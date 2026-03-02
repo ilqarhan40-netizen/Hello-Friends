@@ -1,0 +1,17 @@
+# Секретные ключи и пароли (САМОЕ ВАЖНОЕ)
+.env
+serviceAccountKey.json
+*.pem
+*.key
+
+# Системные папки (ОЧЕНЬ ТЯЖЕЛЫЕ)
+node_modules/
+dist/
+build/
+
+# Системный мусор
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
