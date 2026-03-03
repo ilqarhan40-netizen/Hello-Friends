@@ -14,16 +14,19 @@ app.post('/api/send-email', async (req, res) => {
 
         const transporter = nodemailer.createTransport({
             host: "smtp.gmail.com",
-            port: 587,
-            secure: false,
+            port: 465,
+            secure: true,
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
             },
-            connectionTimeout: 15000, // Увеличили время ожидания до 15 сек
-            tls: { rejectUnauthorized: false }
+            // 🚀 СЕКРЕТНОЕ ОРУЖИЕ: Форсируем старый добрый IPv4,
+            // чтобы обойти сломанный маршрут Render!
+            family: 4 
         });
 
+        console.log("📡 Попытка отправки через IPv4...");
+        
         await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to: to,
@@ -31,12 +34,14 @@ app.post('/api/send-email', async (req, res) => {
             text: text
         });
 
+        console.log("✅ Письмо успешно ушло!");
         res.status(200).json({ success: true });
+
     } catch (error) {
-        console.error('Ошибка:', error.message);
+        console.error('❌ Ошибка:', error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Hello Friends Server active on port ${PORT}`));
+app.listen(PORT, () => console.log(`Hello Friends Server online on port ${PORT}`));
