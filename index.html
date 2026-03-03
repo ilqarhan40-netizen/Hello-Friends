@@ -1185,7 +1185,7 @@
             window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); }
             window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
             
-            // --- НОВАЯ ФУНКЦИЯ ОТПРАВКИ ПИСЕМ В ОБЛАКО RENDER ---
+            // --- НОВАЯ ФУНКЦИЯ ОТПРАВКИ ПИСЕМ ЧЕРЕЗ EMAILJS (СТЕЛС-РЕЖИМ) ---
             window.sendEmailForm = async function(e) {
                 e.preventDefault();
                 
@@ -1199,30 +1199,31 @@
                 btn.disabled = true;
 
                 try {
-                    // ИЗМЕНЕНА СТРОКА НИЖЕ: Теперь запрос идет в облако
-                    const response = await fetch('/api/send-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ to, subject, text })
-                    });
+                    // Формируем параметры для вашего шаблона EmailJS
+                    const templateParams = {
+                        to_email: to,
+                        subject: subject,
+                        message: text
+                    };
 
-                    if (response.ok) {
-                        document.getElementById('empty-archive').style.display = 'none';
-                        const card = document.createElement('div');
-                        card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
-                        card.innerHTML = `<p class="font-bold text-white text-base mb-1">To: ${to}</p><p class="text-sm text-green-400 font-bold mb-1">Sent via Server ✅</p><p class="text-sm text-gray-300">${subject}</p>`;
-                        document.getElementById('archive-list').prepend(card);
-                        
-                        e.target.reset(); 
-                        window.closeEmailModal(); 
-                        window.switchTab(4); 
-                        alert("Успех! Письмо отправлено через сервер!");
-                    } else {
-                        alert("Ошибка сервера при отправке письма.");
-                    }
+                    // Отправляем письмо напрямую через сервера EmailJS (минуя Render)
+                    await emailjs.send("service_i4o7lfa", "template_lrcjrkr", templateParams);
+
+                    // Если код дошел сюда, значит всё успешно!
+                    document.getElementById('empty-archive').style.display = 'none';
+                    const card = document.createElement('div');
+                    card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
+                    card.innerHTML = `<p class="font-bold text-white text-base mb-1">To: ${to}</p><p class="text-sm text-[#a29bfe] font-bold mb-1">Sent via EmailJS 🚀</p><p class="text-sm text-gray-300">${subject}</p>`;
+                    document.getElementById('archive-list').prepend(card);
+                    
+                    e.target.reset(); 
+                    window.closeEmailModal(); 
+                    window.switchTab(4); 
+                    alert("Успех! Письмо мгновенно улетело! Проверьте почту 🚀");
+                    
                 } catch (error) {
-                    console.error("Ошибка сети:", error);
-                    alert("Не удалось связаться с сервером. Попробуйте снова.");
+                    console.error("❌ Ошибка EmailJS:", error);
+                    alert("Ошибка отправки. Посмотрите консоль разработчика.");
                 } finally {
                     btn.innerHTML = origBtnText;
                     btn.disabled = false;
@@ -1253,6 +1254,11 @@
             window.switchChatRoom('global');
             
         });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script>
+       emailjs.init("1jQAeZgeFaV2cvrR8");
     </script>
 </body>
 </html>
