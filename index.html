@@ -6,6 +6,13 @@
     <meta name="google" content="notranslate">
     <title>Hello Friends App - Final</title>
     
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function(){
+            emailjs.init("1jQAeZgeFaV2cvrR8"); // Ваш Public Key
+        })();
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,7 +53,6 @@
         .page-container { width: 100%; height: 100%; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; }
         .page-container h2 { text-align: center; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #fff; flex-shrink: 0; transition: color 0.4s;}
         
-        /* Layout Чата */
         .chat-layout { display: flex; height: 100%; gap: 10px; overflow: hidden; }
         .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid #4a4e53; padding-right: 5px; overflow-y: auto; transition: border-color 0.4s; }
         .chat-contact { position: relative; text-align: center; margin-bottom: 15px; cursor: pointer; }
@@ -66,7 +72,6 @@
         .chat-sender-name { font-size: 0.75rem; color: #a29bfe; margin-bottom: 4px; margin-left: 4px; font-family: sans-serif; font-weight: bold; }
         .translate-box { font-size: 0.75rem; margin-top: 4px; font-family: sans-serif; opacity: 0.9; }
 
-        /* Модалки */
         .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; border-radius: 30px; backdrop-filter: blur(5px); }
         .app-modal.active { display: flex !important; animation: fadeIn 0.2s; }
         .app-modal-content { background: #2a2d32; padding: 24px 20px; border-radius: 20px; width: 90%; max-width: 320px; border: 1px solid #4a4e53; position: relative; display: flex; flex-direction: column; align-items: center; transition: all 0.4s; }
@@ -92,7 +97,6 @@
         .rhombus-main-btn.active + .rhombus-actions { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
         .action-icon { width: 44px; height: 44px; background-color: #3a3d42; color: white; border-radius: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid #4a4e53; transition: all 0.2s; font-size: 1.1rem;}
 
-        /* Видео Звонки */
         .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .video-frame { position: relative; border-radius: 12px; padding-top: 65%; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #000; }
         .video-frame.main { grid-column: 1 / 3; border: 2px solid #a29bfe; box-shadow: 0 0 10px rgba(162, 155, 254, 0.2); }
@@ -305,7 +309,7 @@
                                 <span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap"></span>
                             </div>
 
-                            <div class="w-full flex items-center gap-1.5 px-1 pb-2 relative">
+                            <div class="w-full items-center gap-1.5 px-1 pb-2 relative flex">
                                 <button onclick="toggleEmojiPicker('voice')" class="bg-[#2a2d32] border border-[#4a4e53] text-gray-300 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-regular fa-face-smile text-base"></i></button>
                                 
                                 <div id="voice-emoji-picker" class="hidden absolute bottom-16 left-1 bg-[#2a2d32] border border-[#4a4e53] p-2 rounded-lg grid grid-cols-5 gap-2 text-base shadow-lg z-50">
@@ -773,7 +777,8 @@
                 }
             }).catch(() => {}).finally(() => {
                 document.getElementById('voice-me-flag').innerText = myProfileInfo.flag;
-                document.getElementById('sidebar-me-flag').src = `https://flagcdn.com/w20/${myProfileInfo.flagCode}.png`;
+                const sidebarFlag = document.getElementById('sidebar-me-flag');
+                if(sidebarFlag) sidebarFlag.src = `https://flagcdn.com/w20/${myProfileInfo.flagCode}.png`;
                 renderProfessionList();
                 initConference();
             });
@@ -982,7 +987,6 @@
                 }
             }
 
-            // --- СМАЙЛЫ И CC ---
             window.toggleEmojiPicker = function(type) {
                 if(type === 'text') document.getElementById('text-emoji-picker')?.classList.toggle('hidden');
                 if(type === 'voice') document.getElementById('voice-emoji-picker')?.classList.toggle('hidden');
@@ -1016,7 +1020,6 @@
                 document.querySelectorAll('#conference .translation-bar').forEach(bar => { bar.style.display = isConfCCEnabled ? 'block' : 'none'; });
             };
 
-            // --- БАНКОВСКИЕ ПЕРЕВОДЫ И ПОИСК ---
             window.openBankTransferModal = function() {
                 window.closeDropdown();
                 const sel = document.getElementById('transfer-recipient');
@@ -1116,7 +1119,7 @@
             window.smartClear = function() {
                 if(confirm("Clear chat history?")) {
                     if (document.getElementById('conference').classList.contains('active')) { document.getElementById('conf-messages').innerHTML = ''; } 
-                    else { db.ref(window.currentRoomId).remove().then(() => { document.getElementById('chat-messages').innerHTML = ''; window.clearMarquees(); }); }
+                    else { db.ref(window.currentRoomId).remove().then(() => { if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; }); }
                     window.closeTrashModal();
                 }
             }
@@ -1185,7 +1188,7 @@
             window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); }
             window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
             
-            // --- НОВАЯ ФУНКЦИЯ ОТПРАВКИ ПИСЕМ ЧЕРЕЗ EMAILJS (СТЕЛС-РЕЖИМ) ---
+            // --- НОВАЯ ФУНКЦИЯ ОТПРАВКИ ПИСЕМ ЧЕРЕЗ EMAILJS ---
             window.sendEmailForm = async function(e) {
                 e.preventDefault();
                 
@@ -1206,7 +1209,7 @@
                         message: text
                     };
 
-                    // Отправляем письмо напрямую через сервера EmailJS (минуя Render)
+                    // Отправляем письмо напрямую через сервера EmailJS (БЕЗ RENDER)
                     await emailjs.send("service_i4o7lfa", "template_lrcjrkr", templateParams);
 
                     // Если код дошел сюда, значит всё успешно!
@@ -1223,7 +1226,7 @@
                     
                 } catch (error) {
                     console.error("❌ Ошибка EmailJS:", error);
-                    alert("Ошибка отправки. Посмотрите консоль разработчика.");
+                    alert("Ошибка отправки. Проверьте консоль или настройки шаблона.");
                 } finally {
                     btn.innerHTML = origBtnText;
                     btn.disabled = false;
@@ -1254,11 +1257,6 @@
             window.switchChatRoom('global');
             
         });
-    </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script>
-       emailjs.init("1jQAeZgeFaV2cvrR8");
     </script>
 </body>
 </html>
