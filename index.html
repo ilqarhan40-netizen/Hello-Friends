@@ -903,58 +903,86 @@
                 }, 1500);
             }
 
-            // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ РАБОТЫ С GOOGLE GEMINI API ---
-            function sendFirebaseMsg() {
-                const chatInput = document.getElementById('chat-input');
-                if(!chatInput) return;
-                const text = chatInput.value.trim();
+            // --- УМНАЯ ОТПРАВКА: КАЖДОЙ ВКЛАДКЕ СВОЯ ЛОГИКА ---
+            window.sendMessageFrom = function(inputId) {
+                const inputEl = document.getElementById(inputId);
+                if(!inputEl) return;
+                const text = inputEl.value.trim();
                 if(!text) return;
-                
-                // 1. Сначала отправляем сообщение самого пользователя
-                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                chatInput.value = '';
 
-                // 2. Если это чат с AI Ботом, отправляем запрос к настоящей нейросети
-                if(window.currentRoomId === 'private_ai_bot') {
-                    const apiKey = "AIzaSyA1AMNmfGv_D4Qaneg1XiZUbw8juesycHg"; 
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-                    // Создаем временное сообщение, чтобы было видно, что бот печатает
-                    const tempMsgRef = db.ref(window.currentRoomId).push({ 
-                        name: "AI Co-Pilot", 
-                        text: "⏳ Обрабатываю запрос...", 
-                        sessionId: "ai-bot-session", 
-                        timestamp: firebase.database.ServerValue.TIMESTAMP 
-                    });
-
-                    // Отправляем текст в Google
-                    fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: text }] }]
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Если пришел успешный ответ от нейросети
-                        if (data.candidates && data.candidates[0].content.parts[0].text) {
-                            const aiReply = data.candidates[0].content.parts[0].text;
-                            // Меняем текст временного сообщения на реальный ответ ИИ
-                            tempMsgRef.update({ text: aiReply });
-                        } else {
-                            tempMsgRef.update({ text: "Произошла ошибка в модуле логики. 🤯" });
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Ошибка ИИ:", error);
-                        tempMsgRef.update({ text: "Связь с сервером Google прервалась. 📡" });
-                    });
+                // 1. ЛОГИКА ДЛЯ ГОЛОСОВОЙ КОМНАТЫ (VOICE)
+                if (inputId === 'voice-text-input') {
+                    const mBox = document.getElementById('voice-marquee-container');
+                    const mText = document.getElementById('voice-marquee-text');
+                    if (mBox && mText) {
+                        mBox.style.display = 'flex';
+                        mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text}`;
+                    }
+                    inputEl.value = '';
+                    return; // Текст остается как субтитры, в базу не пишем
                 }
-            }
 
-            document.getElementById('chat-send-btn')?.addEventListener('click', sendFirebaseMsg);
-            document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') sendFirebaseMsg(); });
+                // 2. ЛОГИКА ДЛЯ КОНФЕРЕНЦИИ (CONFERENCE)
+                if (inputId === 'conf-chat-input') {
+                    const confMessages = document.getElementById('conf-messages');
+                    if (confMessages) {
+                        confMessages.innerHTML += `
+                            <div class="conf-msg mt-2 flex gap-2">
+                                <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${myProfileInfo.photo}">
+                                <div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white">
+                                    <span class="text-[#00C4CC] font-bold block mb-0.5">${window.myUsername}</span>
+                                    ${text}
+                                </div>
+                            </div>`;
+                        confMessages.scrollTop = confMessages.scrollHeight;
+                    }
+                    inputEl.value = '';
+                    return; // Текст остается в локальном чате конференции
+                }
+
+                // 3. ЛОГИКА ДЛЯ ГЛАВНОГО ЧАТА (+ ИИ)
+                if (inputId === 'chat-input') {
+                    // Отправляем в базу
+                    db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    inputEl.value = '';
+
+                    // Если чат с ботом — запускаем ИИ
+                    if(window.currentRoomId === 'private_ai_bot') {
+                        const apiKey = "AIzaSyA1AMNmfGv_D4Qaneg1XiZUbw8juesycHg"; 
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+                        const tempMsgRef = db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: "⏳ Обрабатываю запрос...", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
+
+                        fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.error) {
+                                tempMsgRef.update({ text: "❌ Ошибка Google API: " + data.error.message });
+                            } else if (data.candidates && data.candidates[0].content.parts[0].text) {
+                                tempMsgRef.update({ text: data.candidates[0].content.parts[0].text });
+                            } else {
+                                tempMsgRef.update({ text: "Ответ не распознан: " + JSON.stringify(data) });
+                            }
+                        }).catch(err => {
+                            tempMsgRef.update({ text: "Связь с сервером прервалась. 📡" });
+                        });
+                    }
+                }
+            };
+
+            // --- ПРИВЯЗКА КНОПОК И ENTER ДЛЯ ВСЕХ 3-Х ВКЛАДОК ---
+            document.getElementById('chat-send-btn')?.addEventListener('click', () => window.sendMessageFrom('chat-input'));
+            document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendMessageFrom('chat-input'); });
+
+            document.getElementById('voice-send-btn')?.addEventListener('click', () => window.sendMessageFrom('voice-text-input'));
+            document.getElementById('voice-text-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendMessageFrom('voice-text-input'); });
+
+            document.getElementById('conf-chat-send')?.addEventListener('click', () => window.sendMessageFrom('conf-chat-input'));
+            document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendMessageFrom('conf-chat-input'); });
 
             async function handleNewMessage(snapshot) {
                 const data = snapshot.val(); if(!data) return;
@@ -1288,5 +1316,3 @@
     </script>
 </body>
 </html>
-
-
