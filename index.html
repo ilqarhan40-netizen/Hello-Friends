@@ -903,20 +903,53 @@
                 }, 1500);
             }
 
+            // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ РАБОТЫ С GOOGLE GEMINI API ---
             function sendFirebaseMsg() {
                 const chatInput = document.getElementById('chat-input');
                 if(!chatInput) return;
                 const text = chatInput.value.trim();
                 if(!text) return;
                 
+                // 1. Сначала отправляем сообщение самого пользователя
                 db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                 chatInput.value = '';
 
+                // 2. Если это чат с AI Ботом, отправляем запрос к настоящей нейросети
                 if(window.currentRoomId === 'private_ai_bot') {
-                    setTimeout(() => {
-                        const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation, combines professional networking, and features a built-in 1-cent bank transfer system.";
-                        db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: aiReply, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
-                    }, 1500);
+                    const apiKey = "AIzaSyA1AMNmfGv_D4Qaneg1XiZUbw8juesycHg"; 
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+                    // Создаем временное сообщение, чтобы было видно, что бот печатает
+                    const tempMsgRef = db.ref(window.currentRoomId).push({ 
+                        name: "AI Co-Pilot", 
+                        text: "⏳ Обрабатываю запрос...", 
+                        sessionId: "ai-bot-session", 
+                        timestamp: firebase.database.ServerValue.TIMESTAMP 
+                    });
+
+                    // Отправляем текст в Google
+                    fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: text }] }]
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Если пришел успешный ответ от нейросети
+                        if (data.candidates && data.candidates[0].content.parts[0].text) {
+                            const aiReply = data.candidates[0].content.parts[0].text;
+                            // Меняем текст временного сообщения на реальный ответ ИИ
+                            tempMsgRef.update({ text: aiReply });
+                        } else {
+                            tempMsgRef.update({ text: "Произошла ошибка в модуле логики. 🤯" });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Ошибка ИИ:", error);
+                        tempMsgRef.update({ text: "Связь с сервером Google прервалась. 📡" });
+                    });
                 }
             }
 
@@ -952,6 +985,9 @@
                 }
                 
                 let displayedText = data.text;
+                // Форматируем Markdown для бота (жирный текст)
+                if (isAI) displayedText = displayedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
                 let isReceipt = displayedText.includes('💳 [BANK TRANSFER]');
                 let bubbleStyle = '';
                 if (isMe && isReceipt) bubbleStyle = 'border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.1); color: #fff; border-bottom-right-radius: 4px;';
@@ -964,7 +1000,7 @@
                 const bubbleHtml = `
                     <div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">
                         ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}
-                        <div class="${customClass}" style="${bubbleStyle} padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; font-family: sans-serif;">${displayedText}</div>
+                        <div class="${customClass}" style="${bubbleStyle} padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; font-family: sans-serif; white-space: pre-wrap;">${displayedText}</div>
                         ${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1" id="trans-box-${msgId}"></div>` : ''}
                     </div>`;
 
@@ -1188,7 +1224,7 @@
             window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); }
             window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
             
-            // --- НОВАЯ ФУНКЦИЯ ОТПРАВКИ ПИСЕМ ЧЕРЕЗ EMAILJS ---
+            // --- ФУНКЦИЯ ОТПРАВКИ ПИСЕМ ЧЕРЕЗ EMAILJS ---
             window.sendEmailForm = async function(e) {
                 e.preventDefault();
                 
@@ -1202,17 +1238,9 @@
                 btn.disabled = true;
 
                 try {
-                    // Формируем параметры для вашего шаблона EmailJS
-                    const templateParams = {
-                        to_email: to,
-                        subject: subject,
-                        message: text
-                    };
-
-                    // Отправляем письмо напрямую через сервера EmailJS (БЕЗ RENDER)
+                    const templateParams = { to_email: to, subject: subject, message: text };
                     await emailjs.send("service_i4o7lfa", "template_lrcjrkr", templateParams);
 
-                    // Если код дошел сюда, значит всё успешно!
                     document.getElementById('empty-archive').style.display = 'none';
                     const card = document.createElement('div');
                     card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
