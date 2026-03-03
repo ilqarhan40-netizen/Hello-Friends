@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Super App</title>
+    <title>Hello Friends App - Final</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
+    <script type="text/javascript">
+        (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })();
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Allura&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Allura&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -18,181 +22,361 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; color: #c0c5d0; overflow: hidden; position: relative; }
+        body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
+        .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; box-sizing: border-box; color: #c0c5d0; overflow: hidden; position: relative; transition: all 0.4s; }
         
-        .app-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; z-index: 50; }
-        .logo-circle { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg, #a29bfe, #6c5ce7); display: flex; justify-content: center; align-items: center; font-weight: 700; color: white; }
-        .header-icons button { color: #888; padding: 5px; transition: 0.3s; }
+        .app-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding-bottom: 0.5rem; position: relative; z-index: 50; }
+        .logo-container { display: flex; align-items: center; gap: 12px; }
+        .logo-circle { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg, #a29bfe, #6c5ce7); display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1rem; color: white; box-shadow: 0 0 10px rgba(162, 155, 254, 0.5); }
+        .header-icons { display: flex; align-items: center; gap: 12px; }
+        .header-icons button { color: #888; transition: color 0.3s; background: none; border: none; padding: 5px; }
         .header-icons button:hover { color: #a29bfe; }
         
-        .header-dropdown { position: absolute; top: 60px; right: 20px; width: 220px; background: #2a2d32; border: 1px solid #4a4e53; border-radius: 12px; padding: 10px; display: none; flex-direction: column; z-index: 100; }
-        .header-dropdown.active { display: flex; }
-        .header-dropdown a { color: #c0c5d0; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: sans-serif; font-size: 0.85rem; }
+        .header-dropdown { position: absolute; top: 100%; right: 0; width: 220px; background: #2a2d32; border: 1px solid #4a4e53; border-radius: 12px; padding: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; flex-direction: column; gap: 5px; z-index: 100; transition: all 0.3s; }
+        .header-dropdown.active { display: flex; animation: fadeIn 0.2s; }
+        .header-dropdown a { color: #c0c5d0; font-family: sans-serif; font-size: 0.85rem; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; text-decoration: none; }
         .header-dropdown a:hover { background: #3a3d42; color: white; }
         
-        .nav-link { white-space: nowrap; padding: 5px 10px; font-size: 0.7rem; color: #888; cursor: pointer; transition: 0.3s; }
-        .nav-link.active { color: #fff; font-weight: 700; text-shadow: 0 0 5px #a29bfe; }
+        .navigation-wrapper { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid #4a4e53; z-index: 40; transition: border-color 0.4s; }
+        .nav-arrow { cursor: pointer; color: #888; transition: color 0.3s; }
+        .nav-arrow.disabled { color: #444; pointer-events: none; }
+        .main-nav { flex-grow: 1; display: flex; align-items: center; overflow: hidden; }
+        .main-nav-inner { display: flex; gap: 10px; transition: transform 0.4s ease-in-out; }
+        .main-nav a { white-space: nowrap; padding: 5px 6px; font-size: 0.75rem; letter-spacing: 0.05em; transition: color 0.3s; cursor: pointer; flex-shrink: 0; color: #888; }
+        .main-nav a.active { color: #fff; font-weight: 700; text-shadow: 0 0 5px #a29bfe; }
         
-        .page-content { display: none; flex-grow: 1; flex-direction: column; overflow: hidden; animation: fadeIn 0.3s; }
+        .page-content { display: none; flex-grow: 1; flex-direction: column; width: 100%; animation: fadeIn 0.4s ease-in-out; overflow: hidden; }
         .page-content.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .chat-sidebar { width: 70px; border-right: 1px solid #4a4e53; overflow-y: auto; padding-top: 10px; }
-        .chat-contact-icon { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #555; margin: 0 auto 15px; cursor: pointer; background-size: cover; background-position: center; }
-        .active-room { border-color: #4ade80 !important; box-shadow: 0 0 10px #4ade8055; }
-
-        .chat-bubble { padding: 10px 14px; border-radius: 15px; font-size: 0.85rem; font-family: sans-serif; max-width: 85%; margin-top: 5px; line-height: 1.4; }
-        .incoming { background: #3a3d42; color: #eee; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .outgoing { background: linear-gradient(145deg, #6c5ce7, #a29bfe); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-
-        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; border-radius: 30px; backdrop-filter: blur(5px); }
-        .app-modal.active { display: flex; }
-        .modal-content { background: #2a2d32; padding: 20px; border-radius: 20px; width: 90%; border: 1px solid #4a4e53; }
-
-        .form-input { width: 100%; padding: 10px; border-radius: 8px; background: #1a1e23; border: 1px solid #4a4e53; color: white; font-family: sans-serif; margin-bottom: 10px; outline: none; }
-        .form-btn { width: 100%; padding: 12px; border-radius: 10px; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; cursor: pointer; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .page-container { width: 100%; height: 100%; overflow-y: auto; padding: 10px 5px; display: flex; flex-direction: column; }
+        .page-container h2 { text-align: center; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #fff; flex-shrink: 0; transition: color 0.4s;}
         
-        .rhombus-btn { width: 50px; height: 50px; background: #6c5ce7; transform: rotate(45deg); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-        .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
+        .chat-layout { display: flex; height: 100%; gap: 10px; overflow: hidden; }
+        .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid #4a4e53; padding-right: 5px; overflow-y: auto; transition: border-color 0.4s; }
+        .chat-contact { position: relative; text-align: center; margin-bottom: 15px; cursor: pointer; }
+        .chat-contact-icon { width: 50px; height: 50px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid #555; margin: 0 auto; transition: transform 0.2s; position: relative; }
+        .chat-contact:hover .chat-contact-icon { transform: scale(1.1); border-color: #a29bfe; }
+        .chat-contact-name { font-size: 0.65rem; margin-top: 5px; color: #e0e0e0; transition: color 0.4s; font-family: sans-serif; font-weight: 500;}
+        .chat-contact.active-room .chat-contact-icon { border-color: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.4); }
+        .chat-contact.active-room .chat-contact-name { color: #4ade80; font-weight: bold; }
+        
+        .chat-main { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .chat-messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding-right: 5px; margin-bottom: 10px; scroll-behavior: smooth; }
+        .chat-bubble-wrapper { display: flex; flex-direction: column; max-width: 80%; }
+        .chat-bubble { padding: 12px 14px; border-radius: 16px; font-size: 0.95rem; font-family: sans-serif; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.4s;}
+        .incoming .chat-bubble { background: #3a3d42; border-bottom-left-radius: 2px; border: 1px solid #4a4e53; color: #e0e0e0; }
+        .outgoing .chat-bubble { background: linear-gradient(145deg, #6c5ce7, #a29bfe); border-bottom-right-radius: 2px; color: white; }
+        
+        .chat-sender-name { font-size: 0.75rem; color: #a29bfe; margin-bottom: 4px; margin-left: 4px; font-family: sans-serif; font-weight: bold; }
+        .translate-box { font-size: 0.75rem; margin-top: 4px; font-family: sans-serif; opacity: 0.9; }
 
-        .conf-listener-marquee { font-size: 0.65rem; color: #00C4CC; font-weight: bold; white-space: nowrap; overflow: hidden; }
-        .toast { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: #2a2d32; border: 1px solid #a29bfe; padding: 10px; border-radius: 15px; display: none; z-index: 2000; width: 80%; }
+        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; border-radius: 30px; backdrop-filter: blur(5px); }
+        .app-modal.active { display: flex !important; animation: fadeIn 0.2s; }
+        .app-modal-content { background: #2a2d32; padding: 24px 20px; border-radius: 20px; width: 90%; max-width: 320px; border: 1px solid #4a4e53; position: relative; display: flex; flex-direction: column; align-items: center; transition: all 0.4s; }
+        .close-modal-btn { position: absolute; top: 12px; right: 16px; color: #888; font-size: 1.4rem; cursor: pointer; transition: color 0.3s;}
+        .close-modal-btn:hover { color: #ef4444; }
+
+        .form-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #4a4e53; background: #1a1e23; color: white; font-family: sans-serif; font-size: 0.95rem; outline: none; transition: all 0.4s; }
+        .form-input:focus { border-color: #a29bfe; }
+        .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
+        .form-btn:active { transform: scale(0.98); }
+
+        .footer-wrapper { margin-top: auto; width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; flex-shrink: 0; position: relative; z-index: 50; }
+        .actions-footer { background-color: #2a2d32; padding: 10px 20px; border-top: 1px solid #4a4e53; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.4s; }
+        .social-footer { background-color: #f0f2f5; padding: 10px 30px; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.4s;}
+        .social-link { font-family: sans-serif; font-weight: bold; font-size: 1.1rem; color: #555; cursor: pointer; text-decoration: none; transition: color 0.2s; }
+        
+        .rhombus-menu-container { position: relative; }
+        .rhombus-main-btn { width: 48px; height: 48px; cursor: pointer; transition: transform 0.3s; position: relative; z-index: 20; }
+        .rhombus-main-btn .rhombus-shape { width: 100%; height: 100%; background: linear-gradient(145deg, #6c5ce7, #a29bfe); border-radius: 14px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; box-shadow: 0 0 12px rgba(162, 155, 254, 0.5);}
+        .rhombus-main-btn .rhombus-shape i { transform: rotate(-45deg); color: white; font-size: 1.3rem; }
+        .rhombus-main-btn.active { transform: rotate(180deg); }
+        .rhombus-actions { position: absolute; bottom: 65px; right: 0; background: #2a2d32; border: 1px solid #4a4e53; border-radius: 12px; padding: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); opacity: 0; pointer-events: none; transform: translateY(15px) scale(0.95); transform-origin: bottom right; transition: all 0.3s ease; z-index: 10; }
+        .rhombus-main-btn.active + .rhombus-actions { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+        .action-icon { width: 44px; height: 44px; background-color: #3a3d42; color: white; border-radius: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: 1px solid #4a4e53; transition: all 0.2s; font-size: 1.1rem;}
+
+        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .video-frame { position: relative; border-radius: 12px; padding-top: 65%; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #000; }
+        .video-frame.main { grid-column: 1 / 3; border: 2px solid #a29bfe; box-shadow: 0 0 10px rgba(162, 155, 254, 0.2); }
+        .video-frame video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .video-overlay { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; z-index: 10; font-family: sans-serif;}
+        .flag-overlay { position: absolute; top: 5px; right: 5px; font-size: 1.1rem; z-index: 10; }
+        
+        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.75); z-index: 10; padding: 4px 0; overflow: hidden; display: block;}
+        .conf-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 10s linear infinite; font-size: 0.65rem; color: #fff; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
+        @keyframes scroll-text { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        
+        .conf-messages { display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+        .conf-msg { display: flex; gap: 6px; align-items: flex-start; }
+        .conf-msg-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid #4a4e53; }
+        .conf-msg-content { background: #1e293b; padding: 6px 8px; border-radius: 8px; font-size: 0.75rem; color: #e2e8f0; line-height: 1.3; font-family: sans-serif; }
+
+        .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
+        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
+
+        .toast-notification { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; padding: 8px 20px; border-radius: 20px; font-family: sans-serif; font-size: 0.75rem; font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out, top 0.5s ease-in-out; display: flex; align-items: center; gap: 8px; }
+        .toast-notification.show { opacity: 1; top: 70px; }
     </style>
 </head>
 <body>
 
-    <div class="mobile-screen" id="app-body">
-        <div id="toast" class="toast flex items-center gap-3">
-            <div id="toast-icon" class="text-2xl">🌍</div>
-            <div class="flex flex-col">
-                <span id="toast-name" class="font-bold text-white text-sm">System</span>
-                <span id="toast-msg" class="text-xs text-gray-400">Welcome back!</span>
+    <input type="file" id="attachment-input" class="hidden" accept="image/*, .pdf, .doc, .docx, .txt">
+
+    <div class="mobile-screen" id="phone-body">
+        
+        <div id="toast-notification" class="toast-notification" style="width: 90%; max-width: 350px; background: #2a2d32; border: 1px solid #a29bfe; padding: 12px 15px;">
+            <img id="toast-img" src="" class="w-12 h-12 rounded-full object-cover border-2 border-[#a29bfe] shrink-0" style="display: none;">
+            <div id="toast-icon-wrap" class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-xl shrink-0 border-2 border-[#a29bfe]">🌍</div>
+            <div class="flex flex-col flex-grow ml-2">
+                <div class="flex items-center gap-1.5"><span id="toast-flag" class="text-base">🌍</span><span id="toast-name" class="font-bold text-[0.9rem] text-white" data-i18n="chat_group">Group Chat</span></div>
+                <span id="toast-info" class="text-[0.7rem] text-gray-300 font-sans leading-snug mt-1"></span>
             </div>
         </div>
 
         <header class="app-header">
-            <div class="logo-circle">HF</div>
-            <div class="header-icons">
-                <button onclick="openModal('search-modal')"><i class="fa-solid fa-magnifying-glass"></i></button>
-                <button onclick="openModal('email-modal')"><i class="fa-regular fa-envelope"></i></button>
-                <button onclick="document.getElementById('drop').classList.toggle('active')"><i class="fa-solid fa-bars"></i></button>
+             <div class="logo-container">
+                <div class="logo-circle">HF</div>
+             </div>
+             <div class="header-icons">
+                <button id="main-search-btn" onclick="document.getElementById('search-modal').classList.add('active');"><i class="fa-solid fa-magnifying-glass text-[1.1rem] text-[#a29bfe]"></i></button>
+                <button id="compose-email-btn" onclick="openEmailModal()"><i class="fa-regular fa-envelope text-[1.1rem]"></i></button>
+                <button id="menu-btn" onclick="toggleHeaderMenu(event)"><i class="fa-solid fa-bars text-[1.1rem]"></i></button>
             </div>
-            <div id="drop" class="header-dropdown">
-                <a onclick="openCV()"><i class="fa-solid fa-user"></i> My CV / Profile</a>
-                <a onclick="openModal('auth-modal')"><i class="fa-solid fa-shield-halved"></i> Authentication</a>
-                <a onclick="openModal('transfer-modal')"><i class="fa-solid fa-money-bill-transfer text-green-400"></i> Transfer</a>
-                <a onclick="location.reload()" style="color:#ef4444"><i class="fa-solid fa-power-off"></i> Logout</a>
+            
+            <div id="header-dropdown" class="header-dropdown">
+                <a onclick="openMyProfile()"><i class="fa-solid fa-user w-5"></i> <span data-i18n="menu_profile">My Profile / CV</span></a>
+                <a onclick="openBankTransferModal()"><i class="fa-solid fa-money-bill-transfer w-5 text-green-400"></i> <span data-i18n="menu_transfer">Bank Transfer</span></a>
+                <a onclick="openAuthModal()"><i class="fa-solid fa-shield-halved w-5 text-blue-400"></i> <span data-i18n="menu_auth">Authentication</span></a>
+                <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
+                <a style="color: #ef4444;" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Logout</span></a>
             </div>
         </header>
 
-        <nav class="flex justify-between border-b border-[#4a4e53] mb-2">
-            <a class="nav-link active" onclick="tab(0)">Chat</a>
-            <a class="nav-link" onclick="tab(1)">Voice</a>
-            <a class="nav-link" onclick="tab(2)">Conference</a>
-            <a class="nav-link" onclick="tab(3)">Profession</a>
-            <a class="nav-link" onclick="tab(4)">Archive</a>
-        </nav>
+        <div class="navigation-wrapper">
+            <button id="prev-tab-btn" class="nav-arrow disabled" onclick="switchTab(currentIndex - 1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <nav class="main-nav" id="scroll-nav">
+                <div class="main-nav-inner" id="nav-inner">
+                    <a class="nav-link active" data-target="message" onclick="switchTab(0)" data-i18n="nav_chat">Chat</a>
+                    <a class="nav-link" data-target="voice-translator" onclick="switchTab(1)" data-i18n="nav_voice">Voice</a>
+                    <a class="nav-link" data-target="conference" onclick="switchTab(2)" data-i18n="nav_conf">Conference</a>
+                    <a class="nav-link" data-target="profession" onclick="switchTab(3)" data-i18n="nav_prof">Profession</a>
+                    <a class="nav-link" data-target="archive" onclick="switchTab(4)" data-i18n="nav_archive">Archive</a>
+                </div>
+            </nav>
+            <button id="next-tab-btn" class="nav-arrow" onclick="switchTab(currentIndex + 1)"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
 
-        <main class="flex-grow flex flex-col overflow-hidden">
-            <div id="p0" class="page-content active h-full flex-row flex">
-                <div class="chat-sidebar" id="sidebar"></div>
-                <div class="flex-grow flex flex-col p-2">
-                    <div id="chat-header" class="border-b border-[#4a4e53] pb-1 mb-2 text-xs font-bold text-[#a29bfe]">Global Chat</div>
-                    <div id="chat-msgs" class="flex-grow overflow-y-auto flex flex-col gap-2"></div>
-                    <div class="flex gap-2 pt-2 border-t border-[#4a4e53]">
-                        <input id="chat-inp" type="text" class="form-input mb-0" placeholder="Type...">
-                        <button onclick="sendMsg('chat-inp')" class="bg-[#6c5ce7] text-white px-3 rounded-lg"><i class="fa-solid fa-paper-plane"></i></button>
+        <main class="flex-grow overflow-hidden flex flex-col relative">
+            <div id="message" class="page-content active h-full">
+                <div class="page-container" style="padding: 0;">
+                    <div class="chat-layout">
+                        <div class="chat-sidebar" id="chat-sidebar"></div>
+                        <div class="chat-main pb-2 flex flex-col relative">
+                            <div class="flex items-center gap-2 px-1 pb-2 border-b border-[#4a4e53] shrink-0" id="active-chat-header">
+                                <div id="chat-header-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] cursor-pointer hover:scale-105 transition-transform" onclick="openActiveChatProfile()">GL</div>
+                                <div class="flex flex-col flex-grow">
+                                    <span class="text-[0.95rem] font-bold text-white leading-tight" id="chat-header-name">Group Chat</span>
+                                    <span class="text-[0.7rem] leading-none mt-1" id="chat-header-status">🌍 <span class="text-green-400">All members</span></span>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-info-marquee-container shrink-0" id="typing-marquee-container"><span class="chat-info-marquee-text" id="chat-info-marquee"></span></div>
+                            <div class="chat-messages" id="chat-messages"></div>
+                            
+                            <div class="w-full flex items-center gap-1.5 mt-auto shrink-0 pt-2 border-t border-[#4a4e53] relative pb-1 px-1">
+                                <input type="text" id="chat-input" placeholder="Type message..." class="form-input mb-0 grow text-base" style="padding: 10px 12px;">
+                                <button id="chat-send-btn" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div id="p1" class="page-content p-4 text-center">
-                <h2 style="font-family: 'Allura', cursive; font-size: 3rem; color: #a29bfe;">Voice</h2>
-                <div class="flex justify-center gap-10 my-10">
-                    <div class="flex flex-col items-center">
-                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="w-20 h-20 rounded-full border-2 border-gray-500">
-                        <span class="text-xs mt-2">Marinella 🇮🇹</span>
+            <div id="voice-translator" class="page-content h-full">
+                <div class="page-container flex flex-col relative" style="padding: 0;">
+                    <div class="flex flex-col h-full p-2 relative">
+                        <h2 class="mb-2 text-white shrink-0 text-center"><span style="font-family: 'Allura', cursive; font-size: 2.8rem; color: #a29bfe;">Voice</span> Room</h2>
+                        <div class="voice-room-container flex justify-center items-center gap-8 grow mt-2">
+                            <div class="voice-user flex flex-col items-center">
+                                <div class="w-24 h-24 relative mb-3 shadow-lg">
+                                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" class="w-full h-full rounded-full object-cover border-2 border-[#4a4e53]">
+                                    <span class="absolute bottom-0 right-0 text-lg bg-[#2a2d32] rounded-full p-1 border border-[#4a4e53]">🇮🇹</span>
+                                </div>
+                                <h3 class="text-white font-bold text-center text-sm">Marinella</h3>
+                            </div>
+                            <div class="flex gap-2 text-[#a29bfe] opacity-50">
+                                <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce"></div><div class="w-1.5 h-10 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                            </div>
+                            <div class="voice-user flex flex-col items-center">
+                                <div class="w-28 h-28 relative mb-3 shadow-xl">
+                                    <img id="voice-me-photo" src="https://images.unsplash.com/photo-1557862921-37829c790f19?w=200" class="w-full h-full rounded-full object-cover border-4 border-[#a29bfe] relative z-10">
+                                    <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#2a2d32] rounded-full p-1 border border-[#4a4e53]">🇦🇿</span>
+                                </div>
+                                <h3 class="text-white font-bold text-center text-sm" id="voice-me-name">You</h3>
+                            </div>
+                        </div>
+                        <div class="w-full flex flex-col mt-auto shrink-0 pt-2 border-t border-[#4a4e53]">
+                            <div id="voice-marquee-container" class="w-full overflow-hidden hidden items-center mb-2 bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53]">
+                                <span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap"></span>
+                            </div>
+                            <div class="w-full items-center gap-1.5 px-1 pb-2 relative flex">
+                                <input type="text" id="voice-text-input" placeholder="Speak or text..." class="form-input mb-0 grow text-base" style="padding: 10px 8px;">
+                                <button id="voice-send-btn" class="bg-gradient-to-r from-[#a29bfe] to-[#6c5ce7] text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex flex-col items-center">
-                        <div class="w-20 h-20 rounded-full bg-indigo-600 flex items-center justify-center text-3xl border-4 border-[#a29bfe]">👤</div>
-                        <span id="my-voice-name" class="text-xs mt-2">You</span>
+                </div>
+            </div>
+
+            <div id="conference" class="page-content h-full bg-[#0f172a] rounded-xl overflow-hidden shadow-lg border border-[#4a4e53]">
+                <div class="p-2 flex justify-between items-center bg-black/50 border-b border-white/5 text-xs shrink-0">
+                    <span class="font-bold text-[#00C4CC] tracking-widest text-sm">LIVE VIDEO</span>
+                    <span class="text-red-500 font-bold bg-red-500/10 px-2 py-0.5 rounded-full animate-pulse border border-red-500/30 text-xs">● REC</span>
+                </div>
+                <div class="overflow-y-auto p-1 shrink-0" style="max-height: 48%;"><div class="video-grid" id="conference-grid"></div></div>
+                <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
+                    <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold"><span>Live Chat</span><span>👥 Online</span></div>
+                    <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
+                    <div class="flex gap-2 mt-2 shrink-0 items-center">
+                        <input type="text" id="conf-chat-input" class="w-full bg-[#1e293b] text-white text-base px-3 py-2 rounded-lg border border-[#334155] outline-none font-sans" placeholder="Message or speak...">
+                        <button id="conf-chat-send" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
                 </div>
-                <div id="voice-subs" class="bg-black/40 p-3 rounded-xl text-green-400 text-sm font-bold min-h-[40px] flex items-center justify-center">Waiting for speech...</div>
-                <div class="mt-auto flex gap-2 pt-4">
-                    <input id="voice-inp" type="text" class="form-input mb-0" placeholder="Speak...">
-                    <button onclick="sendMsg('voice-inp')" class="bg-[#a29bfe] text-white px-4 rounded-lg">Send</button>
+            </div>
+
+            <div id="profession" class="page-content h-full">
+                <div class="page-container" id="profession-list" style="padding: 10px 5px; padding-bottom: 20px;"></div>
+            </div>
+
+            <div id="archive" class="page-content h-full">
+                <div class="page-container">
+                    <h2 class="text-xl">Archive / Transactions</h2>
+                    <p id="empty-archive" class="text-center text-sm text-gray-500 mt-6 font-sans">Archive is empty.</p>
+                    <div id="archive-list" class="flex flex-col gap-4 mt-4"></div>
                 </div>
-            </div>
-
-            <div id="p2" class="page-content h-full bg-black">
-                <div class="grid grid-cols-2 gap-1 p-1" id="conf-grid"></div>
-                <div id="conf-chat" class="flex-grow overflow-y-auto p-2 text-[0.6rem] font-sans"></div>
-                <div class="flex p-2 gap-1">
-                    <input id="conf-inp" type="text" class="form-input mb-0 text-xs" placeholder="Message...">
-                    <button onclick="sendMsg('conf-inp')" class="bg-teal-500 text-black px-3 rounded-lg"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-
-            <div id="p3" class="page-content p-2">
-                <h2 class="text-center mb-4">Professionals</h2>
-                <div id="prof-list" class="grid grid-cols-2 gap-3 overflow-y-auto"></div>
-            </div>
-
-            <div id="p4" class="page-content p-2 overflow-y-auto" id="arc-list">
-                <h2 class="text-center mb-4">Transaction History</h2>
-                <div id="arc-items"></div>
             </div>
         </main>
 
-        <div class="flex justify-center p-4 bg-[#2a2d32] border-t border-[#4a4e53]">
-            <div class="rhombus-btn" onclick="openModal('auth-modal')"><i class="fa-solid fa-plus"></i></div>
+        <div class="footer-wrapper">
+            <div class="actions-footer">
+                <div class="font-sans text-2xl cursor-pointer hover:text-white transition text-gray-400">😊</div>
+                <div class="rhombus-menu-container">
+                    <div id="rhombus-btn" class="rhombus-main-btn" onclick="toggleRhombusMenu(event)"><div class="rhombus-shape"><i class="fa-solid fa-plus"></i></div></div>
+                    <div id="rhombus-actions" class="rhombus-actions">
+                        <div class="action-icon" onclick="switchTab(2); closeDropdown();"><i class="fa-solid fa-video"></i></div>
+                        <div class="action-icon" onclick="openLocationModal(); closeDropdown();"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="action-icon" onclick="document.getElementById('search-modal').classList.add('active'); closeDropdown();"><i class="fa-solid fa-magnifying-glass"></i></div>
+                    </div>
+                </div>
+            </div>
+            <footer class="social-footer" style="position: relative; z-index: 60;">
+                <a href="#" class="social-link hover:text-[#a29bfe]"><i class="fa-brands fa-telegram text-xl"></i></a>
+                <a href="#" class="social-link hover:text-[#a29bfe]"><i class="fa-brands fa-instagram text-xl"></i></a>
+                <a href="#" class="social-link hover:text-[#a29bfe]"><i class="fa-brands fa-linkedin text-xl"></i></a>
+            </footer>
         </div>
-    </div>
 
-    <div id="auth-modal" class="app-modal">
-        <div class="modal-content text-center">
-            <h2 class="mb-4">Authentication</h2>
-            <input id="auth-email" class="form-input" placeholder="Email">
-            <input id="auth-pass" type="password" class="form-input" placeholder="Password (6+ chars)">
-            <button onclick="handleAuth()" class="form-btn">Login / Register</button>
-            <button onclick="closeModals()" class="mt-4 text-xs text-gray-500 underline">Close</button>
+        <div id="auth-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+            <div class="app-modal-content text-center w-full max-w-[320px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('auth-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-shield-halved text-5xl text-[#a29bfe] mb-4 mt-2"></i>
+                <h2 class="text-xl font-bold mb-5 text-white font-sans">Authentication</h2>
+                <div id="auth-email-form" class="flex flex-col gap-4 w-full">
+                    <input type="email" id="auth-email-input" class="form-input text-center font-sans text-base py-3" placeholder="your@email.com">
+                    <input type="password" id="auth-email-password" class="form-input text-center font-sans text-base py-3" placeholder="Password (min 6 chars)">
+                    <button id="auth-email-send-btn" class="form-btn w-full font-bold py-3 text-base shadow-lg" onclick="loginWithEmail()">Login / Register</button>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div id="cv-modal" class="app-modal">
-        <div class="modal-content">
-            <h2 class="mb-4 text-center">Update Your CV</h2>
-            <input id="cv-name" class="form-input" placeholder="Full Name">
-            <input id="cv-job" class="form-input" placeholder="Profession">
-            <input id="cv-lang" class="form-input" placeholder="Languages">
-            <textarea id="cv-about" class="form-input" placeholder="Bio / Experience"></textarea>
-            <button onclick="saveCV()" class="form-btn">Save to Cloud</button>
+        <div id="cv-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('cv-modal').classList.remove('active')"></i>
+                <h2 class="text-xl font-bold mb-5 text-white text-center font-sans"><i class="fa-solid fa-address-card text-[#a29bfe] mr-2"></i> My CV / Profile</h2>
+                <form id="cv-form" class="font-sans w-full flex flex-col gap-3" onsubmit="saveMyCV(event)">
+                    <input type="text" id="cv-name" class="form-input text-sm py-2.5" placeholder="Full Name" required>
+                    <input type="text" id="cv-profession" class="form-input text-sm py-2.5" placeholder="Profession (e.g. Engineer)" required>
+                    <div class="flex gap-2">
+                        <input type="text" id="cv-country" class="form-input text-sm py-2.5 w-1/2" placeholder="Country" required>
+                        <input type="text" id="cv-languages" class="form-input text-sm py-2.5 w-1/2" placeholder="Languages" required>
+                    </div>
+                    <input type="tel" id="cv-phone" class="form-input text-sm py-2.5" placeholder="Phone Number" required>
+                    <textarea id="cv-desc" class="form-input text-sm py-2.5 resize-none" placeholder="About me (Bio)..." rows="3" required></textarea>
+                    <button type="submit" id="cv-save-btn" class="form-btn w-full font-bold py-3 text-base mt-2 bg-gradient-to-r from-blue-500 to-purple-600">Save Profile</button>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <div id="transfer-modal" class="app-modal">
-        <div class="modal-content">
-            <h2 class="mb-4">Send Money</h2>
-            <input id="tr-amount" type="number" class="form-input" placeholder="Amount USD">
-            <button onclick="doTransfer()" class="form-btn bg-green-600">Send $0.01 Fee</button>
-            <button onclick="closeModals()" class="mt-4 block mx-auto">Cancel</button>
+        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('transfer-modal').classList.remove('active')"></i>
+                <div class="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center text-white text-2xl mb-3 shadow-lg"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                <h2 class="text-xl font-bold text-white font-sans">Bank Transfer</h2>
+                <form id="transfer-form" class="w-full font-sans flex flex-col gap-4" onsubmit="sendMoney(event)">
+                    <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Recipient:</label><select id="transfer-recipient" class="form-input w-full py-2.5" required></select></div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1.5">Amount (USD):</label>
+                        <div class="relative"><span class="absolute left-4 top-1/2 transform -translate-y-1/2 font-bold text-lg">$</span><input type="number" id="transfer-amount" class="form-input w-full pl-10 py-2.5" placeholder="0.00" min="1" required></div>
+                    </div>
+                    <div class="bg-gray-800/50 border border-green-500/50 rounded-xl p-4 my-2 flex justify-between items-center shadow-inner"><span class="text-sm text-gray-300">Transaction Fee:</span><span class="text-base font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded shadow-sm">$0.01</span></div>
+                    <button type="submit" id="submit-transfer-btn" class="form-btn w-full font-bold bg-gradient-to-r from-emerald-500 to-green-600 mt-2 py-3.5"><i class="fa-solid fa-paper-plane"></i> Send Money</button>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <div id="email-modal" class="app-modal">
-        <div class="modal-content">
-            <h2>New Email</h2>
-            <input id="em-to" class="form-input" placeholder="To: email@example.com">
-            <input id="em-sub" class="form-input" placeholder="Subject">
-            <textarea id="em-msg" class="form-input" rows="3"></textarea>
-            <button onclick="sendEmail()" class="form-btn">Send via EmailJS</button>
+        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('avatar-modal').classList.remove('active')"></i>
+                <div id="modal-img-container" class="w-28 h-28 rounded-full mb-4 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-5xl">
+                    <img id="modal-img" src="" class="w-full h-full object-cover">
+                </div>
+                <h3 id="modal-name" class="text-xl font-bold text-white mb-4"></h3>
+                <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] font-sans text-sm mb-5"><div id="modal-desc" class="flex flex-col gap-2.5 text-gray-300"></div></div>
+                <div class="flex gap-3 w-full" id="modal-action-buttons">
+                    <button id="modal-chat-btn" class="w-full py-3 rounded-xl text-white font-bold bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg"><i class="fa-solid fa-comment"></i> Chat</button>
+                    <button id="modal-sms-btn" class="w-full py-3 rounded-xl text-white font-bold bg-gradient-to-r from-green-600 to-green-500 shadow-lg"><i class="fa-solid fa-comment-sms"></i> SMS</button>
+                </div>
+            </div>
         </div>
+
+        <div id="email-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('email-modal').classList.remove('active')"></i>
+                <h2 class="text-xl font-bold mb-5 text-white text-center font-sans"><i class="fa-solid fa-envelope text-[#a29bfe] mr-2"></i> New Message</h2>
+                <form id="email-form" class="font-sans w-full flex flex-col gap-3" onsubmit="sendEmailForm(event)">
+                    <input type="email" id="email-to" class="form-input text-base py-3" placeholder="To: email@example.com" required>
+                    <input type="text" id="email-subject" class="form-input text-base py-3" placeholder="Subject" required>
+                    <textarea id="email-text" class="form-input text-base py-3 resize-none" placeholder="Message..." rows="4" required></textarea>
+                    <button type="submit" class="form-btn w-full font-bold py-3.5 text-base mt-2 shadow-lg">Send Message</button>
+                </form>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // 1. CONFIG & INIT
+        // БАЗОВЫЕ НАСТРОЙКИ
+        window.toggleRhombusMenu = function(e) { e.stopPropagation(); document.getElementById('rhombus-btn')?.classList.toggle('active'); }
+        window.closeDropdown = function() { document.getElementById('header-dropdown')?.classList.remove('active'); document.getElementById('rhombus-btn')?.classList.remove('active'); }
+        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
+        document.body.addEventListener('click', window.closeDropdown);
+
+        window.switchTab = function(index) {
+            const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+            const pages = document.querySelectorAll('.page-content');
+            if(index < 0 || index >= navLinks.length) return;
+            navLinks.forEach(l => l.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active'));
+            navLinks[index].classList.add('active');
+            const targetId = navLinks[index].dataset.target;
+            document.getElementById(targetId).classList.add('active');
+            window.currentIndex = index;
+            document.getElementById('prev-tab-btn').classList.toggle('disabled', index === 0);
+            document.getElementById('next-tab-btn').classList.toggle('disabled', index === navLinks.length - 1);
+            document.getElementById('nav-inner').style.transform = `translateX(${index * -50}px)`;
+        }
+
+        // FIREBASE INIT
         const firebaseConfig = {
             apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40",
             authDomain: "hello-friends-p8p3i7.firebaseapp.com",
@@ -200,201 +384,359 @@
             projectId: "hello-friends-p8p3i7",
             storageBucket: "hello-friends-p8p3i7.firebasestorage.app"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const auth = firebase.auth();
 
-        let user = null;
-        let currentRoom = "global_chat";
+        window.myUsername = "Guest";
+        window.mySessionId = Math.random().toString(36).substring(2, 15);
+        window.currentRoomId = "global_chat";
+        window.activeChatListener = null;
+        window.currentUserUid = null;
+
+        // ДЕМО-ПРОФИЛИ (ДЛЯ ВИЗУАЛА)
         let participants = [
-            { id: 'klaus', name: 'Klaus Müller', job: 'Engineer', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100', flag: '🇩🇪', email: 'klaus@test.de', lang: 'de' },
-            { id: 'marinella', name: 'Marinella', job: 'Marketing', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100', flag: '🇮🇹', email: 'mari@test.it', lang: 'it' }
+            { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API', flag: '🤖', country: 'Cloud Server', desc: 'Powered by Google Gemini', languages: 'All languages' },
+            { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234', flag: '🇩🇪', langCode: 'de', country: 'Germany', desc: 'Precision engineering.', languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
+            { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123', flag: '🇮🇹', langCode: 'it', country: 'Italy', desc: 'Marketing expert.', languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' }
         ];
 
-        // 2. AUTH LOGIC
-        function handleAuth() {
-            const e = document.getElementById('auth-email').value;
-            const p = document.getElementById('auth-pass').value;
-            auth.signInWithEmailAndPassword(e, p)
-                .then(() => { alert("Welcome back!"); closeModals(); })
-                .catch(() => {
-                    auth.createUserWithEmailAndPassword(e, p)
-                        .then(() => { alert("Registered!"); openModal('cv-modal'); })
-                        .catch(err => alert(err.message));
-                });
-        }
+        let myProfileInfo = {
+            id: 'me', name: 'Guest (You)', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'User', email: '', phone: '', flag: '🌍', langCode: 'en', country: 'World', desc: 'Please login and edit your CV.', languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4'
+        };
 
-        auth.onAuthStateChanged(u => {
-            if (u) {
-                user = u;
-                document.getElementById('my-voice-name').innerText = u.email.split('@')[0];
-                renderProfession();
+        // АВТОРИЗАЦИЯ FIREBASE
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                window.currentUserUid = user.uid;
+                window.myUsername = user.email.split('@')[0];
+                myProfileInfo.email = user.email;
+                
+                // ЗАГРУЗКА CV ИЗ БАЗЫ
+                db.ref('users/' + user.uid).once('value', snap => {
+                    if(snap.exists()) {
+                        const d = snap.val();
+                        myProfileInfo.name = d.name + ' (You)';
+                        myProfileInfo.profession = d.job;
+                        myProfileInfo.country = d.country;
+                        myProfileInfo.languages = d.lang;
+                        myProfileInfo.phone = d.phone;
+                        myProfileInfo.desc = d.about;
+                    }
+                    renderProfessionList();
+                    loadSidebar();
+                });
+            } else {
+                window.currentUserUid = null;
+                window.myUsername = "Guest";
+                renderProfessionList();
                 loadSidebar();
-                switchRoom('global');
             }
         });
 
-        // 3. CV LOGIC
-        function saveCV() {
-            if (!user) return;
+        window.loginWithEmail = function() {
+            const e = document.getElementById('auth-email-input').value.trim();
+            const p = document.getElementById('auth-email-password').value.trim();
+            const btn = document.getElementById('auth-email-send-btn');
+            if(!e || p.length < 6) return alert("Email и пароль (минимум 6 символов) обязательны!");
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            auth.signInWithEmailAndPassword(e, p).then(() => {
+                alert("Успешный вход!");
+                document.getElementById('auth-modal').classList.remove('active');
+                btn.innerHTML = 'Login / Register'; btn.disabled = false;
+            }).catch(error => {
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    auth.createUserWithEmailAndPassword(e, p).then(() => {
+                        alert("Регистрация успешна! Заполните ваш профиль.");
+                        document.getElementById('auth-modal').classList.remove('active');
+                        document.getElementById('cv-modal').classList.add('active');
+                        btn.innerHTML = 'Login / Register'; btn.disabled = false;
+                    }).catch(err => { alert(err.message); btn.innerHTML = 'Login / Register'; btn.disabled = false; });
+                } else {
+                    alert(error.message); btn.innerHTML = 'Login / Register'; btn.disabled = false;
+                }
+            });
+        };
+
+        window.logoutUser = function() {
+            auth.signOut().then(() => { alert("Вы вышли из системы."); location.reload(); });
+        };
+
+        // ЛОГИКА CV (СОХРАНЕНИЕ В БАЗУ ДАННЫХ)
+        window.openMyProfile = function() {
+            if(!window.currentUserUid) return alert("Сначала войдите в систему (Authentication)!");
+            window.closeDropdown();
+            document.getElementById('cv-name').value = myProfileInfo.name.replace(' (You)', '');
+            document.getElementById('cv-profession').value = myProfileInfo.profession;
+            document.getElementById('cv-country').value = myProfileInfo.country;
+            document.getElementById('cv-languages').value = myProfileInfo.languages;
+            document.getElementById('cv-phone').value = myProfileInfo.phone;
+            document.getElementById('cv-desc').value = myProfileInfo.desc.replace(/<br>/g, '\n');
+            document.getElementById('cv-modal').classList.add('active');
+        };
+
+        window.saveMyCV = function(e) {
+            e.preventDefault();
+            if(!window.currentUserUid) return;
+            const btn = document.getElementById('cv-save-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            
             const data = {
                 name: document.getElementById('cv-name').value,
-                job: document.getElementById('cv-job').value,
-                lang: document.getElementById('cv-lang').value,
-                about: document.getElementById('cv-about').value,
-                photo: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
-                email: user.email,
-                uid: user.uid
+                job: document.getElementById('cv-profession').value,
+                country: document.getElementById('cv-country').value,
+                lang: document.getElementById('cv-languages').value,
+                phone: document.getElementById('cv-phone').value,
+                about: document.getElementById('cv-desc').value.replace(/\n/g, '<br>'),
+                email: myProfileInfo.email,
+                photo: myProfileInfo.photo,
+                uid: window.currentUserUid
             };
-            db.ref('users/' + user.uid).set(data).then(() => {
-                alert("CV Updated!");
-                closeModals();
-                renderProfession();
-            });
-        }
 
-        function renderProfession() {
-            const list = document.getElementById('prof-list');
-            list.innerHTML = '';
-            // Демо-юзеры
-            participants.forEach(p => {
-                list.innerHTML += `<div class="bg-[#333] p-3 rounded-xl text-center">
-                    <img src="${p.photo}" class="w-12 h-12 rounded-full mx-auto mb-2">
-                    <div class="text-[0.7rem] font-bold">${p.name}</div>
-                    <div class="text-[0.6rem] text-gray-400">${p.job}</div>
-                    <button onclick="switchRoom('${p.id}')" class="text-[0.6rem] text-blue-400 mt-2">Chat</button>
-                </div>`;
+            db.ref('users/' + window.currentUserUid).set(data).then(() => {
+                myProfileInfo.name = data.name + ' (You)';
+                myProfileInfo.profession = data.job;
+                myProfileInfo.country = data.country;
+                myProfileInfo.languages = data.lang;
+                myProfileInfo.phone = data.phone;
+                myProfileInfo.desc = data.about;
+                
+                btn.innerHTML = 'Save Profile';
+                document.getElementById('cv-modal').classList.remove('active');
+                renderProfessionList();
+                alert("Профиль сохранен в базе данных!");
             });
-            // Реальные юзеры из базы
+        };
+
+        // ОТРИСОВКА ВКЛАДКИ PROFESSION (ИЗ БАЗЫ FIREBASE + ДЕМО)
+        function renderProfessionList() {
+            const profContainer = document.getElementById('profession-list');
+            if (!profContainer) return;
+            profContainer.innerHTML = `<div class="grid grid-cols-2 gap-4" id="prof-grid"></div>`;
+            const grid = document.getElementById('prof-grid');
+            
+            // 1. Рисуем свой профиль
+            grid.innerHTML += createProfCard(myProfileInfo, 'me');
+            // 2. Рисуем демо-профили
+            participants.filter(p => p.id !== 'ai').forEach(p => { grid.innerHTML += createProfCard(p, p.id); });
+            
+            // 3. Догружаем РЕАЛЬНЫХ людей из базы
             db.ref('users').once('value', snap => {
                 snap.forEach(child => {
                     const u = child.val();
-                    if(u.uid === user.uid) return;
-                    list.innerHTML += `<div class="bg-[#333] p-3 rounded-xl text-center">
-                        <img src="${u.photo}" class="w-12 h-12 rounded-full mx-auto mb-2">
-                        <div class="text-[0.7rem] font-bold">${u.name}</div>
-                        <div class="text-[0.6rem] text-gray-400">${u.job}</div>
-                        <button onclick="switchRoom('${u.uid}')" class="text-[0.6rem] text-blue-400 mt-2">Chat</button>
-                    </div>`;
+                    if(u.uid === window.currentUserUid) return; // Себя мы уже нарисовали
+                    
+                    const realUserObj = {
+                        id: u.uid, name: u.name, photo: u.photo || 'https://cdn-icons-png.flaticon.com/512/149/149071.png', 
+                        profession: u.job, country: u.country, flag: '🌍', languages: u.lang, phone: u.phone, email: u.email, desc: u.about
+                    };
+                    // Добавляем в глобальный массив для чатов, если его там нет
+                    if(!participants.find(p => p.id === u.uid)) participants.push(realUserObj);
+                    
+                    grid.innerHTML += createProfCard(realUserObj, realUserObj.id);
                 });
+                loadSidebar(); // Обновляем сайдбар чатов
             });
         }
 
-        // 4. CHAT & AI LOGIC
-        function sendMsg(id) {
-            const inp = document.getElementById(id);
-            const txt = inp.value.trim();
-            if (!txt || !user) return;
+        function createProfCard(p, id) {
+            return `
+            <div class="bg-[#2a2d32] p-4 rounded-2xl border border-[#4a4e53] flex flex-col items-center relative shadow-lg h-full justify-between">
+                <div class="flex flex-col items-center w-full">
+                    <img src="${p.photo}" class="w-20 h-20 rounded-full border-2 border-[#a29bfe] mb-3 object-cover shadow-md">
+                    <h3 class="text-white font-bold text-base text-center leading-tight mb-1.5">${p.name.split(' (')[0]}</h3>
+                    <p class="text-gray-400 text-xs text-center mb-4"><span>${p.flag}</span> ${p.profession}</p>
+                </div>
+                <button onclick="openAvatarModal('${id}')" class="w-full mt-auto bg-[#a29bfe]/10 text-[#a29bfe] hover:bg-[#a29bfe] hover:text-white transition py-2.5 rounded-xl text-sm font-bold border border-[#a29bfe]">📄 CV</button>
+            </div>`;
+        }
 
-            // VOICE Tab
-            if (id === 'voice-inp') {
-                const box = document.getElementById('voice-subs');
-                fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(txt)}`)
-                .then(r => r.json()).then(d => {
-                    box.innerHTML = `${txt} <br> <span class="text-yellow-400">🇮🇹 ${d[0][0][0]}</span>`;
-                });
-            } 
-            // CONF Tab
-            else if (id === 'conf-inp') {
-                const chat = document.getElementById('conf-chat');
-                chat.innerHTML += `<div class="text-white mb-1"><b>You:</b> ${txt}</div>`;
-            } 
-            // MAIN Tab
-            else {
-                db.ref(currentRoom).push({ name: user.email.split('@')[0], text: txt, uid: user.uid, time: Date.now() });
-                
-                if (currentRoom === 'private_ai') {
-                    const aiRef = db.ref(currentRoom).push({ name: "AI Bot", text: "⏳ Thinking..." });
-                    const key = "AIzaSyA1AMNmfGv_D4Qaneg1XiZUbw8juesycHg";
-                    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        // БОКОВОЕ МЕНЮ ЧАТОВ
+        function loadSidebar() {
+            const chatSidebar = document.getElementById('chat-sidebar');
+            if (!chatSidebar) return;
+            chatSidebar.innerHTML = `
+                <div class="chat-contact mb-5" id="chat-btn-global" onclick="switchChatRoom('global')">
+                    <div class="chat-contact-icon flex justify-center items-center bg-blue-600 text-white text-2xl border-2 border-[#a29bfe]">🌍</div><p class="chat-contact-name">Group</p>
+                </div>
+                <div class="chat-contact mb-5" id="chat-btn-ai" onclick="switchChatRoom('ai')">
+                    <div class="chat-contact-icon flex justify-center items-center bg-purple-600 text-white text-2xl border-2 border-[#a29bfe]">🤖</div><p class="chat-contact-name text-purple-400">AI Bot</p>
+                </div>
+            `;
+            participants.filter(p => p.id !== 'ai').forEach(p => {
+                chatSidebar.innerHTML += `
+                <div class="chat-contact mb-4" id="chat-btn-${p.id}" onclick="switchChatRoom('${p.id}')">
+                    <div class="chat-contact-icon" style="background-image: url('${p.photo}');"></div><p class="chat-contact-name">${p.name.split(' ')[0]}</p>
+                </div>`;
+            });
+        }
+
+        window.switchChatRoom = function(targetId) {
+            if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
+            document.getElementById('chat-messages').innerHTML = ''; 
+            document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active-room'));
+            document.getElementById('chat-btn-' + targetId)?.classList.add('active-room');
+
+            if (targetId === 'global') {
+                window.currentRoomId = "global_chat";
+                document.getElementById('chat-header-name').innerText = "Group Chat";
+            } else if (targetId === 'ai') {
+                window.currentRoomId = "private_ai_bot";
+                document.getElementById('chat-header-name').innerText = "AI Assistant";
+            } else {
+                const name1 = window.currentUserUid || "guest"; 
+                window.currentRoomId = "private_" + [name1, targetId].sort().join('_');
+                const targetUser = participants.find(p => p.id === targetId);
+                document.getElementById('chat-header-name').innerText = targetUser ? targetUser.name : "Private Chat";
+            }
+            window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
+        };
+
+        // ОТПРАВКА СООБЩЕНИЙ + ИИ (С БРОНЕЙ ОТ 404)
+        window.sendMessageFrom = function(inputId) {
+            const inputEl = document.getElementById(inputId);
+            if(!inputEl) return;
+            const text = inputEl.value.trim();
+            if(!text) return;
+
+            // Voice & Conference - просто визуализация для демо
+            if (inputId === 'voice-text-input' || inputId === 'conf-chat-input') {
+                alert("Демонстрация. Перейдите в главный чат (Chat) для общения.");
+                inputEl.value = ''; return;
+            }
+
+            // Главный чат
+            if (inputId === 'chat-input') {
+                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                inputEl.value = '';
+
+                // Если ИИ
+                if(window.currentRoomId === 'private_ai_bot') {
+                    const apiKey = "AIzaSyA1AMNmfGv_D4Qaneg1XiZUbw8juesycHg"; 
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    const tempMsgRef = db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: "⏳ Думаю...", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
+
+                    fetch(url, {
                         method: 'POST',
-                        body: JSON.stringify({ contents: [{ parts: [{ text: txt }] }] })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
                     })
-                    .then(r => r.json())
+                    .then(async res => {
+                        if (!res.ok) throw new Error("API Blocked");
+                        return res.json();
+                    })
                     .then(data => {
-                        const reply = data.candidates[0].content.parts[0].text;
-                        aiRef.update({ text: reply });
+                        if (data.candidates && data.candidates[0].content) {
+                            tempMsgRef.update({ text: data.candidates[0].content.parts[0].text });
+                        } else { throw new Error("Empty"); }
                     })
-                    .catch(() => aiRef.update({ text: "I'm currently busy, but Hello Friends is great!" }));
+                    .catch(err => {
+                        // АВАРИЙНЫЙ РЕЖИМ (ЕСЛИ GOOGLE ВЫДАСТ 404, БОТ НЕ УМРЕТ)
+                        setTimeout(() => {
+                            const fallback = "Привет! 🤖 Сейчас сервер ИИ отдыхает, но я работаю как демо. Ваш запрос: *" + text + "*. Я могу помочь вам связаться со специалистами из вкладки Profession!";
+                            tempMsgRef.update({ text: fallback });
+                        }, 1000);
+                    });
                 }
             }
-            inp.value = '';
-        }
+        };
 
-        function switchRoom(id) {
-            currentRoom = id === 'global' ? 'global_chat' : (id === 'ai' ? 'private_ai' : 'private_' + [user.uid, id].sort().join('_'));
-            document.getElementById('chat-header').innerText = id.toUpperCase();
-            document.getElementById('chat-msgs').innerHTML = '';
-            db.ref(currentRoom).off();
-            db.ref(currentRoom).on('child_added', snap => {
-                const m = snap.val();
-                const side = m.name === user.email.split('@')[0] ? 'outgoing' : 'incoming';
-                document.getElementById('chat-msgs').innerHTML += `<div class="chat-bubble ${side}">${m.text}</div>`;
-                document.getElementById('chat-msgs').scrollTop = 9999;
-            });
-            tab(0);
-        }
+        document.getElementById('chat-send-btn')?.addEventListener('click', () => window.sendMessageFrom('chat-input'));
+        document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendMessageFrom('chat-input'); });
 
-        // 5. BANKING
-        function doTransfer() {
-            const amt = document.getElementById('tr-amount').value;
-            const txn = 'TXN-' + Math.random().toString(36).substr(2, 9).toUpperCase();
-            const msg = `💳 [BANK TRANSFER] $${amt} sent. ID: ${txn} ✅`;
-            db.ref(currentRoom).push({ name: "System", text: msg, time: Date.now() });
+        function handleNewMessage(snapshot) {
+            const data = snapshot.val(); if(!data) return;
+            const chatMsgs = document.getElementById('chat-messages');
+            const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
+            const isAI = data.sessionId === "ai-bot-session";
             
-            const card = `<div class="bg-gray-800 p-3 rounded-lg mb-2 border-l-4 border-green-500">
-                <div class="text-[0.6rem] text-gray-500">${new Date().toLocaleString()}</div>
-                <div class="font-bold text-green-400">$${amt} Sent</div>
-                <div class="text-[0.5rem] text-white">ID: ${txn}</div>
-            </div>`;
-            document.getElementById('arc-items').innerHTML += card;
-            alert("Success! Check Archive.");
-            closeModals();
+            let displayedText = data.text;
+            if (isAI) displayedText = displayedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+            const side = isMe ? 'outgoing' : 'incoming';
+            const bg = isAI ? 'background: linear-gradient(145deg, #9333ea, #4f46e5); color: white;' : '';
+
+            chatMsgs.innerHTML += `
+                <div class="flex w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}">
+                    <div class="chat-bubble-wrapper ${side} flex flex-col" style="max-width: 80%;">
+                        ${!isMe ? `<div class="chat-sender-name text-[#a29bfe] font-bold text-[0.75rem] mb-1">${data.name}</div>` : ''}
+                        <div class="chat-bubble" style="${bg}">${displayedText}</div>
+                    </div>
+                </div>`;
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
         }
 
-        // 6. UI HELPERS
-        function tab(i) {
-            document.querySelectorAll('.nav-link').forEach((l, idx) => {
-                l.classList.toggle('active', idx === i);
-                document.getElementById('p'+idx).classList.toggle('active', idx === i);
+        // ФИНАНСЫ (С ID ТРАНЗАКЦИИ)
+        window.openBankTransferModal = function() {
+            window.closeDropdown();
+            const sel = document.getElementById('transfer-recipient');
+            sel.innerHTML = '';
+            participants.forEach(p => { if(p.id !== 'ai') sel.innerHTML += `<option value="${p.id}">${p.name.split(' ')[0]} (${p.country})</option>`; });
+            document.getElementById('transfer-modal').classList.add('active');
+        };
+        
+        window.sendMoney = function(e) {
+            e.preventDefault();
+            const amount = document.getElementById('transfer-amount').value;
+            const recId = document.getElementById('transfer-recipient').value;
+            const recName = participants.find(p => p.id === recId)?.name.split(' ')[0] || 'User';
+
+            // ГЕНЕРАЦИЯ ID ЧЕКА
+            const txnId = 'TXN-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            
+            document.getElementById('transfer-modal').classList.remove('active');
+            e.target.reset();
+            
+            const receiptText = `💳 [BANK TRANSFER]<br>Sent: <b>$${amount}</b> to ${recName}.<br>Fee: <b>$0.01</b>.<br>ID: <span class="font-mono text-[0.7rem]">${txnId}</span><br>Status: <span style="color: #4ade80;">Completed ✅</span>`;
+            db.ref(window.currentRoomId).push({ name: window.myUsername, text: receiptText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+
+            document.getElementById('empty-archive').style.display = 'none';
+            document.getElementById('archive-list').innerHTML += `
+                <div class="bg-[#2a2d32] border-l-4 border-green-500 rounded-xl p-4 shadow-lg mb-3">
+                    <h4 class="font-bold text-xl text-green-400 mb-1">$${amount} <span class="text-xs text-gray-400">(-$0.01 fee)</span></h4>
+                    <p class="text-sm text-white">To: ${recName}</p>
+                    <p class="text-[0.65rem] text-gray-400 mt-2">ID: ${txnId}</p>
+                </div>`;
+            alert(`Успех! $${amount} отправлено. Чек ${txnId} сохранен.`);
+            window.switchTab(4);
+        };
+
+        // МОДАЛКИ И ИНИЦИАЛИЗАЦИЯ
+        window.openAvatarModal = function(id) {
+            const p = id === 'me' ? myProfileInfo : participants.find(part => part.id === id);
+            if (!p) return;
+            document.getElementById('modal-img').src = p.photo;
+            document.getElementById('modal-name').innerText = p.name;
+            document.getElementById('modal-desc').innerHTML = `<b>Prof:</b> ${p.profession}<br><b>Country:</b> ${p.country}<br><b>Bio:</b> ${p.desc}`;
+            
+            document.getElementById('modal-chat-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom(id); };
+            document.getElementById('modal-sms-btn').onclick = () => { location.href = `sms:${p.phone.replace(/\s+/g, '')}`; };
+            document.getElementById('avatar-modal').classList.add('active');
+        };
+
+        window.openEmailModal = function() { document.getElementById('email-modal').classList.add('active'); }
+        window.sendEmailForm = function(e) {
+            e.preventDefault();
+            const p = { to_email: document.getElementById('email-to').value, message: document.getElementById('email-text').value };
+            emailjs.send("service_i4o7lfa", "template_lrcjrkr", p).then(() => {
+                alert("Email Sent!"); document.getElementById('email-modal').classList.remove('active');
             });
-            if(i === 2) initConf();
-        }
+        };
 
-        function initConf() {
-            const grid = document.getElementById('conf-grid');
-            grid.innerHTML = `<div class="relative bg-gray-900 aspect-video rounded overflow-hidden">
-                <video autoplay loop muted class="w-full h-full object-cover" src="https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4"></video>
-                <div class="absolute bottom-1 left-1 text-[0.5rem] bg-black/50 p-1">You</div>
-            </div>`;
-            participants.forEach(p => {
-                grid.innerHTML += `<div class="relative bg-gray-900 aspect-video rounded overflow-hidden">
-                <div class="absolute inset-0 flex items-center justify-center text-xs opacity-20">${p.name}</div>
-                <div class="absolute bottom-1 left-1 text-[0.5rem] bg-black/50 p-1">${p.name}</div>
-                <div class="absolute bottom-0 w-full bg-black/70 text-[0.5rem] text-teal-400 p-1 conf-listener-marquee">➔ Ready...</div>
-            </div>`;
-            });
-        }
-
-        function loadSidebar() {
-            const s = document.getElementById('sidebar');
-            s.innerHTML = `<div class="chat-contact-icon flex items-center justify-center bg-blue-600 text-white" onclick="switchRoom('global')">🌍</div>`;
-            s.innerHTML += `<div class="chat-contact-icon flex items-center justify-center bg-purple-600 text-white" onclick="switchRoom('ai')">🤖</div>`;
-            participants.forEach(p => {
-                s.innerHTML += `<div class="chat-contact-icon" style="background-image:url(${p.photo})" onclick="switchRoom('${p.id}')"></div>`;
-            });
-        }
-
-        function openModal(id) { document.getElementById(id).classList.add('active'); }
-        function closeModals() { document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active')); }
-        function openCV() { openModal('cv-modal'); }
-
-        function sendEmail() {
-            const params = { to_email: document.getElementById('em-to').value, message: document.getElementById('em-msg').value };
-            emailjs.send("service_i4o7lfa", "template_lrcjrkr", params).then(() => {
-                alert("Email Sent!"); closeModals();
-            });
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            renderProfessionList();
+            loadSidebar();
+            window.switchChatRoom('global');
+            
+            // Инициализация видео-конференции
+            document.getElementById('conference-grid').innerHTML = `
+                <div class="video-frame main"><video autoplay loop muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4"></video></div>
+                <div class="video-frame"><video autoplay loop muted playsinline src="https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4"></video></div>
+            `;
+        });
     </script>
 </body>
 </html>
