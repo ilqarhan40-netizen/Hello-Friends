@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Live WebRTC</title>
+    <title>Hello Friends App - Live Master</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -25,6 +25,7 @@
         body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
         .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; box-sizing: border-box; color: #c0c5d0; overflow: hidden; position: relative; transition: all 0.4s; }
         
+        /* ПРАВИЛО ДЛЯ НАСТОЯЩИХ ТЕЛЕФОНОВ (ПОЛНЫЙ ЭКРАН) */
         @media (max-width: 500px) {
             .mobile-screen { max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; padding-top: 10px; }
         }
@@ -118,6 +119,7 @@
         .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
 
+        /* --- СВЕТЛАЯ ТЕМА --- */
         .mobile-screen.light-theme { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-color: #ced4da; color: #212529; }
         .mobile-screen.light-theme .header-icons button { color: #495057; }
         .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #dee2e6; }
@@ -275,7 +277,7 @@
                                 <button id="main-chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text">
                                     <i class="fa-solid fa-microphone text-lg"></i>
                                 </button>
-                                <button id="chat-send-btn" onclick="sendTextMessage('chat-input')" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                                <button id="chat-send-btn" onclick="sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
                             </div>
                         </div>
                     </div>
@@ -345,12 +347,12 @@
                 
                 <div class="overflow-y-auto p-1 shrink-0" style="max-height: 48%;">
                     <div class="video-grid" id="conference-grid">
-                        </div>
+                    </div>
                 </div>
                 
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
                     <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 WebRTC Online</span>
+                        <span>Live Chat</span><span>👥 App Online</span>
                     </div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
                     
@@ -621,11 +623,13 @@
     </div>
 
     <script>
+        // ЧИСТАЯ ЛОГИКА МЕНЮ "+"
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             document.getElementById('rhombus-btn')?.classList.toggle('active'); 
         }
 
+        // СЛОВАРЬ ПЕРЕВОДОВ ИНТЕРФЕЙСА
         const translations = {
             en: {
                 menu_profile: "Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
@@ -744,10 +748,16 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            // --- УМНАЯ СИСТЕМА ПРОФИЛЕЙ (РОЛИ) ---
-            window.myUsername = localStorage.getItem('hf_test_user') || "ilgar";
+            // --- УМНАЯ СИСТЕМА ДЛЯ ЛЮБЫХ ПОЛЬЗОВАТЕЛЕЙ ---
+            let savedUser = localStorage.getItem('hf_test_user');
+            if (!savedUser) {
+                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Guest");
+                if (!savedUser) savedUser = "Guest";
+                localStorage.setItem('hf_test_user', savedUser.trim().toLowerCase());
+            }
+            window.myUsername = savedUser.trim();
             window.mySessionId = Math.random().toString(36).substring(2, 15);
-            window.currentRoomId = "global_chat";
+            window.currentRoomId = "global"; // ИСПРАВЛЕНО НА GLOBAL (чтобы работало с ПК версией)
             window.activeChatListener = null;
             window.currentIndex = 0;
 
@@ -760,30 +770,49 @@
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', languages: 'All languages', video: '' };
 
-            // Определяем, кто "МЫ" сейчас
-            let myChar = allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id)) || allCharacters[0];
-            let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
-            window.myUsername = myChar.name.split(' ')[0]; // Фиксируем красивое имя
+            // Ищем персонажа. Если человек ввел новое имя - генерируем ему профиль на лету!
+            let myChar = allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id));
+            if (!myChar) {
+                myChar = {
+                    id: window.myUsername.toLowerCase(),
+                    name: window.myUsername,
+                    photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
+                    profession: 'Tester',
+                    email: window.myUsername.toLowerCase() + '@tester.com',
+                    phone: '+0 000 000 0000',
+                    flag: '🏳️',
+                    flagCode: 'un',
+                    langCode: 'en-US',
+                    country: 'Internet',
+                    pop: 'Unknown',
+                    seas: 'Digital',
+                    desc: 'New user testing the app.',
+                    languages: 'Auto',
+                    video: ''
+                };
+            }
 
-            // Все остальные попадают в контакты (без нас самих)
+            let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
+            window.myUsername = myChar.name.split(' ')[0]; 
+
+            // Остальные попадают в контакты
             let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
 
-            // Смена юзера из меню
+            // Функция смены любого юзера
             window.switchTestUser = function() { 
-                const newUser = prompt("Select profile for this device:\n- Ilgar\n- Klaus\n- Marinella\n- John", "Klaus"); 
+                const newUser = prompt("Введите имя для входа в приложение\n(например: Ilgar, Klaus, или любое другое имя):", window.myUsername); 
                 if(newUser) { 
                     localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
                     location.reload(); 
                 } 
             }
 
-            // Настройка Voice Room (динамический собеседник)
-            const voiceFriend = participants[1]; // Первый живой человек в списке после бота
+            const voiceFriend = participants[1]; 
             document.getElementById('voice-friend-photo').src = voiceFriend.photo;
             document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
             document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0];
 
-            // ---- БЛОК WEBRTC ДЛЯ ВИДЕОЗВОНКОВ (PEERJS) ----
+            // ---- БЛОК WEBRTC С ФРЕЙМАМИ И ЗВУКОМ ----
             let myVideoStream = null;
             let peer = null;
             let currentCalls = {};
@@ -791,13 +820,28 @@
             function initConference() {
                 const confGrid = document.getElementById('conference-grid');
                 if(!confGrid) return;
-                confGrid.innerHTML = `
+                
+                let confHtml = `
                     <div class="video-frame main" id="my-video-container">
                         <video id="my-live-video" class="mirror-video" autoplay muted playsinline></video>
                         <div class="video-overlay" id="my-video-name">${myProfileInfo.name.split(' (')[0]} (You)</div>
                         <div class="flag-overlay" id="conf-me-flag">${myProfileInfo.flag}</div>
                         <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome to Live Video!</div></div>
                     </div>`;
+                    
+                // Добавляем демо-заглушки (как просил Капитан)
+                participants.forEach(p => {
+                    if(p.id === 'ai') return; 
+                    confHtml += `
+                        <div class="video-frame">
+                            <video autoplay loop muted playsinline><source src="${p.video}"></video>
+                            <div class="video-overlay">${p.name.split(' ')[0]}</div>
+                            <div class="flag-overlay">${p.flag}</div>
+                            <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div>
+                        </div>`;
+                });
+                
+                confGrid.innerHTML = confHtml;
                 startMyCamera();
             }
 
@@ -806,21 +850,21 @@
                     const videoEl = document.getElementById('my-live-video');
                     if (!videoEl) return;
                     
-                    // ЗАПРАШИВАЕМ И КАМЕРУ И МИКРОФОН
+                    // ЗВУК ВКЛЮЧЕН ПО ПРИКАЗУ КАПИТАНА!
                     myVideoStream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: "user" }, 
                         audio: true 
                     });
                     
                     videoEl.srcObject = myVideoStream;
-                    videoEl.muted = true; // Себя мы слышать не должны
+                    videoEl.muted = true; // Себя глушим, чтобы не было эха
                     await videoEl.play();
                     
-                    initRealVideoChat(); // ЗАПУСК СЕТИ ПОСЛЕ КАМЕРЫ
+                    initRealVideoChat(); 
                     
                 } catch (err) {
                     console.error("Camera error:", err);
-                    alert("⚠️ Camera Error: " + err.name + "\n\nPlease allow camera and microphone access to use real video calls.");
+                    alert("⚠️ Camera Error: " + err.name + "\n\nПожалуйста, разрешите доступ к камере и микрофону в браузере.");
                 }
             }
 
@@ -839,7 +883,7 @@
 
                 peer.on('call', call => {
                     call.answer(myVideoStream); 
-                    call.on('stream', remoteStream => { addRemoteVideo(remoteStream, call.peer); });
+                    call.on('stream', remoteStream => { addRemoteVideo(remoteStream, call.peer, "Caller"); });
                     currentCalls[call.peer] = call;
                 });
 
@@ -866,7 +910,7 @@
                 currentCalls[targetPeerId] = call;
             }
 
-            function addRemoteVideo(stream, peerId, username = "Friend") {
+            function addRemoteVideo(stream, peerId, username) {
                 if(document.getElementById('video-container-' + peerId)) return;
                 
                 const confGrid = document.getElementById('conference-grid');
@@ -880,15 +924,14 @@
                     <div class="flag-overlay">🌐</div>
                     <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="en" data-flag="🌐">➔ Connected...</div></div>
                 `;
-                confGrid.appendChild(frame);
+                // Добавляем реального человека сразу после вашего главного окна
+                confGrid.insertBefore(frame, confGrid.children[1]);
                 
                 const remoteVid = document.getElementById('video-' + peerId);
                 remoteVid.srcObject = stream;
                 
-                // ПРИНУДИТЕЛЬНЫЙ ПИНОК ЗВУКА И ВИДЕО (ДЛЯ IOS/SAFARI)
-                setTimeout(() => {
-                    remoteVid.play().catch(e => console.warn("Autoplay audio blocked by browser:", e));
-                }, 500);
+                // Принудительный запуск звука
+                setTimeout(() => { remoteVid.play().catch(e => console.warn(e)); }, 500);
             }
 
             function removeRemoteVideo(peerId) {
@@ -914,7 +957,6 @@
             };
             // -------------------------------------------------------------------
 
-            // IP Локация только для данных карты (Флаги берем из роли профиля)
             fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
                 if(data.latitude) {
                     window.myLat = data.latitude;
@@ -996,7 +1038,7 @@
                 const statusEl = document.getElementById('chat-header-status');
 
                 if (targetId === 'global') {
-                    window.currentRoomId = "global_chat";
+                    window.currentRoomId = "global"; // ИСПРАВЛЕНО
                     avatarEl.innerHTML = "🌍"; avatarEl.style.backgroundImage = "none";
                     avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-xl text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] shadow-md";
                     nameEl.innerText = translations[currentLang].chat_group; statusEl.innerHTML = '🌍 <span class="text-[0.7rem] text-green-400">All members</span>';
@@ -1048,6 +1090,69 @@
                     wandBtn.querySelector('i').classList.remove('fa-spin'); input.disabled = false;
                     input.value = "Good afternoon! Could you please provide an update on the project? Thank you!"; input.focus();
                 }, 1500);
+            }
+
+            // МИКРОФОН СИСТЕМЫ ПЕРЕВОДА
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRec) {
+                let rec = new SpeechRec();
+                rec.continuous = false; 
+                rec.interimResults = false;
+                
+                let currentMicTarget = null;
+                let currentMicBtn = null;
+                let chatInputEl = document.getElementById('chat-input'); 
+
+                rec.onstart = () => { 
+                    if(currentMicBtn) { 
+                        currentMicBtn.style.color = '#ef4444'; 
+                        currentMicBtn.classList.add('animate-pulse'); 
+                    }
+                    if(currentMicTarget === 'chat') {
+                        chatInputEl.dataset.origPlaceholder = chatInputEl.placeholder;
+                        chatInputEl.placeholder = "Listening..."; 
+                    }
+                };
+                rec.onend = () => { 
+                    if(currentMicBtn) { 
+                        currentMicBtn.style.color = ''; 
+                        currentMicBtn.classList.remove('animate-pulse'); 
+                    }
+                    if(currentMicTarget === 'chat') {
+                        chatInputEl.placeholder = chatInputEl.dataset.origPlaceholder || ""; 
+                    }
+                };
+                rec.onerror = () => { 
+                    if(currentMicBtn) { 
+                        currentMicBtn.style.color = ''; 
+                        currentMicBtn.classList.remove('animate-pulse'); 
+                    }
+                };
+                rec.onresult = (e) => { 
+                    const text = e.results[0][0].transcript;
+                    
+                    if (currentMicTarget === 'chat') {
+                        chatInputEl.value = text;
+                        window.sendFirebaseMsg();
+                    } else if (currentMicTarget === 'voice') {
+                        window.processVoiceTranslation(text);
+                    } else if (currentMicTarget === 'conf') {
+                        window.processConfTranslation(text);
+                    }
+                };
+
+                window.startMic = function(target, btnId) {
+                    currentMicTarget = target;
+                    currentMicBtn = document.getElementById(btnId);
+                    
+                    const langSel = document.getElementById('plus-mic-lang');
+                    rec.lang = langSel ? langSel.value : 'en-US'; 
+                    try { rec.start(); } catch(e){} 
+                }
+
+                document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
+                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn'));
+                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
             }
 
             window.processVoiceTranslation = function(text) {
@@ -1113,13 +1218,24 @@
                     }
                     window.processConfTranslation(text, msgId);
                 } 
-                else if (inputId === 'chat-input') {
-                    db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                }
                 inputEl.value = '';
             };
 
-            document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('chat-input'); });
+            window.sendFirebaseMsg = function() {
+                const text = document.getElementById('chat-input').value.trim();
+                if(!text) return;
+                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                document.getElementById('chat-input').value = '';
+
+                if(window.currentRoomId === 'private_ai_bot') {
+                    setTimeout(() => {
+                        const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation.";
+                        db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: aiReply, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    }, 1500);
+                }
+            }
+
+            document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendFirebaseMsg(); });
             document.getElementById('voice-text-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('voice-text-input'); });
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('conf-chat-input'); });
 
@@ -1128,7 +1244,8 @@
                 const chatMessages = document.getElementById('chat-messages');
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
                 const isAI = data.sessionId === "ai-bot-session";
-                let p = isMe ? myProfileInfo : (isAI ? participants.find(p => p.id === 'ai') : (participants.find(part => data.name.includes(part.name.split(' ')[0])) || participants[1]));
+                
+                let p = isMe ? myProfileInfo : (isAI ? aiBot : (participants.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+data.name+'&background=random', langCode: 'en', flag: '🌐' }));
                 
                 const msgWrapper = document.createElement('div');
                 msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
@@ -1139,7 +1256,7 @@
 
                 const msgId = 'msg-' + snapshot.key;
                 let targetLangs = [];
-                if (window.currentRoomId === 'global_chat') {
+                if (window.currentRoomId === 'global') {
                     const seen = new Set(); seen.add(p.langCode); 
                     participants.forEach(part => { if (!seen.has(part.langCode) && part.id !== 'ai') { seen.add(part.langCode); targetLangs.push({ code: part.langCode, flag: part.flag }); } });
                     if (!seen.has(myProfileInfo.langCode)) targetLangs.push({ code: myProfileInfo.langCode, flag: myProfileInfo.flag });
