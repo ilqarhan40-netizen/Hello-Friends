@@ -27,6 +27,18 @@
         body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
         .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; box-sizing: border-box; color: #c0c5d0; overflow: hidden; position: relative; transition: all 0.4s; }
         
+        /* ПРАВИЛО ДЛЯ НАСТОЯЩИХ ТЕЛЕФОНОВ (ПОЛНЫЙ ЭКРАН) */
+        @media (max-width: 500px) {
+            .mobile-screen {
+                max-width: 100%;
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+                border: none;
+                padding-top: 10px;
+            }
+        }
+
         .app-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding-bottom: 0.5rem; position: relative; z-index: 50; }
         .logo-container { display: flex; align-items: center; gap: 12px; }
         .logo-circle { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg, #a29bfe, #6c5ce7); display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1rem; color: white; box-shadow: 0 0 10px rgba(162, 155, 254, 0.5); }
@@ -116,6 +128,7 @@
         .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
 
+        /* --- СВЕТЛАЯ ТЕМА --- */
         .mobile-screen.light-theme { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-color: #ced4da; color: #212529; }
         .mobile-screen.light-theme .header-icons button { color: #495057; }
         .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #dee2e6; }
@@ -140,7 +153,12 @@
         .mobile-screen.light-theme .action-icon { background-color: #f8f9fa; color: #212529; border-color: #dee2e6; }
         .mobile-screen.light-theme .action-icon:hover { background-color: #a29bfe; color: white; }
         .mobile-screen.light-theme .chat-info-marquee-container { background: #e9ecef; border-color: #dee2e6; }
-        .mobile-screen.light-theme .chat-info-marquee-text { color: #6c5ce7; }
+        
+        /* Исправление цветов перевода на белом фоне */
+        .mobile-screen.light-theme .text-yellow-300 { color: #1e1e1e !important; font-weight: 800; }
+        .mobile-screen.light-theme .text-green-400 { color: #0056b3 !important; font-weight: 800; }
+        .mobile-screen.light-theme .conf-marquee-text { color: #1e1e1e; font-weight: 900; font-size: 0.75rem; }
+        .mobile-screen.light-theme .chat-info-marquee-text { color: #1e1e1e; font-weight: 900; font-size: 0.8rem; }
 
         .toast-notification {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
@@ -152,21 +170,12 @@
         }
         .toast-notification.show { opacity: 1; top: 70px; }
 
-        /* СТИЛЬ СЕЛЕКТОРА ЯЗЫКА МИКРОФОНА В ПЛЮСЕ */
         .mic-lang-select {
-            grid-column: span 3;
-            background: #1a1e23;
-            border: 1px solid #4a4e53;
-            color: #a29bfe;
-            padding: 8px;
-            border-radius: 8px;
-            font-family: sans-serif;
-            font-size: 0.8rem;
-            font-weight: bold;
-            outline: none;
-            text-align: center;
+            grid-column: span 3; background: #1a1e23; border: 1px solid #4a4e53; color: #a29bfe; padding: 8px; border-radius: 8px; font-family: sans-serif; font-size: 0.8rem; font-weight: bold; outline: none; text-align: center;
         }
         .light-theme .mic-lang-select { background: #f8f9fa; border-color: #ced4da; color: #6c5ce7; }
+        
+        .mirror-video { transform: scaleX(-1); }
     </style>
 </head>
 <body>
@@ -362,7 +371,7 @@
                 </div>
                 
                 <div class="h-14 bg-black/90 flex justify-center items-center gap-5 shrink-0 border-t border-[#334155]">
-                    <button id="conf-cam-btn" onclick="this.classList.toggle('bg-[#00C4CC]'); this.classList.toggle('bg-gray-600'); this.classList.toggle('text-black'); this.classList.toggle('text-white');" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-video text-base"></i></button>
+                    <button id="conf-cam-btn" onclick="toggleMyCamera(this)" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-video text-base"></i></button>
                     <button onclick="toggleConfCC()" id="conf-cc-btn" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-closed-captioning text-base"></i></button>
                     <button onclick="openTrashModal()" class="w-10 h-10 rounded-full bg-yellow-600 text-white flex justify-center items-center"><i class="fa-solid fa-trash-can text-base"></i></button>
                     <button onclick="switchTab(0)" class="w-12 h-12 rounded-full bg-red-600 text-white flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.5)]"><i class="fa-solid fa-phone-slash text-xl"></i></button>
@@ -766,7 +775,7 @@
                 if(!confGrid) return;
                 let confHtml = `
                     <div class="video-frame main">
-                        <video autoplay loop muted playsinline><source src="${myProfileInfo.video}"></video>
+                        <video id="my-live-video" class="mirror-video" autoplay muted playsinline></video>
                         <div class="video-overlay">${myProfileInfo.name.split(' (')[0]} (Speaker)</div>
                         <div class="flag-overlay" id="conf-me-flag">${myProfileInfo.flag}</div>
                         <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
@@ -783,7 +792,56 @@
                         </div>`;
                 }
                 confGrid.innerHTML = confHtml;
+                startMyCamera();
             }
+
+            let myVideoStream = null;
+            
+            async function startMyCamera() {
+                try {
+                    const videoEl = document.getElementById('my-live-video');
+                    if (!videoEl) return;
+                    
+                    myVideoStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "user" }, 
+                        audio: false 
+                    });
+                    
+                    videoEl.srcObject = myVideoStream;
+                    await videoEl.play();
+                    
+                } catch (err) {
+                    console.error("Camera error:", err);
+                    alert("⚠️ Camera Error: " + err.name + " - " + err.message + "\n\nPlease open this link in a standard browser (Safari/Chrome) and allow camera access.");
+                    
+                    const videoEl = document.getElementById('my-live-video');
+                    if(videoEl) {
+                        videoEl.src = myProfileInfo.video;
+                        videoEl.loop = true;
+                        videoEl.classList.remove('mirror-video');
+                    }
+                }
+            }
+
+            window.toggleMyCamera = function(btn) {
+                btn.classList.toggle('bg-[#00C4CC]');
+                btn.classList.toggle('bg-gray-600');
+                btn.classList.toggle('text-black');
+                btn.classList.toggle('text-white');
+                
+                if (myVideoStream) {
+                    const videoTrack = myVideoStream.getVideoTracks()[0];
+                    if (videoTrack) {
+                        videoTrack.enabled = !videoTrack.enabled;
+                        const icon = btn.querySelector('i');
+                        if(videoTrack.enabled) {
+                            icon.className = 'fa-solid fa-video text-base';
+                        } else {
+                            icon.className = 'fa-solid fa-video-slash text-base';
+                        }
+                    }
+                }
+            };
 
             function getFlagEmoji(countryCode) { return countryCode.toUpperCase().replace(/./g, char => String.fromCodePoint(char.charCodeAt(0) + 127397)); }
             fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
@@ -1312,6 +1370,7 @@
             window.startInAppCall = function() { window.closePhoneChoiceModal(); window.switchTab(1); }
             window.startExternalCall = function() { window.closePhoneChoiceModal(); window.location.href = "tel:+994501234567"; }
 
+            // --- ИСПРАВЛЕННАЯ ЛОКАЦИЯ (GOOGLE MAPS) ---
             window.openLocationModal = function() {
                 window.closeDropdown(); document.getElementById('location-modal').classList.add('active');
                 const mapContainer = document.getElementById('location-map');
