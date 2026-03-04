@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Final</title>
+    <title>Hello Friends App - Live WebRTC</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function(){
-            emailjs.init("1jQAeZgeFaV2cvrR8"); // Ваш Public Key
-        })();
-    </script>
+    <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,20 +19,14 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
     <style>
         body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
         .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; box-sizing: border-box; color: #c0c5d0; overflow: hidden; position: relative; transition: all 0.4s; }
         
-        /* ПРАВИЛО ДЛЯ НАСТОЯЩИХ ТЕЛЕФОНОВ (ПОЛНЫЙ ЭКРАН) */
         @media (max-width: 500px) {
-            .mobile-screen {
-                max-width: 100%;
-                height: 100vh;
-                max-height: 100vh;
-                border-radius: 0;
-                border: none;
-                padding-top: 10px;
-            }
+            .mobile-screen { max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; padding-top: 10px; }
         }
 
         .app-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding-bottom: 0.5rem; position: relative; z-index: 50; }
@@ -128,7 +118,6 @@
         .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
 
-        /* --- СВЕТЛАЯ ТЕМА --- */
         .mobile-screen.light-theme { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-color: #ced4da; color: #212529; }
         .mobile-screen.light-theme .header-icons button { color: #495057; }
         .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #dee2e6; }
@@ -154,7 +143,6 @@
         .mobile-screen.light-theme .action-icon:hover { background-color: #a29bfe; color: white; }
         .mobile-screen.light-theme .chat-info-marquee-container { background: #e9ecef; border-color: #dee2e6; }
         
-        /* Исправление цветов перевода на белом фоне */
         .mobile-screen.light-theme .text-yellow-300 { color: #1e1e1e !important; font-weight: 800; }
         .mobile-screen.light-theme .text-green-400 { color: #0056b3 !important; font-weight: 800; }
         .mobile-screen.light-theme .conf-marquee-text { color: #1e1e1e; font-weight: 900; font-size: 0.75rem; }
@@ -221,7 +209,7 @@
                 <a onclick="openAuthModal()"><i class="fa-solid fa-shield-halved w-5 text-blue-400"></i> <span data-i18n="menu_auth">Authentication</span></a>
                 <a onclick="document.getElementById('import-export-input').click(); closeDropdown()"><i class="fa-solid fa-file-import w-5"></i> <span data-i18n="menu_import">Import - Export</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
-                <a style="color: #ef4444;" onclick="switchTestUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Logout</span></a>
+                <a style="color: #ef4444;" onclick="switchTestUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Switch User</span></a>
             </div>
         </header>
 
@@ -302,10 +290,10 @@
                         <div class="voice-room-container flex justify-center items-center gap-8 grow mt-2">
                             <div class="voice-user flex flex-col items-center">
                                 <div class="w-24 h-24 relative mb-3 shadow-lg">
-                                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" class="w-full h-full rounded-full object-cover border-2 border-[#4a4e53]">
-                                    <span class="absolute bottom-0 right-0 text-lg bg-[#2a2d32] rounded-full p-1 border border-[#4a4e53]">🇮🇹</span>
+                                    <img id="voice-friend-photo" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" class="w-full h-full rounded-full object-cover border-2 border-[#4a4e53]">
+                                    <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-lg bg-[#2a2d32] rounded-full p-1 border border-[#4a4e53]">🇮🇹</span>
                                 </div>
-                                <h3 class="text-white font-bold text-center text-sm">Marinella</h3>
+                                <h3 id="voice-friend-name" class="text-white font-bold text-center text-sm">Marinella</h3>
                             </div>
                             
                             <div class="flex gap-2 text-[#a29bfe] opacity-50">
@@ -354,12 +342,15 @@
                     <span class="font-bold text-[#00C4CC] tracking-widest text-sm">LIVE VIDEO</span>
                     <span class="text-red-500 font-bold bg-red-500/10 px-2 py-0.5 rounded-full animate-pulse border border-red-500/30 text-xs">● REC</span>
                 </div>
+                
                 <div class="overflow-y-auto p-1 shrink-0" style="max-height: 48%;">
-                    <div class="video-grid" id="conference-grid"></div>
+                    <div class="video-grid" id="conference-grid">
+                        </div>
                 </div>
+                
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
                     <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 4 Online</span>
+                        <span>Live Chat</span><span>👥 WebRTC Online</span>
                     </div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
                     
@@ -637,19 +628,19 @@
 
         const translations = {
             en: {
-                menu_profile: "Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Logout",
+                menu_profile: "Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
                 nav_chat: "Chat", nav_voice: "Voice", nav_conf: "Conference", nav_prof: "Profession", nav_archive: "Archive",
                 lang_btn: "Language: EN", search_title: "Global Search", search_plc: "Search people, places...", chat_group: "Group Chat", chat_plc: "Type message...",
                 trash_title: "Smart Trash", trash_arc: "Archive", trash_clr: "Clear Chat", trash_del: "Delete"
             },
             ru: {
-                menu_profile: "Профиль", menu_settings: "Настройки", menu_theme: "Тема", menu_transfer: "Перевод Денег", menu_auth: "Вход", menu_import: "Импорт / Экспорт", menu_logout: "Выйти",
+                menu_profile: "Профиль", menu_settings: "Настройки", menu_theme: "Тема", menu_transfer: "Перевод Денег", menu_auth: "Вход", menu_import: "Импорт / Экспорт", menu_logout: "Сменить юзера",
                 nav_chat: "Чат", nav_voice: "Голос", nav_conf: "Звонок", nav_prof: "Профи", nav_archive: "Архив",
                 lang_btn: "Язык: RU", search_title: "Глобальный Поиск", search_plc: "Искать людей, места...", chat_group: "Общий Чат", chat_plc: "Сообщение...",
                 trash_title: "Умная Корзина", trash_arc: "В архив", trash_clr: "Очистить чат", trash_del: "Удалить"
             },
             az: {
-                menu_profile: "Profil", menu_settings: "Ayarlar", menu_theme: "Mövzu", menu_transfer: "Pul Köçürmə", menu_auth: "Giriş", menu_import: "İdxal / İxrac", menu_logout: "Çıxış",
+                menu_profile: "Profil", menu_settings: "Ayarlar", menu_theme: "Mövzu", menu_transfer: "Pul Köçürmə", menu_auth: "Giriş", menu_import: "İdxal / İxrac", menu_logout: "İstifadəçini dəyiş",
                 nav_chat: "Söhbət", nav_voice: "Səs", nav_conf: "Konfrans", nav_prof: "Peşələr", nav_archive: "Arxiv",
                 lang_btn: "Dil: AZ", search_title: "Qlobal Axtarış", search_plc: "Axtarış...", chat_group: "Ümumi Söhbət", chat_plc: "Mesaj yazın...",
                 trash_title: "Ağıllı Səbət", trash_arc: "Arxivə", trash_clr: "Təmizlə", trash_del: "Sil"
@@ -753,74 +744,157 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            window.myUsername = localStorage.getItem('hf_test_user') || "Ilgar";
+            // --- УМНАЯ СИСТЕМА ПРОФИЛЕЙ (РОЛИ) ---
+            window.myUsername = localStorage.getItem('hf_test_user') || "ilgar";
             window.mySessionId = Math.random().toString(36).substring(2, 15);
             window.currentRoomId = "global_chat";
             window.activeChatListener = null;
             window.currentIndex = 0;
 
-            const participants = [
-                { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', languages: 'All languages', video: '' },
+            const allCharacters = [
+                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az-AZ', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Azerbaijan — The Land of Fire.', languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
                 { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Germany is a country in Central Europe, known for its precision engineering.', languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
                 { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Italy is famous for its rich history and art.', languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' },
                 { id: 'john', name: 'John Smith', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', profession: 'Lead Designer', email: 'john@hellofriends.co.uk', phone: '+44 7700 900077', flag: '🇬🇧', flagCode: 'gb', langCode: 'en', country: 'United Kingdom', pop: '~67 million', seas: 'North Sea, Atlantic Ocean', desc: 'The UK is an island nation known for its global cultural influence.', languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }
             ];
 
-            let myProfileInfo = {
-                id: 'me', name: window.myUsername + ' (You)', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az-AZ', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Azerbaijan — The Land of Fire.', languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4'
-            };
+            const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', languages: 'All languages', video: '' };
+
+            // Определяем, кто "МЫ" сейчас
+            let myChar = allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id)) || allCharacters[0];
+            let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
+            window.myUsername = myChar.name.split(' ')[0]; // Фиксируем красивое имя
+
+            // Все остальные попадают в контакты (без нас самих)
+            let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
+
+            // Смена юзера из меню
+            window.switchTestUser = function() { 
+                const newUser = prompt("Select profile for this device:\n- Ilgar\n- Klaus\n- Marinella\n- John", "Klaus"); 
+                if(newUser) { 
+                    localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
+                    location.reload(); 
+                } 
+            }
+
+            // Настройка Voice Room (динамический собеседник)
+            const voiceFriend = participants[1]; // Первый живой человек в списке после бота
+            document.getElementById('voice-friend-photo').src = voiceFriend.photo;
+            document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
+            document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0];
+
+            // ---- БЛОК WEBRTC ДЛЯ ВИДЕОЗВОНКОВ (PEERJS) ----
+            let myVideoStream = null;
+            let peer = null;
+            let currentCalls = {};
 
             function initConference() {
                 const confGrid = document.getElementById('conference-grid');
                 if(!confGrid) return;
-                let confHtml = `
-                    <div class="video-frame main">
+                confGrid.innerHTML = `
+                    <div class="video-frame main" id="my-video-container">
                         <video id="my-live-video" class="mirror-video" autoplay muted playsinline></video>
-                        <div class="video-overlay">${myProfileInfo.name.split(' (')[0]} (Speaker)</div>
+                        <div class="video-overlay" id="my-video-name">${myProfileInfo.name.split(' (')[0]} (You)</div>
                         <div class="flag-overlay" id="conf-me-flag">${myProfileInfo.flag}</div>
-                        <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
+                        <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome to Live Video!</div></div>
                     </div>`;
-                    
-                for(let i=1; i<4; i++) {
-                    if(!participants[i]) continue;
-                    confHtml += `
-                        <div class="video-frame">
-                            <video autoplay loop muted playsinline><source src="${participants[i].video}"></video>
-                            <div class="video-overlay">${participants[i].name.split(' ')[0]}</div>
-                            <div class="flag-overlay">${participants[i].flag}</div>
-                            <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="${participants[i].langCode}" data-flag="${participants[i].flag}">${participants[i].flag} Ready...</div></div>
-                        </div>`;
-                }
-                confGrid.innerHTML = confHtml;
                 startMyCamera();
             }
 
-            let myVideoStream = null;
-            
             async function startMyCamera() {
                 try {
                     const videoEl = document.getElementById('my-live-video');
                     if (!videoEl) return;
                     
+                    // ЗАПРАШИВАЕМ И КАМЕРУ И МИКРОФОН
                     myVideoStream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: "user" }, 
-                        audio: false 
+                        audio: true 
                     });
                     
                     videoEl.srcObject = myVideoStream;
+                    videoEl.muted = true; // Себя мы слышать не должны
                     await videoEl.play();
+                    
+                    initRealVideoChat(); // ЗАПУСК СЕТИ ПОСЛЕ КАМЕРЫ
                     
                 } catch (err) {
                     console.error("Camera error:", err);
-                    alert("⚠️ Camera Error: " + err.name + " - " + err.message + "\n\nPlease open this link in a standard browser (Safari/Chrome) and allow camera access.");
-                    
-                    const videoEl = document.getElementById('my-live-video');
-                    if(videoEl) {
-                        videoEl.src = myProfileInfo.video;
-                        videoEl.loop = true;
-                        videoEl.classList.remove('mirror-video');
-                    }
+                    alert("⚠️ Camera Error: " + err.name + "\n\nPlease allow camera and microphone access to use real video calls.");
                 }
+            }
+
+            function initRealVideoChat() {
+                peer = new Peer(window.mySessionId);
+
+                peer.on('open', id => {
+                    db.ref('live_video_room/' + window.mySessionId).set({
+                        peerId: id,
+                        username: window.myUsername,
+                        photo: myProfileInfo.photo,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    db.ref('live_video_room/' + window.mySessionId).onDisconnect().remove();
+                });
+
+                peer.on('call', call => {
+                    call.answer(myVideoStream); 
+                    call.on('stream', remoteStream => { addRemoteVideo(remoteStream, call.peer); });
+                    currentCalls[call.peer] = call;
+                });
+
+                db.ref('live_video_room').on('child_added', snapshot => {
+                    const data = snapshot.val();
+                    const peerSessionId = snapshot.key;
+                    if (peerSessionId !== window.mySessionId && data.peerId) {
+                        connectToNewUser(data.peerId, myVideoStream, data.username);
+                    }
+                });
+                
+                db.ref('live_video_room').on('child_removed', snapshot => {
+                    if(snapshot.val() && snapshot.val().peerId) {
+                        removeRemoteVideo(snapshot.val().peerId);
+                    }
+                });
+            }
+
+            function connectToNewUser(targetPeerId, stream, username) {
+                if (currentCalls[targetPeerId]) return; 
+                const call = peer.call(targetPeerId, stream);
+                call.on('stream', remoteStream => { addRemoteVideo(remoteStream, targetPeerId, username); });
+                call.on('close', () => { removeRemoteVideo(targetPeerId); });
+                currentCalls[targetPeerId] = call;
+            }
+
+            function addRemoteVideo(stream, peerId, username = "Friend") {
+                if(document.getElementById('video-container-' + peerId)) return;
+                
+                const confGrid = document.getElementById('conference-grid');
+                const frame = document.createElement('div');
+                frame.className = 'video-frame';
+                frame.id = 'video-container-' + peerId;
+                
+                frame.innerHTML = `
+                    <video id="video-${peerId}" autoplay playsinline></video>
+                    <div class="video-overlay">${username}</div>
+                    <div class="flag-overlay">🌐</div>
+                    <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="en" data-flag="🌐">➔ Connected...</div></div>
+                `;
+                confGrid.appendChild(frame);
+                
+                const remoteVid = document.getElementById('video-' + peerId);
+                remoteVid.srcObject = stream;
+                
+                // ПРИНУДИТЕЛЬНЫЙ ПИНОК ЗВУКА И ВИДЕО (ДЛЯ IOS/SAFARI)
+                setTimeout(() => {
+                    remoteVid.play().catch(e => console.warn("Autoplay audio blocked by browser:", e));
+                }, 500);
+            }
+
+            function removeRemoteVideo(peerId) {
+                const frame = document.getElementById('video-container-' + peerId);
+                if (frame) frame.remove();
+                if(currentCalls[peerId]) { currentCalls[peerId].close(); delete currentCalls[peerId]; }
             }
 
             window.toggleMyCamera = function(btn) {
@@ -834,22 +908,15 @@
                     if (videoTrack) {
                         videoTrack.enabled = !videoTrack.enabled;
                         const icon = btn.querySelector('i');
-                        if(videoTrack.enabled) {
-                            icon.className = 'fa-solid fa-video text-base';
-                        } else {
-                            icon.className = 'fa-solid fa-video-slash text-base';
-                        }
+                        icon.className = videoTrack.enabled ? 'fa-solid fa-video text-base' : 'fa-solid fa-video-slash text-base';
                     }
                 }
             };
+            // -------------------------------------------------------------------
 
-            function getFlagEmoji(countryCode) { return countryCode.toUpperCase().replace(/./g, char => String.fromCodePoint(char.charCodeAt(0) + 127397)); }
+            // IP Локация только для данных карты (Флаги берем из роли профиля)
             fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
-                if(data.country_name) {
-                    myProfileInfo.country = data.country_name; myProfileInfo.flagCode = data.country_code.toLowerCase(); myProfileInfo.flag = getFlagEmoji(data.country_code);
-                    myProfileInfo.languages = data.languages ? data.languages.split(',').join(', ') : 'Unknown';
-                    myProfileInfo.desc += `<br><br>📍 <i>Detected location: ${data.city || 'Unknown'}, ${data.country_name}</i>`;
-                    
+                if(data.latitude) {
                     window.myLat = data.latitude;
                     window.myLon = data.longitude;
                 }
@@ -860,7 +927,9 @@
                 renderProfessionList();
                 initConference();
             });
+            
             document.getElementById('voice-me-name').innerText = myProfileInfo.name;
+            document.getElementById('voice-me-photo').src = myProfileInfo.photo;
 
             function renderProfessionList() {
                 const profContainer = document.getElementById('profession-list');
@@ -981,8 +1050,6 @@
                 }, 1500);
             }
 
-
-            // --- ФУНКЦИИ ПРЯМОГО ПЕРЕВОДА ДЛЯ КОНФЕРЕНЦИИ И ГОЛОСОВОЙ КОМНАТЫ ---
             window.processVoiceTranslation = function(text) {
                 const mBox = document.getElementById('voice-marquee-container');
                 const mText = document.getElementById('voice-marquee-text');
@@ -1016,70 +1083,9 @@
                         const transBox = document.getElementById(`${msgId}-trans`);
                         if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
                     }
-                }).catch(() => { 
-                    if (msgId) {
-                        const transBox = document.getElementById(`${msgId}-trans`);
-                        if (transBox) transBox.innerHTML = "Translation error";
-                    }
-                });
+                }).catch(() => {});
             };
 
-
-            // --- МИКРОФОН ВЕЗДЕ (МОБИЛЬНАЯ ВЕРСИЯ) ---
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRec) {
-                let rec = new SpeechRec();
-                rec.continuous = false; 
-                rec.interimResults = false;
-                
-                let currentMicTarget = null;
-                let currentMicBtn = null;
-
-                rec.onstart = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = '#ef4444'; 
-                        currentMicBtn.classList.add('animate-pulse'); 
-                    }
-                };
-                rec.onend = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = ''; 
-                        currentMicBtn.classList.remove('animate-pulse'); 
-                    }
-                };
-                rec.onerror = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = ''; 
-                        currentMicBtn.classList.remove('animate-pulse'); 
-                    }
-                };
-                rec.onresult = (e) => { 
-                    const text = e.results[0][0].transcript;
-                    
-                    if (currentMicTarget === 'chat') {
-                        db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                    } else if (currentMicTarget === 'voice') {
-                        window.processVoiceTranslation(text);
-                    } else if (currentMicTarget === 'conf') {
-                        window.processConfTranslation(text);
-                    }
-                };
-
-                window.startMic = function(target, btnId) {
-                    currentMicTarget = target;
-                    currentMicBtn = document.getElementById(btnId);
-                    
-                    const langSel = document.getElementById('plus-mic-lang');
-                    rec.lang = langSel ? langSel.value : 'en-US'; 
-                    try { rec.start(); } catch(e){} 
-                }
-
-                document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
-                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn'));
-                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
-            }
-
-            // --- ТЕКСТОВЫЙ ЧАТ (Отдельно от микрофона) ---
             window.sendTextMessage = function(inputId) {
                 const inputEl = document.getElementById(inputId);
                 if(!inputEl) return;
@@ -1109,17 +1115,10 @@
                 } 
                 else if (inputId === 'chat-input') {
                     db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                    if(window.currentRoomId === 'private_ai_bot') {
-                        setTimeout(() => {
-                            const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation, combines professional networking, and features a built-in 1-cent bank transfer system.";
-                            db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: aiReply, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
-                        }, 1500);
-                    }
                 }
                 inputEl.value = '';
             };
 
-            // Привязка Enter для чатов
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('chat-input'); });
             document.getElementById('voice-text-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('voice-text-input'); });
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('conf-chat-input'); });
@@ -1179,7 +1178,7 @@
                         const transBoxEl = document.getElementById(`trans-box-${msgId}`);
                         if(transBoxEl) {
                             let html = ''; let marqueeTextStr = '';
-                            translationsRes.forEach(t => { html += `<div class="text-[0.75rem] ${isMe ? 'text-yellow-300' : 'text-[#a29bfe] font-bold'} opacity-95 mt-1 leading-snug">${t.flag} ${t.text}</div>`; marqueeTextStr += `${t.flag} ${t.text} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`; });
+                            translationsRes.forEach(t => { html += `<div class="text-[0.75rem] ${isMe ? 'text-yellow-300' : 'text-[#a29bfe] font-bold'} opacity-95 mt-1 leading-snug">${t.flag} ${t.text}</div>`; marqueeTextStr += `${t.flag} ${t.text}       `; });
                             transBoxEl.innerHTML = html;
                             const mCont = document.getElementById('typing-marquee-container'); const mText = document.getElementById('chat-info-marquee');
                             if (isMarqueeEnabled && mCont && mText) { mCont.style.display = 'flex'; mText.innerHTML = `🌍 <span class="text-white">${data.name}:</span> <span class="text-green-400 font-bold">${marqueeTextStr}</span>`; }
@@ -1370,7 +1369,6 @@
             window.startInAppCall = function() { window.closePhoneChoiceModal(); window.switchTab(1); }
             window.startExternalCall = function() { window.closePhoneChoiceModal(); window.location.href = "tel:+994501234567"; }
 
-            // --- ИСПРАВЛЕННАЯ ЛОКАЦИЯ (GOOGLE MAPS) ---
             window.openLocationModal = function() {
                 window.closeDropdown(); document.getElementById('location-modal').classList.add('active');
                 const mapContainer = document.getElementById('location-map');
@@ -1449,7 +1447,6 @@
                     document.getElementById('auth-phone-form').classList.remove('hidden'); document.getElementById('auth-email-form').classList.add('hidden');
                 }
             };
-            window.switchTestUser = function() { const newUser = prompt("Log in as (enter name):", "Ilgar"); if(newUser) { localStorage.setItem('hf_test_user', newUser.trim()); location.reload(); } }
             window.toggleTheme = function() {
                 window.closeDropdown();
                 const screen = document.getElementById('phone-body'); screen.classList.toggle('light-theme');
