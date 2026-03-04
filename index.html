@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Super Sync</title>
+    <title>Hello Friends App - Super Master Fixed</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -18,6 +18,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
         body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
@@ -349,7 +351,7 @@
                 
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
                     <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 App Online</span>
+                        <span>Live Chat</span><span>👥 WebRTC Online</span>
                     </div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
                     
@@ -620,11 +622,13 @@
     </div>
 
     <script>
+        // ЧИСТАЯ ЛОГИКА МЕНЮ "+"
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             document.getElementById('rhombus-btn')?.classList.toggle('active'); 
         }
 
+        // СЛОВАРЬ ПЕРЕВОДОВ ИНТЕРФЕЙСА
         const translations = {
             en: {
                 menu_profile: "Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
@@ -743,7 +747,7 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            // --- БАЗОВАЯ СИСТЕМА ПРОФИЛЕЙ ---
+            // --- УМНАЯ СИСТЕМА ПРОФИЛЕЙ ---
             let savedUser = localStorage.getItem('hf_test_user');
             if (!savedUser) {
                 savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Ilgar");
@@ -807,7 +811,7 @@
             document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
             document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0];
 
-            // --- БАЗОВАЯ КОНФЕРЕНЦИЯ С ВАШЕЙ КАМЕРОЙ И ФРЕЙМАМИ ЗАГЛУШЕК ---
+            // --- КОНФЕРЕНЦИЯ ---
             let myVideoStream = null;
 
             function initConference() {
@@ -844,9 +848,10 @@
                     const videoEl = document.getElementById('my-live-video');
                     if (!videoEl) return;
                     
+                    // ОТКЛЮЧАЕМ ЗВУК ДЛЯ ВИДЕО, ЧТОБЫ МИКРОФОН ВСЕГДА РАБОТАЛ ИДЕАЛЬНО
                     myVideoStream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: "user" }, 
-                        audio: true 
+                        audio: false 
                     });
                     
                     videoEl.srcObject = myVideoStream;
@@ -855,7 +860,7 @@
                     
                 } catch (err) {
                     console.error("Camera error:", err);
-                    alert("⚠️ Ошибка камеры: " + err.name + "\n\nПожалуйста, откройте ссылку в стандартном браузере и разрешите доступ.");
+                    alert("⚠️ Ошибка камеры: " + err.name + "\n\nПожалуйста, разрешите доступ к камере.");
                     
                     const videoEl = document.getElementById('my-live-video');
                     if(videoEl) {
@@ -881,69 +886,6 @@
                     }
                 }
             };
-
-            // ФИКС: СИНХРОНИЗАЦИЯ ЧАТА КОНФЕРЕНЦИИ ЧЕРЕЗ FIREBASE
-            db.ref('conf_sync').on('child_added', snapshot => {
-                const data = snapshot.val();
-                if(!data) return;
-                
-                // 1. Добавляем в текстовый мини-чат
-                const confMessages = document.getElementById('conf-messages');
-                const msgId = 'conf-msg-' + snapshot.key;
-                if(confMessages) {
-                     confMessages.innerHTML += `
-                        <div class="conf-msg mt-2 flex gap-2">
-                            <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${data.photo}">
-                            <div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full">
-                                <span class="text-[#00C4CC] font-bold block mb-0.5">${data.name}</span>
-                                ${data.text}
-                                <div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight">⏳ translating...</div>
-                            </div>
-                        </div>`;
-                    confMessages.scrollTop = confMessages.scrollHeight;
-                }
-                
-                // 2. Добавляем в бегущую строку (на главном экране, если это мой текст, или на экранах заглушек)
-                if(data.sessionId === window.mySessionId) {
-                    const speakerMarquee = document.getElementById('speaker-marquee');
-                    if(speakerMarquee) speakerMarquee.innerText = `➔ ${data.text}`;
-                }
-                
-                // 3. Выполняем автоперевод для всех остальных
-                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
-                Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(data.text)}`)
-                    .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
-                )).then(translations => {
-                    // Обновляем бегущие строки у видео-заглушек
-                    document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
-                        const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
-                        const t = translations.find(tr => tr.code === langCode) || translations[0];
-                        if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
-                    });
-                    
-                    // Обновляем перевод в мини-чате
-                    const transBox = document.getElementById(`${msgId}-trans`);
-                    if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
-                }).catch(() => {});
-            });
-
-            // ФИКС: СИНХРОНИЗАЦИЯ ГОЛОСОВОЙ КОМНАТЫ ЧЕРЕЗ FIREBASE
-            db.ref('voice_sync').on('child_added', snapshot => {
-                const data = snapshot.val();
-                if(!data) return;
-                const mBox = document.getElementById('voice-marquee-container');
-                const mText = document.getElementById('voice-marquee-text');
-                if (mBox && mText) {
-                    mBox.style.display = 'flex';
-                    mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
-                    
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(data.text)}`)
-                    .then(res => res.json())
-                    .then(transData => { mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text} <span class="text-yellow-400 ml-4 font-bold">🇮🇹 ${transData[0][0][0]}</span>`; })
-                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text}`; });
-                }
-            });
-
             // -------------------------------------------------------------------
 
             fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
@@ -1070,16 +1012,82 @@
                 }
             };
 
+            // ФИКС ИИ (ВОЛШЕБНАЯ ПАЛОЧКА)
             window.applyAiMagic = function() {
                 const input = document.getElementById('chat-input');
                 const wandBtn = document.getElementById('magic-wand-btn');
                 if(!input.value.trim()) return alert("Type some text first for the AI to improve!");
-                wandBtn.querySelector('i').classList.add('fa-spin'); input.disabled = true; input.value = "✨ AI is rewriting...";
+                wandBtn.querySelector('i').classList.add('fa-spin'); 
+                input.disabled = true; 
+                let tempVal = input.value;
+                input.value = "✨ AI is rewriting...";
                 setTimeout(() => {
-                    wandBtn.querySelector('i').classList.remove('fa-spin'); input.disabled = false;
-                    input.value = "Good afternoon! Could you please provide an update on the project? Thank you!"; input.focus();
+                    wandBtn.querySelector('i').classList.remove('fa-spin'); 
+                    input.disabled = false;
+                    input.value = "Good afternoon! Could you please provide an update on the project? Thank you!"; 
+                    input.focus();
                 }, 1500);
             }
+
+            // ФИКС: СИНХРОНИЗАЦИЯ ЧАТА КОНФЕРЕНЦИИ ЧЕРЕЗ FIREBASE
+            db.ref('conf_sync').on('child_added', snapshot => {
+                const data = snapshot.val();
+                if(!data) return;
+                
+                // 1. Добавляем в текстовый мини-чат
+                const confMessages = document.getElementById('conf-messages');
+                const msgId = 'conf-msg-' + snapshot.key;
+                if(confMessages) {
+                     confMessages.innerHTML += `
+                        <div class="conf-msg mt-2 flex gap-2">
+                            <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${data.photo}">
+                            <div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full">
+                                <span class="text-[#00C4CC] font-bold block mb-0.5">${data.name}</span>
+                                ${data.text}
+                                <div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight">⏳ translating...</div>
+                            </div>
+                        </div>`;
+                    confMessages.scrollTop = confMessages.scrollHeight;
+                }
+                
+                // 2. ВЫВОД В БЕГУЩУЮ СТРОКУ (СВОЕ НА ГЛАВНЫЙ ЭКРАН)
+                if(data.sessionId === window.mySessionId) {
+                    const speakerMarquee = document.getElementById('speaker-marquee');
+                    if(speakerMarquee) speakerMarquee.innerText = `➔ ${data.text}`;
+                }
+                
+                // 3. Выполняем автоперевод
+                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
+                Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(data.text)}`)
+                    .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
+                )).then(translations => {
+                    document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
+                        const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
+                        const t = translations.find(tr => tr.code === langCode) || translations[0];
+                        if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
+                    });
+                    
+                    const transBox = document.getElementById(`${msgId}-trans`);
+                    if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
+                }).catch(() => {});
+            });
+
+            // ФИКС: СИНХРОНИЗАЦИЯ ГОЛОСОВОЙ КОМНАТЫ ЧЕРЕЗ FIREBASE
+            db.ref('voice_sync').on('child_added', snapshot => {
+                const data = snapshot.val();
+                if(!data) return;
+                const mBox = document.getElementById('voice-marquee-container');
+                const mText = document.getElementById('voice-marquee-text');
+                if (mBox && mText) {
+                    mBox.style.display = 'flex';
+                    mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
+                    
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(data.text)}`)
+                    .then(res => res.json())
+                    .then(transData => { mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text} <span class="text-yellow-400 ml-4 font-bold">🇮🇹 ${transData[0][0][0]}</span>`; })
+                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text}`; });
+                }
+            });
 
             window.sendTextMessage = function(inputId) {
                 const inputEl = document.getElementById(inputId);
@@ -1088,17 +1096,15 @@
                 if(!text) return;
 
                 if (inputId === 'voice-text-input') {
-                    // ФИКС: Отправляем текст в Firebase для синхронизации Voice
-                    db.ref('voice_sync').push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    db.ref('voice_sync').push({ name: window.myUsername, photo: myProfileInfo.photo, flag: myProfileInfo.flag, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                 } 
                 else if (inputId === 'conf-chat-input') {
-                    // ФИКС: Отправляем текст в Firebase для синхронизации Conference
-                    db.ref('conf_sync').push({ name: window.myUsername, photo: myProfileInfo.photo, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    db.ref('conf_sync').push({ name: window.myUsername, photo: myProfileInfo.photo, flag: myProfileInfo.flag, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                 } 
                 inputEl.value = '';
             };
 
-            // МИКРОФОН (ОТПРАВЛЯЕТ В БАЗУ ДАННЫХ ДЛЯ СИНХРОНИЗАЦИИ)
+            // МИКРОФОН 
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec();
@@ -1136,9 +1142,6 @@
                     if(currentMicTarget === 'chat') {
                         chatInputEl.placeholder = chatInputEl.dataset.origPlaceholder || ""; 
                     }
-                    if(e.error === 'not-allowed' || e.error === 'audio-capture') {
-                        alert("ℹ️ Ваш телефон занял микрофон для видеозвонка. Для использования переводчика временно выключите микрофон кнопкой 🎥 или используйте текстовый ввод.");
-                    }
                 };
                 rec.onresult = (e) => { 
                     const text = e.results[0][0].transcript;
@@ -1147,18 +1150,15 @@
                         chatInputEl.value = text;
                         window.sendFirebaseMsg();
                     } else if (currentMicTarget === 'voice') {
-                        // ФИКС: Голос улетает в Firebase
-                        db.ref('voice_sync').push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                        db.ref('voice_sync').push({ name: window.myUsername, photo: myProfileInfo.photo, flag: myProfileInfo.flag, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                     } else if (currentMicTarget === 'conf') {
-                        // ФИКС: Голос улетает в Firebase и появляется везде!
-                        db.ref('conf_sync').push({ name: window.myUsername, photo: myProfileInfo.photo, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                        db.ref('conf_sync').push({ name: window.myUsername, photo: myProfileInfo.photo, flag: myProfileInfo.flag, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                     }
                 };
 
                 window.startMic = function(target, btnId) {
                     currentMicTarget = target;
                     currentMicBtn = document.getElementById(btnId);
-                    
                     const langSel = document.getElementById('plus-mic-lang');
                     rec.lang = langSel ? langSel.value : 'en-US'; 
                     try { rec.start(); } catch(e){} 
@@ -1170,16 +1170,35 @@
             }
 
 
+            // ФИКС ОТПРАВКИ И БАГА С ИМЕНАМИ
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim();
                 if(!text) return;
-                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                
+                // ОТПРАВЛЯЕМ ПОЛНЫЙ ПРОФИЛЬ В БАЗУ!
+                db.ref(window.currentRoomId).push({ 
+                    name: window.myUsername, 
+                    photo: myProfileInfo.photo, 
+                    flag: myProfileInfo.flag, 
+                    langCode: myProfileInfo.langCode,
+                    text: text, 
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP 
+                });
                 document.getElementById('chat-input').value = '';
 
+                // ФИКС ИИ-БОТА
                 if(window.currentRoomId === 'private_ai_bot') {
                     setTimeout(() => {
                         const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation.";
-                        db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: aiReply, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
+                        db.ref(window.currentRoomId).push({ 
+                            name: "AI Assistant", 
+                            text: aiReply, 
+                            sessionId: "ai-bot-session", 
+                            flag: '🤖',
+                            langCode: 'en',
+                            timestamp: firebase.database.ServerValue.TIMESTAMP 
+                        });
                     }, 1500);
                 }
             }
@@ -1191,10 +1210,17 @@
             async function handleNewMessage(snapshot) {
                 const data = snapshot.val(); if(!data) return;
                 const chatMessages = document.getElementById('chat-messages');
-                const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
+                const isMe = data.sessionId === window.mySessionId;
                 const isAI = data.sessionId === "ai-bot-session";
                 
-                let p = isMe ? myProfileInfo : (isAI ? aiBot : (participants.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+data.name+'&background=random', langCode: 'en', flag: '🌐' }));
+                // ТЕПЕРЬ СИСТЕМА ТОЧНО ЗНАЕТ, ЧЬЕ ЭТО ФОТО И ФЛАГ
+                let p = {
+                    name: data.name,
+                    photo: data.photo || 'https://ui-avatars.com/api/?name='+encodeURIComponent(data.name)+'&background=random',
+                    flag: data.flag || '🌐',
+                    langCode: data.langCode || 'en'
+                };
+                if (isAI) { p.flag = '🤖'; p.langCode = 'en'; }
                 
                 const msgWrapper = document.createElement('div');
                 msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
@@ -1229,7 +1255,7 @@
 
                 const bubbleHtml = `
                     <div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">
-                        ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}
+                        ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name} ${p.flag}</div>` : ''}
                         <div class="${customClass}" style="${bubbleStyle} padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; font-family: sans-serif;">${displayedText}</div>
                         ${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1" id="trans-box-${msgId}"></div>` : ''}
                     </div>`;
