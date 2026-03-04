@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Live Master</title>
+    <title>Hello Friends App - Golden Master</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
+    <script type="text/javascript">
+        (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })();
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,13 +21,10 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
     <style>
         body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
         .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; box-sizing: border-box; color: #c0c5d0; overflow: hidden; position: relative; transition: all 0.4s; }
         
-        /* ПРАВИЛО ДЛЯ НАСТОЯЩИХ ТЕЛЕФОНОВ (ПОЛНЫЙ ЭКРАН) */
         @media (max-width: 500px) {
             .mobile-screen { max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; padding-top: 10px; }
         }
@@ -623,13 +622,11 @@
     </div>
 
     <script>
-        // ЧИСТАЯ ЛОГИКА МЕНЮ "+"
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             document.getElementById('rhombus-btn')?.classList.toggle('active'); 
         }
 
-        // СЛОВАРЬ ПЕРЕВОДОВ ИНТЕРФЕЙСА
         const translations = {
             en: {
                 menu_profile: "Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
@@ -748,16 +745,16 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            // --- УМНАЯ СИСТЕМА ДЛЯ ЛЮБЫХ ПОЛЬЗОВАТЕЛЕЙ ---
+            // --- БАЗОВАЯ СИСТЕМА ПРОФИЛЕЙ ---
             let savedUser = localStorage.getItem('hf_test_user');
             if (!savedUser) {
-                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Guest");
-                if (!savedUser) savedUser = "Guest";
+                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Ilgar");
+                if (!savedUser) savedUser = "Ilgar";
                 localStorage.setItem('hf_test_user', savedUser.trim().toLowerCase());
             }
             window.myUsername = savedUser.trim();
             window.mySessionId = Math.random().toString(36).substring(2, 15);
-            window.currentRoomId = "global"; // ИСПРАВЛЕНО НА GLOBAL (чтобы работало с ПК версией)
+            window.currentRoomId = "global"; // ИСПРАВЛЕНО НА GLOBAL!
             window.activeChatListener = null;
             window.currentIndex = 0;
 
@@ -770,52 +767,50 @@
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', languages: 'All languages', video: '' };
 
-            // Ищем персонажа. Если человек ввел новое имя - генерируем ему профиль на лету!
             let myChar = allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id));
             if (!myChar) {
                 myChar = {
                     id: window.myUsername.toLowerCase(),
                     name: window.myUsername,
                     photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
-                    profession: 'Tester',
-                    email: window.myUsername.toLowerCase() + '@tester.com',
+                    profession: 'User',
+                    email: window.myUsername.toLowerCase() + '@hellofriends.com',
                     phone: '+0 000 000 0000',
-                    flag: '🏳️',
+                    flag: '🌐',
                     flagCode: 'un',
                     langCode: 'en-US',
-                    country: 'Internet',
+                    country: 'Global',
                     pop: 'Unknown',
                     seas: 'Digital',
-                    desc: 'New user testing the app.',
+                    desc: 'New user in the app.',
                     languages: 'Auto',
-                    video: ''
+                    video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'
                 };
             }
 
             let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
             window.myUsername = myChar.name.split(' ')[0]; 
 
-            // Остальные попадают в контакты
             let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
+            if (!allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id))) {
+                participants = [aiBot, ...allCharacters]; 
+            }
 
-            // Функция смены любого юзера
             window.switchTestUser = function() { 
-                const newUser = prompt("Введите имя для входа в приложение\n(например: Ilgar, Klaus, или любое другое имя):", window.myUsername); 
+                const newUser = prompt("Введите имя для входа (например: Ilgar, Klaus):", window.myUsername); 
                 if(newUser) { 
                     localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
                     location.reload(); 
                 } 
             }
 
-            const voiceFriend = participants[1]; 
+            const voiceFriend = participants[1] || allCharacters[1]; 
             document.getElementById('voice-friend-photo').src = voiceFriend.photo;
             document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
             document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0];
 
-            // ---- БЛОК WEBRTC С ФРЕЙМАМИ И ЗВУКОМ ----
+            // --- БАЗОВАЯ КОНФЕРЕНЦИЯ С ВАШЕЙ КАМЕРОЙ И ФРЕЙМАМИ ЗАГЛУШЕК ---
             let myVideoStream = null;
-            let peer = null;
-            let currentCalls = {};
 
             function initConference() {
                 const confGrid = document.getElementById('conference-grid');
@@ -826,12 +821,12 @@
                         <video id="my-live-video" class="mirror-video" autoplay muted playsinline></video>
                         <div class="video-overlay" id="my-video-name">${myProfileInfo.name.split(' (')[0]} (You)</div>
                         <div class="flag-overlay" id="conf-me-flag">${myProfileInfo.flag}</div>
-                        <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome to Live Video!</div></div>
+                        <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
                     </div>`;
                     
-                // Добавляем демо-заглушки (как просил Капитан)
+                let displayedCount = 0;
                 participants.forEach(p => {
-                    if(p.id === 'ai') return; 
+                    if(p.id === 'ai' || displayedCount >= 3) return; 
                     confHtml += `
                         <div class="video-frame">
                             <video autoplay loop muted playsinline><source src="${p.video}"></video>
@@ -839,6 +834,7 @@
                             <div class="flag-overlay">${p.flag}</div>
                             <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div>
                         </div>`;
+                    displayedCount++;
                 });
                 
                 confGrid.innerHTML = confHtml;
@@ -850,94 +846,27 @@
                     const videoEl = document.getElementById('my-live-video');
                     if (!videoEl) return;
                     
-                    // ЗВУК ВКЛЮЧЕН ПО ПРИКАЗУ КАПИТАНА!
+                    // ЗВУК ОТКЛЮЧЕН, ЧТОБЫ МИКРОФОН РАБОТАЛ ИДЕАЛЬНО
                     myVideoStream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: "user" }, 
-                        audio: true 
+                        audio: false 
                     });
                     
                     videoEl.srcObject = myVideoStream;
-                    videoEl.muted = true; // Себя глушим, чтобы не было эха
+                    videoEl.muted = true; 
                     await videoEl.play();
-                    
-                    initRealVideoChat(); 
                     
                 } catch (err) {
                     console.error("Camera error:", err);
-                    alert("⚠️ Camera Error: " + err.name + "\n\nПожалуйста, разрешите доступ к камере и микрофону в браузере.");
+                    alert("⚠️ Ошибка камеры: " + err.name + " - " + err.message + "\n\nПожалуйста, откройте ссылку в стандартном браузере (Safari/Chrome) и разрешите доступ.");
+                    
+                    const videoEl = document.getElementById('my-live-video');
+                    if(videoEl) {
+                        videoEl.src = myProfileInfo.video;
+                        videoEl.loop = true;
+                        videoEl.classList.remove('mirror-video');
+                    }
                 }
-            }
-
-            function initRealVideoChat() {
-                peer = new Peer(window.mySessionId);
-
-                peer.on('open', id => {
-                    db.ref('live_video_room/' + window.mySessionId).set({
-                        peerId: id,
-                        username: window.myUsername,
-                        photo: myProfileInfo.photo,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
-                    });
-                    db.ref('live_video_room/' + window.mySessionId).onDisconnect().remove();
-                });
-
-                peer.on('call', call => {
-                    call.answer(myVideoStream); 
-                    call.on('stream', remoteStream => { addRemoteVideo(remoteStream, call.peer, "Caller"); });
-                    currentCalls[call.peer] = call;
-                });
-
-                db.ref('live_video_room').on('child_added', snapshot => {
-                    const data = snapshot.val();
-                    const peerSessionId = snapshot.key;
-                    if (peerSessionId !== window.mySessionId && data.peerId) {
-                        connectToNewUser(data.peerId, myVideoStream, data.username);
-                    }
-                });
-                
-                db.ref('live_video_room').on('child_removed', snapshot => {
-                    if(snapshot.val() && snapshot.val().peerId) {
-                        removeRemoteVideo(snapshot.val().peerId);
-                    }
-                });
-            }
-
-            function connectToNewUser(targetPeerId, stream, username) {
-                if (currentCalls[targetPeerId]) return; 
-                const call = peer.call(targetPeerId, stream);
-                call.on('stream', remoteStream => { addRemoteVideo(remoteStream, targetPeerId, username); });
-                call.on('close', () => { removeRemoteVideo(targetPeerId); });
-                currentCalls[targetPeerId] = call;
-            }
-
-            function addRemoteVideo(stream, peerId, username) {
-                if(document.getElementById('video-container-' + peerId)) return;
-                
-                const confGrid = document.getElementById('conference-grid');
-                const frame = document.createElement('div');
-                frame.className = 'video-frame';
-                frame.id = 'video-container-' + peerId;
-                
-                frame.innerHTML = `
-                    <video id="video-${peerId}" autoplay playsinline></video>
-                    <div class="video-overlay">${username}</div>
-                    <div class="flag-overlay">🌐</div>
-                    <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="en" data-flag="🌐">➔ Connected...</div></div>
-                `;
-                // Добавляем реального человека сразу после вашего главного окна
-                confGrid.insertBefore(frame, confGrid.children[1]);
-                
-                const remoteVid = document.getElementById('video-' + peerId);
-                remoteVid.srcObject = stream;
-                
-                // Принудительный запуск звука
-                setTimeout(() => { remoteVid.play().catch(e => console.warn(e)); }, 500);
-            }
-
-            function removeRemoteVideo(peerId) {
-                const frame = document.getElementById('video-container-' + peerId);
-                if (frame) frame.remove();
-                if(currentCalls[peerId]) { currentCalls[peerId].close(); delete currentCalls[peerId]; }
             }
 
             window.toggleMyCamera = function(btn) {
