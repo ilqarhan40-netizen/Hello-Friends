@@ -152,6 +152,24 @@
             display: flex; align-items: center; gap: 8px;
         }
         .toast-notification.show { opacity: 1; top: 70px; }
+
+        /* СТИЛЬ СЕЛЕКТОРА ЯЗЫКА МИКРОФОНА В ПЛЮСЕ */
+        .mic-lang-select {
+            grid-column: span 3;
+            background: #1a1e23;
+            border: 1px solid #4a4e53;
+            color: #a29bfe;
+            padding: 8px;
+            border-radius: 8px;
+            font-family: sans-serif;
+            font-size: 0.8rem;
+            font-weight: bold;
+            outline: none;
+            text-align: center;
+        }
+        .light-theme .mic-lang-select {
+            background: #f8f9fa; border-color: #ced4da; color: #6c5ce7;
+        }
     </style>
 </head>
 <body>
@@ -187,6 +205,21 @@
             </div>
             
             <div id="header-dropdown" class="header-dropdown">
+                <div class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer">
+                    <div class="flex items-center"><i class="fa-solid fa-microphone-lines w-6 text-red-500"></i> Mic Lang:</div>
+                    <select id="global-mic-lang" class="bg-transparent text-indigo-600 dark:text-indigo-400 font-bold outline-none cursor-pointer" onclick="event.stopPropagation()">
+                        <option value="az-AZ">🇦🇿 Azərbaycanca</option>
+                        <option value="ru-RU">🇷🇺 Русский</option>
+                        <option value="en-US">🇬🇧 English</option>
+                        <option value="tr-TR">🇹🇷 Türkçe</option>
+                        <option value="de-DE">🇩🇪 Deutsch</option>
+                        <option value="it-IT">🇮🇹 Italiano</option>
+                        <option value="es-ES">🇪🇸 Español</option>
+                        <option value="fr-FR">🇫🇷 Français</option>
+                    </select>
+                </div>
+                <div class="border-t dark:border-slate-700 my-1"></div>
+                
                 <a onclick="toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
                 
@@ -260,10 +293,10 @@
                                 <button id="magic-wand-btn" onclick="applyAiMagic()" class="text-[#a29bfe] hover:text-purple-400 transition p-1.5" title="AI Rewrite">
                                     <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
                                 </button>
-                                <button id="chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text">
+                                <button id="main-chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text">
                                     <i class="fa-solid fa-microphone text-lg"></i>
                                 </button>
-                                <button id="chat-send-btn" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                                <button id="chat-send-btn" onclick="sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
                             </div>
                         </div>
                     </div>
@@ -375,6 +408,14 @@
                         <div class="rhombus-shape"><i class="fa-solid fa-plus"></i></div>
                     </div>
                     <div id="rhombus-actions" class="rhombus-actions">
+                        <select id="plus-mic-lang" class="mic-lang-select" onclick="event.stopPropagation()">
+                            <option value="az-AZ">🇦🇿 AZ Mic</option>
+                            <option value="ru-RU">🇷🇺 RU Mic</option>
+                            <option value="en-US">🇬🇧 EN Mic</option>
+                            <option value="tr-TR">🇹🇷 TR Mic</option>
+                            <option value="de-DE">🇩🇪 DE Mic</option>
+                            <option value="it-IT">🇮🇹 IT Mic</option>
+                        </select>
                         <div class="action-icon" onclick="switchTab(2); closeDropdown();" title="Video"><i class="fa-solid fa-video"></i></div>
                         <div class="action-icon" onclick="openPhoneChoiceModal(); closeDropdown();" title="Call"><i class="fa-solid fa-phone"></i></div>
                         <div class="action-icon" onclick="document.getElementById('attachment-input').click(); closeDropdown();" title="Attach File"><i class="fa-solid fa-paperclip"></i></div>
@@ -899,6 +940,68 @@
                 }, 1500);
             }
 
+            // --- МИКРОФОН ВЕЗДЕ (МОБИЛЬНАЯ ВЕРСИЯ) ---
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRec) {
+                let rec = new SpeechRec();
+                rec.continuous = false; 
+                rec.interimResults = false;
+                
+                let currentTargetInput = null;
+                let currentTargetBtn = null;
+
+                rec.onstart = () => { 
+                    if(currentTargetBtn) {
+                        currentTargetBtn.style.color = '#ef4444'; // Красный
+                        currentTargetBtn.classList.add('animate-pulse'); 
+                    }
+                    if(currentTargetInput) {
+                        currentTargetInput.dataset.origPlaceholder = currentTargetInput.placeholder;
+                        currentTargetInput.placeholder = "Listening..."; 
+                    }
+                };
+                rec.onend = () => { 
+                    if(currentTargetBtn) {
+                        currentTargetBtn.style.color = '';
+                        currentTargetBtn.classList.remove('animate-pulse'); 
+                    }
+                    if(currentTargetInput) {
+                        currentTargetInput.placeholder = currentTargetInput.dataset.origPlaceholder || ""; 
+                    }
+                };
+                rec.onerror = () => { 
+                    if(currentTargetBtn) {
+                        currentTargetBtn.style.color = '';
+                        currentTargetBtn.classList.remove('animate-pulse'); 
+                    }
+                };
+                rec.onresult = (e) => { 
+                    if(currentTargetInput) {
+                        currentTargetInput.value = e.results[0][0].transcript; 
+                        
+                        // В главном чате сразу отправляем
+                        if (currentTargetInput.id === 'chat-input') {
+                            window.sendMessageFrom('chat-input'); 
+                        }
+                    }
+                };
+
+                window.startMic = function(inputId, btnId) {
+                    currentTargetInput = document.getElementById(inputId);
+                    currentTargetBtn = document.getElementById(btnId);
+                    
+                    // Берем язык микрофона из меню плюса
+                    const langSel = document.getElementById('plus-mic-lang');
+                    rec.lang = langSel ? langSel.value : 'en-US'; 
+                    try { rec.start(); } catch(e){} 
+                }
+
+                // Привязка микрофонов
+                document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat-input', 'main-chat-mic-btn'));
+                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice-text-input', 'voice-mic-btn'));
+                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf-chat-input', 'conf-voice-mic-btn'));
+            }
+
             // --- УНИВЕРСАЛЬНАЯ ОТПРАВКА С ЖИВЫМИ ПЕРЕВОДАМИ ---
             window.sendMessageFrom = function(inputId) {
                 const inputEl = document.getElementById(inputId);
@@ -974,15 +1077,7 @@
 
                 // 3. ЛОГИКА ДЛЯ ГЛАВНОГО ЧАТА (+ БОТ ДЕМО)
                 if (inputId === 'chat-input') {
-                    db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                    inputEl.value = '';
-
-                    if(window.currentRoomId === 'private_ai_bot') {
-                        setTimeout(() => {
-                            const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation, combines professional networking, and features a built-in 1-cent bank transfer system.";
-                            db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: aiReply, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
-                        }, 1500);
-                    }
+                    window.sendFirebaseMsg();
                 }
             };
 
@@ -995,6 +1090,20 @@
 
             document.getElementById('conf-chat-send')?.addEventListener('click', () => window.sendMessageFrom('conf-chat-input'));
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendMessageFrom('conf-chat-input'); });
+
+            window.sendFirebaseMsg = function() {
+                const text = document.getElementById('chat-input').value.trim();
+                if(!text) return;
+                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                document.getElementById('chat-input').value = '';
+
+                if(window.currentRoomId === 'private_ai_bot') {
+                    setTimeout(() => {
+                        const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation, combines professional networking, and features a built-in 1-cent bank transfer system.";
+                        db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: aiReply, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    }, 1500);
+                }
+            }
 
 
             async function handleNewMessage(snapshot) {
@@ -1197,6 +1306,8 @@
                 }
             }
             window.smartDelete = function() { window.smartClear(); }
+
+            window.openMyProfile = function() { window.closeDropdown(); window.openAvatarModal('me', 'cv'); };
 
             window.openAvatarModal = function(id, mode = 'cv') {
                 const p = id === 'me' ? myProfileInfo : participants.find(part => part.id === id);
