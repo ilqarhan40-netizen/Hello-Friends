@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Golden Master</title>
+    <title>Hello Friends App - Super Live</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })();
-    </script>
+    <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,10 +19,13 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
     <style>
         body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
         .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; box-sizing: border-box; color: #c0c5d0; overflow: hidden; position: relative; transition: all 0.4s; }
         
+        /* ПОЛНЫЙ ЭКРАН ДЛЯ МОБИЛЬНЫХ */
         @media (max-width: 500px) {
             .mobile-screen { max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; padding-top: 10px; }
         }
@@ -351,12 +352,12 @@
                 
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
                     <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 App Online</span>
+                        <span>Live Chat</span><span>👥 WebRTC Online</span>
                     </div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
                     
                     <div class="flex gap-2 mt-2 shrink-0 items-center">
-                        <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Speak"><i class="fa-solid fa-microphone text-base"></i></button>
+                        <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Hold to Translate"><i class="fa-solid fa-microphone text-base"></i></button>
                         <input type="text" id="conf-chat-input" data-i18n-placeholder="chat_plc" class="w-full bg-[#1e293b] text-white text-base px-3 py-2 rounded-lg border border-[#334155] outline-none font-sans" placeholder="Message or speak...">
                         <button id="conf-chat-send" onclick="sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
@@ -622,11 +623,13 @@
     </div>
 
     <script>
+        // ЧИСТАЯ ЛОГИКА МЕНЮ "+"
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             document.getElementById('rhombus-btn')?.classList.toggle('active'); 
         }
 
+        // СЛОВАРЬ ПЕРЕВОДОВ ИНТЕРФЕЙСА
         const translations = {
             en: {
                 menu_profile: "Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
@@ -745,16 +748,16 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            // --- БАЗОВАЯ СИСТЕМА ПРОФИЛЕЙ ---
+            // --- УМНАЯ СИСТЕМА ПРОФИЛЕЙ ---
             let savedUser = localStorage.getItem('hf_test_user');
             if (!savedUser) {
-                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Ilgar");
-                if (!savedUser) savedUser = "Ilgar";
+                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Guest");
+                if (!savedUser) savedUser = "Guest";
                 localStorage.setItem('hf_test_user', savedUser.trim().toLowerCase());
             }
             window.myUsername = savedUser.trim();
             window.mySessionId = Math.random().toString(36).substring(2, 15);
-            window.currentRoomId = "global"; // ИСПРАВЛЕНО НА GLOBAL!
+            window.currentRoomId = "global"; 
             window.activeChatListener = null;
             window.currentIndex = 0;
 
@@ -773,18 +776,18 @@
                     id: window.myUsername.toLowerCase(),
                     name: window.myUsername,
                     photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
-                    profession: 'User',
-                    email: window.myUsername.toLowerCase() + '@hellofriends.com',
+                    profession: 'Tester',
+                    email: window.myUsername.toLowerCase() + '@tester.com',
                     phone: '+0 000 000 0000',
-                    flag: '🌐',
+                    flag: '🏳️',
                     flagCode: 'un',
                     langCode: 'en-US',
-                    country: 'Global',
+                    country: 'Internet',
                     pop: 'Unknown',
                     seas: 'Digital',
-                    desc: 'New user in the app.',
+                    desc: 'New user testing the app.',
                     languages: 'Auto',
-                    video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'
+                    video: ''
                 };
             }
 
@@ -792,25 +795,24 @@
             window.myUsername = myChar.name.split(' ')[0]; 
 
             let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
-            if (!allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id))) {
-                participants = [aiBot, ...allCharacters]; 
-            }
 
             window.switchTestUser = function() { 
-                const newUser = prompt("Введите имя для входа (например: Ilgar, Klaus):", window.myUsername); 
+                const newUser = prompt("Введите имя для входа в приложение\n(например: Ilgar, Klaus, или любое другое имя):", window.myUsername); 
                 if(newUser) { 
                     localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
                     location.reload(); 
                 } 
             }
 
-            const voiceFriend = participants[1] || allCharacters[1]; 
+            const voiceFriend = participants[1]; 
             document.getElementById('voice-friend-photo').src = voiceFriend.photo;
             document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
             document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0];
 
-            // --- БАЗОВАЯ КОНФЕРЕНЦИЯ С ВАШЕЙ КАМЕРОЙ И ФРЕЙМАМИ ЗАГЛУШЕК ---
+            // ---- БЛОК WEBRTC + SMART MIC ----
             let myVideoStream = null;
+            let peer = null;
+            let currentCalls = {};
 
             function initConference() {
                 const confGrid = document.getElementById('conference-grid');
@@ -821,12 +823,11 @@
                         <video id="my-live-video" class="mirror-video" autoplay muted playsinline></video>
                         <div class="video-overlay" id="my-video-name">${myProfileInfo.name.split(' (')[0]} (You)</div>
                         <div class="flag-overlay" id="conf-me-flag">${myProfileInfo.flag}</div>
-                        <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
+                        <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome to Live Video!</div></div>
                     </div>`;
                     
-                let displayedCount = 0;
                 participants.forEach(p => {
-                    if(p.id === 'ai' || displayedCount >= 3) return; 
+                    if(p.id === 'ai') return; 
                     confHtml += `
                         <div class="video-frame">
                             <video autoplay loop muted playsinline><source src="${p.video}"></video>
@@ -834,7 +835,6 @@
                             <div class="flag-overlay">${p.flag}</div>
                             <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div>
                         </div>`;
-                    displayedCount++;
                 });
                 
                 confGrid.innerHTML = confHtml;
@@ -846,27 +846,123 @@
                     const videoEl = document.getElementById('my-live-video');
                     if (!videoEl) return;
                     
-                    // ЗВУК ОТКЛЮЧЕН, ЧТОБЫ МИКРОФОН РАБОТАЛ ИДЕАЛЬНО
+                    // ЗВУК ВКЛЮЧЕН ДЛЯ ЖИВОГО ОБЩЕНИЯ
                     myVideoStream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: "user" }, 
-                        audio: false 
+                        audio: true 
                     });
                     
                     videoEl.srcObject = myVideoStream;
-                    videoEl.muted = true; 
+                    videoEl.muted = true; // Себя глушим, чтобы не было эха
                     await videoEl.play();
+                    
+                    initRealVideoChat(); 
                     
                 } catch (err) {
                     console.error("Camera error:", err);
-                    alert("⚠️ Ошибка камеры: " + err.name + " - " + err.message + "\n\nПожалуйста, откройте ссылку в стандартном браузере (Safari/Chrome) и разрешите доступ.");
-                    
-                    const videoEl = document.getElementById('my-live-video');
-                    if(videoEl) {
-                        videoEl.src = myProfileInfo.video;
-                        videoEl.loop = true;
-                        videoEl.classList.remove('mirror-video');
-                    }
+                    alert("⚠️ Camera Error: " + err.name + "\n\nПожалуйста, разрешите доступ к камере и микрофону в браузере.");
                 }
+            }
+
+            function initRealVideoChat() {
+                peer = new Peer(window.mySessionId);
+
+                peer.on('open', id => {
+                    db.ref('live_video_room/' + window.mySessionId).set({
+                        peerId: id,
+                        username: window.myUsername,
+                        photo: myProfileInfo.photo,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    db.ref('live_video_room/' + window.mySessionId).onDisconnect().remove();
+                });
+
+                peer.on('call', call => {
+                    call.answer(myVideoStream); 
+                    call.on('stream', remoteStream => { addRemoteVideo(remoteStream, call.peer, "Friend"); });
+                    currentCalls[call.peer] = call;
+                });
+
+                db.ref('live_video_room').on('child_added', snapshot => {
+                    const data = snapshot.val();
+                    const peerSessionId = snapshot.key;
+                    if (peerSessionId !== window.mySessionId && data.peerId) {
+                        connectToNewUser(data.peerId, myVideoStream, data.username);
+                    }
+                });
+                
+                db.ref('live_video_room').on('child_removed', snapshot => {
+                    if(snapshot.val() && snapshot.val().peerId) {
+                        removeRemoteVideo(snapshot.val().peerId);
+                    }
+                });
+                
+                // Слушаем новые субтитры от других
+                db.ref('conf_subtitles').on('child_added', snapshot => {
+                    const data = snapshot.val();
+                    if (Date.now() - data.timestamp > 30000) return; // Игнорируем старые
+                    
+                    // Если это написали мы - обновляем свой экран
+                    if (data.sessionId === window.mySessionId) {
+                        const myMarquee = document.getElementById('speaker-marquee');
+                        if(myMarquee) myMarquee.innerText = `➔ ${data.text}`;
+                    } else {
+                        // Если написал друг - переводим на наш язык
+                        let myLang = myProfileInfo.langCode.split('-')[0] || 'en';
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(data.text)}`)
+                        .then(res => res.json()).then(resData => {
+                            let translated = resData[0][0][0];
+                            
+                            // Ищем фрейм друга
+                            let frame = document.getElementById('video-container-' + data.peerId);
+                            if (frame) {
+                                let marquee = frame.querySelector('.conf-marquee-text');
+                                if (marquee) marquee.innerText = `➔ ${myProfileInfo.flag} ${translated}`;
+                            } else {
+                                // Если фрейма нет, кидаем на демо-заглушки (для красоты питча)
+                                document.querySelectorAll('.conf-listener-marquee').forEach(m => {
+                                    m.innerText = `➔ ${translated}`;
+                                });
+                            }
+                        }).catch(()=>{});
+                    }
+                });
+            }
+
+            function connectToNewUser(targetPeerId, stream, username) {
+                if (currentCalls[targetPeerId]) return; 
+                const call = peer.call(targetPeerId, stream);
+                call.on('stream', remoteStream => { addRemoteVideo(remoteStream, targetPeerId, username); });
+                call.on('close', () => { removeRemoteVideo(targetPeerId); });
+                currentCalls[targetPeerId] = call;
+            }
+
+            function addRemoteVideo(stream, peerId, username) {
+                if(document.getElementById('video-container-' + peerId)) return;
+                
+                const confGrid = document.getElementById('conference-grid');
+                const frame = document.createElement('div');
+                frame.className = 'video-frame';
+                frame.id = 'video-container-' + peerId;
+                
+                frame.innerHTML = `
+                    <video id="video-${peerId}" autoplay playsinline></video>
+                    <div class="video-overlay">${username}</div>
+                    <div class="flag-overlay">🌐</div>
+                    <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="en" data-flag="🌐">➔ Connected...</div></div>
+                `;
+                confGrid.insertBefore(frame, confGrid.children[1]);
+                
+                const remoteVid = document.getElementById('video-' + peerId);
+                remoteVid.srcObject = stream;
+                
+                setTimeout(() => { remoteVid.play().catch(e => console.warn(e)); }, 500);
+            }
+
+            function removeRemoteVideo(peerId) {
+                const frame = document.getElementById('video-container-' + peerId);
+                if (frame) frame.remove();
+                if(currentCalls[peerId]) { currentCalls[peerId].close(); delete currentCalls[peerId]; }
             }
 
             window.toggleMyCamera = function(btn) {
@@ -884,6 +980,93 @@
                     }
                 }
             };
+
+            // МИКРОФОН СИСТЕМЫ ПЕРЕВОДА (SMART MIC)
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRec) {
+                let rec = new SpeechRec();
+                rec.continuous = false; 
+                rec.interimResults = false;
+                
+                let currentMicTarget = null;
+                let currentMicBtn = null;
+                let chatInputEl = document.getElementById('chat-input'); 
+
+                rec.onstart = () => { 
+                    if(currentMicBtn) { 
+                        currentMicBtn.style.color = '#ef4444'; 
+                        currentMicBtn.classList.add('animate-pulse'); 
+                    }
+                    if(currentMicTarget === 'chat') {
+                        chatInputEl.dataset.origPlaceholder = chatInputEl.placeholder;
+                        chatInputEl.placeholder = "Listening..."; 
+                    }
+                };
+                rec.onend = () => { 
+                    if(currentMicBtn) { 
+                        currentMicBtn.style.color = ''; 
+                        currentMicBtn.classList.remove('animate-pulse'); 
+                    }
+                    if(currentMicTarget === 'chat') {
+                        chatInputEl.placeholder = chatInputEl.dataset.origPlaceholder || ""; 
+                    }
+                    // УМНЫЙ МИКРОФОН: ВОЗВРАЩАЕМ ЖИВОЙ ЗВУК
+                    if (currentMicTarget === 'conf' && myVideoStream) {
+                        const audioTrack = myVideoStream.getAudioTracks()[0];
+                        if (audioTrack) audioTrack.enabled = true;
+                    }
+                };
+                rec.onerror = () => { 
+                    if(currentMicBtn) { 
+                        currentMicBtn.style.color = ''; 
+                        currentMicBtn.classList.remove('animate-pulse'); 
+                    }
+                    // УМНЫЙ МИКРОФОН: ВОЗВРАЩАЕМ ЖИВОЙ ЗВУК ДАЖЕ ПРИ ОШИБКЕ
+                    if (currentMicTarget === 'conf' && myVideoStream) {
+                        const audioTrack = myVideoStream.getAudioTracks()[0];
+                        if (audioTrack) audioTrack.enabled = true;
+                    }
+                };
+                rec.onresult = (e) => { 
+                    const text = e.results[0][0].transcript;
+                    
+                    if (currentMicTarget === 'chat') {
+                        chatInputEl.value = text;
+                        window.sendFirebaseMsg();
+                    } else if (currentMicTarget === 'voice') {
+                        window.processVoiceTranslation(text);
+                    } else if (currentMicTarget === 'conf') {
+                        // Отправляем субтитры в Firebase
+                        db.ref('conf_subtitles').push({
+                            sessionId: window.mySessionId,
+                            peerId: peer ? peer.id : 'demo',
+                            username: window.myUsername,
+                            text: text,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    }
+                };
+
+                window.startMic = function(target, btnId) {
+                    currentMicTarget = target;
+                    currentMicBtn = document.getElementById(btnId);
+                    
+                    // УМНЫЙ МИКРОФОН: СТАВИМ ЖИВОЙ ЗВУК НА ПАУЗУ, ЧТОБЫ ОСВОБОДИТЬ МИКРОФОН
+                    if (target === 'conf' && myVideoStream) {
+                        const audioTrack = myVideoStream.getAudioTracks()[0];
+                        if (audioTrack) audioTrack.enabled = false;
+                    }
+                    
+                    const langSel = document.getElementById('plus-mic-lang');
+                    rec.lang = langSel ? langSel.value : 'en-US'; 
+                    try { rec.start(); } catch(e){} 
+                }
+
+                document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
+                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn'));
+                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
+            }
+
             // -------------------------------------------------------------------
 
             fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
@@ -1021,69 +1204,6 @@
                 }, 1500);
             }
 
-            // МИКРОФОН СИСТЕМЫ ПЕРЕВОДА
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRec) {
-                let rec = new SpeechRec();
-                rec.continuous = false; 
-                rec.interimResults = false;
-                
-                let currentMicTarget = null;
-                let currentMicBtn = null;
-                let chatInputEl = document.getElementById('chat-input'); 
-
-                rec.onstart = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = '#ef4444'; 
-                        currentMicBtn.classList.add('animate-pulse'); 
-                    }
-                    if(currentMicTarget === 'chat') {
-                        chatInputEl.dataset.origPlaceholder = chatInputEl.placeholder;
-                        chatInputEl.placeholder = "Listening..."; 
-                    }
-                };
-                rec.onend = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = ''; 
-                        currentMicBtn.classList.remove('animate-pulse'); 
-                    }
-                    if(currentMicTarget === 'chat') {
-                        chatInputEl.placeholder = chatInputEl.dataset.origPlaceholder || ""; 
-                    }
-                };
-                rec.onerror = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = ''; 
-                        currentMicBtn.classList.remove('animate-pulse'); 
-                    }
-                };
-                rec.onresult = (e) => { 
-                    const text = e.results[0][0].transcript;
-                    
-                    if (currentMicTarget === 'chat') {
-                        chatInputEl.value = text;
-                        window.sendFirebaseMsg();
-                    } else if (currentMicTarget === 'voice') {
-                        window.processVoiceTranslation(text);
-                    } else if (currentMicTarget === 'conf') {
-                        window.processConfTranslation(text);
-                    }
-                };
-
-                window.startMic = function(target, btnId) {
-                    currentMicTarget = target;
-                    currentMicBtn = document.getElementById(btnId);
-                    
-                    const langSel = document.getElementById('plus-mic-lang');
-                    rec.lang = langSel ? langSel.value : 'en-US'; 
-                    try { rec.start(); } catch(e){} 
-                }
-
-                document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
-                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn'));
-                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
-            }
-
             window.processVoiceTranslation = function(text) {
                 const mBox = document.getElementById('voice-marquee-container');
                 const mText = document.getElementById('voice-marquee-text');
@@ -1099,11 +1219,8 @@
             };
 
             window.processConfTranslation = function(text, msgId = null) {
-                const speakerMarquee = document.getElementById('speaker-marquee');
-                if(speakerMarquee) speakerMarquee.innerText = `➔ ${text}`;
-                
+                // Если отправляем через текстовый чат, пускаем просто на локальные демо-заглушки
                 const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
-                
                 Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(text)}`)
                     .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
                 )).then(translations => {
@@ -1112,7 +1229,6 @@
                         const t = translations.find(tr => tr.code === langCode) || translations[0];
                         if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
                     });
-                    
                     if (msgId) {
                         const transBox = document.getElementById(`${msgId}-trans`);
                         if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
