@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Golden Master</title>
+    <title>Hello Friends App - Golden Master + Custom CV</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -82,8 +82,10 @@
 
         .form-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #4a4e53; background: #1a1e23; color: white; font-family: sans-serif; font-size: 0.95rem; outline: none; transition: all 0.4s; }
         .form-input:focus { border-color: #a29bfe; }
+        .form-label { font-size: 0.75rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 12px; display: block; text-align: left; width: 100%; font-family: sans-serif;}
         .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
         .form-btn:active { transform: scale(0.98); }
+        select.form-input { cursor: pointer; appearance: none; }
 
         .footer-wrapper { margin-top: auto; width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; flex-shrink: 0; position: relative; z-index: 50; }
         .actions-footer { background-color: #2a2d32; padding: 10px 20px; border-top: 1px solid #4a4e53; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.4s; }
@@ -203,7 +205,8 @@
                 <a onclick="toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
                 
-                <a onclick="openMyProfile()"><i class="fa-solid fa-user w-5"></i> <span data-i18n="menu_profile">Profile</span></a>
+                <a onclick="openEditProfileModal()"><i class="fa-solid fa-user-pen w-5 text-[#a29bfe]"></i> <span data-i18n="menu_profile">Edit Profile</span></a>
+                
                 <a><i class="fa-solid fa-gear w-5"></i> <span data-i18n="menu_settings">Settings</span></a>
                 <a onclick="toggleTheme()"><i id="theme-icon" class="fa-solid fa-sun w-5"></i> <span data-i18n="menu_theme">Theme</span></a>
                 <a onclick="openBankTransferModal()"><i class="fa-solid fa-money-bill-transfer w-5 text-green-400"></i> <span data-i18n="menu_transfer">Bank Transfer</span></a>
@@ -418,6 +421,108 @@
             </footer>
         </div>
 
+        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('avatar-modal').classList.remove('active')"></i>
+                <div id="modal-img-container" class="w-28 h-28 rounded-full mb-4 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-5xl">
+                    <img id="modal-img" src="" class="w-full h-full object-cover">
+                </div>
+                <h3 id="modal-name" class="text-xl font-bold text-white mb-4"></h3>
+                
+                <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] font-sans text-sm mb-5 shadow-inner">
+                    <div id="modal-desc" class="flex flex-col gap-2.5 text-gray-300"></div>
+                </div>
+                
+                <div class="flex gap-3 w-full" id="modal-action-buttons">
+                    <button id="modal-chat-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-comment"></i> Chat
+                    </button>
+                    <button id="modal-sms-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-comment-sms"></i> SMS
+                    </button>
+                    <button id="modal-email-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-envelope"></i> Email
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+            <div class="app-modal-content w-full max-w-[340px] max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('edit-profile-modal').classList.remove('active')"></i>
+                
+                <h2 class="text-xl font-bold text-white mb-2 text-center border-b border-[#4a4e53] pb-3 w-full">
+                    <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile
+                </h2>
+
+                <div class="flex flex-col items-center mt-4 mb-2 w-full">
+                    <div class="relative w-24 h-24 mb-3">
+                        <img id="edit-preview-photo" src="https://ui-avatars.com/api/?name=User" class="w-full h-full rounded-full object-cover border-2 border-[#a29bfe] shadow-lg">
+                        <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#a29bfe] text-white rounded-full w-8 h-8 flex items-center justify-center border border-[#2a2d32] hover:scale-110 transition cursor-pointer" title="Upload Photo">
+                            <i class="fa-solid fa-camera text-sm"></i>
+                        </button>
+                    </div>
+                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+                </div>
+
+                <label class="form-label">Name</label>
+                <input type="text" id="edit-name" class="form-input" placeholder="Your Name">
+
+                <label class="form-label">Country</label>
+                <div class="flex items-center gap-3 w-full">
+                    <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded-sm border border-[#4a4e53] object-cover shadow-md shrink-0">
+                    <select id="edit-country-select" class="form-input w-full" style="margin-top: 0;" onchange="updateFlagIcon(this)">
+                        <option value="un" data-name="Global" data-emoji="🌐">Global / Default</option>
+                        <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿">Azerbaijan</option>
+                        <option value="ru" data-name="Russia" data-emoji="🇷🇺">Russia</option>
+                        <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧">United Kingdom</option>
+                        <option value="us" data-name="United States" data-emoji="🇺🇸">United States</option>
+                        <option value="de" data-name="Germany" data-emoji="🇩🇪">Germany</option>
+                        <option value="it" data-name="Italy" data-emoji="🇮🇹">Italy</option>
+                        <option value="tr" data-name="Turkey" data-emoji="🇹🇷">Turkey</option>
+                        <option value="fr" data-name="France" data-emoji="🇫🇷">France</option>
+                        <option value="es" data-name="Spain" data-emoji="🇪🇸">Spain</option>
+                        <option value="cn" data-name="China" data-emoji="🇨🇳">China</option>
+                        <option value="ae" data-name="UAE" data-emoji="🇦🇪">United Arab Emirates</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 w-full">
+                    <div class="w-1/2">
+                        <label class="form-label">Phone</label>
+                        <input type="tel" id="edit-phone" class="form-input" placeholder="+994...">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="edit-email" class="form-input" placeholder="mail@...">
+                    </div>
+                </div>
+
+                <label class="form-label">Profession / Role</label>
+                <input type="text" id="edit-prof" class="form-input" placeholder="e.g. CEO / Investor">
+
+                <label class="form-label">Languages</label>
+                <input type="text" id="edit-langs" class="form-input" placeholder="e.g. English, Russian">
+
+                <label class="form-label">About / CV</label>
+                <textarea id="edit-desc" class="form-input resize-none w-full" rows="3" placeholder="Tell about your skills..."></textarea>
+
+                <button onclick="saveProfileData()" class="form-btn mb-4 w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
+
+                <div class="flex gap-3 w-full border-t border-[#4a4e53] pt-4">
+                    <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom('me');" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-comment"></i> Chat
+                    </button>
+                    <button onclick="alert('You cannot send SMS to yourself.');" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1.5 text-sm shadow-lg opacity-80">
+                        <i class="fa-solid fa-comment-sms"></i> SMS
+                    </button>
+                    <button onclick="alert('You cannot email yourself from here.');" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1.5 text-sm shadow-lg opacity-80">
+                        <i class="fa-solid fa-envelope"></i> Email
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div id="search-modal" class="app-modal" onclick="if(event.target===this) { this.classList.remove('active'); document.getElementById('search-result-frame').classList.add('hidden'); }">
             <div class="app-modal-content w-full max-w-[360px] h-[80vh] flex flex-col justify-start" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('search-modal').classList.remove('active'); document.getElementById('search-result-frame').classList.add('hidden');"></i>
@@ -504,32 +609,6 @@
                         <i class="fa-solid fa-paper-plane"></i> Send Money
                     </button>
                 </form>
-            </div>
-        </div>
-
-        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('avatar-modal').classList.remove('active')"></i>
-                <div id="modal-img-container" class="w-28 h-28 rounded-full mb-4 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-5xl">
-                    <img id="modal-img" src="" class="w-full h-full object-cover">
-                </div>
-                <h3 id="modal-name" class="text-xl font-bold text-white mb-4"></h3>
-                
-                <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] font-sans text-sm mb-5 shadow-inner">
-                    <div id="modal-desc" class="flex flex-col gap-2.5 text-gray-300"></div>
-                </div>
-                
-                <div class="flex gap-3 w-full" id="modal-action-buttons">
-                    <button id="modal-chat-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
-                        <i class="fa-solid fa-comment"></i> Chat
-                    </button>
-                    <button id="modal-sms-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
-                        <i class="fa-solid fa-comment-sms"></i> SMS
-                    </button>
-                    <button id="modal-email-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
-                        <i class="fa-solid fa-envelope"></i> Email
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -629,19 +708,19 @@
 
         const translations = {
             en: {
-                menu_profile: "Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
+                menu_profile: "Edit Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
                 nav_chat: "Chat", nav_voice: "Voice", nav_conf: "Conference", nav_prof: "Profession", nav_archive: "Archive",
                 lang_btn: "Language: EN", search_title: "Global Search", search_plc: "Search people, places...", chat_group: "Group Chat", chat_plc: "Type message...",
                 trash_title: "Smart Trash", trash_arc: "Archive", trash_clr: "Clear Chat", trash_del: "Delete"
             },
             ru: {
-                menu_profile: "Профиль", menu_settings: "Настройки", menu_theme: "Тема", menu_transfer: "Перевод Денег", menu_auth: "Вход", menu_import: "Импорт / Экспорт", menu_logout: "Сменить юзера",
+                menu_profile: "Изменить профиль", menu_settings: "Настройки", menu_theme: "Тема", menu_transfer: "Перевод Денег", menu_auth: "Вход", menu_import: "Импорт / Экспорт", menu_logout: "Сменить юзера",
                 nav_chat: "Чат", nav_voice: "Голос", nav_conf: "Звонок", nav_prof: "Профи", nav_archive: "Архив",
                 lang_btn: "Язык: RU", search_title: "Глобальный Поиск", search_plc: "Искать людей, места...", chat_group: "Общий Чат", chat_plc: "Сообщение...",
                 trash_title: "Умная Корзина", trash_arc: "В архив", trash_clr: "Очистить чат", trash_del: "Удалить"
             },
             az: {
-                menu_profile: "Profil", menu_settings: "Ayarlar", menu_theme: "Mövzu", menu_transfer: "Pul Köçürmə", menu_auth: "Giriş", menu_import: "İdxal / İxrac", menu_logout: "İstifadəçini dəyiş",
+                menu_profile: "Profili Yenilə", menu_settings: "Ayarlar", menu_theme: "Mövzu", menu_transfer: "Pul Köçürmə", menu_auth: "Giriş", menu_import: "İdxal / İxrac", menu_logout: "İstifadəçini dəyiş",
                 nav_chat: "Söhbət", nav_voice: "Səs", nav_conf: "Konfrans", nav_prof: "Peşələr", nav_archive: "Arxiv",
                 lang_btn: "Dil: AZ", search_title: "Qlobal Axtarış", search_plc: "Axtarış...", chat_group: "Ümumi Söhbət", chat_plc: "Mesaj yazın...",
                 trash_title: "Ağıllı Səbət", trash_arc: "Arxivə", trash_clr: "Təmizlə", trash_del: "Sil"
@@ -790,6 +869,14 @@
             let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
             window.myUsername = myChar.name.split(' ')[0]; 
 
+            // ВНЕДРЕНИЕ: ЗАМЕНЯЕМ СТАНДАРТНЫЙ ПРОФИЛЬ НА СОХРАНЕННЫЙ ИЗ LOCALSTORAGE
+            const savedCustomProfile = JSON.parse(localStorage.getItem('hf_my_custom_profile'));
+            if (savedCustomProfile) {
+                myProfileInfo = { ...myProfileInfo, ...savedCustomProfile, id: 'me', name: savedCustomProfile.name.split(' ')[0] + ' (You)' };
+                window.myUsername = savedCustomProfile.name.split(' ')[0];
+                localStorage.setItem('hf_test_user', window.myUsername.toLowerCase());
+            }
+
             let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
             if (!allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id))) {
                 participants = [aiBot, ...allCharacters]; 
@@ -803,7 +890,6 @@
                 } 
             }
 
-            // === ИСПРАВЛЕНИЕ 1: ЖЕСТКО СТАВИМ МАРИНЕЛЛУ ===
             const voiceFriend = allCharacters.find(c => c.id === 'marinella') || allCharacters[2]; 
             if (voiceFriend) {
                 document.getElementById('voice-friend-photo').src = voiceFriend.photo;
@@ -898,7 +984,7 @@
                 initConference();
             });
             
-            document.getElementById('voice-me-name').innerText = myProfileInfo.name;
+            document.getElementById('voice-me-name').innerText = myProfileInfo.name.split(' (')[0];
             document.getElementById('voice-me-photo').src = myProfileInfo.photo;
 
             function renderProfessionList() {
@@ -936,7 +1022,7 @@
 
                     <div class="chat-contact mb-4" id="chat-btn-me" onclick="switchChatRoom('me')" title="Saved Messages">
                         <div class="chat-contact-icon border-2 border-[#a29bfe] shadow-md" style="background-image: url('${myProfileInfo.photo}'); position: relative;">
-                            <img id="sidebar-me-flag" src="https://flagcdn.com/w20/${myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md">
+                            <img id="sidebar-me-flag" src="https://flagcdn.com/w20/${myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover">
                         </div>
                         <p class="chat-contact-name text-[#a29bfe]">You</p>
                     </div>
@@ -946,7 +1032,7 @@
                     chatSidebar.innerHTML += `
                     <div class="chat-contact mb-4" id="chat-btn-${p.id}" onclick="switchChatRoom('${p.id}')">
                         <div class="chat-contact-icon shadow-md" style="background-image: url('${p.photo}'); position: relative;">
-                            <img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md">
+                            <img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover">
                         </div>
                         <p class="chat-contact-name">${p.name.split(' ')[0]}</p>
                     </div>`;
@@ -981,7 +1067,7 @@
                     window.currentRoomId = "private_me_" + window.myUsername.toLowerCase().trim();
                     avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center";
                     avatarEl.style.backgroundImage = `url('${myProfileInfo.photo}')`;
-                    nameEl.innerText = "Saved (You)"; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${myProfileInfo.flagCode === 'un' ? 'un' : myProfileInfo.flagCode}.png" class="w-5 h-3.5 rounded-sm inline"> <span class="text-[0.7rem] text-green-400">Online</span>`;
+                    nameEl.innerText = "Saved (You)"; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${myProfileInfo.flagCode === 'un' ? 'un' : myProfileInfo.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`;
                     window.showToast(myProfileInfo, false); 
                 } else {
                     const targetUser = participants.find(p => p.id === targetId);
@@ -990,7 +1076,7 @@
                         window.currentRoomId = "private_" + [name1, name2].sort().join('_');
                         avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center";
                         avatarEl.style.backgroundImage = `url('${targetUser.photo}')`;
-                        nameEl.innerText = targetUser.name.split(' ')[0]; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${targetUser.flagCode}.png" class="w-5 h-3.5 rounded-sm inline"> <span class="text-[0.7rem] text-green-400">Online</span>`;
+                        nameEl.innerText = targetUser.name.split(' ')[0]; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${targetUser.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`;
                         window.showToast(targetUser, false); 
                     }
                 }
@@ -1270,8 +1356,77 @@
             }
             window.smartDelete = function() { window.smartClear(); }
 
-            window.openMyProfile = function() { window.closeDropdown(); window.openAvatarModal('me', 'cv'); };
+            // --- ВНЕДРЕНИЕ: ФУНКЦИИ РЕДАКТИРОВАНИЯ ПРОФИЛЯ ---
+            window.currentPhotoData = 'https://ui-avatars.com/api/?name=User';
 
+            window.updateFlagIcon = function(selectElement) {
+                const flagCode = selectElement.value;
+                document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`;
+            }
+
+            window.handleFileUpload = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    window.currentPhotoData = e.target.result;
+                    document.getElementById('edit-preview-photo').src = window.currentPhotoData;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            window.openEditProfileModal = function() {
+                window.closeDropdown();
+                let savedData = JSON.parse(localStorage.getItem('hf_my_custom_profile')) || myProfileInfo;
+                
+                document.getElementById('edit-name').value = savedData.name || '';
+                window.currentPhotoData = savedData.photo || 'https://ui-avatars.com/api/?name=User';
+                document.getElementById('edit-preview-photo').src = window.currentPhotoData;
+                
+                const countrySelect = document.getElementById('edit-country-select');
+                countrySelect.value = savedData.flagCode && savedData.flagCode !== 'un' ? savedData.flagCode : 'un';
+                if(savedData.flagCode) countrySelect.value = savedData.flagCode;
+                window.updateFlagIcon(countrySelect);
+
+                document.getElementById('edit-phone').value = savedData.phone || '';
+                document.getElementById('edit-email').value = savedData.email || '';
+                document.getElementById('edit-prof').value = savedData.profession || '';
+                document.getElementById('edit-langs').value = savedData.languages || '';
+                document.getElementById('edit-desc').value = savedData.desc || '';
+
+                document.getElementById('edit-profile-modal').classList.add('active');
+            }
+
+            window.saveProfileData = function() {
+                let nameVal = document.getElementById('edit-name').value.trim() || 'User';
+
+                if (window.currentPhotoData === 'https://ui-avatars.com/api/?name=User' || window.currentPhotoData === 'https://ui-avatars.com/api/?name=') {
+                    window.currentPhotoData = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=a29bfe&color=fff';
+                }
+
+                const selectEl = document.getElementById('edit-country-select');
+                const selectedOption = selectEl.options[selectEl.selectedIndex];
+
+                let customProfile = {
+                    name: nameVal,
+                    photo: window.currentPhotoData,
+                    flagCode: selectEl.value,
+                    flag: selectedOption.getAttribute('data-emoji'),
+                    country: selectedOption.getAttribute('data-name'),
+                    phone: document.getElementById('edit-phone').value.trim() || 'Not provided',
+                    email: document.getElementById('edit-email').value.trim() || 'Not provided',
+                    profession: document.getElementById('edit-prof').value.trim() || 'No profession',
+                    languages: document.getElementById('edit-langs').value.trim() || 'Auto',
+                    desc: document.getElementById('edit-desc').value.trim() || 'No description provided.'
+                };
+
+                localStorage.setItem('hf_my_custom_profile', JSON.stringify(customProfile));
+                
+                alert('Profile saved successfully! 💾 App will reload to apply changes globally.');
+                location.reload(); 
+            }
+
+            // Старая функция просмотра чужого профиля
             window.openAvatarModal = function(id, mode = 'cv') {
                 const p = id === 'me' ? myProfileInfo : participants.find(part => part.id === id);
                 if (!p) return;
@@ -1384,16 +1539,15 @@
             window.closeAuthModal = function() { document.getElementById('auth-modal').classList.remove('active'); }
             window.switchAuthTab = function(type) {
                 if(type === 'email') {
-                    document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-base font-bold transition';
-                    document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-base font-bold transition';
+                    document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
+                    document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
                     document.getElementById('auth-email-form').classList.remove('hidden'); document.getElementById('auth-phone-form').classList.add('hidden');
                 } else {
-                    document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-base font-bold transition';
-                    document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-base font-bold transition';
+                    document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
+                    document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
                     document.getElementById('auth-phone-form').classList.remove('hidden'); document.getElementById('auth-email-form').classList.add('hidden');
                 }
             };
-            window.switchTestUser = function() { const newUser = prompt("Log in as (enter name):", "Ilgar"); if(newUser) { localStorage.setItem('hf_test_user', newUser.trim()); location.reload(); } }
             window.toggleTheme = function() {
                 window.closeDropdown();
                 const screen = document.getElementById('phone-body'); screen.classList.toggle('light-theme');
