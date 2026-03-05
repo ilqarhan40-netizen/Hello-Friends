@@ -1052,16 +1052,26 @@
                         currentMicBtn.classList.remove('animate-pulse'); 
                     }
                 };
-                rec.onresult = (e) => { 
+               rec.onresult = (e) => { 
                     const text = e.results[0][0].transcript;
                     
                     if (currentMicTarget === 'chat') {
                         chatInputEl.value = text;
                         window.sendFirebaseMsg();
                     } else if (currentMicTarget === 'voice') {
-                        window.processVoiceTranslation(text);
+                        // Микрофон кидает текст в строку Voice и сам отправляет в чат
+                        const voiceInput = document.getElementById('voice-text-input');
+                        if (voiceInput) {
+                            voiceInput.value = text;
+                            window.sendTextMessage('voice-text-input'); 
+                        }
                     } else if (currentMicTarget === 'conf') {
-                        window.processConfTranslation(text);
+                        // Микрофон кидает текст в строку Conference и сам отправляет в чат
+                        const confInput = document.getElementById('conf-chat-input');
+                        if (confInput) {
+                            confInput.value = text;
+                            window.sendTextMessage('conf-chat-input'); 
+                        }
                     }
                 };
 
@@ -1501,3 +1511,4 @@
     </script>
 </body>
 </html>
+
