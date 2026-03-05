@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Golden Master + CV</title>
+    <title>Hello Friends App - Smart Logic CV</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -85,10 +85,10 @@
         .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
         .form-btn:active { transform: scale(0.98); }
 
-        /* Стили для компактной формы редактирования профиля */
-        #edit-profile-modal .form-input { padding: 6px 10px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
-        #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; display: block; width: 100%; text-align: left; font-family: sans-serif; }
-        #edit-profile-modal select.form-input { cursor: pointer; appearance: none; }
+        /* СТИЛИ ДЛЯ КОМПАКТНОЙ ФОРМЫ */
+        #edit-profile-modal .form-input { padding: 8px 12px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
+        #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; display: block; width: 100%; text-align: left; font-family: sans-serif; }
+        #edit-profile-modal select.form-input { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; }
 
         .footer-wrapper { margin-top: auto; width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; flex-shrink: 0; position: relative; z-index: 50; }
         .actions-footer { background-color: #2a2d32; padding: 10px 20px; border-top: 1px solid #4a4e53; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.4s; }
@@ -123,7 +123,7 @@
         .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
 
-        /* --- СВЕТЛАЯ ТЕМА --- */
+        /* СВЕТЛАЯ ТЕМА */
         .mobile-screen.light-theme { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-color: #ced4da; color: #212529; }
         .mobile-screen.light-theme .header-icons button { color: #495057; }
         .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #dee2e6; }
@@ -451,14 +451,14 @@
         </div>
 
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content w-full max-w-[300px] max-h-[80vh] overflow-y-auto p-4" onclick="event.stopPropagation();">
+            <div class="app-modal-content w-full max-w-[300px] max-h-[85vh] overflow-y-auto p-5" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="document.getElementById('edit-profile-modal').classList.remove('active')"></i>
                 
                 <h2 class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">
                     <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile
                 </h2>
 
-                <div class="flex flex-col items-center mb-3 w-full">
+                <div class="flex flex-col items-center mb-4 w-full">
                     <div class="relative w-20 h-20 mb-1">
                         <img id="edit-preview-photo" src="https://ui-avatars.com/api/?name=User" class="w-full h-full rounded-full object-cover border-2 border-[#a29bfe] shadow-md">
                         <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#a29bfe] text-white rounded-full w-7 h-7 flex items-center justify-center border border-[#2a2d32] hover:scale-110 transition cursor-pointer" title="Upload Photo">
@@ -469,60 +469,51 @@
                 </div>
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Name</label>
-                <input type="text" id="edit-name" class="form-input py-1.5 px-3 text-sm mb-2" placeholder="Your Name">
+                <input type="text" id="edit-name" class="form-input py-2 px-3 text-sm mb-3" placeholder="Your Name">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Country</label>
-                <div class="flex items-center gap-2 w-full mb-2">
+                <div class="flex items-center gap-2 w-full mb-3">
                     <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-8 h-5 rounded-sm border border-[#4a4e53] object-cover shadow-sm shrink-0">
-                    <select id="edit-country-select" class="form-input py-1.5 px-2 text-sm w-full mt-0" onchange="updateFlagIcon(this)">
-                        <option value="un" data-name="Global" data-emoji="🌐">Global / Default</option>
-                        <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿">Azerbaijan</option>
-                        <option value="ru" data-name="Russia" data-emoji="🇷🇺">Russia</option>
-                        <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧">United Kingdom</option>
-                        <option value="us" data-name="United States" data-emoji="🇺🇸">United States</option>
-                        <option value="de" data-name="Germany" data-emoji="🇩🇪">Germany</option>
-                        <option value="it" data-name="Italy" data-emoji="🇮🇹">Italy</option>
-                        <option value="tr" data-name="Turkey" data-emoji="🇹🇷">Turkey</option>
-                        <option value="fr" data-name="France" data-emoji="🇫🇷">France</option>
-                        <option value="es" data-name="Spain" data-emoji="🇪🇸">Spain</option>
-                        <option value="cn" data-name="China" data-emoji="🇨🇳">China</option>
-                        <option value="ae" data-name="UAE" data-emoji="🇦🇪">United Arab Emirates</option>
-                    </select>
+                    <div class="relative w-full">
+                        <select id="edit-country-select" class="form-input py-2 px-2 text-sm w-full mt-0 appearance-none pr-8 bg-[#1a1e23]" onchange="handleCountryChange(this)">
+                            <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global / Default</option>
+                            <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
+                            <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
+                            <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
+                            <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
+                            <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
+                            <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
+                            <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
+                            <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
+                            <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
+                            <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh-CN">China</option>
+                            <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                    </div>
                 </div>
 
-                <div class="flex gap-2 w-full mb-2">
+                <div class="flex gap-2 w-full mb-3">
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Phone</label>
-                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="+994...">
+                        <input type="tel" id="edit-phone" class="form-input py-2 px-2 text-sm mt-0" placeholder="+994...">
                     </div>
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Email</label>
-                        <input type="email" id="edit-email" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="mail@...">
+                        <input type="email" id="edit-email" class="form-input py-2 px-2 text-sm mt-0" placeholder="mail@...">
                     </div>
                 </div>
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Profession / Role</label>
-                <input type="text" id="edit-prof" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. CEO / Investor">
+                <input type="text" id="edit-prof" class="form-input py-2 px-3 text-sm mb-3 mt-0" placeholder="e.g. CEO / Investor">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Languages</label>
-                <input type="text" id="edit-langs" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. English, Russian">
+                <input type="text" id="edit-langs" class="form-input py-2 px-3 text-sm mb-3 mt-0" placeholder="e.g. English, Russian">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">About / CV</label>
-                <textarea id="edit-desc" class="form-input resize-none w-full py-1.5 px-3 text-sm mt-0" rows="2" placeholder="Tell about your skills..."></textarea>
+                <textarea id="edit-desc" class="form-input resize-none w-full py-2 px-3 text-sm mt-0" rows="4" placeholder="Tell about your skills, experience..."></textarea>
 
-                <button onclick="saveProfileData()" class="form-btn mt-3 mb-3 py-2.5 text-sm w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
-
-                <div class="flex gap-2 w-full border-t border-[#4a4e53] pt-3">
-                    <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom('me');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1 text-xs shadow-sm">
-                        <i class="fa-solid fa-comment"></i> Chat
-                    </button>
-                    <button onclick="alert('You cannot send SMS to yourself.');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1 text-xs shadow-sm opacity-80">
-                        <i class="fa-solid fa-comment-sms"></i> SMS
-                    </button>
-                    <button onclick="alert('You cannot email yourself from here.');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1 text-xs shadow-sm opacity-80">
-                        <i class="fa-solid fa-envelope"></i> Email
-                    </button>
-                </div>
+                <button onclick="saveProfileData()" class="form-btn mt-4 py-3 text-sm w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
             </div>
         </div>
 
@@ -704,6 +695,22 @@
     </div>
 
     <script>
+        // --- БИЗНЕС-ЛОГИКА: СПРАВОЧНИК СТРАН ---
+        const countryData = {
+            "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
+            "az": { phone: "+994", pop: "~10.1 million", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire. Known for rich culture and oil reserves." },
+            "ru": { phone: "+7", pop: "~144 million", seas: "Arctic Ocean, Black Sea", desc: "The largest country in the world, spanning Eastern Europe and Northern Asia." },
+            "gb": { phone: "+44", pop: "~67 million", seas: "North Sea, Atlantic Ocean", desc: "An island nation with deep historical global influence." },
+            "us": { phone: "+1", pop: "~331 million", seas: "Atlantic, Pacific Oceans", desc: "A massive country with diverse geography and leading tech industries." },
+            "de": { phone: "+49", pop: "~84 million", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe, known for precision engineering." },
+            "it": { phone: "+39", pop: "~59 million", seas: "Mediterranean, Adriatic", desc: "Famous for its rich history, Renaissance art, and world-class cuisine." },
+            "tr": { phone: "+90", pop: "~85 million", seas: "Black, Mediterranean, Aegean", desc: "A transcontinental country bridging Europe and Asia with a rich heritage." },
+            "fr": { phone: "+33", pop: "~67 million", seas: "Atlantic, Mediterranean", desc: "World center of art, fashion, gastronomy, and culture." },
+            "es": { phone: "+34", pop: "~47 million", seas: "Mediterranean, Atlantic", desc: "Known for its diverse culture, vibrant lifestyle, and beautiful geography." },
+            "cn": { phone: "+86", pop: "~1.4 billion", seas: "East China Sea, Yellow Sea", desc: "One of the world's most populous countries and a global economic hub." },
+            "ae": { phone: "+971", pop: "~9.9 million", seas: "Persian Gulf, Gulf of Oman", desc: "Known for ultra-modern architecture, luxury shopping, and desert landscapes." }
+        };
+
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             document.getElementById('rhombus-btn')?.classList.toggle('active'); 
@@ -780,10 +787,10 @@
                 } else if (isAI) {
                     tImg.style.display = 'none'; tIconWrap.style.display = 'flex';
                     tIconWrap.innerHTML = '🤖'; tIconWrap.className = "w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-2xl shrink-0 border-2 border-[#a29bfe]";
-                    tFlag.innerText = '🤖'; tName.innerText = profile.name; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.desc.split('<br>')[0]}</span>`;
+                    tFlag.innerText = '🤖'; tName.innerText = profile.name; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.countryDesc || profile.desc}</span>`;
                 } else {
                     tImg.src = profile.photo; tImg.style.display = 'block'; tIconWrap.style.display = 'none';
-                    tFlag.innerText = profile.flag; tName.innerText = profile.name.split(' ')[0]; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.desc.split('<br>')[0]}</span>`;
+                    tFlag.innerText = profile.flag; tName.innerText = profile.name.split(' ')[0]; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.countryDesc || profile.desc}</span>`;
                 }
                 
                 toast.classList.add('show');
@@ -827,10 +834,11 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
+            // --- БИЗНЕС-ЛОГИКА: ИЕРАРХИЯ ПОЛЬЗОВАТЕЛЕЙ ---
             let savedUser = localStorage.getItem('hf_test_user');
             if (!savedUser) {
-                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Ilgar");
-                if (!savedUser) savedUser = "Ilgar";
+                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя (Ильгар или любое другое):", "Guest");
+                if (!savedUser) savedUser = "Guest";
                 localStorage.setItem('hf_test_user', savedUser.trim().toLowerCase());
             }
             window.myUsername = savedUser.trim();
@@ -840,30 +848,33 @@
             window.currentIndex = 0;
 
             const allCharacters = [
-                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az-AZ', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Azerbaijan — The Land of Fire.', languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
-                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Germany is a country in Central Europe, known for its precision engineering.', languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
-                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Italy is famous for its rich history and art.', languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' },
-                { id: 'john', name: 'John Smith', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', profession: 'Lead Designer', email: 'john@hellofriends.co.uk', phone: '+44 7700 900077', flag: '🇬🇧', flagCode: 'gb', langCode: 'en', country: 'United Kingdom', pop: '~67 million', seas: 'North Sea, Atlantic Ocean', desc: 'The UK is an island nation known for its global cultural influence.', languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }
+                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Founder of the Super-App.', countryDesc: countryData['az'].desc, languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
+                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Developing the core engine.', countryDesc: countryData['de'].desc, languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
+                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Leading global marketing campaigns.', countryDesc: countryData['it'].desc, languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' },
+                { id: 'john', name: 'John Smith', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', profession: 'Lead Designer', email: 'john@hellofriends.co.uk', phone: '+44 7700 900077', flag: '🇬🇧', flagCode: 'gb', langCode: 'en', country: 'United Kingdom', pop: '~67 million', seas: 'North Sea, Atlantic Ocean', desc: 'Creating intuitive user interfaces.', countryDesc: countryData['gb'].desc, languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }
             ];
 
-            const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', languages: 'All languages', video: '' };
+            const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', countryDesc: 'Virtual Environment', languages: 'All languages', video: '' };
 
-            let myChar = allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id));
-            if (!myChar) {
+            let isIlgar = window.myUsername.toLowerCase().includes('ilgar');
+            let myChar = null;
+
+            if (isIlgar) {
+                // ИЛЬГАР ВХОДИТ КАК БОСС
+                myChar = allCharacters.find(c => c.id === 'ilgar');
+            } else {
+                // ЛЮБОЙ ДРУГОЙ ВХОДИТ КАК НОВЫЙ ПОЛЬЗОВАТЕЛЬ
                 myChar = {
-                    id: window.myUsername.toLowerCase(),
+                    id: window.myUsername.toLowerCase().replace(/\s+/g, ''),
                     name: window.myUsername,
                     photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
-                    profession: 'User',
-                    email: window.myUsername.toLowerCase() + '@hellofriends.com',
+                    profession: 'New User',
+                    email: window.myUsername.toLowerCase().replace(/\s+/g, '') + '@hellofriends.com',
                     phone: '+0 000 000 0000',
-                    flag: '🌐',
-                    flagCode: 'un',
-                    langCode: 'en-US',
-                    country: 'Global',
-                    pop: 'Unknown',
-                    seas: 'Digital',
-                    desc: 'New user in the app.',
+                    flag: '🌐', flagCode: 'un', langCode: 'en',
+                    country: 'Global', pop: 'Unknown', seas: 'Digital',
+                    desc: 'I am a new user in the Hello Friends app.',
+                    countryDesc: 'International user connecting globally.',
                     languages: 'Auto',
                     video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'
                 };
@@ -872,28 +883,27 @@
             let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
             window.myUsername = myChar.name.split(' ')[0]; 
 
-            // ВНЕДРЕНИЕ: ЗАМЕНЯЕМ СТАНДАРТНЫЙ ПРОФИЛЬ НА СОХРАНЕННЫЙ ИЗ LOCALSTORAGE
-            const savedCustomProfile = JSON.parse(localStorage.getItem('hf_my_custom_profile'));
+            // Загружаем только тот профиль, который принадлежит этому конкретному пользователю
+            const savedCustomProfile = JSON.parse(localStorage.getItem('hf_custom_' + window.myUsername.toLowerCase()));
             if (savedCustomProfile) {
                 myProfileInfo = { ...myProfileInfo, ...savedCustomProfile, id: 'me', name: savedCustomProfile.name.split(' ')[0] + ' (You)' };
-                window.myUsername = savedCustomProfile.name.split(' ')[0];
-                localStorage.setItem('hf_test_user', window.myUsername.toLowerCase());
             }
 
-            let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
-            if (!allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id))) {
-                participants = [aiBot, ...allCharacters]; 
+            let participants = [aiBot, ...allCharacters.filter(c => c.id !== 'ilgar')];
+            // Если Босс не Ильгар, добавляем Ильгара в список контактов!
+            if (!isIlgar) {
+                participants = [aiBot, allCharacters.find(c => c.id === 'ilgar'), ...allCharacters.filter(c => c.id !== 'ilgar')];
             }
 
             window.switchTestUser = function() { 
-                const newUser = prompt("Введите имя для входа (например: Ilgar, Klaus):", window.myUsername); 
+                const newUser = prompt("Введите имя для входа (например: Ilgar, John, Guest):", window.myUsername); 
                 if(newUser) { 
                     localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
                     location.reload(); 
                 } 
             }
 
-            const voiceFriend = allCharacters.find(c => c.id === 'marinella') || allCharacters[2]; 
+            const voiceFriend = participants.find(c => c.id === 'marinella') || participants[2]; 
             if (voiceFriend) {
                 document.getElementById('voice-friend-photo').src = voiceFriend.photo;
                 document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
@@ -1177,6 +1187,7 @@
                 if (window.currentRoomId === 'global') {
                     const seen = new Set(); seen.add(p.langCode); 
                     participants.forEach(part => { if (!seen.has(part.langCode) && part.id !== 'ai') { seen.add(part.langCode); targetLangs.push({ code: part.langCode, flag: part.flag }); } });
+                    
                     if (!seen.has(myProfileInfo.langCode)) targetLangs.push({ code: myProfileInfo.langCode, flag: myProfileInfo.flag });
                 } else if (window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('private_me_') && !window.currentRoomId.includes('private_ai_')) {
                     if (isMe) {
@@ -1359,12 +1370,20 @@
             }
             window.smartDelete = function() { window.smartClear(); }
 
-            // --- НОВЫЕ ФУНКЦИИ РЕДАКТИРОВАНИЯ ПРОФИЛЯ ---
+            // --- БИЗНЕС-ЛОГИКА: УПРАВЛЕНИЕ ПРОФИЛЕМ ---
             window.currentPhotoData = 'https://ui-avatars.com/api/?name=User';
 
-            window.updateFlagIcon = function(selectElement) {
+            window.handleCountryChange = function(selectElement) {
                 const flagCode = selectElement.value;
                 document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`;
+                
+                // АВТО-ПРЕФИКС ТЕЛЕФОНА
+                if (countryData[flagCode]) {
+                    const phoneInput = document.getElementById('edit-phone');
+                    if(!phoneInput.value || phoneInput.value.startsWith('+')) {
+                        phoneInput.value = countryData[flagCode].phone + " ";
+                    }
+                }
             }
 
             window.handleFileUpload = function(event) {
@@ -1378,10 +1397,9 @@
                 reader.readAsDataURL(file);
             }
 
-            // ИСПРАВЛЕНА: Теперь 100% открывает новую форму
             window.openMyProfile = function() {
                 window.closeDropdown();
-                let savedData = JSON.parse(localStorage.getItem('hf_my_custom_profile')) || myProfileInfo;
+                let savedData = JSON.parse(localStorage.getItem('hf_custom_' + window.myUsername.toLowerCase())) || myProfileInfo;
                 
                 document.getElementById('edit-name').value = savedData.name || '';
                 window.currentPhotoData = savedData.photo || 'https://ui-avatars.com/api/?name=User';
@@ -1390,7 +1408,7 @@
                 const countrySelect = document.getElementById('edit-country-select');
                 countrySelect.value = savedData.flagCode && savedData.flagCode !== 'un' ? savedData.flagCode : 'un';
                 if(savedData.flagCode) countrySelect.value = savedData.flagCode;
-                if(typeof window.updateFlagIcon === 'function') window.updateFlagIcon(countrySelect);
+                document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${countrySelect.value}.png`;
 
                 document.getElementById('edit-phone').value = savedData.phone || '';
                 document.getElementById('edit-email').value = savedData.email || '';
@@ -1410,27 +1428,34 @@
 
                 const selectEl = document.getElementById('edit-country-select');
                 const selectedOption = selectEl.options[selectEl.selectedIndex];
+                const flagCode = selectEl.value;
+                const cData = countryData[flagCode] || countryData['un']; // Подтягиваем данные из Справочника
 
                 let customProfile = {
                     name: nameVal,
                     photo: window.currentPhotoData,
-                    flagCode: selectEl.value,
+                    flagCode: flagCode,
                     flag: selectedOption.getAttribute('data-emoji'),
                     country: selectedOption.getAttribute('data-name'),
+                    langCode: selectedOption.getAttribute('data-lang') || 'en',
+                    pop: cData.pop, // АВТО: Население
+                    seas: cData.seas, // АВТО: Моря
+                    countryDesc: cData.desc, // АВТО: Описание страны
                     phone: document.getElementById('edit-phone').value.trim() || 'Not provided',
                     email: document.getElementById('edit-email').value.trim() || 'Not provided',
                     profession: document.getElementById('edit-prof').value.trim() || 'No profession',
                     languages: document.getElementById('edit-langs').value.trim() || 'Auto',
-                    desc: document.getElementById('edit-desc').value.trim() || 'No description provided.'
+                    desc: document.getElementById('edit-desc').value.trim() || 'No description provided.' // ЛИЧНОЕ CV
                 };
 
-                localStorage.setItem('hf_my_custom_profile', JSON.stringify(customProfile));
+                // Сохраняем изолированно для текущего имени пользователя!
+                localStorage.setItem('hf_custom_' + window.myUsername.toLowerCase(), JSON.stringify(customProfile));
                 
-                alert('Profile saved successfully! 💾 App will reload to apply changes globally.');
+                alert('Profile saved! App will reload to apply your language and data globally. 🌍');
                 location.reload(); 
             }
 
-            // Старая функция просмотра чужого профиля (по клику на аватарку)
+            // УМНОЕ ОКНО CV (Собирает Авто-справку и Личное описание)
             window.openAvatarModal = function(id, mode = 'cv') {
                 const p = id === 'me' ? myProfileInfo : participants.find(part => part.id === id);
                 if (!p) return;
@@ -1443,13 +1468,16 @@
                 const descContainer = document.getElementById('modal-desc');
                 const actionButtons = document.getElementById('modal-action-buttons');
                 
+                const cDesc = p.countryDesc || 'Country information is not available.';
+                const displayDesc = p.desc ? `${cDesc}<br><br><b class="text-[#a29bfe]">About Me:</b><br>${p.desc}` : cDesc;
+                
                 if (mode === 'chat' || id === 'ai') {
                     descContainer.innerHTML = `
                         <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Seas:</b> <span class="text-gray-300 text-base">${p.seas}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed"><b>About:</b> ${p.desc}</div>`;
+                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
                     actionButtons.style.display = 'none'; 
                 } else {
                     descContainer.innerHTML = `
@@ -1459,7 +1487,7 @@
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Phone:</b> <span class="text-gray-300 text-base">${p.phone}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Email:</b> <span class="text-gray-300 text-base">${p.email}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${p.desc}</div>`;
+                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
                     actionButtons.style.display = 'flex'; 
                     document.getElementById('modal-email-btn').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); };
                     document.getElementById('modal-chat-btn').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); };
@@ -1558,7 +1586,7 @@
                 document.getElementById('theme-icon').className = screen.classList.contains('light-theme') ? 'fa-solid fa-moon w-5' : 'fa-solid fa-sun w-5';
             }
 
-            // --- БЫСТРЫЕ МИКРОФОНЫ (ОРИГИНАЛЬНАЯ ЛОГИКА) ---
+            // --- БЫСТРЫЕ МИКРОФОНЫ ---
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec();
