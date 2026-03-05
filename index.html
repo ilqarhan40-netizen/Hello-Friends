@@ -809,7 +809,6 @@
             document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
             document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0];
 
-            // --- БАЗОВАЯ КОНФЕРЕНЦИЯ С ВАШЕЙ КАМЕРОЙ И ФРЕЙМАМИ ЗАГЛУШЕК ---
             let myVideoStream = null;
 
             function initConference() {
@@ -846,7 +845,6 @@
                     const videoEl = document.getElementById('my-live-video');
                     if (!videoEl) return;
                     
-                    // ЗВУК ОТКЛЮЧЕН, ЧТОБЫ МИКРОФОН РАБОТАЛ ИДЕАЛЬНО
                     myVideoStream = await navigator.mediaDevices.getUserMedia({ 
                         video: { facingMode: "user" }, 
                         audio: false 
@@ -858,7 +856,7 @@
                     
                 } catch (err) {
                     console.error("Camera error:", err);
-                    alert("⚠️ Ошибка камеры: " + err.name + " - " + err.message + "\n\nПожалуйста, откройте ссылку в стандартном браузере (Safari/Chrome) и разрешите доступ.");
+                    alert("⚠️ Ошибка камеры: " + err.name + " - " + err.message + "\n\nПожалуйста, откройте ссылку в стандартном браузере и разрешите доступ.");
                     
                     const videoEl = document.getElementById('my-live-video');
                     if(videoEl) {
@@ -884,7 +882,6 @@
                     }
                 }
             };
-            // -------------------------------------------------------------------
 
             fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
                 if(data.latitude) {
@@ -1021,7 +1018,113 @@
                 }, 1500);
             }
 
-            // === ИЗМЕНЕНО ДЛЯ СИНХРОНИЗАЦИИ ОНЛАЙН ===
+            // === ФИКС ПЕРЕВОДА ОНЛАЙН В ГОЛОСОВОЙ КОМНАТЕ ===
+            window.processVoiceTranslation = function(text) {
+                const mBox = document.getElementById('voice-marquee-container');
+                const mText = document.getElementById('voice-marquee-text');
+                if (mBox && mText) {
+                    mBox.style.display = 'flex';
+                    mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
+                    
+                    // Переводим на язык друга (если он есть) или на английский
+                    let targetLang = voiceFriend.langCode.split('-')[0] || 'en';
+                    let targetFlag = voiceFriend.flag || '🌐';
+
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`)
+                    .then(res => res.json())
+                    .then(data => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-yellow-400 ml-4 font-bold">${targetFlag} ${data[0][0][0]}</span>`; })
+                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text}`; });
+                }
+            };
+
+            db.ref('voice_global').on('child_added', snapshot => {
+                const data = snapshot.val(); if(!data) return;
+                const mBox = document.getElementById('voice-marquee-container');
+                const mText = document.getElementById('voice-marquee-text');
+                if (mBox && mText) {
+                    mBox.style.display = 'flex';
+                    mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
+                    
+                    // Переводим на НАШ язык
+                    const isMe = data.sessionId === window.mySessionId;
+                    let targetLang = isMe ? voiceFriend.langCode.split('-')[0] : myProfileInfo.langCode.split('-')[0];
+                    let targetFlag = isMe ? voiceFriend.flag : myProfileInfo.flag;
+
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(data.text)}`)
+                    .then(res => res.json())
+                    .then(trans => { mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text} <span class="text-yellow-400 ml-4 font-bold">${targetFlag} ${trans[0][0][0]}</span>`; })
+                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text}`; });
+                }
+            });
+
+            // === ФИКС ПЕРЕВОДА ОНЛАЙН В КОНФЕРЕНЦИИ ===
+            window.processConfTranslation = function(text, msgId = null) {
+                // Выводим себе на экран (в бегущую строку)
+                const speakerMarquee = document.getElementById('speaker-marquee');
+                if(speakerMarquee) speakerMarquee.innerText = `➔ ${text}`;
+                
+                // Переводим для заглушек
+                let myBaseLang = myProfileInfo.langCode.split('-')[0];
+                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
+                if(!targetLangs.find(l => l.code === myBaseLang)) targetLangs.push({code: myBaseLang, flag: myProfileInfo.flag});
+                
+                Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(text)}`)
+                    .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
+                )).then(translations => {
+                    document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
+                        const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
+                        const t = translations.find(tr => tr.code === langCode) || translations[0];
+                        if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
+                    });
+                    
+                    if (msgId) {
+                        const transBox = document.getElementById(`${msgId}-trans`);
+                        if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
+                    }
+                }).catch(() => {});
+            };
+
+            db.ref('conf_global').on('child_added', snapshot => {
+                const data = snapshot.val(); if(!data) return;
+                const isMe = data.sessionId === window.mySessionId;
+                const confMessages = document.getElementById('conf-messages');
+                const msgId = 'conf-msg-' + snapshot.key;
+
+                if (confMessages) {
+                    confMessages.innerHTML += `
+                        <div class="conf-msg mt-2 flex gap-2">
+                            <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${data.photo}">
+                            <div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full">
+                                <span class="text-[#00C4CC] font-bold block mb-0.5">${data.name} ${data.flag}</span>
+                                ${data.text}
+                                <div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight">⏳ translating...</div>
+                            </div>
+                        </div>`;
+                    confMessages.scrollTop = confMessages.scrollHeight;
+                }
+
+                if (isMe) {
+                    const speakerMarquee = document.getElementById('speaker-marquee');
+                    if(speakerMarquee) speakerMarquee.innerText = `➔ ${data.text}`;
+                }
+
+                let myBaseLang = myProfileInfo.langCode.split('-')[0];
+                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
+                if(!targetLangs.find(l => l.code === myBaseLang)) targetLangs.push({code: myBaseLang, flag: myProfileInfo.flag});
+
+                Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(data.text)}`)
+                    .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
+                )).then(translations => {
+                    document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
+                        const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
+                        const t = translations.find(tr => tr.code === langCode) || translations[0];
+                        if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
+                    });
+                    const transBox = document.getElementById(`${msgId}-trans`);
+                    if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
+                }).catch(() => {});
+            });
+
             window.sendTextMessage = function(inputId) {
                 const inputEl = document.getElementById(inputId);
                 if(!inputEl) return;
@@ -1029,17 +1132,14 @@
                 if(!text) return;
 
                 if (inputId === 'voice-text-input') {
-                    // Отправляем в общий канал Voice для онлайн видимости
                     db.ref('voice_global').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                 } 
                 else if (inputId === 'conf-chat-input') {
-                    // Отправляем в общий канал Conference для онлайн видимости
                     db.ref('conf_global').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                 } 
                 inputEl.value = '';
             };
 
-            // === ИЗМЕНЕНО ДЛЯ СИНХРОНИЗАЦИИ ОНЛАЙН ===
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec();
@@ -1082,10 +1182,8 @@
                         chatInputEl.value = text;
                         window.sendFirebaseMsg();
                     } else if (currentMicTarget === 'voice') {
-                        // Отправляем голос в Firebase для онлайн видимости
                         db.ref('voice_global').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                     } else if (currentMicTarget === 'conf') {
-                        // Отправляем голос в Firebase для онлайн видимости
                         db.ref('conf_global').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                     }
                 };
@@ -1104,11 +1202,10 @@
                 document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
             }
 
-            // === ИЗМЕНЕНО ДЛЯ СИНХРОНИЗАЦИИ ОНЛАЙН ===
+            // === ФИКС ПЕРЕВОДА ОНЛАЙН В ОБЩЕМ ЧАТЕ ===
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim();
                 if(!text) return;
-                // Отправляем с фото и флагом, чтобы другой телефон точно знал, чья аватарка
                 db.ref(window.currentRoomId).push({ 
                     name: window.myUsername, 
                     text: text, 
@@ -1136,7 +1233,6 @@
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
                 const isAI = data.sessionId === "ai-bot-session";
                 
-                // Берем данные напрямую из присланного сообщения, чтобы работало на любом устройстве
                 let p = {
                     name: data.name,
                     photo: data.photo || 'https://ui-avatars.com/api/?name='+encodeURIComponent(data.name)+'&background=random',
@@ -1153,17 +1249,36 @@
                     : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="openAvatarModal('${isMe ? 'me' : p.name.toLowerCase()}', 'chat')">`;
 
                 const msgId = 'msg-' + snapshot.key;
+                
                 let targetLangs = [];
+                let myBaseLang = myProfileInfo.langCode.split('-')[0];
+                let senderBaseLang = p.langCode.split('-')[0];
+
                 if (window.currentRoomId === 'global') {
-                    const seen = new Set(); seen.add(p.langCode); 
-                    participants.forEach(part => { if (!seen.has(part.langCode) && part.id !== 'ai') { seen.add(part.langCode); targetLangs.push({ code: part.langCode, flag: part.flag }); } });
-                    if (!seen.has(myProfileInfo.langCode)) targetLangs.push({ code: myProfileInfo.langCode, flag: myProfileInfo.flag });
+                    const seen = new Set(); 
+                    seen.add(senderBaseLang);
+                    
+                    // ГАРАНТИЯ: Переводим на МОЙ язык, если писал не я.
+                    if (myBaseLang !== senderBaseLang) {
+                        targetLangs.push({ code: myBaseLang, flag: myProfileInfo.flag });
+                        seen.add(myBaseLang);
+                    }
+
+                    // Добавляем языки других участников
+                    participants.forEach(part => { 
+                        let baseL = part.langCode.split('-')[0];
+                        if (!seen.has(baseL) && part.id !== 'ai' && baseL !== senderBaseLang) { 
+                            seen.add(baseL); 
+                            targetLangs.push({ code: baseL, flag: part.flag }); 
+                        } 
+                    });
                 } else if (window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('private_me_') && !window.currentRoomId.includes('private_ai_')) {
-                    if (isMe) {
-                        const targetUserId = document.querySelector('.chat-contact.active-room')?.id.replace('chat-btn-', '');
-                        const targetUser = participants.find(part => part.id === targetUserId);
-                        if (targetUser && targetUser.id !== 'ai') targetLangs = [{ code: targetUser.langCode, flag: targetUser.flag }];
-                    } else targetLangs = [{ code: myProfileInfo.langCode, flag: myProfileInfo.flag }];
+                    let targetUserId = document.querySelector('.chat-contact.active-room')?.id.replace('chat-btn-', '');
+                    let targetUser = participants.find(part => part.id === targetUserId);
+                    if (targetUser && targetUser.id !== 'ai') {
+                        let targetUserBaseLang = targetUser.langCode.split('-')[0];
+                        targetLangs = [{ code: isMe ? targetUserBaseLang : myBaseLang, flag: isMe ? targetUser.flag : myProfileInfo.flag }];
+                    }
                 }
                 
                 let displayedText = data.text;
@@ -1178,7 +1293,7 @@
 
                 const bubbleHtml = `
                     <div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">
-                        ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}
+                        ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name} ${p.flag}</div>` : ''}
                         <div class="${customClass}" style="${bubbleStyle} padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; font-family: sans-serif;">${displayedText}</div>
                         ${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1" id="trans-box-${msgId}"></div>` : ''}
                     </div>`;
@@ -1201,62 +1316,6 @@
                     } catch (e) {}
                 }
             }
-
-            // === СЛУШАТЕЛИ ОНЛАЙН СИНХРОНИЗАЦИИ ДЛЯ VOICE И CONF ===
-            db.ref('voice_global').on('child_added', snapshot => {
-                const data = snapshot.val(); if(!data) return;
-                const mBox = document.getElementById('voice-marquee-container');
-                const mText = document.getElementById('voice-marquee-text');
-                if (mBox && mText) {
-                    mBox.style.display = 'flex';
-                    mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(data.text)}`)
-                    .then(res => res.json())
-                    .then(trans => { mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text} <span class="text-yellow-400 ml-4 font-bold">🇮🇹 ${trans[0][0][0]}</span>`; })
-                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text}`; });
-                }
-            });
-
-            db.ref('conf_global').on('child_added', snapshot => {
-                const data = snapshot.val(); if(!data) return;
-                const isMe = data.sessionId === window.mySessionId;
-                const confMessages = document.getElementById('conf-messages');
-                const msgId = 'conf-msg-' + snapshot.key;
-
-                // Добавляем в мини-чат
-                if (confMessages) {
-                    confMessages.innerHTML += `
-                        <div class="conf-msg mt-2 flex gap-2">
-                            <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${data.photo}">
-                            <div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full">
-                                <span class="text-[#00C4CC] font-bold block mb-0.5">${data.name} ${data.flag}</span>
-                                ${data.text}
-                                <div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight">⏳ translating...</div>
-                            </div>
-                        </div>`;
-                    confMessages.scrollTop = confMessages.scrollHeight;
-                }
-
-                // Выводим на свое видео только если это мы сказали (как было в Супер)
-                if (isMe) {
-                    const speakerMarquee = document.getElementById('speaker-marquee');
-                    if(speakerMarquee) speakerMarquee.innerText = `➔ ${data.text}`;
-                }
-
-                // Переводим и отправляем на заглушки
-                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
-                Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(data.text)}`)
-                    .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
-                )).then(translations => {
-                    document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
-                        const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
-                        const t = translations.find(tr => tr.code === langCode) || translations[0];
-                        if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
-                    });
-                    const transBox = document.getElementById(`${msgId}-trans`);
-                    if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
-                }).catch(() => {});
-            });
 
             window.toggleEmojiPicker = function(type) {
                 if(type === 'text') document.getElementById('text-emoji-picker')?.classList.toggle('hidden');
