@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Director Auto-Switch</title>
+    <title>Hello Friends App - Golden Director</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
+    <script type="text/javascript">
+        (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })();
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,8 +20,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
         body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
@@ -202,12 +202,15 @@
             <div id="header-dropdown" class="header-dropdown">
                 <a onclick="toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
+                
+                <a onclick="openMyProfile()"><i class="fa-solid fa-user w-5"></i> <span data-i18n="menu_profile">Profile</span></a>
+                <a><i class="fa-solid fa-gear w-5"></i> <span data-i18n="menu_settings">Settings</span></a>
                 <a onclick="toggleTheme()"><i id="theme-icon" class="fa-solid fa-sun w-5"></i> <span data-i18n="menu_theme">Theme</span></a>
                 <a onclick="openBankTransferModal()"><i class="fa-solid fa-money-bill-transfer w-5 text-green-400"></i> <span data-i18n="menu_transfer">Bank Transfer</span></a>
                 <a onclick="openAuthModal()"><i class="fa-solid fa-shield-halved w-5 text-blue-400"></i> <span data-i18n="menu_auth">Authentication</span></a>
                 <a onclick="document.getElementById('import-export-input').click(); closeDropdown()"><i class="fa-solid fa-file-import w-5"></i> <span data-i18n="menu_import">Import - Export</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
-                <a style="color: #a29bfe;"><i class="fa-solid fa-info-circle w-5"></i> <span style="font-size: 0.7rem;">Click an avatar to switch user</span></a>
+                <a style="color: #a29bfe;"><i class="fa-solid fa-info-circle w-5"></i> <span style="font-size: 0.7rem;">Click any avatar to swap</span></a>
             </div>
         </header>
 
@@ -301,7 +304,7 @@
                             </div>
                             
                             <div class="voice-user flex flex-col items-center">
-                                <div class="w-28 h-28 relative mb-3 shadow-xl cursor-pointer hover:scale-105 transition" onclick="alert('Вы сейчас: ' + window.myUsername)">
+                                <div class="w-28 h-28 relative mb-3 shadow-xl">
                                     <div id="voice-pulse" class="pulse-ring"></div>
                                     <img id="voice-me-photo" src="https://images.unsplash.com/photo-1557862921-37829c790f19?w=200" class="w-full h-full rounded-full object-cover border-4 border-[#a29bfe] relative z-10">
                                     <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#2a2d32] rounded-full p-1 border border-[#4a4e53]">🇦🇿</span>
@@ -343,17 +346,17 @@
                 
                 <div class="overflow-y-auto p-1 shrink-0" style="max-height: 48%;">
                     <div class="video-grid" id="conference-grid">
-                        </div>
+                    </div>
                 </div>
                 
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
                     <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 WebRTC Online</span>
+                        <span>Live Chat</span><span>👥 App Online</span>
                     </div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
                     
                     <div class="flex gap-2 mt-2 shrink-0 items-center">
-                        <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Hold to Translate"><i class="fa-solid fa-microphone text-base"></i></button>
+                        <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Speak"><i class="fa-solid fa-microphone text-base"></i></button>
                         <input type="text" id="conf-chat-input" data-i18n-placeholder="chat_plc" class="w-full bg-[#1e293b] text-white text-base px-3 py-2 rounded-lg border border-[#334155] outline-none font-sans" placeholder="Message or speak...">
                         <button id="conf-chat-send" onclick="sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
@@ -511,12 +514,20 @@
                     <img id="modal-img" src="" class="w-full h-full object-cover">
                 </div>
                 <h3 id="modal-name" class="text-xl font-bold text-white mb-4"></h3>
+                
                 <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] font-sans text-sm mb-5 shadow-inner">
                     <div id="modal-desc" class="flex flex-col gap-2.5 text-gray-300"></div>
                 </div>
+                
                 <div class="flex gap-3 w-full" id="modal-action-buttons">
                     <button id="modal-chat-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
                         <i class="fa-solid fa-comment"></i> Chat
+                    </button>
+                    <button id="modal-sms-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-comment-sms"></i> SMS
+                    </button>
+                    <button id="modal-email-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-envelope"></i> Email
                     </button>
                 </div>
             </div>
@@ -630,7 +641,7 @@
             window.closeAvatarModal();
             window.switchChatRoom('global');
 
-            // Красивое уведомление вместо alert
+            // Красивое уведомление
             const toast = document.getElementById('toast-notification');
             const tImg = document.getElementById('toast-img');
             const tIconWrap = document.getElementById('toast-icon-wrap');
@@ -672,13 +683,14 @@
             participants.filter(p => p.id !== 'ai').forEach((p) => {
                 chatSidebar.innerHTML += `
                 <div class="chat-contact mb-4" id="chat-btn-${p.id}">
-                    <div class="chat-contact-icon shadow-md cursor-pointer hover:border-red-500 transition-colors" style="background-image: url('${p.photo}'); position: relative;" onclick="becomeUser('${p.id}'); event.stopPropagation();" title="Click to become ${p.name}">
+                    <div class="chat-contact-icon shadow-md cursor-pointer hover:border-red-500 transition-colors" style="background-image: url('${p.photo}'); position: relative;" onclick="becomeUser('${p.id}'); event.stopPropagation();" title="Click to become ${p.name.split(' ')[0]}">
                         <img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md">
                     </div>
                     <p class="chat-contact-name cursor-pointer" onclick="switchChatRoom('${p.id}')">${p.name.split(' ')[0]}</p>
                 </div>`;
             });
         }
+        window.renderSidebar();
 
         async function handleNewMessage(snapshot) {
             const data = snapshot.val(); if(!data) return;
@@ -686,7 +698,7 @@
             const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
             const isAI = data.sessionId === "ai-bot-session";
             
-            // ВАЖНО: БЕРЕМ ДАННЫЕ ОТПРАВИТЕЛЯ ИЗ БАЗЫ
+            // ВАЖНО: БЕРЕМ ДАННЫЕ ОТПРАВИТЕЛЯ ИЗ БАЗЫ ИЛИ ИЗ ЕГО ИМЕНИ
             let p = {
                 name: data.name,
                 photo: data.photo || 'https://ui-avatars.com/api/?name='+encodeURIComponent(data.name)+'&background=random',
@@ -744,12 +756,42 @@
                     const transBoxEl = document.getElementById(`trans-box-${msgId}`);
                     if(transBoxEl) {
                         let html = ''; let marqueeTextStr = '';
-                        translationsRes.forEach(t => { html += `<div class="text-[0.75rem] ${isMe ? 'text-yellow-300' : 'text-[#a29bfe] font-bold'} opacity-95 mt-1 leading-snug">${t.flag} ${t.text}</div>`; marqueeTextStr += `${t.flag} ${t.text}       `; });
+                        translationsRes.forEach(t => { html += `<div class="text-[0.75rem] ${isMe ? 'text-yellow-300' : 'text-[#a29bfe] font-bold'} opacity-95 mt-1 leading-snug">${t.flag} ${t.text}</div>`; marqueeTextStr += `${t.flag} ${t.text}       `; });
                         transBoxEl.innerHTML = html;
                         const mCont = document.getElementById('typing-marquee-container'); const mText = document.getElementById('chat-info-marquee');
                         if (isMarqueeEnabled && mCont && mText) { mCont.style.display = 'flex'; mText.innerHTML = `🌍 <span class="text-white">${data.name}:</span> <span class="text-green-400 font-bold">${marqueeTextStr}</span>`; }
                     }
                 } catch (e) {}
+            }
+        }
+        
+        window.sendFirebaseMsg = function() {
+            const text = document.getElementById('chat-input').value.trim();
+            if(!text) return;
+            
+            db.ref(window.currentRoomId).push({ 
+                name: window.myUsername, 
+                photo: myProfileInfo.photo,
+                flag: myProfileInfo.flag,
+                langCode: myProfileInfo.langCode,
+                text: text, 
+                sessionId: window.mySessionId, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP 
+            });
+            document.getElementById('chat-input').value = '';
+
+            if(window.currentRoomId === 'private_ai_bot') {
+                setTimeout(() => {
+                    const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation.";
+                    db.ref(window.currentRoomId).push({ 
+                        name: "AI Assistant", 
+                        text: aiReply, 
+                        sessionId: "ai-bot-session", 
+                        flag: '🤖',
+                        langCode: 'en',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP 
+                    });
+                }, 1500);
             }
         }
     </script>
