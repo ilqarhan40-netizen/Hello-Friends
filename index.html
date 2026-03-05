@@ -346,17 +346,17 @@
                 
                 <div class="overflow-y-auto p-1 shrink-0" style="max-height: 48%;">
                     <div class="video-grid" id="conference-grid">
-                    </div>
+                        </div>
                 </div>
                 
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
                     <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 App Online</span>
+                        <span>Live Chat</span><span>👥 WebRTC Online</span>
                     </div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
                     
                     <div class="flex gap-2 mt-2 shrink-0 items-center">
-                        <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Speak"><i class="fa-solid fa-microphone text-base"></i></button>
+                        <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Hold to Translate"><i class="fa-solid fa-microphone text-base"></i></button>
                         <input type="text" id="conf-chat-input" data-i18n-placeholder="chat_plc" class="w-full bg-[#1e293b] text-white text-base px-3 py-2 rounded-lg border border-[#334155] outline-none font-sans" placeholder="Message or speak...">
                         <button id="conf-chat-send" onclick="sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
@@ -1010,6 +1010,21 @@
                 }, 1500);
             }
 
+            window.sendTextMessage = function(inputId) {
+                const inputEl = document.getElementById(inputId);
+                if(!inputEl) return;
+                const text = inputEl.value.trim();
+                if(!text) return;
+
+                if (inputId === 'voice-text-input') {
+                    db.ref('voice_sync').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, langCode: myProfileInfo.langCode, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                } 
+                else if (inputId === 'conf-chat-input') {
+                    db.ref('conf_sync').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, langCode: myProfileInfo.langCode, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                } 
+                inputEl.value = '';
+            };
+
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec();
@@ -1052,9 +1067,9 @@
                         chatInputEl.value = text;
                         window.sendFirebaseMsg();
                     } else if (currentMicTarget === 'voice') {
-                        db.ref('voice_global').push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                        db.ref('voice_sync').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, langCode: myProfileInfo.langCode, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                     } else if (currentMicTarget === 'conf') {
-                        db.ref('conf_global').push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                        db.ref('conf_sync').push({ name: window.myUsername, text: text, photo: myProfileInfo.photo, flag: myProfileInfo.flag, langCode: myProfileInfo.langCode, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                     }
                 };
 
@@ -1070,49 +1085,39 @@
                 document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
                 document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn'));
                 document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
-            } else {
-                const alertNoMic = () => alert("Голосовой ввод не поддерживается в этом браузере. Пожалуйста, используйте Chrome или Safari.");
-                document.getElementById('main-chat-mic-btn')?.addEventListener('click', alertNoMic);
-                document.getElementById('voice-mic-btn')?.addEventListener('click', alertNoMic);
-                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', alertNoMic);
             }
 
-            // === ФИКС ПЕРЕВОДА В VOICE ROOM ОНЛАЙН ===
-            db.ref('voice_global').on('child_added', snapshot => {
+            db.ref('voice_sync').on('child_added', snapshot => {
                 const data = snapshot.val(); if(!data) return;
                 const mBox = document.getElementById('voice-marquee-container');
                 const mText = document.getElementById('voice-marquee-text');
                 if (mBox && mText) {
                     mBox.style.display = 'flex';
-                    mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
+                    mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
                     
                     const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
-                    // Если писали МЫ -> переводим Маринелле. Если писал СОБЕСЕДНИК -> переводим НАМ
                     let targetLang = isMe ? 'it' : myProfileInfo.langCode.split('-')[0];
                     let targetFlag = isMe ? '🇮🇹' : myProfileInfo.flag;
 
                     fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(data.text)}`)
                     .then(res => res.json())
-                    .then(transData => { mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text} <span class="text-yellow-400 ml-4 font-bold">${targetFlag} ${transData[0][0][0]}</span>`; })
-                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${data.name}:</span> ${data.text}`; });
+                    .then(transData => { mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text} <span class="text-yellow-400 ml-4 font-bold">${targetFlag} ${transData[0][0][0]}</span>`; })
+                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${data.name} ${data.flag}:</span> ${data.text}`; });
                 }
             });
 
-            // === ФИКС ПЕРЕВОДА В КОНФЕРЕНЦИИ ОНЛАЙН ===
-            db.ref('conf_global').on('child_added', snapshot => {
+            db.ref('conf_sync').on('child_added', snapshot => {
                 const data = snapshot.val(); if(!data) return;
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
                 const confMessages = document.getElementById('conf-messages');
                 const msgId = 'conf-msg-' + snapshot.key;
 
-                let p = isMe ? myProfileInfo : (participants.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+encodeURIComponent(data.name)+'&background=random', langCode: 'en', flag: '🌐' });
-
                 if (confMessages) {
                     confMessages.innerHTML += `
                         <div class="conf-msg mt-2 flex gap-2">
-                            <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${p.photo}">
+                            <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${data.photo}">
                             <div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full">
-                                <span class="text-[#00C4CC] font-bold block mb-0.5">${data.name} ${p.flag}</span>
+                                <span class="text-[#00C4CC] font-bold block mb-0.5">${data.name} ${data.flag}</span>
                                 ${data.text}
                                 <div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight">⏳ translating...</div>
                             </div>
@@ -1125,42 +1130,35 @@
                     if(speakerMarquee) speakerMarquee.innerText = `➔ ${data.text}`;
                 }
 
-                // Жестко переводим на 4 главных языка
-                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'}, {code: 'az', flag: '🇦🇿'} ];
-                
+                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
+                let myBaseLang = myProfileInfo.langCode.split('-')[0];
+                if(!targetLangs.find(l => l.code === myBaseLang)) targetLangs.push({code: myBaseLang, flag: myProfileInfo.flag});
+
                 Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(data.text)}`)
                     .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
                 )).then(translations => {
                     document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
                         const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
-                        const t = translations.find(tr => tr.code === langCode) || translations.find(tr => tr.code === 'en');
+                        const t = translations.find(tr => tr.code === langCode) || translations[0];
                         if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
                     });
-                    
                     const transBox = document.getElementById(`${msgId}-trans`);
                     if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
                 }).catch(() => {});
             });
 
-            window.sendTextMessage = function(inputId) {
-                const inputEl = document.getElementById(inputId);
-                if(!inputEl) return;
-                const text = inputEl.value.trim();
-                if(!text) return;
-
-                if (inputId === 'voice-text-input') {
-                    db.ref('voice_global').push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                } 
-                else if (inputId === 'conf-chat-input') {
-                    db.ref('conf_global').push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                } 
-                inputEl.value = '';
-            };
-
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim();
                 if(!text) return;
-                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                db.ref(window.currentRoomId).push({ 
+                    name: window.myUsername, 
+                    text: text, 
+                    photo: myProfileInfo.photo,
+                    flag: myProfileInfo.flag,
+                    langCode: myProfileInfo.langCode,
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP 
+                });
                 document.getElementById('chat-input').value = '';
 
                 if(window.currentRoomId === 'private_ai_bot') {
@@ -1179,28 +1177,47 @@
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
                 const isAI = data.sessionId === "ai-bot-session";
                 
-                let p = isMe ? myProfileInfo : (isAI ? aiBot : (participants.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+encodeURIComponent(data.name)+'&background=random', langCode: 'en', flag: '🌐' }));
+                let p;
+                if (isAI) {
+                    p = aiBot;
+                } else if (isMe) {
+                    p = myProfileInfo;
+                } else {
+                    p = {
+                        name: data.name,
+                        photo: data.photo || (participants.find(part => part.name.includes(data.name))?.photo || 'https://ui-avatars.com/api/?name='+encodeURIComponent(data.name)+'&background=random'),
+                        flag: data.flag || (participants.find(part => part.name.includes(data.name))?.flag || '🌐'),
+                        langCode: data.langCode || (participants.find(part => part.name.includes(data.name))?.langCode || 'en')
+                    };
+                }
                 
                 const msgWrapper = document.createElement('div');
                 msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
                 
                 let avatarHtml = isAI 
                     ? `<div class="w-8 h-8 rounded-full shrink-0 self-end border border-[#4a4e53] flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm shadow-md" onclick="openAvatarModal('ai', 'chat')">🤖</div>` 
-                    : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="openAvatarModal('${isMe ? 'me' : p.id}', 'chat')">`;
+                    : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="openAvatarModal('${isMe ? 'me' : p.name.split(' ')[0].toLowerCase()}', 'chat')">`;
 
                 const msgId = 'msg-' + snapshot.key;
-                
-                // ГАРАНТИЯ В ОБЩЕМ ЧАТЕ: Переводит всегда на 4 языка (Английский, Итальянский, Немецкий, Азербайджанский)
                 let targetLangs = [];
+                
                 if (window.currentRoomId === 'global') {
-                    const defaultLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'}, {code: 'az', flag: '🇦🇿'} ];
-                    targetLangs = defaultLangs.filter(l => l.code !== p.langCode.split('-')[0]); // убираем язык отправителя
+                    const seen = new Set(); seen.add(p.langCode.split('-')[0]); 
+                    participants.forEach(part => { 
+                        if (!seen.has(part.langCode.split('-')[0]) && part.id !== 'ai') { 
+                            seen.add(part.langCode.split('-')[0]); 
+                            targetLangs.push({ code: part.langCode.split('-')[0], flag: part.flag }); 
+                        } 
+                    });
+                    if (!seen.has(myProfileInfo.langCode.split('-')[0])) {
+                        targetLangs.push({ code: myProfileInfo.langCode.split('-')[0], flag: myProfileInfo.flag });
+                    }
                 } else if (window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('private_me_') && !window.currentRoomId.includes('private_ai_')) {
                     if (isMe) {
                         const targetUserId = document.querySelector('.chat-contact.active-room')?.id.replace('chat-btn-', '');
                         const targetUser = participants.find(part => part.id === targetUserId);
-                        if (targetUser && targetUser.id !== 'ai') targetLangs = [{ code: targetUser.langCode, flag: targetUser.flag }];
-                    } else targetLangs = [{ code: myProfileInfo.langCode, flag: myProfileInfo.flag }];
+                        if (targetUser && targetUser.id !== 'ai') targetLangs = [{ code: targetUser.langCode.split('-')[0], flag: targetUser.flag }];
+                    } else targetLangs = [{ code: myProfileInfo.langCode.split('-')[0], flag: myProfileInfo.flag }];
                 }
                 
                 let displayedText = data.text;
@@ -1215,7 +1232,7 @@
 
                 const bubbleHtml = `
                     <div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">
-                        ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}
+                        ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name} ${p.flag}</div>` : ''}
                         <div class="${customClass}" style="${bubbleStyle} padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; font-family: sans-serif;">${displayedText}</div>
                         ${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1" id="trans-box-${msgId}"></div>` : ''}
                     </div>`;
