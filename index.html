@@ -85,9 +85,9 @@
         .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
         .form-btn:active { transform: scale(0.98); }
 
-        #edit-profile-modal .form-input { padding: 8px 12px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
-        #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; display: block; width: 100%; text-align: left; font-family: sans-serif; }
-        #edit-profile-modal select.form-input { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; }
+        #edit-profile-modal .form-input { padding: 6px 10px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
+        #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; display: block; width: 100%; text-align: left; font-family: sans-serif; }
+        #edit-profile-modal select.form-input { cursor: pointer; appearance: none; }
 
         .footer-wrapper { margin-top: auto; width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; flex-shrink: 0; position: relative; z-index: 50; }
         .actions-footer { background-color: #2a2d32; padding: 10px 20px; border-top: 1px solid #4a4e53; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.4s; }
@@ -382,18 +382,17 @@
         </div>
 
         <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
-            <div class="app-modal-content w-[95%] max-w-[400px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeAvatarModal()"></i>
-                <div id="modal-img-container" class="w-28 h-28 rounded-full mb-4 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-5xl">
+            <div class="app-modal-content w-[92%] max-w-[420px] max-h-[90vh] overflow-y-auto !px-4 !py-6" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="window.closeAvatarModal()"></i>
+                
+                <div id="modal-img-container" class="w-24 h-24 rounded-full mb-3 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-4xl shrink-0">
                     <img id="modal-img" src="" class="w-full h-full object-cover">
                 </div>
-                <h3 id="modal-name" class="text-xl font-bold text-white mb-4"></h3>
+                <h3 id="modal-name" class="text-xl font-bold text-white mb-4 text-center"></h3>
                 
-                <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] font-sans text-sm mb-5 shadow-inner">
-                    <div id="modal-desc" class="flex flex-col gap-2.5 text-gray-300"></div>
-                </div>
+                <div id="modal-desc" class="w-full flex flex-col mb-5"></div>
                 
-                <div class="flex gap-3 w-full" id="modal-action-buttons">
+                <div class="flex gap-2 w-full mt-auto shrink-0" id="modal-action-buttons">
                     <button id="modal-chat-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
                         <i class="fa-solid fa-comment"></i> Chat
                     </button>
@@ -408,14 +407,14 @@
         </div>
 
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) document.getElementById('edit-profile-modal').classList.remove('active');">
-            <div class="app-modal-content w-[95%] max-w-[400px] max-h-[85vh] overflow-y-auto p-4" onclick="event.stopPropagation();">
+            <div class="app-modal-content w-[92%] max-w-[420px] max-h-[90vh] overflow-y-auto p-5" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="document.getElementById('edit-profile-modal').classList.remove('active')"></i>
                 
                 <h2 id="profile-modal-title" class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">
-                    <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Registration
+                    <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile
                 </h2>
 
-                <div class="flex flex-col items-center mb-3 w-full">
+                <div class="flex flex-col items-center mb-3 w-full shrink-0">
                     <div class="relative w-20 h-20 mb-1">
                         <img id="edit-preview-photo" src="https://ui-avatars.com/api/?name=User" class="w-full h-full rounded-full object-cover border-2 border-[#a29bfe] shadow-md">
                         <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#a29bfe] text-white rounded-full w-7 h-7 flex items-center justify-center border border-[#2a2d32] hover:scale-110 transition cursor-pointer" title="Upload Photo">
@@ -426,13 +425,13 @@
                 </div>
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Name</label>
-                <input type="text" id="edit-name" class="form-input py-1.5 px-3 text-sm mb-2" placeholder="Your Name">
+                <input type="text" id="edit-name" class="form-input py-2 px-3 text-sm mb-2" placeholder="Your Name">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Country</label>
                 <div class="flex items-center gap-2 w-full mb-2">
-                    <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-8 h-5 rounded-sm border border-[#4a4e53] object-cover shadow-sm shrink-0">
+                    <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-6 rounded-sm border border-[#4a4e53] object-cover shadow-sm shrink-0">
                     <div class="relative w-full">
-                        <select id="edit-country-select" class="form-input py-1.5 px-2 text-sm w-full mt-0 appearance-none pr-8 bg-[#1a1e23]" onchange="window.handleCountryChange(this)">
+                        <select id="edit-country-select" class="form-input py-2 px-3 text-sm w-full mt-0 appearance-none pr-8 bg-[#1a1e23]" onchange="window.handleCountryChange(this)">
                             <option value="un" data-name="Global" data-emoji="🌐">Global / Default</option>
                             <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿">Azerbaijan</option>
                             <option value="ru" data-name="Russia" data-emoji="🇷🇺">Russia</option>
@@ -453,26 +452,26 @@
                 <div class="flex gap-2 w-full mb-2">
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Phone</label>
-                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="+...">
+                        <input type="tel" id="edit-phone" class="form-input py-2 px-2 text-sm mt-0" placeholder="+...">
                     </div>
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Email</label>
-                        <input type="email" id="edit-email" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="mail@...">
+                        <input type="email" id="edit-email" class="form-input py-2 px-2 text-sm mt-0" placeholder="mail@...">
                     </div>
                 </div>
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Profession / Role</label>
-                <input type="text" id="edit-prof" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. CEO / Investor">
+                <input type="text" id="edit-prof" class="form-input py-2 px-3 text-sm mb-2 mt-0" placeholder="e.g. CEO / Investor">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Languages</label>
-                <input type="text" id="edit-langs" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. English, Russian">
+                <input type="text" id="edit-langs" class="form-input py-2 px-3 text-sm mb-2 mt-0" placeholder="e.g. English, Russian">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">About / CV</label>
-                <textarea id="edit-desc" class="form-input resize-none w-full py-1.5 px-3 text-sm mt-0" rows="2" placeholder="Tell about your skills..."></textarea>
+                <textarea id="edit-desc" class="form-input resize-none w-full py-2 px-3 text-sm mt-0" rows="2" placeholder="Tell about your skills..."></textarea>
 
-                <button onclick="window.saveProfileData()" class="form-btn mt-3 mb-2 py-2.5 text-sm w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
+                <button onclick="window.saveProfileData()" class="form-btn mt-4 mb-2 py-3 text-sm w-full shadow-lg"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
 
-                <div class="mt-2 pt-3 border-t border-[#4a4e53] text-center w-full">
+                <div class="mt-2 pt-3 border-t border-[#4a4e53] text-center w-full shrink-0">
                     <p class="text-[0.65rem] text-gray-400 font-sans mb-1">Hello Friends Super-App</p>
                     <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.openAvatarModal('ilgar', 'cv');" class="text-[0.75rem] text-[#a29bfe] font-bold hover:text-white transition bg-transparent border-none cursor-pointer">
                         Created by Ilgar (Founder)
@@ -1549,7 +1548,7 @@
                 location.reload();
             }
 
-            // ПЕРЕПИСАННЫЙ AVATAR MODAL (АВТО-ОПИСАНИЕ СТРАНЫ)
+            // БЛОК 3: УМНАЯ ЛОГИКА CV (КАРТОЧНЫЙ ДИЗАЙН)
             window.openAvatarModal = function(id, mode = 'cv') {
                 const p = id === 'me' ? myProfileInfo : (participants.find(part => part.id === id) || allCharacters.find(part => part.id === id));
                 if (!p) return;
@@ -1563,29 +1562,60 @@
                 const descContainer = document.getElementById('modal-desc');
                 const actionButtons = document.getElementById('modal-action-buttons');
                 
-                const cDesc = p.countryDesc || (countryData[p.flagCode] ? countryData[p.flagCode].desc : 'Country information is not available.');
-                const displayDesc = p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? `${cDesc}<br><br><b class="text-[#a29bfe]">About Me:</b><br>${p.desc}` : cDesc;
+                const cInfo = countryData[p.flagCode] || countryData['un'];
+                const cDesc = p.countryDesc || cInfo.desc;
+                const pDesc = p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? p.desc : '';
+
+                let contactInfo = (mode !== 'chat' && id !== 'ai') ? `
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <div class="bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53] text-[0.65rem] text-gray-300 truncate flex items-center shadow-inner"><i class="fa-solid fa-phone text-[#a29bfe] mr-2"></i> ${p.phone || 'Hidden'}</div>
+                        <div class="bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53] text-[0.65rem] text-gray-300 truncate flex items-center shadow-inner"><i class="fa-solid fa-envelope text-[#a29bfe] mr-2"></i> ${p.email || 'Hidden'}</div>
+                    </div>` : '';
+
+                descContainer.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-[#4a4e53] pb-3 mb-3">
+                        <div class="flex flex-col">
+                            <span class="text-gray-100 font-bold text-lg leading-tight">${p.country}</span>
+                            <span class="text-[#a29bfe] text-xs font-bold">${p.profession || 'User'}</span>
+                        </div>
+                        <span class="text-4xl drop-shadow-lg">${p.flag}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-[#1a1e23] p-2.5 rounded-xl border border-[#4a4e53] flex flex-col justify-center shadow-sm">
+                            <span class="text-[0.6rem] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Languages</span>
+                            <span class="text-xs text-white font-bold truncate">${p.languages || 'Auto'}</span>
+                        </div>
+                        <div class="bg-[#1a1e23] p-2.5 rounded-xl border border-[#4a4e53] flex flex-col justify-center shadow-sm">
+                            <span class="text-[0.6rem] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Population</span>
+                            <span class="text-xs text-white font-bold truncate">${p.pop || cInfo.pop}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1a1e23] p-3 rounded-xl border border-[#4a4e53] shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-[#a29bfe]"></div>
+                        <span class="text-[0.65rem] text-[#a29bfe] font-bold uppercase tracking-wider block mb-1 pl-2">🌍 Country Overview</span>
+                        <span class="text-[0.6rem] text-gray-400 block mb-1 pl-2">Seas: ${p.seas || cInfo.seas}</span>
+                        <p class="text-xs text-gray-300 leading-relaxed font-sans pl-2">${cDesc}</p>
+                    </div>
+
+                    ${pDesc ? `
+                    <div class="bg-[#1a1e23] p-3 rounded-xl border border-[#4a4e53] shadow-sm mt-3 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+                        <span class="text-[0.65rem] text-green-400 font-bold uppercase tracking-wider block mb-1 pl-2">📝 About Me / CV</span>
+                        <p class="text-xs text-gray-300 leading-relaxed font-sans pl-2">${pDesc}</p>
+                    </div>` : ''}
+                    
+                    ${contactInfo}
+                `;
 
                 if (mode === 'chat' || id === 'ai') {
-                    descContainer.innerHTML = `
-                        <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages || 'Auto'}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop || cInfo.pop}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Seas:</b> <span class="text-gray-300 text-base">${p.seas || cInfo.seas}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
                     actionButtons.style.display = 'none'; 
                 } else {
-                    descContainer.innerHTML = `
-                        <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Profession:</b> <span class="text-gray-300 text-base">${p.profession || 'User'}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages || 'Auto'}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Phone:</b> <span class="text-gray-300 text-base">${p.phone || 'Hidden'}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Email:</b> <span class="text-gray-300 text-base">${p.email || 'Hidden'}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
                     actionButtons.style.display = 'flex'; 
-                    document.getElementById('modal-email-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.openEmailModal(); };
-                    document.getElementById('modal-chat-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); };
-                    document.getElementById('modal-sms-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.location.href = `sms:${p.phone.replace(/\s+/g, '')}`; };
+                    document.getElementById('modal-email-btn').onclick = () => { window.closeAvatarModal(); window.openEmailModal(); };
+                    document.getElementById('modal-chat-btn').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); };
+                    document.getElementById('modal-sms-btn').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; };
                 }
                 document.getElementById('avatar-modal').classList.add('active');
             };
