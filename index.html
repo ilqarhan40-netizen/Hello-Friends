@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Smart Logic CV</title>
+    <title>Hello Friends App - Smart Logic + Aggregator</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -85,7 +85,6 @@
         .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
         .form-btn:active { transform: scale(0.98); }
 
-        /* СТИЛИ ДЛЯ КОМПАКТНОЙ ФОРМЫ */
         #edit-profile-modal .form-input { padding: 8px 12px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
         #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; display: block; width: 100%; text-align: left; font-family: sans-serif; }
         #edit-profile-modal select.form-input { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; }
@@ -123,7 +122,6 @@
         .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
 
-        /* СВЕТЛАЯ ТЕМА */
         .mobile-screen.light-theme { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-color: #ced4da; color: #212529; }
         .mobile-screen.light-theme .header-icons button { color: #495057; }
         .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #dee2e6; }
@@ -856,54 +854,83 @@
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', countryDesc: 'Virtual Environment', languages: 'All languages', video: '' };
 
+            // --- АГРЕГАТОР ВСЕХ СОЗДАННЫХ ПОЛЬЗОВАТЕЛЕЙ ИЗ ПАМЯТИ ---
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith('hf_custom_')) {
+                    try {
+                        let savedUser = JSON.parse(localStorage.getItem(key));
+                        let savedId = savedUser.name.toLowerCase().replace(/\s+/g, '');
+                        // Добавляем всех, кого вы насоздавали (Алекс, Мария и тд), чтобы они больше не пропадали
+                        if (savedId !== 'ilgar' && !allCharacters.find(c => c.id === savedId)) {
+                            savedUser.id = savedId;
+                            if(!savedUser.video) savedUser.video = 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4';
+                            allCharacters.push(savedUser);
+                        }
+                    } catch(e) {}
+                }
+            }
+
             let isIlgar = window.myUsername.toLowerCase().includes('ilgar');
             let myChar = null;
 
             if (isIlgar) {
-                // ИЛЬГАР ВХОДИТ КАК БОСС
                 myChar = allCharacters.find(c => c.id === 'ilgar');
             } else {
-                // ЛЮБОЙ ДРУГОЙ ВХОДИТ КАК НОВЫЙ ПОЛЬЗОВАТЕЛЬ
-                myChar = {
-                    id: window.myUsername.toLowerCase().replace(/\s+/g, ''),
-                    name: window.myUsername,
-                    photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
-                    profession: 'New User',
-                    email: window.myUsername.toLowerCase().replace(/\s+/g, '') + '@hellofriends.com',
-                    phone: '+0 000 000 0000',
-                    flag: '🌐', flagCode: 'un', langCode: 'en',
-                    country: 'Global', pop: 'Unknown', seas: 'Digital',
-                    desc: 'I am a new user in the Hello Friends app.',
-                    countryDesc: 'International user connecting globally.',
-                    languages: 'Auto',
-                    video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'
-                };
+                // Если зашел новый человек, ищем его в нашей обновленной базе
+                let existingId = window.myUsername.toLowerCase().replace(/\s+/g, '');
+                let existingUser = allCharacters.find(c => c.id === existingId);
+                
+                if (existingUser) {
+                    myChar = existingUser;
+                } else {
+                    // Если это вообще абсолютно новый гость
+                    myChar = {
+                        id: existingId,
+                        name: window.myUsername,
+                        photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
+                        profession: 'New User',
+                        email: existingId + '@hellofriends.com',
+                        phone: '+0 000 000 0000',
+                        flag: '🌐', flagCode: 'un', langCode: 'en',
+                        country: 'Global', pop: 'Unknown', seas: 'Digital',
+                        desc: 'I am a new user in the Hello Friends app.',
+                        countryDesc: 'International user connecting globally.',
+                        languages: 'Auto',
+                        video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'
+                    };
+                }
             }
 
             let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
             window.myUsername = myChar.name.split(' ')[0]; 
 
-            // Загружаем только тот профиль, который принадлежит этому конкретному пользователю
+            // Загружаем только профиль того, кто держит телефон
             const savedCustomProfile = JSON.parse(localStorage.getItem('hf_custom_' + window.myUsername.toLowerCase()));
             if (savedCustomProfile) {
                 myProfileInfo = { ...myProfileInfo, ...savedCustomProfile, id: 'me', name: savedCustomProfile.name.split(' ')[0] + ' (You)' };
             }
 
-            let participants = [aiBot, ...allCharacters.filter(c => c.id !== 'ilgar')];
-            // Если Босс не Ильгар, добавляем Ильгара в список контактов!
-            if (!isIlgar) {
-                participants = [aiBot, allCharacters.find(c => c.id === 'ilgar'), ...allCharacters.filter(c => c.id !== 'ilgar')];
-            }
+            // Формируем список контактов: Исключаем ТОЛЬКО текущего пользователя
+            let participants = [aiBot];
+            allCharacters.forEach(c => {
+                if (c.id !== (myChar.id === 'me' ? myChar.id : myChar.id)) { // Проверка по реальному ID
+                    // Защита от дублей: если юзер не равен текущему
+                    if (c.name.split(' ')[0] !== window.myUsername) {
+                        participants.push(c);
+                    }
+                }
+            });
 
             window.switchTestUser = function() { 
-                const newUser = prompt("Введите имя для входа (например: Ilgar, John, Guest):", window.myUsername); 
+                const newUser = prompt("Введите имя для входа (например: Ilgar, Alex, Guest):", window.myUsername); 
                 if(newUser) { 
                     localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
                     location.reload(); 
                 } 
             }
 
-            const voiceFriend = participants.find(c => c.id === 'marinella') || participants[2]; 
+            const voiceFriend = participants.find(c => c.id === 'marinella') || participants[1]; 
             if (voiceFriend) {
                 document.getElementById('voice-friend-photo').src = voiceFriend.photo;
                 document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
@@ -1173,7 +1200,8 @@
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
                 const isAI = data.sessionId === "ai-bot-session";
                 
-                let p = isMe ? myProfileInfo : (isAI ? aiBot : (participants.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+data.name+'&background=random', langCode: 'en', flag: '🌐' }));
+                // ИЩЕМ ЮЗЕРА В ПОЛНОЙ БАЗЕ (ВКЛЮЧАЯ ВАШИХ СОЗДАННЫХ)
+                let p = isMe ? myProfileInfo : (isAI ? aiBot : (allCharacters.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+data.name+'&background=random', langCode: 'en', flag: '🌐' }));
                 
                 const msgWrapper = document.createElement('div');
                 msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
@@ -1377,7 +1405,6 @@
                 const flagCode = selectElement.value;
                 document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`;
                 
-                // АВТО-ПРЕФИКС ТЕЛЕФОНА
                 if (countryData[flagCode]) {
                     const phoneInput = document.getElementById('edit-phone');
                     if(!phoneInput.value || phoneInput.value.startsWith('+')) {
@@ -1429,7 +1456,7 @@
                 const selectEl = document.getElementById('edit-country-select');
                 const selectedOption = selectEl.options[selectEl.selectedIndex];
                 const flagCode = selectEl.value;
-                const cData = countryData[flagCode] || countryData['un']; // Подтягиваем данные из Справочника
+                const cData = countryData[flagCode] || countryData['un']; 
 
                 let customProfile = {
                     name: nameVal,
@@ -1438,24 +1465,23 @@
                     flag: selectedOption.getAttribute('data-emoji'),
                     country: selectedOption.getAttribute('data-name'),
                     langCode: selectedOption.getAttribute('data-lang') || 'en',
-                    pop: cData.pop, // АВТО: Население
-                    seas: cData.seas, // АВТО: Моря
-                    countryDesc: cData.desc, // АВТО: Описание страны
+                    pop: cData.pop, 
+                    seas: cData.seas, 
+                    countryDesc: cData.desc, 
                     phone: document.getElementById('edit-phone').value.trim() || 'Not provided',
                     email: document.getElementById('edit-email').value.trim() || 'Not provided',
                     profession: document.getElementById('edit-prof').value.trim() || 'No profession',
                     languages: document.getElementById('edit-langs').value.trim() || 'Auto',
-                    desc: document.getElementById('edit-desc').value.trim() || 'No description provided.' // ЛИЧНОЕ CV
+                    desc: document.getElementById('edit-desc').value.trim() || 'No description provided.' 
                 };
 
-                // Сохраняем изолированно для текущего имени пользователя!
                 localStorage.setItem('hf_custom_' + window.myUsername.toLowerCase(), JSON.stringify(customProfile));
                 
                 alert('Profile saved! App will reload to apply your language and data globally. 🌍');
                 location.reload(); 
             }
 
-            // УМНОЕ ОКНО CV (Собирает Авто-справку и Личное описание)
+            // УМНОЕ ОКНО CV
             window.openAvatarModal = function(id, mode = 'cv') {
                 const p = id === 'me' ? myProfileInfo : participants.find(part => part.id === id);
                 if (!p) return;
