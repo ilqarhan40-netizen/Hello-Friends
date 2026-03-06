@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Golden Master + CV</title>
+    <title>Hello Friends App - Stable Master + Smart Auth</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -208,7 +208,7 @@
                 <a onclick="toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
                 
-                <a onclick="openMyProfile()"><i class="fa-solid fa-user-pen w-5 text-[#a29bfe]"></i> <span data-i18n="menu_profile">Edit Profile</span></a>
+                <a onclick="openMyProfile()"><i class="fa-solid fa-user-pen w-5 text-[#a29bfe]"></i> <span id="menu-profile-text" data-i18n="menu_profile">Edit Profile</span></a>
                 
                 <a><i class="fa-solid fa-gear w-5"></i> <span data-i18n="menu_settings">Settings</span></a>
                 <a onclick="toggleTheme()"><i id="theme-icon" class="fa-solid fa-sun w-5"></i> <span data-i18n="menu_theme">Theme</span></a>
@@ -216,7 +216,8 @@
                 <a onclick="openAuthModal()"><i class="fa-solid fa-shield-halved w-5 text-blue-400"></i> <span data-i18n="menu_auth">Authentication</span></a>
                 <a onclick="document.getElementById('import-export-input').click(); closeDropdown()"><i class="fa-solid fa-file-import w-5"></i> <span data-i18n="menu_import">Import - Export</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
-                <a style="color: #ef4444;" onclick="switchTestUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Switch User</span></a>
+                
+                <a style="color: #ef4444;" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Log Out</span></a>
             </div>
         </header>
 
@@ -454,8 +455,8 @@
             <div class="app-modal-content w-full max-w-[300px] max-h-[80vh] overflow-y-auto p-4" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="document.getElementById('edit-profile-modal').classList.remove('active')"></i>
                 
-                <h2 class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">
-                    <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile
+                <h2 id="profile-modal-title" class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">
+                    <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Registration
                 </h2>
 
                 <div class="flex flex-col items-center mb-3 w-full">
@@ -474,26 +475,26 @@
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Country</label>
                 <div class="flex items-center gap-2 w-full mb-2">
                     <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-8 h-5 rounded-sm border border-[#4a4e53] object-cover shadow-sm shrink-0">
-                    <select id="edit-country-select" class="form-input py-1.5 px-2 text-sm w-full mt-0" onchange="updateFlagIcon(this)">
-                        <option value="un" data-name="Global" data-emoji="🌐">Global / Default</option>
-                        <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿">Azerbaijan</option>
-                        <option value="ru" data-name="Russia" data-emoji="🇷🇺">Russia</option>
-                        <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧">United Kingdom</option>
-                        <option value="us" data-name="United States" data-emoji="🇺🇸">United States</option>
-                        <option value="de" data-name="Germany" data-emoji="🇩🇪">Germany</option>
-                        <option value="it" data-name="Italy" data-emoji="🇮🇹">Italy</option>
-                        <option value="tr" data-name="Turkey" data-emoji="🇹🇷">Turkey</option>
-                        <option value="fr" data-name="France" data-emoji="🇫🇷">France</option>
-                        <option value="es" data-name="Spain" data-emoji="🇪🇸">Spain</option>
-                        <option value="cn" data-name="China" data-emoji="🇨🇳">China</option>
-                        <option value="ae" data-name="UAE" data-emoji="🇦🇪">United Arab Emirates</option>
+                    <select id="edit-country-select" class="form-input py-1.5 px-2 text-sm w-full mt-0" onchange="handleCountryChange(this)">
+                        <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global / Default</option>
+                        <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
+                        <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
+                        <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
+                        <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
+                        <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
+                        <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
+                        <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
+                        <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
+                        <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
+                        <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh-CN">China</option>
+                        <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">United Arab Emirates</option>
                     </select>
                 </div>
 
                 <div class="flex gap-2 w-full mb-2">
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Phone</label>
-                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="+994...">
+                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="+...">
                     </div>
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Email</label>
@@ -510,17 +511,12 @@
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">About / CV</label>
                 <textarea id="edit-desc" class="form-input resize-none w-full py-1.5 px-3 text-sm mt-0" rows="2" placeholder="Tell about your skills..."></textarea>
 
-                <button onclick="saveProfileData()" class="form-btn mt-3 mb-3 py-2.5 text-sm w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
+                <button id="profile-modal-btn" onclick="saveProfileData()" class="form-btn mt-3 mb-2 py-2.5 text-sm w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Complete Registration</button>
 
-                <div class="flex gap-2 w-full border-t border-[#4a4e53] pt-3">
-                    <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom('me');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1 text-xs shadow-sm">
-                        <i class="fa-solid fa-comment"></i> Chat
-                    </button>
-                    <button onclick="alert('You cannot send SMS to yourself.');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1 text-xs shadow-sm opacity-80">
-                        <i class="fa-solid fa-comment-sms"></i> SMS
-                    </button>
-                    <button onclick="alert('You cannot email yourself from here.');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1 text-xs shadow-sm opacity-80">
-                        <i class="fa-solid fa-envelope"></i> Email
+                <div class="mt-2 pt-3 border-t border-[#4a4e53] text-center w-full">
+                    <p class="text-[0.65rem] text-gray-400 font-sans mb-1">Hello Friends Super-App</p>
+                    <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.openAvatarModal('ilgar', 'cv');" class="text-[0.75rem] text-[#a29bfe] font-bold hover:text-white transition bg-transparent border-none cursor-pointer">
+                        Created by Ilgar (Founder)
                     </button>
                 </div>
             </div>
@@ -704,6 +700,22 @@
     </div>
 
     <script>
+        // --- СПРАВОЧНИК СТРАН (БИЗНЕС ЛОГИКА) ---
+        const countryData = {
+            "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
+            "az": { phone: "+994", pop: "~10.1 million", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire. Known for rich culture and oil reserves." },
+            "ru": { phone: "+7", pop: "~144 million", seas: "Arctic Ocean, Black Sea", desc: "The largest country in the world, spanning Eastern Europe and Northern Asia." },
+            "gb": { phone: "+44", pop: "~67 million", seas: "North Sea, Atlantic Ocean", desc: "An island nation with deep historical global influence." },
+            "us": { phone: "+1", pop: "~331 million", seas: "Atlantic, Pacific Oceans", desc: "A massive country with diverse geography and leading tech industries." },
+            "de": { phone: "+49", pop: "~84 million", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe, known for precision engineering." },
+            "it": { phone: "+39", pop: "~59 million", seas: "Mediterranean, Adriatic", desc: "Famous for its rich history, Renaissance art, and world-class cuisine." },
+            "tr": { phone: "+90", pop: "~85 million", seas: "Black, Mediterranean, Aegean", desc: "A transcontinental country bridging Europe and Asia with a rich heritage." },
+            "fr": { phone: "+33", pop: "~67 million", seas: "Atlantic, Mediterranean", desc: "World center of art, fashion, gastronomy, and culture." },
+            "es": { phone: "+34", pop: "~47 million", seas: "Mediterranean, Atlantic", desc: "Known for its diverse culture, vibrant lifestyle, and beautiful geography." },
+            "cn": { phone: "+86", pop: "~1.4 billion", seas: "East China Sea, Yellow Sea", desc: "One of the world's most populous countries and a global economic hub." },
+            "ae": { phone: "+971", pop: "~9.9 million", seas: "Persian Gulf, Gulf of Oman", desc: "Known for ultra-modern architecture, luxury shopping, and desert landscapes." }
+        };
+
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             document.getElementById('rhombus-btn')?.classList.toggle('active'); 
@@ -754,6 +766,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             
+            // Сохраняем ваше закрытие модалок
             document.querySelectorAll('.app-modal').forEach(modal => {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
@@ -780,10 +793,10 @@
                 } else if (isAI) {
                     tImg.style.display = 'none'; tIconWrap.style.display = 'flex';
                     tIconWrap.innerHTML = '🤖'; tIconWrap.className = "w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-2xl shrink-0 border-2 border-[#a29bfe]";
-                    tFlag.innerText = '🤖'; tName.innerText = profile.name; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.desc.split('<br>')[0]}</span>`;
+                    tFlag.innerText = '🤖'; tName.innerText = profile.name; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.countryDesc || profile.desc.split('<br>')[0]}</span>`;
                 } else {
                     tImg.src = profile.photo; tImg.style.display = 'block'; tIconWrap.style.display = 'none';
-                    tFlag.innerText = profile.flag; tName.innerText = profile.name.split(' ')[0]; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.desc.split('<br>')[0]}</span>`;
+                    tFlag.innerText = profile.flag; tName.innerText = profile.name.split(' ')[0]; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.countryDesc || profile.desc.split('<br>')[0]}</span>`;
                 }
                 
                 toast.classList.add('show');
@@ -791,6 +804,7 @@
                 window.toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3500);
             }
 
+            // ВАША СТАБИЛЬНАЯ НАВИГАЦИЯ
             window.switchTab = function(index) {
                 const navLinks = Array.from(document.querySelectorAll('.nav-link'));
                 const pages = document.querySelectorAll('.page-content');
@@ -817,6 +831,7 @@
             
             document.body.addEventListener('click', () => { window.closeDropdown(); });
 
+            // FIREBASE
             const firebaseConfig = {
                 apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40",
                 authDomain: "hello-friends-p8p3i7.firebaseapp.com",
@@ -827,73 +842,69 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            let savedUser = localStorage.getItem('hf_test_user');
-            if (!savedUser) {
-                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Ilgar");
-                if (!savedUser) savedUser = "Ilgar";
-                localStorage.setItem('hf_test_user', savedUser.trim().toLowerCase());
-            }
-            window.myUsername = savedUser.trim();
-            window.mySessionId = Math.random().toString(36).substring(2, 15);
+            // --- НОВАЯ СИСТЕМА УЧЕТНЫХ ЗАПИСЕЙ ---
+            let activeUserId = localStorage.getItem('hf_active_user');
+            window.isGuest = !activeUserId;
+            
             window.currentRoomId = "global"; 
             window.activeChatListener = null;
             window.currentIndex = 0;
 
-            const allCharacters = [
-                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az-AZ', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Azerbaijan — The Land of Fire.', languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
-                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Germany is a country in Central Europe, known for its precision engineering.', languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
-                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Italy is famous for its rich history and art.', languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' },
-                { id: 'john', name: 'John Smith', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', profession: 'Lead Designer', email: 'john@hellofriends.co.uk', phone: '+44 7700 900077', flag: '🇬🇧', flagCode: 'gb', langCode: 'en', country: 'United Kingdom', pop: '~67 million', seas: 'North Sea, Atlantic Ocean', desc: 'The UK is an island nation known for its global cultural influence.', languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }
+            const baseCharacters = [
+                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Creator and Founder of the Hello Friends Super-App. Leading the vision to connect the world without language barriers.', countryDesc: countryData['az'].desc, languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
+                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Developing the core engine.', countryDesc: countryData['de'].desc, languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
+                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Leading global marketing campaigns.', countryDesc: countryData['it'].desc, languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' },
+                { id: 'john', name: 'John Smith', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', profession: 'Lead Designer', email: 'john@hellofriends.co.uk', phone: '+44 7700 900077', flag: '🇬🇧', flagCode: 'gb', langCode: 'en', country: 'United Kingdom', pop: '~67 million', seas: 'North Sea, Atlantic Ocean', desc: 'Creating intuitive user interfaces.', countryDesc: countryData['gb'].desc, languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }
             ];
 
-            const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', languages: 'All languages', video: '' };
+            const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', countryDesc: 'Virtual Environment', languages: 'All languages', video: '' };
 
-            let myChar = allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id));
-            if (!myChar) {
-                myChar = {
-                    id: window.myUsername.toLowerCase(),
-                    name: window.myUsername,
-                    photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
-                    profession: 'User',
-                    email: window.myUsername.toLowerCase() + '@hellofriends.com',
-                    phone: '+0 000 000 0000',
-                    flag: '🌐',
-                    flagCode: 'un',
-                    langCode: 'en-US',
-                    country: 'Global',
-                    pop: 'Unknown',
-                    seas: 'Digital',
-                    desc: 'New user in the app.',
-                    languages: 'Auto',
-                    video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'
-                };
+            let allCharacters = [...baseCharacters];
+            
+            // Подтягиваем сохраненных
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith('hf_custom_')) {
+                    try {
+                        let savedUser = JSON.parse(localStorage.getItem(key));
+                        if (!savedUser.video) savedUser.video = 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4';
+                        let existingIndex = allCharacters.findIndex(c => c.id === savedUser.id);
+                        if (existingIndex !== -1) { allCharacters[existingIndex] = { ...allCharacters[existingIndex], ...savedUser }; } 
+                        else { allCharacters.push(savedUser); }
+                    } catch(e) {}
+                }
+            }
+
+            let myChar = null;
+            if (window.isGuest) {
+                window.myUsername = "Guest";
+                window.mySessionId = "guest_session_" + Math.random().toString(36).substring(2, 9);
+                myChar = { id: 'guest', name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=a29bfe&color=fff', profession: 'New User', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: 'New user in the app.', countryDesc: 'International user connecting globally.', languages: 'Auto', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' };
+            } else {
+                myChar = allCharacters.find(c => c.id === activeUserId);
+                if(!myChar) { window.isGuest = true; window.myUsername = "Guest"; myChar = allCharacters[0]; }
+                else { window.myUsername = myChar.name.split(' ')[0]; window.mySessionId = activeUserId; }
             }
 
             let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
-            window.myUsername = myChar.name.split(' ')[0]; 
 
-            // ВНЕДРЕНИЕ: ЗАМЕНЯЕМ СТАНДАРТНЫЙ ПРОФИЛЬ НА СОХРАНЕННЫЙ ИЗ LOCALSTORAGE
-            const savedCustomProfile = JSON.parse(localStorage.getItem('hf_my_custom_profile'));
-            if (savedCustomProfile) {
-                myProfileInfo = { ...myProfileInfo, ...savedCustomProfile, id: 'me', name: savedCustomProfile.name.split(' ')[0] + ' (You)' };
-                window.myUsername = savedCustomProfile.name.split(' ')[0];
-                localStorage.setItem('hf_test_user', window.myUsername.toLowerCase());
+            const menuProfileText = document.getElementById('menu-profile-text');
+            if (menuProfileText) { menuProfileText.innerText = window.isGuest ? "Register" : "Edit Profile"; }
+
+            let participants = [aiBot];
+            allCharacters.forEach(c => {
+                if (c.id !== (myChar.id === 'me' ? myChar.id : myChar.id) && c.name.split(' ')[0] !== window.myUsername && c.id !== 'guest') {
+                    participants.push(c);
+                }
+            });
+
+            // ВЫХОД
+            window.logoutUser = function() { 
+                localStorage.removeItem('hf_active_user'); 
+                location.reload(); 
             }
 
-            let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
-            if (!allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id))) {
-                participants = [aiBot, ...allCharacters]; 
-            }
-
-            window.switchTestUser = function() { 
-                const newUser = prompt("Введите имя для входа (например: Ilgar, Klaus):", window.myUsername); 
-                if(newUser) { 
-                    localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
-                    location.reload(); 
-                } 
-            }
-
-            const voiceFriend = allCharacters.find(c => c.id === 'marinella') || allCharacters[2]; 
+            const voiceFriend = participants.find(c => c.id === 'marinella') || participants[1]; 
             if (voiceFriend) {
                 document.getElementById('voice-friend-photo').src = voiceFriend.photo;
                 document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
@@ -947,8 +958,6 @@
                     
                 } catch (err) {
                     console.error("Camera error:", err);
-                    alert("⚠️ Ошибка камеры: " + err.name + " - " + err.message + "\n\nПожалуйста, откройте ссылку в стандартном браузере (Safari/Chrome) и разрешите доступ.");
-                    
                     const videoEl = document.getElementById('my-live-video');
                     if(videoEl) {
                         videoEl.src = myProfileInfo.video;
@@ -1169,8 +1178,8 @@
                 msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
                 
                 let avatarHtml = isAI 
-                    ? `<div class="w-8 h-8 rounded-full shrink-0 self-end border border-[#4a4e53] flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm shadow-md" onclick="openAvatarModal('ai', 'chat')">🤖</div>` 
-                    : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="openAvatarModal('${isMe ? 'me' : p.id}', 'chat')">`;
+                    ? `<div class="w-8 h-8 rounded-full shrink-0 self-end border border-[#4a4e53] flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm shadow-md" onclick="window.openAvatarModal('ai', 'chat')">🤖</div>` 
+                    : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}', 'chat')">`;
 
                 const msgId = 'msg-' + snapshot.key;
                 let targetLangs = [];
@@ -1359,14 +1368,19 @@
             }
             window.smartDelete = function() { window.smartClear(); }
 
-            // --- НОВЫЕ ФУНКЦИИ РЕДАКТИРОВАНИЯ ПРОФИЛЯ ---
-            window.currentPhotoData = 'https://ui-avatars.com/api/?name=User';
-
-            window.updateFlagIcon = function(selectElement) {
+            // --- БИЗНЕС-ЛОГИКА: УПРАВЛЕНИЕ ПРОФИЛЕМ ---
+            window.handleCountryChange = function(selectElement) {
                 const flagCode = selectElement.value;
                 document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`;
+                if (countryData[flagCode]) {
+                    const phoneInput = document.getElementById('edit-phone');
+                    if(!phoneInput.value || phoneInput.value.startsWith('+')) {
+                        phoneInput.value = countryData[flagCode].phone + " ";
+                    }
+                }
             }
 
+            window.currentPhotoData = 'https://ui-avatars.com/api/?name=User';
             window.handleFileUpload = function(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -1378,62 +1392,97 @@
                 reader.readAsDataURL(file);
             }
 
-            // ИСПРАВЛЕНА: Теперь 100% открывает новую форму
             window.openMyProfile = function() {
                 window.closeDropdown();
-                let savedData = JSON.parse(localStorage.getItem('hf_my_custom_profile')) || myProfileInfo;
-                
-                document.getElementById('edit-name').value = savedData.name || '';
-                window.currentPhotoData = savedData.photo || 'https://ui-avatars.com/api/?name=User';
-                document.getElementById('edit-preview-photo').src = window.currentPhotoData;
-                
-                const countrySelect = document.getElementById('edit-country-select');
-                countrySelect.value = savedData.flagCode && savedData.flagCode !== 'un' ? savedData.flagCode : 'un';
-                if(savedData.flagCode) countrySelect.value = savedData.flagCode;
-                if(typeof window.updateFlagIcon === 'function') window.updateFlagIcon(countrySelect);
+                const modalTitle = document.getElementById('profile-modal-title');
+                const modalBtn = document.getElementById('profile-modal-btn');
 
-                document.getElementById('edit-phone').value = savedData.phone || '';
-                document.getElementById('edit-email').value = savedData.email || '';
-                document.getElementById('edit-prof').value = savedData.profession || '';
-                document.getElementById('edit-langs').value = savedData.languages || '';
-                document.getElementById('edit-desc').value = savedData.desc || '';
+                if (window.isGuest) {
+                    modalTitle.innerHTML = '<i class="fa-solid fa-user-plus text-[#a29bfe] mr-2"></i> Registration';
+                    modalBtn.innerHTML = 'Complete Registration';
+                    
+                    document.getElementById('edit-name').value = '';
+                    window.currentPhotoData = 'https://ui-avatars.com/api/?name=New+User&background=a29bfe&color=fff';
+                    document.getElementById('edit-preview-photo').src = window.currentPhotoData;
+                    document.getElementById('edit-country-select').value = 'un';
+                    document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/un.png`;
+                    document.getElementById('edit-phone').value = '';
+                    document.getElementById('edit-email').value = '';
+                    document.getElementById('edit-prof').value = '';
+                    document.getElementById('edit-langs').value = '';
+                    document.getElementById('edit-desc').value = '';
+                } else {
+                    modalTitle.innerHTML = '<i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile';
+                    modalBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes';
+
+                    document.getElementById('edit-name').value = myProfileInfo.name.replace(' (You)', '');
+                    window.currentPhotoData = myProfileInfo.photo || 'https://ui-avatars.com/api/?name=User';
+                    document.getElementById('edit-preview-photo').src = window.currentPhotoData;
+                    const countrySelect = document.getElementById('edit-country-select');
+                    countrySelect.value = myProfileInfo.flagCode && myProfileInfo.flagCode !== 'un' ? myProfileInfo.flagCode : 'un';
+                    document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${countrySelect.value}.png`;
+
+                    document.getElementById('edit-phone').value = myProfileInfo.phone || '';
+                    document.getElementById('edit-email').value = myProfileInfo.email || '';
+                    document.getElementById('edit-prof').value = myProfileInfo.profession || '';
+                    document.getElementById('edit-langs').value = myProfileInfo.languages || '';
+                    document.getElementById('edit-desc').value = myProfileInfo.desc || '';
+                }
 
                 document.getElementById('edit-profile-modal').classList.add('active');
             };
 
             window.saveProfileData = function() {
-                let nameVal = document.getElementById('edit-name').value.trim() || 'User';
+                let nameVal = document.getElementById('edit-name').value.trim();
+                if (!nameVal) return alert("Please enter your Name to register!");
 
-                if (window.currentPhotoData === 'https://ui-avatars.com/api/?name=User' || window.currentPhotoData === 'https://ui-avatars.com/api/?name=') {
+                let newId = nameVal.toLowerCase().replace(/\s+/g, '');
+
+                if (window.isGuest && newId === 'ilgar') {
+                    localStorage.setItem('hf_active_user', 'ilgar');
+                    location.reload();
+                    return;
+                }
+
+                if (window.currentPhotoData.includes('ui-avatars.com') || window.currentPhotoData === '') {
                     window.currentPhotoData = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=a29bfe&color=fff';
                 }
 
                 const selectEl = document.getElementById('edit-country-select');
                 const selectedOption = selectEl.options[selectEl.selectedIndex];
+                const flagCode = selectEl.value;
+                const cData = countryData[flagCode] || countryData['un'];
 
                 let customProfile = {
+                    id: newId,
                     name: nameVal,
                     photo: window.currentPhotoData,
-                    flagCode: selectEl.value,
+                    flagCode: flagCode,
                     flag: selectedOption.getAttribute('data-emoji'),
                     country: selectedOption.getAttribute('data-name'),
-                    phone: document.getElementById('edit-phone').value.trim() || 'Not provided',
-                    email: document.getElementById('edit-email').value.trim() || 'Not provided',
-                    profession: document.getElementById('edit-prof').value.trim() || 'No profession',
-                    languages: document.getElementById('edit-langs').value.trim() || 'Auto',
-                    desc: document.getElementById('edit-desc').value.trim() || 'No description provided.'
+                    langCode: selectedOption.getAttribute('data-lang') || 'en',
+                    pop: cData.pop,
+                    seas: cData.seas,
+                    countryDesc: cData.desc,
+                    phone: document.getElementById('edit-phone').value.trim(),
+                    email: document.getElementById('edit-email').value.trim(),
+                    profession: document.getElementById('edit-prof').value.trim(),
+                    languages: document.getElementById('edit-langs').value.trim(),
+                    desc: document.getElementById('edit-desc').value.trim()
                 };
 
-                localStorage.setItem('hf_my_custom_profile', JSON.stringify(customProfile));
+                localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile));
+                localStorage.setItem('hf_active_user', newId);
                 
-                alert('Profile saved successfully! 💾 App will reload to apply changes globally.');
-                location.reload(); 
+                alert(window.isGuest ? 'Registration complete! Welcome to Hello Friends. 🌍' : 'Profile updated successfully! 💾');
+                location.reload();
             }
 
-            // Старая функция просмотра чужого профиля (по клику на аватарку)
+            // ПЕРЕПИСАННЫЙ AVATAR MODAL (АВТО-ОПИСАНИЕ СТРАНЫ)
             window.openAvatarModal = function(id, mode = 'cv') {
-                const p = id === 'me' ? myProfileInfo : participants.find(part => part.id === id);
+                const p = id === 'me' ? myProfileInfo : (participants.find(part => part.id === id) || allCharacters.find(part => part.id === id));
                 if (!p) return;
+                
                 const imgContainer = document.getElementById('modal-img-container');
                 const imgEl = document.getElementById('modal-img');
                 if(p.flag === '🤖') { imgEl.style.display = 'none'; imgContainer.innerHTML = '🤖'; } 
@@ -1443,13 +1492,16 @@
                 const descContainer = document.getElementById('modal-desc');
                 const actionButtons = document.getElementById('modal-action-buttons');
                 
+                const cDesc = p.countryDesc || (countryData[p.flagCode] ? countryData[p.flagCode].desc : 'Country information is not available.');
+                const displayDesc = p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? `${cDesc}<br><br><b class="text-[#a29bfe]">About Me:</b><br>${p.desc}` : cDesc;
+
                 if (mode === 'chat' || id === 'ai') {
                     descContainer.innerHTML = `
                         <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Seas:</b> <span class="text-gray-300 text-base">${p.seas}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed"><b>About:</b> ${p.desc}</div>`;
+                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
                     actionButtons.style.display = 'none'; 
                 } else {
                     descContainer.innerHTML = `
@@ -1459,203 +1511,39 @@
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Phone:</b> <span class="text-gray-300 text-base">${p.phone}</span></div>
                         <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Email:</b> <span class="text-gray-300 text-base">${p.email}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${p.desc}</div>`;
+                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
                     actionButtons.style.display = 'flex'; 
-                    document.getElementById('modal-email-btn').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); };
-                    document.getElementById('modal-chat-btn').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); };
-                    document.getElementById('modal-sms-btn').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${p.phone.replace(/\s+/g, '')}`; };
+                    document.getElementById('modal-email-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.openEmailModal(); };
+                    document.getElementById('modal-chat-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); };
+                    document.getElementById('modal-sms-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.location.href = `sms:${p.phone.replace(/\s+/g, '')}`; };
                 }
                 document.getElementById('avatar-modal').classList.add('active');
             };
-            window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); }
-            
-            window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); }
-            window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); }
-            window.startInAppCall = function() { window.closePhoneChoiceModal(); window.switchTab(1); }
-            window.startExternalCall = function() { window.closePhoneChoiceModal(); window.location.href = "tel:+994501234567"; }
 
-            window.openLocationModal = function() {
-                window.closeDropdown(); document.getElementById('location-modal').classList.add('active');
-                const mapContainer = document.getElementById('location-map');
-                mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#a29bfe] mb-3"></i><span>Detecting location...</span>';
-                
-                const loadMap = (lat, lon) => {
-                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`;
-                };
-
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); },
-                        (error) => { 
-                            if (window.myLat && window.myLon) { loadMap(window.myLat, window.myLon); } 
-                            else { mapContainer.innerHTML = '<span class="text-red-400">Failed to get location.</span>'; }
-                        },
-                        { timeout: 5000 }
-                    );
-                } else { 
-                    if (window.myLat && window.myLon) { loadMap(window.myLat, window.myLon); } 
-                    else { mapContainer.innerHTML = 'Geolocation is not supported.'; }
-                }
-            }
-            window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); }
-
-            window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); }
-            window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); }
-            window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
-            
-            window.sendEmailForm = async function(e) {
-                e.preventDefault();
-                
-                const to = document.getElementById('email-to').value;
-                const subject = document.getElementById('email-subject').value;
-                const text = document.getElementById('email-text').value;
-                
-                const btn = e.target.querySelector('button[type="submit"]');
-                const origBtnText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-                btn.disabled = true;
-
-                try {
-                    const templateParams = { to_email: to, subject: subject, message: text };
-                    await emailjs.send("service_i4o7lfa", "template_lrcjrkr", templateParams);
-
-                    document.getElementById('empty-archive').style.display = 'none';
-                    const card = document.createElement('div');
-                    card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
-                    card.innerHTML = `<p class="font-bold text-white text-base mb-1">To: ${to}</p><p class="text-sm text-[#a29bfe] font-bold mb-1">Sent via EmailJS 🚀</p><p class="text-sm text-gray-300">${subject}</p>`;
-                    document.getElementById('archive-list').prepend(card);
-                    
-                    e.target.reset(); 
-                    window.closeEmailModal(); 
-                    window.switchTab(4); 
-                    alert("Успех! Письмо мгновенно улетело! Проверьте почту 🚀");
-                    
-                } catch (error) {
-                    console.error("❌ Ошибка EmailJS:", error);
-                    alert("Ошибка отправки. Проверьте консоль или настройки шаблона.");
-                } finally {
-                    btn.innerHTML = origBtnText;
-                    btn.disabled = false;
-                }
-            }
-
-            window.openAuthModal = function() { window.closeDropdown(); document.getElementById('auth-modal').classList.add('active'); }
-            window.closeAuthModal = function() { document.getElementById('auth-modal').classList.remove('active'); }
-            window.switchAuthTab = function(type) {
-                if(type === 'email') {
-                    document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
-                    document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
-                    document.getElementById('auth-email-form').classList.remove('hidden'); document.getElementById('auth-phone-form').classList.add('hidden');
-                } else {
-                    document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
-                    document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
-                    document.getElementById('auth-phone-form').classList.remove('hidden'); document.getElementById('auth-email-form').classList.add('hidden');
-                }
-            };
-            window.toggleTheme = function() {
-                window.closeDropdown();
-                const screen = document.getElementById('phone-body'); screen.classList.toggle('light-theme');
-                document.getElementById('theme-icon').className = screen.classList.contains('light-theme') ? 'fa-solid fa-moon w-5' : 'fa-solid fa-sun w-5';
-            }
-
-            // --- БЫСТРЫЕ МИКРОФОНЫ (ОРИГИНАЛЬНАЯ ЛОГИКА) ---
+            // --- БЫСТРЫЕ МИКРОФОНЫ ---
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
-                let rec = new SpeechRec();
-                rec.continuous = false; 
-                rec.interimResults = false; 
-                
-                let currentMicTarget = null;
-                let currentMicBtn = null;
-
-                rec.onstart = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = '#ef4444'; 
-                        currentMicBtn.classList.add('animate-pulse'); 
-                    }
-                };
-                rec.onend = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = ''; 
-                        currentMicBtn.classList.remove('animate-pulse'); 
-                    }
-                };
-                rec.onerror = () => { 
-                    if(currentMicBtn) { 
-                        currentMicBtn.style.color = ''; 
-                        currentMicBtn.classList.remove('animate-pulse'); 
-                    }
-                };
-                rec.onresult = (e) => { 
-                    const text = e.results[0][0].transcript;
-                    
-                    if (currentMicTarget === 'chat') {
-                        let chatInputEl = document.getElementById('chat-input');
-                        if (chatInputEl) chatInputEl.value = text;
-                        window.sendFirebaseMsg(); 
-                    } else if (currentMicTarget === 'voice') {
-                        let voiceInputEl = document.getElementById('voice-text-input');
-                        if (voiceInputEl) voiceInputEl.value = text;
-                        window.sendTextMessage('voice-text-input'); 
-                    } else if (currentMicTarget === 'conf') {
-                        let confInputEl = document.getElementById('conf-chat-input');
-                        if (confInputEl) confInputEl.value = text;
-                        window.sendTextMessage('conf-chat-input'); 
-                    }
-                };
-
-                window.startMic = function(target, btnId) {
-                    currentMicTarget = target;
-                    currentMicBtn = document.getElementById(btnId);
-                    const langSel = document.getElementById('plus-mic-lang');
-                    rec.lang = langSel ? langSel.value : 'en-US'; 
-                    try { rec.start(); } catch(e){} 
-                }
-
-                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn'));
-                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
-                document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
+                let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false; let currentMicTarget = null; let currentMicBtn = null;
+                rec.onstart = () => { if(currentMicBtn) { currentMicBtn.style.color = '#ef4444'; currentMicBtn.classList.add('animate-pulse'); } };
+                rec.onend = () => { if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse'); } };
+                rec.onerror = () => { if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse'); } };
+                rec.onresult = (e) => { const text = e.results[0][0].transcript; if (currentMicTarget === 'chat') { let chatInputEl = document.getElementById('chat-input'); if (chatInputEl) chatInputEl.value = text; window.sendFirebaseMsg(); } else if (currentMicTarget === 'voice') { let voiceInputEl = document.getElementById('voice-text-input'); if (voiceInputEl) voiceInputEl.value = text; window.sendTextMessage('voice-text-input'); } else if (currentMicTarget === 'conf') { let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendTextMessage('conf-chat-input'); } };
+                window.startMic = function(target, btnId) { currentMicTarget = target; currentMicBtn = document.getElementById(btnId); const langSel = document.getElementById('plus-mic-lang'); rec.lang = langSel ? langSel.value : 'en-US'; try { rec.start(); } catch(e){} }
+                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn')); document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn')); document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
             }
 
-            window.processVoiceTranslation = function(text) {
-                const mBox = document.getElementById('voice-marquee-container');
-                const mText = document.getElementById('voice-marquee-text');
-                if (mBox && mText) {
-                    mBox.style.display = 'flex';
-                    mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
-                    
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(text)}`)
-                    .then(res => res.json())
-                    .then(data => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-yellow-400 ml-4 font-bold">🇮🇹 ${data[0][0][0]}</span>`; })
-                    .catch(() => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text}`; });
-                }
-            };
+            window.processVoiceTranslation = function(text) { const mBox = document.getElementById('voice-marquee-container'); const mText = document.getElementById('voice-marquee-text'); if (mBox && mText) { mBox.style.display = 'flex'; mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`; fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(text)}`).then(res => res.json()).then(data => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-yellow-400 ml-4 font-bold">🇮🇹 ${data[0][0][0]}</span>`; }).catch(() => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text}`; }); } };
+            window.processConfTranslation = function(text, msgId = null) { const speakerMarquee = document.getElementById('speaker-marquee'); if(speakerMarquee) speakerMarquee.innerText = `➔ ${text}`; const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ]; Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(text)}`).then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] })))).then(translations => { document.querySelectorAll('.conf-listener-marquee').forEach(marquee => { const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en'; const t = translations.find(tr => tr.code === langCode) || translations[0]; if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`; }); if (msgId) { const transBox = document.getElementById(`${msgId}-trans`); if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>'); } }).catch(() => {}); };
 
-            window.processConfTranslation = function(text, msgId = null) {
-                const speakerMarquee = document.getElementById('speaker-marquee');
-                if(speakerMarquee) speakerMarquee.innerText = `➔ ${text}`;
-                
-                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
-                
-                Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(text)}`)
-                    .then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] }))
-                )).then(translations => {
-                    document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
-                        const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
-                        const t = translations.find(tr => tr.code === langCode) || translations[0];
-                        if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
-                    });
-                    
-                    if (msgId) {
-                        const transBox = document.getElementById(`${msgId}-trans`);
-                        if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>');
-                    }
-                }).catch(() => {});
-            };
-
-            // --- ЗАПУСК ПО УМОЛЧАНИЮ ---
+            // ЗАПУСК ЧАТА
             window.switchChatRoom('global');
-            
+
+            // ВЫЗОВ РЕГИСТРАЦИИ ДЛЯ НОВИЧКОВ
+            if (window.isGuest) {
+                setTimeout(() => {
+                    window.openMyProfile();
+                }, 800);
+            }
         });
     </script>
 </body>
