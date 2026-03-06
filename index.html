@@ -22,7 +22,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
     <style>
-        body { background-color: #1a1e23; font-family: 'Orbitron', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
+        /* НАТИВНЫЕ ЧИТАЕМЫЕ ШРИФТЫ (КАК В WHATSAPP) */
+        body { background-color: #1a1e23; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.4s; }
         .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 800px; background: linear-gradient(180deg, #3a3d42 0%, #2a2d32 100%); border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid #4a4e53; display: flex; flex-direction: column; padding: 20px 20px 0 20px; box-sizing: border-box; color: #c0c5d0; overflow: hidden; position: relative; transition: all 0.4s; }
         
         @media (max-width: 500px) {
@@ -31,14 +32,15 @@
 
         .app-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding-bottom: 0.5rem; position: relative; z-index: 50; }
         .logo-container { display: flex; align-items: center; gap: 12px; }
-        .logo-circle { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg, #a29bfe, #6c5ce7); display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 1rem; color: white; box-shadow: 0 0 10px rgba(162, 155, 254, 0.5); }
+        /* Логотип остается в стартап-стиле */
+        .logo-circle { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(145deg, #a29bfe, #6c5ce7); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1rem; color: white; box-shadow: 0 0 10px rgba(162, 155, 254, 0.5); }
         .header-icons { display: flex; align-items: center; gap: 12px; }
         .header-icons button { color: #888; transition: color 0.3s; background: none; border: none; padding: 5px; cursor: pointer; }
         .header-icons button:hover { color: #a29bfe; }
         
         .header-dropdown { position: absolute; top: 100%; right: 0; width: 220px; background: #2a2d32; border: 1px solid #4a4e53; border-radius: 12px; padding: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; flex-direction: column; gap: 5px; z-index: 100; transition: all 0.3s; }
         .header-dropdown.active { display: flex; animation: fadeIn 0.2s; }
-        .header-dropdown a { color: #c0c5d0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 0.85rem; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; text-decoration: none; }
+        .header-dropdown a { color: #c0c5d0; font-size: 0.9rem; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; text-decoration: none; }
         .header-dropdown a:hover { background: #3a3d42; color: white; }
         
         .navigation-wrapper { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid #4a4e53; z-index: 40; transition: border-color 0.4s; }
@@ -46,7 +48,7 @@
         .nav-arrow.disabled { color: #444; pointer-events: none; }
         .main-nav { flex-grow: 1; display: flex; align-items: center; overflow: hidden; }
         .main-nav-inner { display: flex; gap: 10px; transition: transform 0.4s ease-in-out; }
-        .main-nav a { white-space: nowrap; padding: 5px 6px; font-size: 0.75rem; letter-spacing: 0.05em; transition: color 0.3s; cursor: pointer; flex-shrink: 0; color: #888; }
+        .main-nav a { white-space: nowrap; padding: 5px 6px; font-size: 0.8rem; letter-spacing: 0.02em; transition: color 0.3s; cursor: pointer; flex-shrink: 0; color: #888; font-weight: 500; }
         .main-nav a.active { color: #fff; font-weight: 700; text-shadow: 0 0 5px #a29bfe; }
         
         .page-content { display: none; flex-grow: 1; flex-direction: column; width: 100%; animation: fadeIn 0.4s ease-in-out; overflow: hidden; }
@@ -60,7 +62,7 @@
         .chat-contact { position: relative; text-align: center; margin-bottom: 15px; cursor: pointer; }
         .chat-contact-icon { width: 50px; height: 50px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid #555; margin: 0 auto; transition: transform 0.2s; position: relative; }
         .chat-contact:hover .chat-contact-icon { transform: scale(1.1); border-color: #a29bfe; }
-        .chat-contact-name { font-size: 0.65rem; margin-top: 5px; color: #e0e0e0; transition: color 0.4s; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: 500;}
+        .chat-contact-name { font-size: 0.65rem; margin-top: 5px; color: #e0e0e0; transition: color 0.4s; font-weight: 500;}
         .chat-contact.active-room .chat-contact-icon { border-color: #4ade80; box-shadow: 0 0 10px rgba(74, 222, 128, 0.4); }
         .chat-contact.active-room .chat-contact-name { color: #4ade80; font-weight: bold; }
         
@@ -68,13 +70,13 @@
         .chat-messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding-right: 5px; margin-bottom: 10px; scroll-behavior: smooth; }
         .chat-bubble-wrapper { display: flex; flex-direction: column; max-width: 80%; }
         
-        /* ЧИТАЕМЫЕ ШРИФТЫ В ЧАТЕ (WHATSAPP STYLE) */
-        .chat-bubble { padding: 12px 14px; border-radius: 16px; font-size: 0.95rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.4s;}
+        /* Читаемые пузыри чата */
+        .chat-bubble { padding: 12px 14px; border-radius: 16px; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.4s;}
         .incoming .chat-bubble { background: #3a3d42; border-bottom-left-radius: 2px; border: 1px solid #4a4e53; color: #e0e0e0; }
         .outgoing .chat-bubble { background: linear-gradient(145deg, #6c5ce7, #a29bfe); border-bottom-right-radius: 2px; color: white; }
         
-        .chat-sender-name { font-size: 0.75rem; color: #a29bfe; margin-bottom: 4px; margin-left: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: bold; }
-        .translate-box { font-size: 0.75rem; margin-top: 4px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; opacity: 0.9; }
+        .chat-sender-name { font-size: 0.75rem; color: #a29bfe; margin-bottom: 4px; margin-left: 4px; font-weight: bold; }
+        .translate-box { font-size: 0.75rem; margin-top: 4px; opacity: 0.9; }
 
         .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9999; border-radius: 30px; backdrop-filter: blur(5px); }
         .app-modal.active { display: flex !important; animation: fadeIn 0.2s; }
@@ -82,23 +84,19 @@
         .close-modal-btn { position: absolute; top: 12px; right: 16px; color: #888; font-size: 1.4rem; cursor: pointer; transition: color 0.3s;}
         .close-modal-btn:hover { color: #ef4444; }
 
-        /* ЧИТАЕМЫЕ ШРИФТЫ В ФОРМАХ */
-        .form-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #4a4e53; background: #1a1e23; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; font-size: 0.95rem; outline: none; transition: all 0.4s; }
+        .form-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #4a4e53; background: #1a1e23; color: white; font-size: 0.95rem; outline: none; transition: all 0.4s; }
         .form-input:focus { border-color: #a29bfe; }
-        .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
+        .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
         .form-btn:active { transform: scale(0.98); }
 
-        #edit-profile-modal .form-input { padding: 8px 12px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
-        #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; display: block; width: 100%; text-align: left; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; }
+        #edit-profile-modal .form-input { padding: 8px 12px; font-size: 0.9rem; margin-bottom: 8px; border-radius: 8px; }
+        #edit-profile-modal .form-label { font-size: 0.7rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; display: block; width: 100%; text-align: left; }
         #edit-profile-modal select.form-input { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; }
-
-        /* ТЕКСТ В CV */
-        #modal-desc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; }
 
         .footer-wrapper { margin-top: auto; width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; flex-shrink: 0; position: relative; z-index: 50; }
         .actions-footer { background-color: #2a2d32; padding: 10px 20px; border-top: 1px solid #4a4e53; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.4s; }
         .social-footer { background-color: #f0f2f5; padding: 10px 30px; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.4s;}
-        .social-link { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: bold; font-size: 1.1rem; color: #555; cursor: pointer; text-decoration: none; transition: color 0.2s; }
+        .social-link { font-weight: bold; font-size: 1.1rem; color: #555; cursor: pointer; text-decoration: none; transition: color 0.2s; }
         .social-link:hover { color: #a29bfe; }
         
         .rhombus-menu-container { position: relative; }
@@ -114,51 +112,65 @@
         .video-frame { position: relative; border-radius: 12px; padding-top: 65%; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: #000; }
         .video-frame.main { grid-column: 1 / 3; border: 2px solid #a29bfe; box-shadow: 0 0 10px rgba(162, 155, 254, 0.2); }
         .video-frame video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .video-overlay { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; z-index: 10; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;}
+        .video-overlay { position: absolute; top: 5px; left: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; z-index: 10;}
         .flag-overlay { position: absolute; top: 5px; right: 5px; font-size: 1.1rem; z-index: 10; }
         
         .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.75); z-index: 10; padding: 4px 0; overflow: hidden; display: block;}
-        .conf-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 10s linear infinite; font-size: 0.65rem; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; white-space: nowrap; font-weight: bold; }
+        .conf-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 10s linear infinite; font-size: 0.65rem; color: #fff; white-space: nowrap; font-weight: bold; }
         @keyframes scroll-text { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
         
         .conf-messages { display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
         .conf-msg { display: flex; gap: 6px; align-items: flex-start; }
         .conf-msg-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid #4a4e53; }
-        .conf-msg-content { background: #1e293b; padding: 6px 8px; border-radius: 8px; font-size: 0.75rem; color: #e2e8f0; line-height: 1.3; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .conf-msg-content { background: #1e293b; padding: 6px 8px; border-radius: 8px; font-size: 0.75rem; color: #e2e8f0; line-height: 1.3; }
 
         .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
-        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; white-space: nowrap; font-weight: bold; }
+        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; white-space: nowrap; font-weight: bold; }
 
-        /* --- СВЕТЛАЯ ТЕМА --- */
-        .mobile-screen.light-theme { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-color: #ced4da; color: #212529; }
-        .mobile-screen.light-theme .header-icons button { color: #495057; }
-        .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #dee2e6; }
-        .mobile-screen.light-theme .header-dropdown a { color: #495057; }
-        .mobile-screen.light-theme .header-dropdown a:hover { background: #f1f3f5; color: #212529; }
-        .mobile-screen.light-theme .navigation-wrapper { border-color: #dee2e6; }
-        .mobile-screen.light-theme .nav-arrow { color: #adb5bd; }
-        .mobile-screen.light-theme .main-nav a { color: #6c757d; }
-        .mobile-screen.light-theme .main-nav a.active { color: #212529; text-shadow: none; font-weight: bold; }
-        .mobile-screen.light-theme .page-container h2, .mobile-screen.light-theme h3 { color: #212529; }
-        .mobile-screen.light-theme .chat-sidebar { border-color: #dee2e6; }
-        .mobile-screen.light-theme .chat-contact-name { color: #495057; }
-        .mobile-screen.light-theme .incoming .chat-bubble { background: #ffffff; border-color: #dee2e6; color: #212529; }
-        .mobile-screen.light-theme .bg-\[\#2a2d32\] { background-color: #ffffff !important; border-color: #dee2e6 !important; }
-        .mobile-screen.light-theme .text-white { color: #212529 !important; }
-        .mobile-screen.light-theme .text-gray-300, .mobile-screen.light-theme .text-gray-400 { color: #495057 !important; }
-        .mobile-screen.light-theme .app-modal-content { background: #ffffff; border-color: #dee2e6; color: #212529;}
-        .mobile-screen.light-theme .app-modal-content h2 { color: #212529; }
-        .mobile-screen.light-theme .form-input { background: #f8f9fa; border-color: #ced4da; color: #212529; }
-        .mobile-screen.light-theme .actions-footer { background-color: #ffffff; border-color: #dee2e6; }
-        .mobile-screen.light-theme .rhombus-actions { background: #ffffff; border-color: #dee2e6; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .mobile-screen.light-theme .action-icon { background-color: #f8f9fa; color: #212529; border-color: #dee2e6; }
-        .mobile-screen.light-theme .action-icon:hover { background-color: #a29bfe; color: white; }
-        .mobile-screen.light-theme .chat-info-marquee-container { background: #e9ecef; border-color: #dee2e6; }
+        /* --- ИСПРАВЛЕННАЯ СВЕТЛАЯ ТЕМА С ЧИТАЕМЫМ ДИЗАЙНОМ (WHATSAPP STYLE) --- */
+        .mobile-screen.light-theme { background: #efeae2; border-color: #d1d7db; color: #111b21; }
+        .mobile-screen.light-theme .app-header { background: #ffffff; border-bottom: 1px solid #d1d7db; }
+        .mobile-screen.light-theme .header-icons button { color: #54656f; }
+        .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #d1d7db; }
+        .mobile-screen.light-theme .header-dropdown a { color: #111b21; }
+        .mobile-screen.light-theme .header-dropdown a:hover { background: #f0f2f5; }
+        .mobile-screen.light-theme .navigation-wrapper { border-color: #d1d7db; background: #ffffff; padding-top: 10px; margin-top: -10px;}
+        .mobile-screen.light-theme .nav-arrow { color: #54656f; }
+        .mobile-screen.light-theme .main-nav a { color: #54656f; font-weight: 500; }
+        .mobile-screen.light-theme .main-nav a.active { color: #008069; font-weight: bold; text-shadow: none; border-bottom: 2px solid #008069; padding-bottom: 8px; }
+        .mobile-screen.light-theme .page-container h2, .mobile-screen.light-theme h3 { color: #111b21 !important; }
+        .mobile-screen.light-theme .chat-sidebar { border-color: #d1d7db; background: #ffffff;}
+        .mobile-screen.light-theme .chat-contact-name { color: #54656f; }
+        
+        /* Светлые пузыри чата */
+        .mobile-screen.light-theme .incoming .chat-bubble { background: #ffffff; border: 1px solid #d1d7db; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
+        .mobile-screen.light-theme .outgoing .chat-bubble { background: #d9fdd3; border: 1px solid #c8e0c4; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
+        
+        /* Исправление желтого цвета в светлой теме */
+        .mobile-screen.light-theme .text-yellow-400, 
+        .mobile-screen.light-theme .text-yellow-300 { color: #ea580c !important; } /* Делаем невидимый желтый читаемым оранжевым */
+        .mobile-screen.light-theme .text-\[\#a29bfe\] { color: #008069 !important; }
+        .mobile-screen.light-theme .text-white { color: #111b21 !important; }
+        .mobile-screen.light-theme .text-gray-300, .mobile-screen.light-theme .text-gray-400 { color: #54656f !important; }
+        
+        /* Светлые формы */
+        .mobile-screen.light-theme .app-modal-content { background: #ffffff; border-color: #d1d7db; color: #111b21;}
+        .mobile-screen.light-theme .form-input { background: #f0f2f5; border-color: #d1d7db; color: #111b21; }
+        .mobile-screen.light-theme .form-input:focus { border-color: #008069; }
+        .mobile-screen.light-theme .bg-\[\#1a1e23\], .mobile-screen.light-theme .bg-\[\#2a2d32\] { background-color: #f0f2f5 !important; border-color: #d1d7db !important; }
+        
+        /* Светлый футер */
+        .mobile-screen.light-theme .actions-footer { background-color: #ffffff; border-color: #d1d7db; }
+        .mobile-screen.light-theme .social-footer { background-color: #f0f2f5; border-color: #d1d7db;}
+        .mobile-screen.light-theme .rhombus-actions { background: #ffffff; border-color: #d1d7db; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .mobile-screen.light-theme .action-icon { background-color: #f0f2f5; color: #54656f; border-color: #d1d7db; }
+        .mobile-screen.light-theme .action-icon:hover { background-color: #008069; color: white; }
+        .mobile-screen.light-theme .chat-info-marquee-container { background: #ffffff; border-color: #d1d7db; }
         
         .toast-notification {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white;
-            padding: 8px 20px; border-radius: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 0.75rem;
+            padding: 8px 20px; border-radius: 20px; font-size: 0.75rem;
             font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 3000;
             opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out, top 0.5s ease-in-out;
             display: flex; align-items: center; gap: 8px;
@@ -166,9 +178,9 @@
         .toast-notification.show { opacity: 1; top: 70px; }
 
         .mic-lang-select {
-            grid-column: span 3; background: #1a1e23; border: 1px solid #4a4e53; color: #a29bfe; padding: 8px; border-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 0.8rem; font-weight: bold; outline: none; text-align: center;
+            grid-column: span 3; background: #1a1e23; border: 1px solid #4a4e53; color: #a29bfe; padding: 8px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; outline: none; text-align: center;
         }
-        .light-theme .mic-lang-select { background: #f8f9fa; border-color: #ced4da; color: #6c5ce7; }
+        .light-theme .mic-lang-select { background: #f0f2f5; border-color: #d1d7db; color: #008069; }
         
         .mirror-video { transform: scaleX(-1); }
     </style>
@@ -185,7 +197,7 @@
             <div id="toast-icon-wrap" class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-xl shrink-0 border-2 border-[#a29bfe]">🌍</div>
             <div class="flex flex-col flex-grow ml-2">
                 <div class="flex items-center gap-1.5"><span id="toast-flag" class="text-base">🌍</span><span id="toast-name" class="font-bold text-[0.9rem] text-white" data-i18n="chat_group">Group Chat</span></div>
-                <span id="toast-info" class="text-[0.7rem] text-gray-300 font-sans leading-snug mt-1"></span>
+                <span id="toast-info" class="text-[0.7rem] text-gray-300 leading-snug mt-1"></span>
             </div>
         </div>
 
@@ -195,13 +207,13 @@
              </div>
              <div class="header-icons">
                 <button id="main-search-btn" onclick="window.openSearchModal()" title="Global Search">
-                    <i class="fa-solid fa-magnifying-glass text-[1.1rem] text-[#a29bfe]"></i>
+                    <i class="fa-solid fa-magnifying-glass text-[1.1rem] hover:text-[#a29bfe]"></i>
                 </button>
                 <button id="compose-email-btn" onclick="window.openEmailModal()" title="Email">
-                    <i class="fa-regular fa-envelope text-[1.1rem]"></i>
+                    <i class="fa-regular fa-envelope text-[1.1rem] hover:text-[#a29bfe]"></i>
                 </button>
                 <button id="menu-btn" onclick="window.toggleHeaderMenu(event)">
-                    <i class="fa-solid fa-bars text-[1.1rem]"></i>
+                    <i class="fa-solid fa-bars text-[1.1rem] hover:text-[#a29bfe]"></i>
                 </button>
             </div>
             
@@ -246,8 +258,8 @@
                             <div class="flex items-center gap-2 px-1 pb-2 border-b border-[#4a4e53] shrink-0" id="active-chat-header">
                                 <div id="chat-header-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] cursor-pointer hover:scale-105 transition-transform" onclick="window.openActiveChatProfile()" title="Show Profile">GL</div>
                                 <div class="flex flex-col flex-grow">
-                                    <span class="text-[0.95rem] font-bold text-white leading-tight font-sans" id="chat-header-name" data-i18n="chat_group">Group Chat</span>
-                                    <span class="text-[0.7rem] leading-none mt-1 font-sans" id="chat-header-status">🌍 <span class="text-green-400">All members</span></span>
+                                    <span class="text-[0.95rem] font-bold text-white leading-tight" id="chat-header-name" data-i18n="chat_group">Group Chat</span>
+                                    <span class="text-[0.7rem] leading-none mt-1" id="chat-header-status">🌍 <span class="text-green-400">All members</span></span>
                                 </div>
                                 <button onclick="window.toggleMarquee()" id="marquee-toggle-btn" class="text-[#a29bfe] hover:text-white transition-colors p-1 ml-auto bg-transparent border-none cursor-pointer"><i class="fa-solid fa-closed-captioning text-lg"></i></button>
                                 <button onclick="window.openTrashModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-transparent border-none cursor-pointer ml-1 relative z-50"><i class="fa-solid fa-trash-can text-lg"></i></button>
@@ -262,10 +274,10 @@
                                     <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('👍')">👍</span>
                                     <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🤔')">🤔</span>
                                 </div>
-                                <input type="text" id="chat-input" data-i18n-placeholder="chat_plc" placeholder="Type message..." class="form-input mb-0 grow text-base font-sans" style="padding: 10px 12px;">
+                                <input type="text" id="chat-input" data-i18n-placeholder="chat_plc" placeholder="Type message..." class="form-input mb-0 grow text-base" style="padding: 10px 12px; border-radius: 20px;">
                                 <button id="magic-wand-btn" onclick="window.applyAiMagic()" class="text-[#a29bfe] hover:text-purple-400 transition p-1.5" title="AI Rewrite"><i class="fa-solid fa-wand-magic-sparkles text-lg"></i></button>
                                 <button id="main-chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text"><i class="fa-solid fa-microphone text-lg"></i></button>
-                                <button id="chat-send-btn" onclick="window.sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                                <button id="chat-send-btn" onclick="window.sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px; border-radius: 20px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
                             </div>
                         </div>
                     </div>
@@ -282,7 +294,7 @@
                                     <img id="voice-friend-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-[#4a4e53]">
                                     <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-lg bg-[#2a2d32] rounded-full p-1 border border-[#4a4e53]"></span>
                                 </div>
-                                <h3 id="voice-friend-name" class="text-white font-bold text-center text-sm font-sans"></h3>
+                                <h3 id="voice-friend-name" class="text-white font-bold text-center text-sm"></h3>
                             </div>
                             <div class="flex gap-2 text-[#a29bfe] opacity-50">
                                 <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce"></div><div class="w-1.5 h-10 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
@@ -293,18 +305,18 @@
                                     <img id="voice-me-photo" src="https://images.unsplash.com/photo-1557862921-37829c790f19?w=200" class="w-full h-full rounded-full object-cover border-4 border-[#a29bfe] relative z-10">
                                     <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#2a2d32] rounded-full p-1 border border-[#4a4e53]">🇦🇿</span>
                                 </div>
-                                <h3 class="text-white font-bold text-center text-sm font-sans" id="voice-me-name">You</h3>
+                                <h3 class="text-white font-bold text-center text-sm" id="voice-me-name">You</h3>
                             </div>
                         </div>
                         <div class="w-full flex flex-col mt-auto shrink-0 pt-2 border-t border-[#4a4e53]">
-                            <div id="voice-marquee-container" class="w-full overflow-hidden hidden items-center mb-2 bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53]"><span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap font-sans"></span></div>
+                            <div id="voice-marquee-container" class="w-full overflow-hidden hidden items-center mb-2 bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53]"><span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap"></span></div>
                             <div class="w-full items-center gap-1.5 px-1 pb-2 relative flex">
                                 <button onclick="window.toggleEmojiPicker('voice')" class="bg-[#2a2d32] border border-[#4a4e53] text-gray-300 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-regular fa-face-smile text-base"></i></button>
                                 <div id="voice-emoji-picker" class="hidden absolute bottom-16 left-1 bg-[#2a2d32] border border-[#4a4e53] p-2 rounded-lg grid grid-cols-5 gap-2 text-base shadow-lg z-50">
                                     <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('👍')">👍</span>
                                     <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🤔')">🤔</span>
                                 </div>
-                                <input type="text" id="voice-text-input" data-i18n-placeholder="chat_plc" placeholder="Speak or text..." class="form-input mb-0 grow text-base font-sans" style="padding: 10px 8px;">
+                                <input type="text" id="voice-text-input" data-i18n-placeholder="chat_plc" placeholder="Speak or text..." class="form-input mb-0 grow text-base" style="padding: 10px 12px; border-radius: 20px;">
                                 <button id="voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-microphone text-base"></i></button>
                                 <button id="voice-send-btn" onclick="window.sendTextMessage('voice-text-input')" class="bg-gradient-to-r from-[#a29bfe] to-[#6c5ce7] text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-paper-plane text-base"></i></button>
                                 <button id="voice-cc-btn" onclick="window.toggleVoiceCC()" class="bg-[#a29bfe] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0 ml-1" title="Toggle CC"><i class="fa-solid fa-closed-captioning text-base"></i></button>
@@ -316,7 +328,7 @@
             </div>
 
             <div id="conference" class="page-content h-full bg-[#0f172a] rounded-xl overflow-hidden shadow-lg border border-[#4a4e53]">
-                <div class="p-2 flex justify-between items-center bg-black/50 border-b border-white/5 text-xs shrink-0 font-sans">
+                <div class="p-2 flex justify-between items-center bg-black/50 border-b border-white/5 text-xs shrink-0">
                     <span class="font-bold text-[#00C4CC] tracking-widest text-sm">LIVE VIDEO</span>
                     <span class="text-red-500 font-bold bg-red-500/10 px-2 py-0.5 rounded-full animate-pulse border border-red-500/30 text-xs">● REC</span>
                 </div>
@@ -324,12 +336,12 @@
                     <div class="video-grid" id="conference-grid"></div>
                 </div>
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
-                    <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold"><span>Live Chat</span><span>👥 App Online</span></div>
+                    <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 flex justify-between font-bold"><span>Live Chat</span><span>👥 App Online</span></div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
                     <div class="flex gap-2 mt-2 shrink-0 items-center">
                         <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Speak"><i class="fa-solid fa-microphone text-base"></i></button>
-                        <input type="text" id="conf-chat-input" data-i18n-placeholder="chat_plc" class="form-input w-full bg-[#1e293b] text-white text-base px-3 py-2 rounded-lg border border-[#334155] outline-none font-sans" placeholder="Message or speak...">
-                        <button id="conf-chat-send" onclick="window.sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400 font-sans"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                        <input type="text" id="conf-chat-input" data-i18n-placeholder="chat_plc" class="w-full bg-[#1e293b] text-white text-base px-4 py-2 rounded-full border border-[#334155] outline-none" placeholder="Message or speak...">
+                        <button id="conf-chat-send" onclick="window.sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2 rounded-full font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
                 </div>
                 <div class="h-14 bg-black/90 flex justify-center items-center gap-5 shrink-0 border-t border-[#334155]">
@@ -346,31 +358,33 @@
 
             <div id="archive" class="page-content h-full">
                 <div class="page-container">
-                    <h2 class="text-xl font-sans" data-i18n="nav_archive">Archive</h2>
-                    <p id="empty-archive" class="text-center text-sm text-gray-500 mt-6 font-sans">Archive is empty.</p>
-                    <div id="archive-list" class="flex flex-col gap-4 mt-4 font-sans"></div>
+                    <h2 class="text-xl" data-i18n="nav_archive">Archive</h2>
+                    <p id="empty-archive" class="text-center text-sm text-gray-500 mt-6">Archive is empty.</p>
+                    <div id="archive-list" class="flex flex-col gap-4 mt-4"></div>
                 </div>
             </div>
         </main>
 
         <div class="footer-wrapper">
             <div class="actions-footer">
-                <div class="font-sans text-2xl cursor-pointer hover:text-white transition text-gray-400">😊</div>
+                <div class="text-2xl cursor-pointer hover:text-white transition text-gray-400">😊</div>
                 <div class="rhombus-menu-container">
                     <div id="rhombus-btn" class="rhombus-main-btn" onclick="window.toggleRhombusMenu(event)">
                         <div class="rhombus-shape"><i class="fa-solid fa-plus"></i></div>
                     </div>
                     <div id="rhombus-actions" class="rhombus-actions">
-                        <select id="plus-mic-lang" class="mic-lang-select font-sans" onclick="event.stopPropagation()">
-                            <option value="az-AZ">🇦🇿 AZ Mic</option>
-                            <option value="ru-RU">🇷🇺 RU Mic</option>
-                            <option value="en-US">🇬🇧 EN Mic</option>
-                            <option value="tr-TR">🇹🇷 TR Mic</option>
-                            <option value="de-DE">🇩🇪 DE Mic</option>
-                            <option value="it-IT">🇮🇹 IT Mic</option>
+                        <select id="plus-mic-lang" class="mic-lang-select" onclick="event.stopPropagation()">
+                            <option value="az-AZ">🇦🇿 AZ</option>
+                            <option value="ru-RU">🇷🇺 RU</option>
+                            <option value="en-US">🇬🇧 EN</option>
+                            <option value="tr-TR">🇹🇷 TR</option>
+                            <option value="de-DE">🇩🇪 DE</option>
+                            <option value="it-IT">🇮🇹 IT</option>
                         </select>
                         <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video"><i class="fa-solid fa-video"></i></div>
-                        <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Call"><i class="fa-solid fa-phone"></i></div>
+                        
+                        <div class="action-icon" onclick="window.openPhoneChoiceModal();" title="Call"><i class="fa-solid fa-phone"></i></div>
+                        
                         <div class="action-icon" onclick="document.getElementById('attachment-input').click(); window.closeDropdown();" title="Attach File"><i class="fa-solid fa-paperclip"></i></div>
                         <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
                         <div class="action-icon" onclick="window.openSearchModal(); window.closeDropdown();" title="Search"><i class="fa-solid fa-magnifying-glass"></i></div>
@@ -395,14 +409,23 @@
                 <div id="modal-img-container" class="w-28 h-28 rounded-full mb-4 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-5xl">
                     <img id="modal-img" src="" class="w-full h-full object-cover">
                 </div>
-                <h3 id="modal-name" class="text-xl font-bold text-white mb-4 font-sans"></h3>
+                <h3 id="modal-name" class="text-xl font-bold text-white mb-4"></h3>
                 
-                <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] font-sans text-sm mb-5 shadow-inner">
+                <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] text-sm mb-5 shadow-inner">
                     <div id="modal-desc" class="flex flex-col gap-2.5 text-gray-300"></div>
                 </div>
                 
                 <div class="flex gap-3 w-full" id="modal-action-buttons">
-                    </div>
+                    <button id="modal-chat-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-comment"></i> Chat
+                    </button>
+                    <button id="modal-sms-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-comment-sms"></i> SMS
+                    </button>
+                    <button id="modal-email-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
+                        <i class="fa-solid fa-envelope"></i> Email
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -410,7 +433,7 @@
             <div class="app-modal-content w-[95%] max-w-[400px] max-h-[85vh] overflow-y-auto p-5" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="window.closeProfileModal()"></i>
                 
-                <h2 id="profile-modal-title" class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full font-sans">
+                <h2 id="profile-modal-title" class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">
                     <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Registration
                 </h2>
 
@@ -424,14 +447,14 @@
                     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
                 </div>
 
-                <label class="form-label mt-0 mb-1 font-sans">Name</label>
-                <input type="text" id="edit-name" class="form-input py-1.5 px-3 mb-2 font-sans" placeholder="Your Name">
+                <label class="form-label mt-0 mb-1">Name</label>
+                <input type="text" id="edit-name" class="form-input py-1.5 px-3 mb-2" placeholder="Your Name">
 
-                <label class="form-label mt-0 mb-1 font-sans">Country</label>
+                <label class="form-label mt-0 mb-1">Country</label>
                 <div class="flex items-center gap-2 w-full mb-2">
                     <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-8 h-5 rounded-sm border border-[#4a4e53] object-cover shadow-sm shrink-0">
                     <div class="relative w-full">
-                        <select id="edit-country-select" class="form-input py-1.5 px-2 w-full mt-0 appearance-none pr-8 font-sans" onchange="window.handleCountryChange(this)">
+                        <select id="edit-country-select" class="form-input py-1.5 px-2 w-full mt-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
                             <option value="un" data-name="Global" data-emoji="🌐">Global / Default</option>
                             <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿">Azerbaijan</option>
                             <option value="ru" data-name="Russia" data-emoji="🇷🇺">Russia</option>
@@ -448,78 +471,64 @@
 
                 <div class="flex gap-2 w-full mb-2">
                     <div class="w-1/2">
-                        <label class="form-label mt-0 mb-1 font-sans">Phone</label>
-                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 mt-0 font-sans" placeholder="+...">
+                        <label class="form-label mt-0 mb-1">Phone</label>
+                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 mt-0" placeholder="+...">
                     </div>
                     <div class="w-1/2">
-                        <label class="form-label mt-0 mb-1 font-sans">Email</label>
-                        <input type="email" id="edit-email" class="form-input py-1.5 px-2 mt-0 font-sans" placeholder="mail@...">
+                        <label class="form-label mt-0 mb-1">Email</label>
+                        <input type="email" id="edit-email" class="form-input py-1.5 px-2 mt-0" placeholder="mail@...">
                     </div>
                 </div>
 
-                <label class="form-label mt-0 mb-1 font-sans">Profession / Role</label>
-                <input type="text" id="edit-prof" class="form-input py-1.5 px-3 mb-2 mt-0 font-sans" placeholder="e.g. CEO / Investor">
+                <label class="form-label mt-0 mb-1">Profession / Role</label>
+                <input type="text" id="edit-prof" class="form-input py-1.5 px-3 mb-2 mt-0" placeholder="e.g. CEO / Investor">
 
-                <label class="form-label mt-0 mb-1 font-sans">Languages</label>
-                <input type="text" id="edit-langs" class="form-input py-1.5 px-3 mb-2 mt-0 font-sans" placeholder="e.g. English, Russian">
+                <label class="form-label mt-0 mb-1">Languages</label>
+                <input type="text" id="edit-langs" class="form-input py-1.5 px-3 mb-2 mt-0" placeholder="e.g. English, Russian">
 
-                <label class="form-label mt-0 mb-1 font-sans">About / CV</label>
-                <textarea id="edit-desc" class="form-input resize-none w-full py-1.5 px-3 mt-0 font-sans" rows="2" placeholder="Tell about your skills..."></textarea>
+                <label class="form-label mt-0 mb-1">About / CV</label>
+                <textarea id="edit-desc" class="form-input resize-none w-full py-1.5 px-3 mt-0" rows="2" placeholder="Tell about your skills..."></textarea>
 
-                <button onclick="window.saveProfileData()" class="form-btn mt-3 mb-2 py-2.5 w-full shadow-lg font-sans"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
+                <button onclick="window.saveProfileData()" class="form-btn mt-3 mb-2 py-2.5 w-full shadow-lg"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
             </div>
         </div>
 
         <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
             <div class="app-modal-content w-[95%] max-w-[400px] h-[80vh] flex flex-col justify-start" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeSearchModal()"></i>
-                
-                <h2 class="text-xl font-bold mb-5 text-white font-sans w-full text-left border-b border-[#4a4e53] pb-3">
-                    <i class="fa-solid fa-globe text-[#a29bfe] mr-2"></i> <span data-i18n="search_title">Global Search</span>
-                </h2>
-                
+                <h2 class="text-xl font-bold mb-5 text-white w-full text-left border-b border-[#4a4e53] pb-3"><i class="fa-solid fa-globe text-[#a29bfe] mr-2"></i> <span data-i18n="search_title">Global Search</span></h2>
                 <div class="relative w-full shrink-0 mb-4">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                    <input type="text" id="global-search-input" data-i18n-placeholder="search_plc" onkeyup="window.performLiveSearch()" placeholder="Search people, places..." class="form-input w-full pl-10 pr-10 bg-[#1a1e23] border-[#4a4e53] text-base font-sans">
+                    <input type="text" id="global-search-input" data-i18n-placeholder="search_plc" onkeyup="window.performLiveSearch()" placeholder="Search people, places..." class="form-input w-full pl-10 pr-10 bg-[#1a1e23] border-[#4a4e53]">
                     <i class="fa-solid fa-circle-xmark absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hidden text-xl" id="clear-search-btn" onclick="window.resetGlobalSearch()"></i>
                 </div>
-
                 <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 45vh;">
-                    <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🤝 People & Skills</p>
+                    <p class="text-[0.7rem] text-gray-400 mb-2 uppercase tracking-wider font-bold">🤝 People & Skills</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">💻 Engineer</button>
-                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🎨 Designer</button>
-                        <button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">📈 Marketing</button>
+                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition shadow-sm">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition shadow-sm">🎨 Designer</button>
+                        <button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition shadow-sm">📈 Marketing</button>
                     </div>
-
-                    <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🌍 Places & Languages</p>
+                    <p class="text-[0.7rem] text-gray-400 mb-2 uppercase tracking-wider font-bold">🌍 Places & Languages</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Germany', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇩🇪 Germany</button>
-                        <button onclick="window.handleSmartSearch('Italy', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇮🇹 Italy</button>
-                        <button onclick="window.handleSmartSearch('English', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🗣️ English</button>
+                        <button onclick="window.handleSmartSearch('Germany', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition shadow-sm">🇩🇪 Germany</button>
+                        <button onclick="window.handleSmartSearch('Italy', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition shadow-sm">🇮🇹 Italy</button>
+                        <button onclick="window.handleSmartSearch('English', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition shadow-sm">🗣️ English</button>
                     </div>
-
-                    <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">💳 Services & Actions</p>
+                    <p class="text-[0.7rem] text-gray-400 mb-2 uppercase tracking-wider font-bold">💳 Services & Actions</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('', 'transfer')" class="px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg text-sm text-green-400 hover:bg-green-500 hover:text-white transition font-sans shadow-sm">💸 Send Money</button>
-                        <button onclick="window.handleSmartSearch('', 'email')" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-lg text-sm text-purple-400 hover:bg-purple-500 hover:text-white transition font-sans shadow-sm">📧 Compose Email</button>
+                        <button onclick="window.handleSmartSearch('', 'transfer')" class="px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg text-sm text-green-400 hover:bg-green-500 hover:text-white transition shadow-sm">💸 Send Money</button>
+                        <button onclick="window.handleSmartSearch('', 'email')" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-lg text-sm text-purple-400 hover:bg-purple-500 hover:text-white transition shadow-sm">📧 Compose Email</button>
                     </div>
-
-                    <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🌐 Web Queries</p>
+                    <p class="text-[0.7rem] text-gray-400 mb-2 uppercase tracking-wider font-bold">🌐 Web Queries</p>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="window.handleSmartSearch('Current USD to EUR exchange rate', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">💱 Exchange Rates</button>
-                        <button onclick="window.handleSmartSearch('World Tech News Today', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">📰 World News</button>
+                        <button onclick="window.handleSmartSearch('Current USD to EUR exchange rate', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition shadow-sm">💱 Exchange Rates</button>
+                        <button onclick="window.handleSmartSearch('World Tech News Today', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition shadow-sm">📰 World News</button>
                     </div>
                 </div>
-
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 border-t border-[#4a4e53] pt-4" id="search-results-area"></div>
-                
+                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-4" id="search-results-area"></div>
                 <iframe id="search-result-frame" class="w-full h-[30vh] mt-3 rounded-xl border border-[#4a4e53] bg-white hidden shrink-0 shadow-inner" src="about:blank"></iframe>
-
-                <button onclick="window.doGoogleSearch()" class="form-btn bg-[#2a2d32] border border-[#4a4e53] hover:bg-[#3a3d42] mt-4 shrink-0 font-sans flex justify-center items-center gap-2 py-3">
-                    <span class="text-gray-300 text-sm">Search Web:</span>
-                    <span class="font-bold text-blue-500 text-sm">G</span><span class="font-bold text-red-500 text-sm">o</span><span class="font-bold text-yellow-500 text-sm">o</span><span class="font-bold text-blue-500 text-sm">g</span><span class="font-bold text-green-500 text-sm">l</span><span class="font-bold text-red-500 text-sm">e</span>
-                </button>
+                <button onclick="window.doGoogleSearch()" class="form-btn bg-[#2a2d32] border border-[#4a4e53] hover:bg-[#3a3d42] mt-4 shrink-0 flex justify-center items-center gap-2 py-3"><span class="text-gray-300 text-sm">Search Web:</span><span class="font-bold text-blue-500 text-sm">G</span><span class="font-bold text-red-500 text-sm">o</span><span class="font-bold text-yellow-500 text-sm">o</span><span class="font-bold text-blue-500 text-sm">g</span><span class="font-bold text-green-500 text-sm">l</span><span class="font-bold text-red-500 text-sm">e</span></button>
             </div>
         </div>
 
@@ -527,27 +536,13 @@
             <div class="app-modal-content w-[95%] max-w-[320px]" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeBankTransferModal()"></i>
                 <div class="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center text-white text-2xl mb-3 shadow-lg"><i class="fa-solid fa-money-bill-transfer"></i></div>
-                <h2 class="text-xl font-bold text-white font-sans" data-i18n="menu_transfer">Bank Transfer</h2>
-                <p class="text-[0.75rem] text-gray-400 mb-5 font-sans text-center">Fast & secure • Powered by <span class="text-yellow-500 font-bold">Western Union</span></p>
-                <form id="transfer-form" class="w-full font-sans flex flex-col gap-4" onsubmit="window.sendMoney(event)">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1.5">Recipient:</label>
-                        <select id="transfer-recipient" class="form-input w-full bg-[#1a1e23] border-[#4a4e53] text-base py-2.5 font-sans" required></select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1.5">Amount (USD):</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-lg">$</span>
-                            <input type="number" id="transfer-amount" class="form-input w-full pl-10 text-base py-2.5 font-sans" placeholder="0.00" min="1" required>
-                        </div>
-                    </div>
-                    <div class="bg-gray-800/50 dark:bg-[#1a1e23] border border-green-500/50 rounded-xl p-4 my-2 flex justify-between items-center shadow-inner">
-                        <span class="text-sm text-gray-300">Transaction Fee:</span>
-                        <span class="text-base font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded shadow-sm">$0.01</span>
-                    </div>
-                    <button type="submit" id="submit-transfer-btn" class="form-btn w-full font-bold bg-gradient-to-r from-emerald-500 to-green-600 mt-2 shadow-lg flex items-center justify-center gap-2 py-3.5 text-base font-sans">
-                        <i class="fa-solid fa-paper-plane"></i> Send Money
-                    </button>
+                <h2 class="text-xl font-bold text-white" data-i18n="menu_transfer">Bank Transfer</h2>
+                <p class="text-[0.75rem] text-gray-400 mb-5 text-center">Fast & secure • Powered by <span class="text-yellow-500 font-bold">Western Union</span></p>
+                <form id="transfer-form" class="w-full flex flex-col gap-4 mt-4" onsubmit="window.sendMoney(event)">
+                    <select id="transfer-recipient" class="form-input w-full bg-[#1a1e23] border-[#4a4e53] py-2.5" required></select>
+                    <div class="relative"><span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-lg">$</span><input type="number" id="transfer-amount" class="form-input w-full pl-10 py-2.5" placeholder="0.00" min="1" required></div>
+                    <div class="bg-gray-800/50 dark:bg-[#1a1e23] border border-green-500/50 rounded-xl p-4 my-2 flex justify-between items-center shadow-inner"><span class="text-sm text-gray-300">Transaction Fee:</span><span class="text-base font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded shadow-sm">$0.01</span></div>
+                    <button type="submit" id="submit-transfer-btn" class="form-btn w-full font-bold bg-gradient-to-r from-emerald-500 to-green-600 mt-2 shadow-lg py-3.5"><i class="fa-solid fa-paper-plane"></i> Send Money</button>
                 </form>
             </div>
         </div>
@@ -555,11 +550,11 @@
         <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
             <div class="app-modal-content text-center w-[95%] max-w-[280px]" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeTrashModal()"></i>
-                <h2 class="text-xl font-bold mb-6 text-white font-sans" data-i18n="trash_title"><i class="fa-solid fa-trash-can text-red-500 mr-2"></i> Smart Trash</h2>
+                <h2 class="text-xl font-bold mb-6 text-white" data-i18n="trash_title"><i class="fa-solid fa-trash-can text-red-500 mr-2"></i> Smart Trash</h2>
                 <div class="flex flex-col gap-4">
-                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive text-xl"></i> <span data-i18n="trash_arc">Archive</span></button>
-                    <button class="form-btn bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartClear()"><i class="fa-solid fa-broom text-xl"></i> <span data-i18n="trash_clr">Clear Chat</span></button>
-                    <button class="form-btn bg-red-600 hover:bg-red-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartDelete()"><i class="fa-solid fa-fire text-xl"></i> <span data-i18n="trash_del">Delete</span></button>
+                    <button class="form-btn bg-blue-600 hover:bg-blue-500 py-3" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive text-xl mr-2"></i> <span data-i18n="trash_arc">Archive</span></button>
+                    <button class="form-btn bg-yellow-600 hover:bg-yellow-500 py-3" onclick="window.smartClear()"><i class="fa-solid fa-broom text-xl mr-2"></i> <span data-i18n="trash_clr">Clear Chat</span></button>
+                    <button class="form-btn bg-red-600 hover:bg-red-500 py-3" onclick="window.smartDelete()"><i class="fa-solid fa-fire text-xl mr-2"></i> <span data-i18n="trash_del">Delete</span></button>
                 </div>
             </div>
         </div>
@@ -567,10 +562,10 @@
         <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();">
             <div class="app-modal-content text-center w-[95%] max-w-[280px]" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closePhoneChoiceModal()"></i>
-                <h2 class="text-xl font-bold mb-6 text-white font-sans">Select Call Type</h2>
+                <h2 class="text-xl font-bold mb-6 text-white">Select Call Type</h2>
                 <div class="flex flex-col gap-4">
-                    <button class="form-btn bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Voice Room</button>
-                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button>
+                    <button class="form-btn bg-emerald-600 hover:bg-emerald-500 py-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl mr-2"></i> Voice Room</button>
+                    <button class="form-btn bg-blue-600 hover:bg-blue-500 py-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl mr-2"></i> Cellular Call</button>
                 </div>
             </div>
         </div>
@@ -579,20 +574,19 @@
             <div class="app-modal-content text-center w-[95%] max-w-[320px]" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeAuthModal()"></i>
                 <i class="fa-solid fa-shield-halved text-5xl text-[#a29bfe] mb-4 mt-2"></i>
-                <h2 class="text-xl font-bold mb-5 text-white font-sans" data-i18n="menu_auth">Authentication</h2>
-                <div class="flex border border-[#4a4e53] rounded-xl mb-5 overflow-hidden font-sans w-full shadow-inner">
+                <h2 class="text-xl font-bold mb-5 text-white" data-i18n="menu_auth">Authentication</h2>
+                <div class="flex border border-[#4a4e53] rounded-xl mb-5 overflow-hidden w-full shadow-inner">
                     <button id="tab-phone" class="flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition" onclick="window.switchAuthTab('phone')">Phone</button>
                     <button id="tab-email" class="flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition" onclick="window.switchAuthTab('email')">Email</button>
                 </div>
                 <div id="auth-phone-form" class="flex flex-col gap-4 w-full relative">
-                    <input type="tel" id="auth-phone-input" class="form-input text-center font-sans text-base py-3" placeholder="+994 50 123 45 67">
-                    <button id="auth-phone-send-btn" class="form-btn w-full font-bold py-3 text-base shadow-lg font-sans" onclick="alert('Sending SMS...')">Send SMS</button>
-                    <div id="recaptcha-container"></div>
+                    <input type="tel" id="auth-phone-input" class="form-input text-center text-base py-3" placeholder="+994 50 123 45 67">
+                    <button id="auth-phone-send-btn" class="form-btn w-full font-bold py-3 text-base shadow-lg" onclick="alert('Feature in development')">Send SMS</button>
                 </div>
                 <div id="auth-email-form" class="flex flex-col gap-4 w-full hidden">
-                    <input type="email" id="auth-email-input" class="form-input text-center font-sans text-base py-3" placeholder="your@email.com">
-                    <input type="password" id="auth-email-password" class="form-input text-center font-sans text-base py-3" placeholder="Password (min 6 chars)">
-                    <button id="auth-email-send-btn" class="form-btn w-full font-bold py-3 text-base shadow-lg font-sans" onclick="alert('Login...')">Login / Register</button>
+                    <input type="email" id="auth-email-input" class="form-input text-center text-base py-3" placeholder="your@email.com">
+                    <input type="password" id="auth-email-password" class="form-input text-center text-base py-3" placeholder="Password">
+                    <button id="auth-email-send-btn" class="form-btn w-full font-bold py-3 text-base shadow-lg" onclick="alert('Feature in development')">Login</button>
                 </div>
             </div>
         </div>
@@ -600,12 +594,12 @@
         <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
             <div class="app-modal-content w-[95%] max-w-[320px]" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeEmailModal()"></i>
-                <h2 class="text-xl font-bold mb-5 text-white text-center font-sans"><i class="fa-solid fa-envelope text-[#a29bfe] mr-2"></i> New Message</h2>
-                <form id="email-form" class="font-sans w-full flex flex-col gap-3" onsubmit="window.sendEmailForm(event)">
-                    <input type="email" id="email-to" class="form-input text-base py-3 font-sans" placeholder="To: email@example.com" required>
-                    <input type="text" id="email-subject" class="form-input text-base py-3 font-sans" placeholder="Subject" required>
-                    <textarea id="email-text" class="form-input text-base py-3 resize-none font-sans" placeholder="Message..." rows="4" required></textarea>
-                    <button type="submit" class="form-btn w-full font-bold py-3.5 text-base mt-2 shadow-lg font-sans">Send Message</button>
+                <h2 class="text-xl font-bold mb-5 text-white text-center"><i class="fa-solid fa-envelope text-[#a29bfe] mr-2"></i> New Message</h2>
+                <form id="email-form" class="w-full flex flex-col gap-3" onsubmit="window.sendEmailForm(event)">
+                    <input type="email" id="email-to" class="form-input text-base py-3" placeholder="To: email@example.com" required>
+                    <input type="text" id="email-subject" class="form-input text-base py-3" placeholder="Subject" required>
+                    <textarea id="email-text" class="form-input text-base py-3 resize-none" placeholder="Message..." rows="4" required></textarea>
+                    <button type="submit" class="form-btn w-full font-bold py-3.5 text-base mt-2 shadow-lg">Send Message</button>
                 </form>
             </div>
         </div>
@@ -613,7 +607,7 @@
         <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
             <div class="app-modal-content w-[95%] max-w-[340px] h-[55vh] flex flex-col" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeLocationModal()"></i>
-                <h2 class="text-xl font-bold mb-4 text-white font-sans shrink-0"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> My Location</h2>
+                <h2 class="text-xl font-bold mb-4 text-white shrink-0"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> My Location</h2>
                 <div id="location-map" class="w-full grow bg-[#1a1e23] rounded-xl border border-[#4a4e53] flex flex-col items-center justify-center text-gray-400 text-sm text-center p-2 overflow-hidden shadow-inner">
                 </div>
             </div>
@@ -622,7 +616,7 @@
     </div>
 
     <script>
-        // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ЗАКРЫТИЯ ОКОН (РАБОТАЮТ НА 100%) ===
+        // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ЗАКРЫТИЯ (РАБОТАЮТ 100%) ===
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeSearchModal = function() { document.getElementById('search-modal').classList.remove('active'); if(window.resetGlobalSearch) window.resetGlobalSearch(); };
@@ -633,7 +627,7 @@
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
         window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
 
-        // === ФУНКЦИИ ТЕЛЕФОНА И РОМБА (ПОЧИНЕНЫ) ===
+        // === ФУНКЦИИ ТЕЛЕФОНА И РОМБА ===
         window.openPhoneChoiceModal = function() { 
             window.closeDropdown(); 
             document.getElementById('phone-choice-modal').classList.add('active'); 
@@ -671,7 +665,7 @@
                 const templateParams = { to_email: to, subject: subject, message: text };
                 await emailjs.send("service_i4o7lfa", "template_lrcjrkr", templateParams);
                 const emptyArchive = document.getElementById('empty-archive'); if (emptyArchive) emptyArchive.style.display = 'none';
-                const card = document.createElement('div'); card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
+                const card = document.createElement('div'); card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 shadow-lg mb-3';
                 card.innerHTML = `<p class="font-bold text-white text-base mb-1">To: ${to}</p><p class="text-sm text-[#a29bfe] font-bold mb-1">Sent via EmailJS 🚀</p><p class="text-sm text-gray-300">${subject}</p>`;
                 const archiveList = document.getElementById('archive-list'); if (archiveList) archiveList.prepend(card);
                 e.target.reset(); window.closeEmailModal(); window.switchTab(4); alert("Успех! Письмо отправлено.");
@@ -681,12 +675,12 @@
         window.toggleTheme = function() { window.closeDropdown(); const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); document.getElementById('theme-icon').className = s.classList.contains('light-theme') ? 'fa-solid fa-moon w-5' : 'fa-solid fa-sun w-5'; };
         window.switchAuthTab = function(type) {
             if(type === 'email') {
-                document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition font-sans';
-                document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition font-sans';
+                document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
+                document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
                 document.getElementById('auth-email-form').classList.remove('hidden'); document.getElementById('auth-phone-form').classList.add('hidden');
             } else {
-                document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition font-sans';
-                document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition font-sans';
+                document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
+                document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
                 document.getElementById('auth-phone-form').classList.remove('hidden'); document.getElementById('auth-email-form').classList.add('hidden');
             }
         };
@@ -792,11 +786,11 @@
             let myVideoStream = null;
             function initConference() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
-                let confHtml = `<div class="video-frame main" id="my-video-container"><video id="my-live-video" class="mirror-video" autoplay muted playsinline></video><div class="video-overlay font-sans">${window.myProfileInfo.name.split(' (')[0]} (You)</div><div class="flag-overlay">${window.myProfileInfo.flag}</div><div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC] font-sans" id="speaker-marquee">➔ [AUTO] Welcome!</div></div></div>`;
+                let confHtml = `<div class="video-frame main" id="my-video-container"><video id="my-live-video" class="mirror-video" autoplay muted playsinline></video><div class="video-overlay">${window.myProfileInfo.name.split(' (')[0]} (You)</div><div class="flag-overlay">${window.myProfileInfo.flag}</div><div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome!</div></div></div>`;
                 let displayedCount = 0;
                 window.participants.forEach(p => {
                     if(p.id === 'ai' || displayedCount >= 3) return; 
-                    confHtml += `<div class="video-frame"><video autoplay loop muted playsinline><source src="${p.video}"></video><div class="video-overlay font-sans">${p.name.split(' ')[0]}</div><div class="flag-overlay">${p.flag}</div><div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee font-sans" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div></div>`;
+                    confHtml += `<div class="video-frame"><video autoplay loop muted playsinline><source src="${p.video}"></video><div class="video-overlay">${p.name.split(' ')[0]}</div><div class="flag-overlay">${p.flag}</div><div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div></div>`;
                     displayedCount++;
                 });
                 confGrid.innerHTML = confHtml; startMyCamera();
@@ -819,7 +813,7 @@
 
             function renderProfessionList() {
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return;
-                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; let cardsHTML = `<div class="grid grid-cols-2 gap-4 font-sans">`;
+                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; let cardsHTML = `<div class="grid grid-cols-2 gap-4">`;
                 allUsers.forEach((p) => {
                     cardsHTML += `<div class="bg-[#2a2d32] p-4 rounded-2xl border border-[#4a4e53] flex flex-col items-center relative shadow-lg h-full justify-between"><div class="flex flex-col items-center w-full"><img src="${p.photo}" class="w-20 h-20 rounded-full border-2 border-[#a29bfe] mb-3 object-cover shadow-md"><h3 class="text-white font-bold text-base text-center leading-tight mb-1.5">${p.name.split(' (')[0]}</h3><p class="text-gray-400 text-xs text-center mb-4"><span>${p.flag}</span> ${p.profession}</p></div><button onclick="window.openAvatarModal('${p.id}', 'cv')" class="w-full mt-auto bg-[#a29bfe]/10 text-[#a29bfe] hover:bg-[#a29bfe] hover:text-white transition py-2.5 rounded-xl text-sm font-bold border border-[#a29bfe]">📄 CV</button></div>`;
                 });
@@ -846,14 +840,14 @@
                 const avatarEl = document.getElementById('chat-header-avatar'); const nameEl = document.getElementById('chat-header-name'); const statusEl = document.getElementById('chat-header-status');
 
                 if (targetId === 'global') {
-                    window.currentRoomId = "global"; avatarEl.innerHTML = "🌍"; avatarEl.style.backgroundImage = "none"; avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-xl text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] shadow-md cursor-pointer hover:scale-105 transition-transform"; nameEl.innerText = translations[currentLang].chat_group; statusEl.innerHTML = '🌍 <span class="text-[0.7rem] text-green-400 font-sans">All members</span>'; window.showToast(null, true); 
+                    window.currentRoomId = "global"; avatarEl.innerHTML = "🌍"; avatarEl.style.backgroundImage = "none"; avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-xl text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] shadow-md cursor-pointer hover:scale-105 transition-transform"; nameEl.innerText = translations[currentLang].chat_group; statusEl.innerHTML = '🌍 <span class="text-[0.7rem] text-green-400">All members</span>'; window.showToast(null, true); 
                 } else if (targetId === 'ai') {
-                    window.currentRoomId = "private_ai_bot"; avatarEl.innerHTML = "🤖"; avatarEl.style.backgroundImage = "none"; avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-2xl text-white shrink-0 bg-gradient-to-r from-purple-500 to-indigo-500 border border-[#a29bfe] shadow-lg cursor-pointer hover:scale-105 transition-transform"; nameEl.innerText = "AI Assistant"; statusEl.innerHTML = '🤖 <span class="text-[0.7rem] text-purple-400 font-sans">Online</span>'; window.showToast(window.participants.find(p => p.id === 'ai'), false, true); 
+                    window.currentRoomId = "private_ai_bot"; avatarEl.innerHTML = "🤖"; avatarEl.style.backgroundImage = "none"; avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-2xl text-white shrink-0 bg-gradient-to-r from-purple-500 to-indigo-500 border border-[#a29bfe] shadow-lg cursor-pointer hover:scale-105 transition-transform"; nameEl.innerText = "AI Assistant"; statusEl.innerHTML = '🤖 <span class="text-[0.7rem] text-purple-400">Online</span>'; window.showToast(window.participants.find(p => p.id === 'ai'), false, true); 
                 } else if (targetId === 'me') {
-                    window.currentRoomId = "private_me_" + window.myUsername.toLowerCase().trim(); avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center cursor-pointer hover:scale-105 transition-transform"; avatarEl.style.backgroundImage = `url('${window.myProfileInfo.photo}')`; nameEl.innerText = "Saved (You)"; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode === 'un' ? 'un' : window.myProfileInfo.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400 font-sans">Online</span>`; window.showToast(window.myProfileInfo, false); 
+                    window.currentRoomId = "private_me_" + window.myUsername.toLowerCase().trim(); avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center cursor-pointer hover:scale-105 transition-transform"; avatarEl.style.backgroundImage = `url('${window.myProfileInfo.photo}')`; nameEl.innerText = "Saved (You)"; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode === 'un' ? 'un' : window.myProfileInfo.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`; window.showToast(window.myProfileInfo, false); 
                 } else {
                     const targetUser = window.participants.find(p => p.id === targetId);
-                    if(targetUser) { window.currentRoomId = "private_" + [window.myUsername.toLowerCase().trim(), targetUser.name.split(' ')[0].toLowerCase().trim()].sort().join('_'); avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center cursor-pointer hover:scale-105 transition-transform"; avatarEl.style.backgroundImage = `url('${targetUser.photo}')`; nameEl.innerText = targetUser.name.split(' ')[0]; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${targetUser.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400 font-sans">Online</span>`; window.showToast(targetUser, false); }
+                    if(targetUser) { window.currentRoomId = "private_" + [window.myUsername.toLowerCase().trim(), targetUser.name.split(' ')[0].toLowerCase().trim()].sort().join('_'); avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center cursor-pointer hover:scale-105 transition-transform"; avatarEl.style.backgroundImage = `url('${targetUser.photo}')`; nameEl.innerText = targetUser.name.split(' ')[0]; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${targetUser.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`; window.showToast(targetUser, false); }
                 }
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
@@ -868,7 +862,7 @@
                 if (inputId === 'voice-text-input') { window.processVoiceTranslation(text); } 
                 else if (inputId === 'conf-chat-input') {
                     const confMessages = document.getElementById('conf-messages'); const msgId = 'conf-msg-' + Date.now();
-                    if (confMessages) { confMessages.innerHTML += `<div class="conf-msg mt-2 flex gap-2"><img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${window.myProfileInfo.photo}"><div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full font-sans"><span class="text-[#00C4CC] font-bold block mb-0.5">${window.myUsername}</span>${text}<div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight font-sans">⏳ translating...</div></div></div>`; confMessages.scrollTop = confMessages.scrollHeight; }
+                    if (confMessages) { confMessages.innerHTML += `<div class="conf-msg mt-2 flex gap-2"><img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${window.myProfileInfo.photo}"><div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full"><span class="text-[#00C4CC] font-bold block mb-0.5">${window.myUsername}</span>${text}<div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight">⏳ translating...</div></div></div>`; confMessages.scrollTop = confMessages.scrollHeight; }
                     window.processConfTranslation(text, msgId);
                 } 
                 inputEl.value = '';
@@ -898,10 +892,10 @@
                 let displayedText = data.text; let isReceipt = displayedText.includes('💳 [BANK TRANSFER]'); let bubbleStyle = '';
                 if (isMe && isReceipt) bubbleStyle = 'border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.1); color: #fff; border-bottom-right-radius: 4px;'; else if (!isMe && isReceipt) bubbleStyle = 'border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.1); color: #fff; border-bottom-left-radius: 4px;'; else if (isAI) bubbleStyle = 'background: linear-gradient(145deg, #9333ea, #4f46e5); color: #fff; border: none; border-bottom-left-radius: 4px; box-shadow: 0 4px 10px rgba(147, 51, 234, 0.3);';
 
-                const customClass = (isReceipt || isAI) ? 'font-sans' : 'chat-bubble font-sans';
-                const senderNameClasses = isMe ? 'text-indigo-200 text-right font-sans' : (isAI ? 'text-purple-400 font-bold text-left font-sans' : 'text-[#a29bfe] font-bold text-left font-sans');
+                const customClass = (isReceipt || isAI) ? '' : 'chat-bubble';
+                const senderNameClasses = isMe ? 'text-indigo-200 text-right' : (isAI ? 'text-purple-400 font-bold text-left' : 'text-[#a29bfe] font-bold text-left');
 
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}<div class="${customClass}" style="${bubbleStyle}">${displayedText}</div>${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1 font-sans" id="trans-box-${msgId}"></div>` : ''}</div>`;
+                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}<div class="${customClass}" style="${bubbleStyle}">${displayedText}</div>${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1" id="trans-box-${msgId}"></div>` : ''}</div>`;
                 msgWrapper.innerHTML = isMe ? bubbleHtml + avatarHtml : avatarHtml + bubbleHtml; if(chatMessages) { chatMessages.appendChild(msgWrapper); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
                 if (targetLangs.length > 0 && !isReceipt && !isAI) {
