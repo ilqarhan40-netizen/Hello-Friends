@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Stable Master V15</title>
+    <title>Hello Friends App - Golden Master + Smart CV</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -42,7 +42,7 @@
         .header-dropdown a:hover { background: #3a3d42; color: white; }
         
         .navigation-wrapper { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid #4a4e53; z-index: 40; transition: border-color 0.4s; }
-        .nav-arrow { cursor: pointer; color: #888; transition: color 0.3s; background: transparent; border: none; padding: 0 5px; }
+        .nav-arrow { cursor: pointer; color: #888; transition: color 0.3s; background: none; border: none; padding: 0; }
         .nav-arrow.disabled { color: #444; pointer-events: none; }
         .main-nav { flex-grow: 1; display: flex; align-items: center; overflow: hidden; }
         .main-nav-inner { display: flex; gap: 10px; transition: transform 0.4s ease-in-out; }
@@ -122,6 +122,7 @@
         .chat-info-marquee-container { display: none; width: 100%; background: #1a1e23; border-bottom: 1px solid #4a4e53; overflow: hidden; padding: 4px 0; align-items: center; margin-bottom: 8px; transition: opacity 0.3s; }
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 12s linear infinite; font-size: 0.7rem; color: #a29bfe; font-family: sans-serif; white-space: nowrap; font-weight: bold; }
 
+        /* --- СВЕТЛАЯ ТЕМА --- */
         .mobile-screen.light-theme { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); border-color: #ced4da; color: #212529; }
         .mobile-screen.light-theme .header-icons button { color: #495057; }
         .mobile-screen.light-theme .header-dropdown { background: #ffffff; border-color: #dee2e6; }
@@ -175,12 +176,8 @@
         <div id="toast-notification" class="toast-notification" style="width: 90%; max-width: 350px; background: #2a2d32; border: 1px solid #a29bfe; padding: 12px 15px;">
             <img id="toast-img" src="" class="w-12 h-12 rounded-full object-cover border-2 border-[#a29bfe] shrink-0" style="display: none;">
             <div id="toast-icon-wrap" class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-xl shrink-0 border-2 border-[#a29bfe]">🌍</div>
-            
             <div class="flex flex-col flex-grow ml-2">
-                <div class="flex items-center gap-1.5">
-                    <span id="toast-flag" class="text-base">🌍</span>
-                    <span id="toast-name" class="font-bold text-[0.9rem] text-white" data-i18n="chat_group">Group Chat</span>
-                </div>
+                <div class="flex items-center gap-1.5"><span id="toast-flag" class="text-base">🌍</span><span id="toast-name" class="font-bold text-[0.9rem] text-white" data-i18n="chat_group">Group Chat</span></div>
                 <span id="toast-info" class="text-[0.7rem] text-gray-300 font-sans leading-snug mt-1"></span>
             </div>
         </div>
@@ -190,42 +187,46 @@
                 <div class="logo-circle">HF</div>
              </div>
              <div class="header-icons">
-                <button id="main-search-btn" onclick="document.getElementById('search-modal').classList.add('active');" title="Global Search">
+                <button id="main-search-btn" onclick="window.openSearchModal()" title="Global Search">
                     <i class="fa-solid fa-magnifying-glass text-[1.1rem] text-[#a29bfe]"></i>
                 </button>
-                <button id="compose-email-btn" onclick="openEmailModal()" title="Email"><i class="fa-regular fa-envelope text-[1.1rem]"></i></button>
-                <button id="menu-btn" onclick="toggleHeaderMenu(event)"><i class="fa-solid fa-bars text-[1.1rem]"></i></button>
+                <button id="compose-email-btn" onclick="window.openEmailModal()" title="Email">
+                    <i class="fa-regular fa-envelope text-[1.1rem]"></i>
+                </button>
+                <button id="menu-btn" onclick="window.toggleHeaderMenu(event)">
+                    <i class="fa-solid fa-bars text-[1.1rem]"></i>
+                </button>
             </div>
             
             <div id="header-dropdown" class="header-dropdown">
-                <a onclick="toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
+                <a onclick="window.toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
                 
-                <a onclick="openMyProfile()"><i class="fa-solid fa-user-pen w-5 text-[#a29bfe]"></i> <span id="menu-profile-text" data-i18n="menu_profile">Edit Profile</span></a>
+                <a onclick="window.openMyProfile()"><i class="fa-solid fa-user-pen w-5 text-[#a29bfe]"></i> <span id="menu-profile-text" data-i18n="menu_profile">Edit Profile</span></a>
                 
                 <a><i class="fa-solid fa-gear w-5"></i> <span data-i18n="menu_settings">Settings</span></a>
-                <a onclick="toggleTheme()"><i id="theme-icon" class="fa-solid fa-sun w-5"></i> <span data-i18n="menu_theme">Theme</span></a>
-                <a onclick="openBankTransferModal()"><i class="fa-solid fa-money-bill-transfer w-5 text-green-400"></i> <span data-i18n="menu_transfer">Bank Transfer</span></a>
-                <a onclick="openAuthModal()"><i class="fa-solid fa-shield-halved w-5 text-blue-400"></i> <span data-i18n="menu_auth">Authentication</span></a>
-                <a onclick="document.getElementById('import-export-input').click(); closeDropdown()"><i class="fa-solid fa-file-import w-5"></i> <span data-i18n="menu_import">Import - Export</span></a>
+                <a onclick="window.toggleTheme()"><i id="theme-icon" class="fa-solid fa-sun w-5"></i> <span data-i18n="menu_theme">Theme</span></a>
+                <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-money-bill-transfer w-5 text-green-400"></i> <span data-i18n="menu_transfer">Bank Transfer</span></a>
+                <a onclick="window.openAuthModal()"><i class="fa-solid fa-shield-halved w-5 text-blue-400"></i> <span data-i18n="menu_auth">Authentication</span></a>
+                <a onclick="document.getElementById('import-export-input').click(); window.closeDropdown()"><i class="fa-solid fa-file-import w-5"></i> <span data-i18n="menu_import">Import - Export</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
                 
-                <a style="color: #ef4444;" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Log Out</span></a>
+                <a style="color: #ef4444;" onclick="window.logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Log Out</span></a>
             </div>
         </header>
 
         <div class="navigation-wrapper">
-            <button id="prev-tab-btn" class="nav-arrow disabled" onclick="switchTab(currentIndex - 1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <button id="prev-tab-btn" class="nav-arrow disabled" onclick="window.switchTab(window.currentIndex - 1)"><i class="fa-solid fa-chevron-left"></i></button>
             <nav class="main-nav" id="scroll-nav">
                 <div class="main-nav-inner" id="nav-inner">
-                    <a class="nav-link active" data-target="message" onclick="switchTab(0)" data-i18n="nav_chat">Chat</a>
-                    <a class="nav-link" data-target="voice-translator" onclick="switchTab(1)" data-i18n="nav_voice">Voice</a>
-                    <a class="nav-link" data-target="conference" onclick="switchTab(2)" data-i18n="nav_conf">Conference</a>
-                    <a class="nav-link" data-target="profession" onclick="switchTab(3)" data-i18n="nav_prof">Profession</a>
-                    <a class="nav-link" data-target="archive" onclick="switchTab(4)" data-i18n="nav_archive">Archive</a>
+                    <a class="nav-link active" data-target="message" onclick="window.switchTab(0)" data-i18n="nav_chat">Chat</a>
+                    <a class="nav-link" data-target="voice-translator" onclick="window.switchTab(1)" data-i18n="nav_voice">Voice</a>
+                    <a class="nav-link" data-target="conference" onclick="window.switchTab(2)" data-i18n="nav_conf">Conference</a>
+                    <a class="nav-link" data-target="profession" onclick="window.switchTab(3)" data-i18n="nav_prof">Profession</a>
+                    <a class="nav-link" data-target="archive" onclick="window.switchTab(4)" data-i18n="nav_archive">Archive</a>
                 </div>
             </nav>
-            <button id="next-tab-btn" class="nav-arrow" onclick="switchTab(currentIndex + 1)"><i class="fa-solid fa-chevron-right"></i></button>
+            <button id="next-tab-btn" class="nav-arrow" onclick="window.switchTab(window.currentIndex + 1)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
 
         <main class="flex-grow overflow-hidden flex flex-col relative">
@@ -235,48 +236,29 @@
                     <div class="chat-layout">
                         <div class="chat-sidebar" id="chat-sidebar"></div>
                         <div class="chat-main pb-2 flex flex-col relative">
-                            
                             <div class="flex items-center gap-2 px-1 pb-2 border-b border-[#4a4e53] shrink-0" id="active-chat-header">
-                                <div id="chat-header-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] cursor-pointer hover:scale-105 transition-transform" onclick="openActiveChatProfile()" title="Show Profile">GL</div>
+                                <div id="chat-header-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] cursor-pointer hover:scale-105 transition-transform" onclick="window.openActiveChatProfile()" title="Show Profile">GL</div>
                                 <div class="flex flex-col flex-grow">
                                     <span class="text-[0.95rem] font-bold text-white leading-tight" id="chat-header-name" data-i18n="chat_group">Group Chat</span>
                                     <span class="text-[0.7rem] leading-none mt-1" id="chat-header-status">🌍 <span class="text-green-400">All members</span></span>
                                 </div>
-                                
-                                <button onclick="toggleMarquee()" id="marquee-toggle-btn" class="text-[#a29bfe] hover:text-white transition-colors p-1 ml-auto bg-transparent border-none cursor-pointer">
-                                    <i class="fa-solid fa-closed-captioning text-lg"></i>
-                                </button>
-
-                                <button onclick="openTrashModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-transparent border-none cursor-pointer ml-1 relative z-50">
-                                    <i class="fa-solid fa-trash-can text-lg"></i>
-                                </button>
+                                <button onclick="window.toggleMarquee()" id="marquee-toggle-btn" class="text-[#a29bfe] hover:text-white transition-colors p-1 ml-auto bg-transparent border-none cursor-pointer"><i class="fa-solid fa-closed-captioning text-lg"></i></button>
+                                <button onclick="window.openTrashModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-transparent border-none cursor-pointer ml-1 relative z-50"><i class="fa-solid fa-trash-can text-lg"></i></button>
                             </div>
                             
-                            <div class="chat-info-marquee-container shrink-0" id="typing-marquee-container">
-                                <span class="chat-info-marquee-text" id="chat-info-marquee"></span>
-                            </div>
-
+                            <div class="chat-info-marquee-container shrink-0" id="typing-marquee-container"><span class="chat-info-marquee-text" id="chat-info-marquee"></span></div>
                             <div class="chat-messages" id="chat-messages"></div>
                             
                             <div class="w-full flex items-center gap-1.5 mt-auto shrink-0 pt-2 border-t border-[#4a4e53] relative pb-1 px-1">
-                                <button onclick="toggleEmojiPicker('text')" class="text-gray-400 hover:text-yellow-400 transition p-1.5" title="Emojis">
-                                    <i class="fa-regular fa-face-smile text-base"></i>
-                                </button>
-                                
+                                <button onclick="window.toggleEmojiPicker('text')" class="text-gray-400 hover:text-yellow-400 transition p-1.5" title="Emojis"><i class="fa-regular fa-face-smile text-base"></i></button>
                                 <div id="text-emoji-picker" class="hidden absolute bottom-12 left-1 bg-[#2a2d32] border border-[#4a4e53] p-2 rounded-lg grid grid-cols-5 gap-2 text-base shadow-lg z-50">
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('👍')">👍</span>
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('🤔')">🤔</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('👍')">👍</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🤔')">🤔</span>
                                 </div>
-
                                 <input type="text" id="chat-input" data-i18n-placeholder="chat_plc" placeholder="Type message..." class="form-input mb-0 grow text-base" style="padding: 10px 12px;">
-                                
-                                <button id="magic-wand-btn" onclick="applyAiMagic()" class="text-[#a29bfe] hover:text-purple-400 transition p-1.5" title="AI Rewrite">
-                                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                                </button>
-                                <button id="main-chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text">
-                                    <i class="fa-solid fa-microphone text-lg"></i>
-                                </button>
-                                <button id="chat-send-btn" onclick="sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                                <button id="magic-wand-btn" onclick="window.applyAiMagic()" class="text-[#a29bfe] hover:text-purple-400 transition p-1.5" title="AI Rewrite"><i class="fa-solid fa-wand-magic-sparkles text-lg"></i></button>
+                                <button id="main-chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text"><i class="fa-solid fa-microphone text-lg"></i></button>
+                                <button id="chat-send-btn" onclick="window.sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
                             </div>
                         </div>
                     </div>
@@ -287,7 +269,6 @@
                 <div class="page-container flex flex-col relative" style="padding: 0;">
                     <div class="flex flex-col h-full p-2 relative">
                         <h2 class="mb-2 text-white shrink-0 text-center"><span style="font-family: 'Allura', cursive; font-size: 2.8rem; color: #a29bfe;">Voice</span> Room</h2>
-                        
                         <div class="voice-room-container flex justify-center items-center gap-8 grow mt-2">
                             <div class="voice-user flex flex-col items-center">
                                 <div class="w-24 h-24 relative mb-3 shadow-lg">
@@ -296,13 +277,9 @@
                                 </div>
                                 <h3 id="voice-friend-name" class="text-white font-bold text-center text-sm"></h3>
                             </div>
-                            
                             <div class="flex gap-2 text-[#a29bfe] opacity-50">
-                                <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce"></div>
-                                <div class="w-1.5 h-10 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                                <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                                <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce"></div><div class="w-1.5 h-10 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
                             </div>
-                            
                             <div class="voice-user flex flex-col items-center">
                                 <div class="w-28 h-28 relative mb-3 shadow-xl">
                                     <div id="voice-pulse" class="pulse-ring"></div>
@@ -312,26 +289,19 @@
                                 <h3 class="text-white font-bold text-center text-sm" id="voice-me-name">You</h3>
                             </div>
                         </div>
-                        
                         <div class="w-full flex flex-col mt-auto shrink-0 pt-2 border-t border-[#4a4e53]">
-                            <div id="voice-marquee-container" class="w-full overflow-hidden hidden items-center mb-2 bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53]">
-                                <span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap"></span>
-                            </div>
-
+                            <div id="voice-marquee-container" class="w-full overflow-hidden hidden items-center mb-2 bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53]"><span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap"></span></div>
                             <div class="w-full items-center gap-1.5 px-1 pb-2 relative flex">
-                                <button onclick="toggleEmojiPicker('voice')" class="bg-[#2a2d32] border border-[#4a4e53] text-gray-300 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-regular fa-face-smile text-base"></i></button>
-                                
+                                <button onclick="window.toggleEmojiPicker('voice')" class="bg-[#2a2d32] border border-[#4a4e53] text-gray-300 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-regular fa-face-smile text-base"></i></button>
                                 <div id="voice-emoji-picker" class="hidden absolute bottom-16 left-1 bg-[#2a2d32] border border-[#4a4e53] p-2 rounded-lg grid grid-cols-5 gap-2 text-base shadow-lg z-50">
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('👍')">👍</span>
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('🤔')">🤔</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('👍')">👍</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🤔')">🤔</span>
                                 </div>
-
                                 <input type="text" id="voice-text-input" data-i18n-placeholder="chat_plc" placeholder="Speak or text..." class="form-input mb-0 grow text-base" style="padding: 10px 8px;">
                                 <button id="voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-microphone text-base"></i></button>
-                                
-                                <button id="voice-send-btn" onclick="sendTextMessage('voice-text-input')" class="bg-gradient-to-r from-[#a29bfe] to-[#6c5ce7] text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-paper-plane text-base"></i></button>
-                                <button id="voice-cc-btn" onclick="toggleVoiceCC()" class="bg-[#a29bfe] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0 ml-1" title="Toggle CC"><i class="fa-solid fa-closed-captioning text-base"></i></button>
-                                <button onclick="switchTab(0)" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 rounded-full flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.6)] shrink-0 ml-1" title="End Call"><i class="fa-solid fa-phone-slash text-base"></i></button>
+                                <button id="voice-send-btn" onclick="window.sendTextMessage('voice-text-input')" class="bg-gradient-to-r from-[#a29bfe] to-[#6c5ce7] text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                                <button id="voice-cc-btn" onclick="window.toggleVoiceCC()" class="bg-[#a29bfe] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0 ml-1" title="Toggle CC"><i class="fa-solid fa-closed-captioning text-base"></i></button>
+                                <button onclick="window.switchTab(0)" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 rounded-full flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.6)] shrink-0 ml-1" title="End Call"><i class="fa-solid fa-phone-slash text-base"></i></button>
                             </div>
                         </div>
                     </div>
@@ -343,30 +313,23 @@
                     <span class="font-bold text-[#00C4CC] tracking-widest text-sm">LIVE VIDEO</span>
                     <span class="text-red-500 font-bold bg-red-500/10 px-2 py-0.5 rounded-full animate-pulse border border-red-500/30 text-xs">● REC</span>
                 </div>
-                
                 <div class="overflow-y-auto p-1 shrink-0" style="max-height: 48%;">
-                    <div class="video-grid" id="conference-grid">
-                    </div>
+                    <div class="video-grid" id="conference-grid"></div>
                 </div>
-                
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
-                    <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 App Online</span>
-                    </div>
+                    <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold"><span>Live Chat</span><span>👥 App Online</span></div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
-                    
                     <div class="flex gap-2 mt-2 shrink-0 items-center">
                         <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Speak"><i class="fa-solid fa-microphone text-base"></i></button>
                         <input type="text" id="conf-chat-input" data-i18n-placeholder="chat_plc" class="w-full bg-[#1e293b] text-white text-base px-3 py-2 rounded-lg border border-[#334155] outline-none font-sans" placeholder="Message or speak...">
-                        <button id="conf-chat-send" onclick="sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                        <button id="conf-chat-send" onclick="window.sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
                 </div>
-                
                 <div class="h-14 bg-black/90 flex justify-center items-center gap-5 shrink-0 border-t border-[#334155]">
-                    <button id="conf-cam-btn" onclick="toggleMyCamera(this)" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-video text-base"></i></button>
-                    <button onclick="toggleConfCC()" id="conf-cc-btn" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-closed-captioning text-base"></i></button>
-                    <button onclick="openTrashModal()" class="w-10 h-10 rounded-full bg-yellow-600 text-white flex justify-center items-center"><i class="fa-solid fa-trash-can text-base"></i></button>
-                    <button onclick="switchTab(0)" class="w-12 h-12 rounded-full bg-red-600 text-white flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.5)]"><i class="fa-solid fa-phone-slash text-xl"></i></button>
+                    <button id="conf-cam-btn" onclick="window.toggleMyCamera(this)" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-video text-base"></i></button>
+                    <button onclick="window.toggleConfCC()" id="conf-cc-btn" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-closed-captioning text-base"></i></button>
+                    <button onclick="window.openTrashModal()" class="w-10 h-10 rounded-full bg-yellow-600 text-white flex justify-center items-center"><i class="fa-solid fa-trash-can text-base"></i></button>
+                    <button onclick="window.switchTab(0)" class="w-12 h-12 rounded-full bg-red-600 text-white flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.5)]"><i class="fa-solid fa-phone-slash text-xl"></i></button>
                 </div>
             </div>
 
@@ -387,7 +350,7 @@
             <div class="actions-footer">
                 <div class="font-sans text-2xl cursor-pointer hover:text-white transition text-gray-400">😊</div>
                 <div class="rhombus-menu-container">
-                    <div id="rhombus-btn" class="rhombus-main-btn" onclick="toggleRhombusMenu(event)">
+                    <div id="rhombus-btn" class="rhombus-main-btn" onclick="window.toggleRhombusMenu(event)">
                         <div class="rhombus-shape"><i class="fa-solid fa-plus"></i></div>
                     </div>
                     <div id="rhombus-actions" class="rhombus-actions">
@@ -399,12 +362,12 @@
                             <option value="de-DE">🇩🇪 DE Mic</option>
                             <option value="it-IT">🇮🇹 IT Mic</option>
                         </select>
-                        <div class="action-icon" onclick="switchTab(2); closeDropdown();" title="Video"><i class="fa-solid fa-video"></i></div>
-                        <div class="action-icon" onclick="openPhoneChoiceModal(); closeDropdown();" title="Call"><i class="fa-solid fa-phone"></i></div>
-                        <div class="action-icon" onclick="document.getElementById('attachment-input').click(); closeDropdown();" title="Attach File"><i class="fa-solid fa-paperclip"></i></div>
-                        <div class="action-icon" onclick="openLocationModal(); closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
-                        <div class="action-icon" onclick="document.getElementById('search-modal').classList.add('active'); closeDropdown();" title="Search"><i class="fa-solid fa-magnifying-glass"></i></div>
-                        <div class="action-icon text-red-400" onclick="openTrashModal(); closeDropdown();" title="Smart Trash"><i class="fa-solid fa-trash"></i></div>
+                        <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video"><i class="fa-solid fa-video"></i></div>
+                        <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Call"><i class="fa-solid fa-phone"></i></div>
+                        <div class="action-icon" onclick="document.getElementById('attachment-input').click(); window.closeDropdown();" title="Attach File"><i class="fa-solid fa-paperclip"></i></div>
+                        <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="action-icon" onclick="window.openSearchModal(); window.closeDropdown();" title="Search"><i class="fa-solid fa-magnifying-glass"></i></div>
+                        <div class="action-icon text-red-400" onclick="window.openTrashModal(); window.closeDropdown();" title="Smart Trash"><i class="fa-solid fa-trash"></i></div>
                     </div>
                 </div>
             </div>
@@ -418,9 +381,9 @@
             </footer>
         </div>
 
-        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) document.getElementById('avatar-modal').classList.remove('active');">
+        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
             <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('avatar-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeAvatarModal()"></i>
                 <div id="modal-img-container" class="w-28 h-28 rounded-full mb-4 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-5xl">
                     <img id="modal-img" src="" class="w-full h-full object-cover">
                 </div>
@@ -445,71 +408,71 @@
         </div>
 
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) document.getElementById('edit-profile-modal').classList.remove('active');">
-            <div class="app-modal-content w-full max-w-[300px] max-h-[85vh] overflow-y-auto p-5" onclick="event.stopPropagation();">
+            <div class="app-modal-content w-full max-w-[300px] max-h-[85vh] overflow-y-auto p-4" onclick="event.stopPropagation();">
                 <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="document.getElementById('edit-profile-modal').classList.remove('active')"></i>
                 
                 <h2 id="profile-modal-title" class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">
                     <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Registration
                 </h2>
 
-                <div class="flex flex-col items-center mb-4 w-full">
+                <div class="flex flex-col items-center mb-3 w-full">
                     <div class="relative w-20 h-20 mb-1">
                         <img id="edit-preview-photo" src="https://ui-avatars.com/api/?name=User" class="w-full h-full rounded-full object-cover border-2 border-[#a29bfe] shadow-md">
                         <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#a29bfe] text-white rounded-full w-7 h-7 flex items-center justify-center border border-[#2a2d32] hover:scale-110 transition cursor-pointer" title="Upload Photo">
                             <i class="fa-solid fa-camera text-xs"></i>
                         </button>
                     </div>
-                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
                 </div>
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Name</label>
-                <input type="text" id="edit-name" class="form-input py-2 px-3 text-sm mb-3" placeholder="Enter your name">
+                <input type="text" id="edit-name" class="form-input py-1.5 px-3 text-sm mb-2" placeholder="Your Name">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Country</label>
-                <div class="flex items-center gap-2 w-full mb-3">
+                <div class="flex items-center gap-2 w-full mb-2">
                     <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-8 h-5 rounded-sm border border-[#4a4e53] object-cover shadow-sm shrink-0">
                     <div class="relative w-full">
-                        <select id="edit-country-select" class="form-input py-2 px-2 text-sm w-full mt-0 appearance-none pr-8 bg-[#1a1e23]" onchange="handleCountryChange(this)">
-                            <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global / Default</option>
-                            <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
-                            <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
-                            <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
-                            <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
-                            <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
-                            <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
-                            <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
-                            <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
-                            <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
-                            <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh-CN">China</option>
-                            <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">United Arab Emirates</option>
+                        <select id="edit-country-select" class="form-input py-1.5 px-2 text-sm w-full mt-0 appearance-none pr-8 bg-[#1a1e23]" onchange="window.handleCountryChange(this)">
+                            <option value="un" data-name="Global" data-emoji="🌐">Global / Default</option>
+                            <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿">Azerbaijan</option>
+                            <option value="ru" data-name="Russia" data-emoji="🇷🇺">Russia</option>
+                            <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧">United Kingdom</option>
+                            <option value="us" data-name="United States" data-emoji="🇺🇸">United States</option>
+                            <option value="de" data-name="Germany" data-emoji="🇩🇪">Germany</option>
+                            <option value="it" data-name="Italy" data-emoji="🇮🇹">Italy</option>
+                            <option value="tr" data-name="Turkey" data-emoji="🇹🇷">Turkey</option>
+                            <option value="fr" data-name="France" data-emoji="🇫🇷">France</option>
+                            <option value="es" data-name="Spain" data-emoji="🇪🇸">Spain</option>
+                            <option value="cn" data-name="China" data-emoji="🇨🇳">China</option>
+                            <option value="ae" data-name="UAE" data-emoji="🇦🇪">United Arab Emirates</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
-                <div class="flex gap-2 w-full mb-3">
+                <div class="flex gap-2 w-full mb-2">
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Phone</label>
-                        <input type="tel" id="edit-phone" class="form-input py-2 px-2 text-sm mt-0" placeholder="+... ">
+                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="+...">
                     </div>
                     <div class="w-1/2">
                         <label class="form-label mt-0 mb-1 text-[0.65rem]">Email</label>
-                        <input type="email" id="edit-email" class="form-input py-2 px-2 text-sm mt-0" placeholder="mail@...">
+                        <input type="email" id="edit-email" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="mail@...">
                     </div>
                 </div>
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Profession / Role</label>
-                <input type="text" id="edit-prof" class="form-input py-2 px-3 text-sm mb-3 mt-0" placeholder="e.g. Investor">
+                <input type="text" id="edit-prof" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. CEO / Investor">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Languages</label>
-                <input type="text" id="edit-langs" class="form-input py-2 px-3 text-sm mb-3 mt-0" placeholder="e.g. English">
+                <input type="text" id="edit-langs" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. English, Russian">
 
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">About / CV</label>
-                <textarea id="edit-desc" class="form-input resize-none w-full py-2 px-3 text-sm mt-0" rows="3" placeholder="Tell about your skills, experience..."></textarea>
+                <textarea id="edit-desc" class="form-input resize-none w-full py-1.5 px-3 text-sm mt-0" rows="2" placeholder="Tell about your skills..."></textarea>
 
-                <button id="profile-modal-btn" onclick="saveProfileData()" class="form-btn mt-2 py-3 text-sm w-full">Complete Registration</button>
+                <button onclick="window.saveProfileData()" class="form-btn mt-3 mb-2 py-2.5 text-sm w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
 
-                <div class="mt-4 pt-3 border-t border-[#4a4e53] text-center w-full">
+                <div class="mt-2 pt-3 border-t border-[#4a4e53] text-center w-full">
                     <p class="text-[0.65rem] text-gray-400 font-sans mb-1">Hello Friends Super-App</p>
                     <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.openAvatarModal('ilgar', 'cv');" class="text-[0.75rem] text-[#a29bfe] font-bold hover:text-white transition bg-transparent border-none cursor-pointer">
                         Created by Ilgar (Founder)
@@ -520,7 +483,7 @@
 
         <div id="search-modal" class="app-modal" onclick="if(event.target===this) { this.classList.remove('active'); document.getElementById('search-result-frame').classList.add('hidden'); }">
             <div class="app-modal-content w-full max-w-[360px] h-[80vh] flex flex-col justify-start" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('search-modal').classList.remove('active'); document.getElementById('search-result-frame').classList.add('hidden');"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeSearchModal()"></i>
                 
                 <h2 class="text-xl font-bold mb-5 text-white font-sans w-full text-left border-b border-[#4a4e53] pb-3">
                     <i class="fa-solid fa-globe text-[#a29bfe] mr-2"></i> <span data-i18n="search_title">Global Search</span>
@@ -528,35 +491,35 @@
                 
                 <div class="relative w-full shrink-0 mb-4">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                    <input type="text" id="global-search-input" data-i18n-placeholder="search_plc" onkeyup="performLiveSearch()" placeholder="Search people, places..." class="form-input w-full pl-10 pr-10 bg-[#1a1e23] border-[#4a4e53] text-base">
-                    <i class="fa-solid fa-circle-xmark absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hidden text-xl" id="clear-search-btn" onclick="resetGlobalSearch()"></i>
+                    <input type="text" id="global-search-input" data-i18n-placeholder="search_plc" onkeyup="window.performLiveSearch()" placeholder="Search people, places..." class="form-input w-full pl-10 pr-10 bg-[#1a1e23] border-[#4a4e53] text-base">
+                    <i class="fa-solid fa-circle-xmark absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hidden text-xl" id="clear-search-btn" onclick="window.resetGlobalSearch()"></i>
                 </div>
 
                 <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 45vh;">
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🤝 People & Skills</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="handleSmartSearch('Engineer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">💻 Engineer</button>
-                        <button onclick="handleSmartSearch('Designer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🎨 Designer</button>
-                        <button onclick="handleSmartSearch('Marketing', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">📈 Marketing</button>
+                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🎨 Designer</button>
+                        <button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">📈 Marketing</button>
                     </div>
 
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🌍 Places & Languages</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="handleSmartSearch('Germany', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇩🇪 Germany</button>
-                        <button onclick="handleSmartSearch('Italy', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇮🇹 Italy</button>
-                        <button onclick="handleSmartSearch('English', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🗣️ English</button>
+                        <button onclick="window.handleSmartSearch('Germany', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇩🇪 Germany</button>
+                        <button onclick="window.handleSmartSearch('Italy', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇮🇹 Italy</button>
+                        <button onclick="window.handleSmartSearch('English', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🗣️ English</button>
                     </div>
 
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">💳 Services & Actions</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="handleSmartSearch('', 'transfer')" class="px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg text-sm text-green-400 hover:bg-green-500 hover:text-white transition font-sans shadow-sm">💸 Send Money</button>
-                        <button onclick="handleSmartSearch('', 'email')" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-lg text-sm text-purple-400 hover:bg-purple-500 hover:text-white transition font-sans shadow-sm">📧 Compose Email</button>
+                        <button onclick="window.handleSmartSearch('', 'transfer')" class="px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg text-sm text-green-400 hover:bg-green-500 hover:text-white transition font-sans shadow-sm">💸 Send Money</button>
+                        <button onclick="window.handleSmartSearch('', 'email')" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-lg text-sm text-purple-400 hover:bg-purple-500 hover:text-white transition font-sans shadow-sm">📧 Compose Email</button>
                     </div>
 
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🌐 Web Queries</p>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="handleSmartSearch('Current USD to EUR exchange rate', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">💱 Exchange Rates</button>
-                        <button onclick="handleSmartSearch('World Tech News Today', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">📰 World News</button>
+                        <button onclick="window.handleSmartSearch('Current USD to EUR exchange rate', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">💱 Exchange Rates</button>
+                        <button onclick="window.handleSmartSearch('World Tech News Today', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">📰 World News</button>
                     </div>
                 </div>
 
@@ -564,16 +527,16 @@
                 
                 <iframe id="search-result-frame" class="w-full h-[30vh] mt-3 rounded-xl border border-[#4a4e53] bg-white hidden shrink-0 shadow-inner" src="about:blank"></iframe>
 
-                <button onclick="doGoogleSearch()" class="form-btn bg-[#2a2d32] border border-[#4a4e53] hover:bg-[#3a3d42] mt-4 shrink-0 font-sans flex justify-center items-center gap-2 py-3">
+                <button onclick="window.doGoogleSearch()" class="form-btn bg-[#2a2d32] border border-[#4a4e53] hover:bg-[#3a3d42] mt-4 shrink-0 font-sans flex justify-center items-center gap-2 py-3">
                     <span class="text-gray-300 text-sm">Search Web:</span>
                     <span class="font-bold text-blue-500 text-sm">G</span><span class="font-bold text-red-500 text-sm">o</span><span class="font-bold text-yellow-500 text-sm">o</span><span class="font-bold text-blue-500 text-sm">g</span><span class="font-bold text-green-500 text-sm">l</span><span class="font-bold text-red-500 text-sm">e</span>
                 </button>
             </div>
         </div>
 
-        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
             <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('transfer-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeBankTransferModal()"></i>
                 
                 <div class="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center text-white text-2xl mb-3 shadow-lg">
                     <i class="fa-solid fa-money-bill-transfer"></i>
@@ -581,7 +544,7 @@
                 <h2 class="text-xl font-bold text-white font-sans" data-i18n="menu_transfer">Bank Transfer</h2>
                 <p class="text-[0.75rem] text-gray-400 mb-5 font-sans text-center">Fast & secure • Powered by <span class="text-yellow-500 font-bold">Western Union</span></p>
                 
-                <form id="transfer-form" class="w-full font-sans flex flex-col gap-4" onsubmit="sendMoney(event)">
+                <form id="transfer-form" class="w-full font-sans flex flex-col gap-4" onsubmit="window.sendMoney(event)">
                     <div>
                         <label class="block text-sm font-medium text-gray-400 mb-1.5">Recipient:</label>
                         <select id="transfer-recipient" class="form-input w-full bg-[#1a1e23] border-[#4a4e53] text-base py-2.5" required>
@@ -607,48 +570,48 @@
             </div>
         </div>
 
-        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
             <div class="app-modal-content text-center w-full max-w-[280px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('trash-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeTrashModal()"></i>
                 <h2 class="text-xl font-bold mb-6 text-white font-sans" data-i18n="trash_title"><i class="fa-solid fa-trash-can text-red-500 mr-2"></i> Smart Trash</h2>
                 <div class="flex flex-col gap-4">
-                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="smartArchive()">
+                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartArchive()">
                         <i class="fa-solid fa-box-archive text-xl"></i> <span data-i18n="trash_arc">Archive</span>
                     </button>
-                    <button class="form-btn bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="smartClear()">
+                    <button class="form-btn bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartClear()">
                         <i class="fa-solid fa-broom text-xl"></i> <span data-i18n="trash_clr">Clear Chat</span>
                     </button>
-                    <button class="form-btn bg-red-600 hover:bg-red-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="smartDelete()">
+                    <button class="form-btn bg-red-600 hover:bg-red-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartDelete()">
                         <i class="fa-solid fa-fire text-xl"></i> <span data-i18n="trash_del">Delete</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();">
             <div class="app-modal-content text-center w-full max-w-[280px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('phone-choice-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closePhoneChoiceModal()"></i>
                 <h2 class="text-xl font-bold mb-6 text-white font-sans">Select Call Type</h2>
                 <div class="flex flex-col gap-4">
-                    <button class="form-btn bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="startInAppCall()">
+                    <button class="form-btn bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.startInAppCall()">
                         <i class="fa-solid fa-headset text-xl"></i> Voice Room
                     </button>
-                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="startExternalCall()">
+                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.startExternalCall()">
                         <i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call
                     </button>
                 </div>
             </div>
         </div>
 
-        <div id="auth-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+        <div id="auth-modal" class="app-modal" onclick="if(event.target===this) window.closeAuthModal();">
             <div class="app-modal-content text-center w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('auth-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeAuthModal()"></i>
                 <i class="fa-solid fa-shield-halved text-5xl text-[#a29bfe] mb-4 mt-2"></i>
                 <h2 class="text-xl font-bold mb-5 text-white font-sans" data-i18n="menu_auth">Authentication</h2>
                 
                 <div class="flex border border-[#4a4e53] rounded-xl mb-5 overflow-hidden font-sans w-full shadow-inner">
-                    <button id="tab-phone" class="flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition" onclick="switchAuthTab('phone')">Phone</button>
-                    <button id="tab-email" class="flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition" onclick="switchAuthTab('email')">Email</button>
+                    <button id="tab-phone" class="flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition" onclick="window.switchAuthTab('phone')">Phone</button>
+                    <button id="tab-email" class="flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition" onclick="window.switchAuthTab('email')">Email</button>
                 </div>
 
                 <div id="auth-phone-form" class="flex flex-col gap-4 w-full relative">
@@ -671,11 +634,11 @@
             </div>
         </div>
 
-        <div id="email-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+        <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
             <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('email-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeEmailModal()"></i>
                 <h2 class="text-xl font-bold mb-5 text-white text-center font-sans"><i class="fa-solid fa-envelope text-[#a29bfe] mr-2"></i> New Message</h2>
-                <form id="email-form" class="font-sans w-full flex flex-col gap-3" onsubmit="sendEmailForm(event)">
+                <form id="email-form" class="font-sans w-full flex flex-col gap-3" onsubmit="window.sendEmailForm(event)">
                     <input type="email" id="email-to" class="form-input text-base py-3" placeholder="To: email@example.com" required>
                     <input type="text" id="email-subject" class="form-input text-base py-3" placeholder="Subject" required>
                     <textarea id="email-text" class="form-input text-base py-3 resize-none" placeholder="Message..." rows="4" required></textarea>
@@ -684,9 +647,9 @@
             </div>
         </div>
 
-        <div id="location-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
             <div class="app-modal-content w-full max-w-[340px] h-[55vh] flex flex-col" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('location-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeLocationModal()"></i>
                 <h2 class="text-xl font-bold mb-4 text-white font-sans shrink-0"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> My Location</h2>
                 <div id="location-map" class="w-full grow bg-[#1a1e23] rounded-xl border border-[#4a4e53] flex flex-col items-center justify-center text-gray-400 text-sm text-center p-2 overflow-hidden shadow-inner">
                 </div>
@@ -696,34 +659,86 @@
     </div>
 
     <script>
-        // --- ГЛОБАЛЬНЫЕ ФУНКЦИИ (ДЛЯ КНОПОК) ---
+        // === ГЛОБАЛЬНАЯ ЗОНА ===
+        
+        window.openEmailModal = function() { 
+            if(typeof window.closeDropdown === 'function') window.closeDropdown(); 
+            document.getElementById('email-modal').classList.add('active'); 
+        };
+
+        window.closeEmailModal = function() { 
+            document.getElementById('email-modal').classList.remove('active'); 
+        };
+
+        window.openDirectEmail = function(email) { 
+            window.openEmailModal(); 
+            if(email) document.getElementById('email-to').value = email; 
+        };
+
+        window.sendEmailForm = async function(e) {
+            e.preventDefault();
+            const to = document.getElementById('email-to').value;
+            const subject = document.getElementById('email-subject').value;
+            const text = document.getElementById('email-text').value;
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const origBtnText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+            btn.disabled = true;
+
+            try {
+                const templateParams = { to_email: to, subject: subject, message: text };
+                await emailjs.send("service_i4o7lfa", "template_lrcjrkr", templateParams);
+
+                const emptyArchive = document.getElementById('empty-archive');
+                if (emptyArchive) emptyArchive.style.display = 'none';
+                
+                const card = document.createElement('div');
+                card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
+                card.innerHTML = `<p class="font-bold text-white text-base mb-1">To: ${to}</p><p class="text-sm text-[#a29bfe] font-bold mb-1">Sent via EmailJS 🚀</p><p class="text-sm text-gray-300">${subject}</p>`;
+                
+                const archiveList = document.getElementById('archive-list');
+                if (archiveList) archiveList.prepend(card);
+                
+                e.target.reset(); 
+                window.closeEmailModal(); 
+                if(typeof window.switchTab === 'function') window.switchTab(4); 
+                alert("Успех! Письмо мгновенно улетело! Проверьте почту 🚀");
+                
+            } catch (error) {
+                console.error("❌ Ошибка EmailJS:", error);
+                alert("Ошибка отправки. Проверьте консоль или настройки шаблона.");
+            } finally {
+                btn.innerHTML = origBtnText;
+                btn.disabled = false;
+            }
+        };
+
         window.toggleTheme = function() {
-            window.closeDropdown();
+            if(typeof window.closeDropdown === 'function') window.closeDropdown();
             const screen = document.getElementById('phone-body');
             screen.classList.toggle('light-theme');
             document.getElementById('theme-icon').className = screen.classList.contains('light-theme') ? 'fa-solid fa-moon w-5' : 'fa-solid fa-sun w-5';
         };
 
         window.openAuthModal = function() { 
-            window.closeDropdown(); 
+            if(typeof window.closeDropdown === 'function') window.closeDropdown(); 
             document.getElementById('auth-modal').classList.add('active'); 
         };
-        window.closeAuthModal = function() { 
-            document.getElementById('auth-modal').classList.remove('active'); 
-        };
+        window.closeAuthModal = function() { document.getElementById('auth-modal').classList.remove('active'); };
         window.switchAuthTab = function(type) {
             if(type === 'email') {
                 document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
                 document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
-                document.getElementById('auth-email-form').classList.remove('hidden'); 
-                document.getElementById('auth-phone-form').classList.add('hidden');
+                document.getElementById('auth-email-form').classList.remove('hidden'); document.getElementById('auth-phone-form').classList.add('hidden');
             } else {
                 document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
                 document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
-                document.getElementById('auth-phone-form').classList.remove('hidden'); 
-                document.getElementById('auth-email-form').classList.add('hidden');
+                document.getElementById('auth-phone-form').classList.remove('hidden'); document.getElementById('auth-email-form').classList.add('hidden');
             }
         };
+
+        // --- ВАШ ОРИГИНАЛЬНЫЙ КОД ---
 
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
@@ -738,13 +753,13 @@
                 trash_title: "Smart Trash", trash_arc: "Archive", trash_clr: "Clear Chat", trash_del: "Delete"
             },
             ru: {
-                menu_profile: "Профиль", menu_settings: "Настройки", menu_theme: "Тема", menu_transfer: "Перевод Денег", menu_auth: "Вход", menu_import: "Импорт / Экспорт", menu_logout: "Выйти",
+                menu_profile: "Изменить профиль", menu_settings: "Настройки", menu_theme: "Тема", menu_transfer: "Перевод Денег", menu_auth: "Вход", menu_import: "Импорт / Экспорт", menu_logout: "Сменить юзера",
                 nav_chat: "Чат", nav_voice: "Голос", nav_conf: "Звонок", nav_prof: "Профи", nav_archive: "Архив",
                 lang_btn: "Язык: RU", search_title: "Глобальный Поиск", search_plc: "Искать людей, места...", chat_group: "Общий Чат", chat_plc: "Сообщение...",
                 trash_title: "Умная Корзина", trash_arc: "В архив", trash_clr: "Очистить чат", trash_del: "Удалить"
             },
             az: {
-                menu_profile: "Profil", menu_settings: "Ayarlar", menu_theme: "Mövzu", menu_transfer: "Pul Köçürmə", menu_auth: "Giriş", menu_import: "İdxal / İxrac", menu_logout: "Çıxış",
+                menu_profile: "Profili Yenilə", menu_settings: "Ayarlar", menu_theme: "Mövzu", menu_transfer: "Pul Köçürmə", menu_auth: "Giriş", menu_import: "İdxal / İxrac", menu_logout: "İstifadəçini dəyiş",
                 nav_chat: "Söhbət", nav_voice: "Səs", nav_conf: "Konfrans", nav_prof: "Peşələr", nav_archive: "Arxiv",
                 lang_btn: "Dil: AZ", search_title: "Qlobal Axtarış", search_plc: "Axtarış...", chat_group: "Ümumi Söhbət", chat_plc: "Mesaj yazın...",
                 trash_title: "Ağıllı Səbət", trash_arc: "Arxivə", trash_clr: "Təmizlə", trash_del: "Sil"
@@ -771,22 +786,6 @@
             if(langText) langText.innerText = translations[currentLang].lang_btn;
             
             window.closeDropdown();
-        };
-
-        // --- СПРАВОЧНИК СТРАН ---
-        const countryData = {
-            "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
-            "az": { phone: "+994", pop: "~10.1 million", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire. Known for rich culture and oil reserves." },
-            "ru": { phone: "+7", pop: "~144 million", seas: "Arctic Ocean, Black Sea", desc: "The largest country in the world, spanning Eastern Europe and Northern Asia." },
-            "gb": { phone: "+44", pop: "~67 million", seas: "North Sea, Atlantic Ocean", desc: "An island nation with deep historical global influence." },
-            "us": { phone: "+1", pop: "~331 million", seas: "Atlantic, Pacific Oceans", desc: "A massive country with diverse geography and leading tech industries." },
-            "de": { phone: "+49", pop: "~84 million", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe, known for precision engineering." },
-            "it": { phone: "+39", pop: "~59 million", seas: "Mediterranean, Adriatic", desc: "Famous for its rich history, Renaissance art, and world-class cuisine." },
-            "tr": { phone: "+90", pop: "~85 million", seas: "Black, Mediterranean, Aegean", desc: "A transcontinental country bridging Europe and Asia with a rich heritage." },
-            "fr": { phone: "+33", pop: "~67 million", seas: "Atlantic, Mediterranean", desc: "World center of art, fashion, gastronomy, and culture." },
-            "es": { phone: "+34", pop: "~47 million", seas: "Mediterranean, Atlantic", desc: "Known for its diverse culture, vibrant lifestyle, and beautiful geography." },
-            "cn": { phone: "+86", pop: "~1.4 billion", seas: "East China Sea, Yellow Sea", desc: "One of the world's most populous countries and a global economic hub." },
-            "ae": { phone: "+971", pop: "~9.9 million", seas: "Persian Gulf, Gulf of Oman", desc: "Known for ultra-modern architecture, luxury shopping, and desert landscapes." }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -864,7 +863,7 @@
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            // --- АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ ---
+            // --- НОВАЯ СИСТЕМА УЧЕТНЫХ ЗАПИСЕЙ ---
             let activeUserId = localStorage.getItem('hf_active_user');
             window.isGuest = !activeUserId;
             
@@ -872,10 +871,27 @@
             window.activeChatListener = null;
             window.currentIndex = 0;
 
+            // БИЗНЕС-ЛОГИКА: СПРАВОЧНИК СТРАН
+            const countryData = {
+                "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
+                "az": { phone: "+994", pop: "~10.1 million", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire. Known for rich culture and oil reserves." },
+                "ru": { phone: "+7", pop: "~144 million", seas: "Arctic Ocean, Black Sea", desc: "The largest country in the world, spanning Eastern Europe and Northern Asia." },
+                "gb": { phone: "+44", pop: "~67 million", seas: "North Sea, Atlantic Ocean", desc: "An island nation with deep historical global influence." },
+                "us": { phone: "+1", pop: "~331 million", seas: "Atlantic, Pacific Oceans", desc: "A massive country with diverse geography and leading tech industries." },
+                "de": { phone: "+49", pop: "~84 million", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe, known for precision engineering." },
+                "it": { phone: "+39", pop: "~59 million", seas: "Mediterranean, Adriatic", desc: "Famous for its rich history, Renaissance art, and world-class cuisine." },
+                "tr": { phone: "+90", pop: "~85 million", seas: "Black, Mediterranean, Aegean", desc: "A transcontinental country bridging Europe and Asia with a rich heritage." },
+                "fr": { phone: "+33", pop: "~67 million", seas: "Atlantic, Mediterranean", desc: "World center of art, fashion, gastronomy, and culture." },
+                "es": { phone: "+34", pop: "~47 million", seas: "Mediterranean, Atlantic", desc: "Known for its diverse culture, vibrant lifestyle, and beautiful geography." },
+                "cn": { phone: "+86", pop: "~1.4 billion", seas: "East China Sea, Yellow Sea", desc: "One of the world's most populous countries and a global economic hub." },
+                "ae": { phone: "+971", pop: "~9.9 million", seas: "Persian Gulf, Gulf of Oman", desc: "Known for ultra-modern architecture, luxury shopping, and desert landscapes." }
+            };
+
             const baseCharacters = [
-                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Creator and Founder of the Hello Friends Super-App.', countryDesc: countryData['az'].desc, languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
+                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Creator and Founder of the Hello Friends Super-App. Leading the vision to connect the world without language barriers.', countryDesc: countryData['az'].desc, languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
                 { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Developing the core engine.', countryDesc: countryData['de'].desc, languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
-                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Leading global marketing campaigns.', countryDesc: countryData['it'].desc, languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' }
+                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Leading global marketing campaigns.', countryDesc: countryData['it'].desc, languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' },
+                { id: 'john', name: 'John Smith', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', profession: 'Lead Designer', email: 'john@hellofriends.co.uk', phone: '+44 7700 900077', flag: '🇬🇧', flagCode: 'gb', langCode: 'en', country: 'United Kingdom', pop: '~67 million', seas: 'North Sea, Atlantic Ocean', desc: 'Creating intuitive user interfaces.', countryDesc: countryData['gb'].desc, languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }
             ];
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', countryDesc: 'Virtual Environment', languages: 'All languages', video: '' };
@@ -966,11 +982,18 @@
                 try {
                     const videoEl = document.getElementById('my-live-video');
                     if (!videoEl) return;
-                    myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                    
+                    myVideoStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "user" }, 
+                        audio: false 
+                    });
+                    
                     videoEl.srcObject = myVideoStream;
                     videoEl.muted = true; 
                     await videoEl.play();
+                    
                 } catch (err) {
+                    console.error("Camera error:", err);
                     const videoEl = document.getElementById('my-live-video');
                     if(videoEl) {
                         videoEl.src = myProfileInfo.video;
@@ -981,7 +1004,11 @@
             }
 
             window.toggleMyCamera = function(btn) {
-                btn.classList.toggle('bg-[#00C4CC]'); btn.classList.toggle('bg-gray-600'); btn.classList.toggle('text-black'); btn.classList.toggle('text-white');
+                btn.classList.toggle('bg-[#00C4CC]');
+                btn.classList.toggle('bg-gray-600');
+                btn.classList.toggle('text-black');
+                btn.classList.toggle('text-white');
+                
                 if (myVideoStream) {
                     const videoTrack = myVideoStream.getVideoTracks()[0];
                     if (videoTrack) {
@@ -993,7 +1020,10 @@
             };
 
             fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
-                if(data.latitude) { window.myLat = data.latitude; window.myLon = data.longitude; }
+                if(data.latitude) {
+                    window.myLat = data.latitude;
+                    window.myLon = data.longitude;
+                }
             }).catch(() => {}).finally(() => {
                 document.getElementById('voice-me-flag').innerText = myProfileInfo.flag;
                 const sidebarFlag = document.getElementById('sidebar-me-flag');
@@ -1028,17 +1058,17 @@
             const chatSidebar = document.getElementById('chat-sidebar');
             if (chatSidebar) {
                 chatSidebar.innerHTML = `
-                    <div class="chat-contact mb-5" id="chat-btn-global" onclick="switchChatRoom('global')" title="Group Chat">
+                    <div class="chat-contact mb-5" id="chat-btn-global" onclick="window.switchChatRoom('global')" title="Group Chat">
                         <div class="chat-contact-icon flex justify-center items-center bg-gradient-to-r from-blue-500 to-purple-500 text-white text-2xl border-2 border-[#a29bfe] shadow-md">🌍</div>
                         <p class="chat-contact-name font-bold text-[#a29bfe]">Group</p>
                     </div>
                     
-                    <div class="chat-contact mb-5" id="chat-btn-ai" onclick="switchChatRoom('ai')" title="AI Assistant">
+                    <div class="chat-contact mb-5" id="chat-btn-ai" onclick="window.switchChatRoom('ai')" title="AI Assistant">
                         <div class="chat-contact-icon flex justify-center items-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-2xl border-2 border-[#a29bfe] shadow-md">🤖</div>
                         <p class="chat-contact-name font-bold text-purple-400">AI Bot</p>
                     </div>
 
-                    <div class="chat-contact mb-4" id="chat-btn-me" onclick="switchChatRoom('me')" title="Saved Messages">
+                    <div class="chat-contact mb-4" id="chat-btn-me" onclick="window.switchChatRoom('me')" title="Saved Messages">
                         <div class="chat-contact-icon border-2 border-[#a29bfe] shadow-md" style="background-image: url('${myProfileInfo.photo}'); position: relative;">
                             <img id="sidebar-me-flag" src="https://flagcdn.com/w20/${myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover">
                         </div>
@@ -1048,7 +1078,7 @@
                 
                 participants.filter(p => p.id !== 'ai').forEach((p) => {
                     chatSidebar.innerHTML += `
-                    <div class="chat-contact mb-4" id="chat-btn-${p.id}" onclick="switchChatRoom('${p.id}')">
+                    <div class="chat-contact mb-4" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')">
                         <div class="chat-contact-icon shadow-md" style="background-image: url('${p.photo}'); position: relative;">
                             <img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover">
                         </div>
@@ -1193,14 +1223,14 @@
                 const msgWrapper = document.createElement('div');
                 msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
                 
-                let avatarHtml = isAI
-                    ? `<div class="w-8 h-8 rounded-full shrink-0 self-end border border-[#4a4e53] flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm shadow-md" onclick="window.openAvatarModal('ai', 'chat')">🤖</div>`
+                let avatarHtml = isAI 
+                    ? `<div class="w-8 h-8 rounded-full shrink-0 self-end border border-[#4a4e53] flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm shadow-md" onclick="window.openAvatarModal('ai', 'chat')">🤖</div>` 
                     : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}', 'chat')">`;
 
                 const msgId = 'msg-' + snapshot.key;
                 let targetLangs = [];
                 if (window.currentRoomId === 'global') {
-                    const seen = new Set(); seen.add(p.langCode);
+                    const seen = new Set(); seen.add(p.langCode); 
                     participants.forEach(part => { if (!seen.has(part.langCode) && part.id !== 'ai') { seen.add(part.langCode); targetLangs.push({ code: part.langCode, flag: part.flag }); } });
                     if (!seen.has(myProfileInfo.langCode)) targetLangs.push({ code: myProfileInfo.langCode, flag: myProfileInfo.flag });
                 } else if (window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('private_me_') && !window.currentRoomId.includes('private_ai_')) {
@@ -1333,7 +1363,7 @@
                 const input = document.getElementById('global-search-input');
                 if (type === 'text') { input.value = text; window.performLiveSearch(); } 
                 else if (type === 'transfer') { window.closeSearchModal(); window.openBankTransferModal(); } 
-                else if (type === 'email') { window.closeSearchModal(); document.getElementById('email-modal').classList.add('active'); } 
+                else if (type === 'email') { window.closeSearchModal(); window.openEmailModal(); } 
                 else if (type === 'web') { input.value = text; document.getElementById('search-results-area').innerHTML = ''; window.doGoogleSearch(); }
             };
             window.performLiveSearch = function() {
@@ -1384,6 +1414,31 @@
             }
             window.smartDelete = function() { window.smartClear(); }
 
+            window.openLocationModal = function() {
+                window.closeDropdown(); document.getElementById('location-modal').classList.add('active');
+                const mapContainer = document.getElementById('location-map');
+                mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#a29bfe] mb-3"></i><span>Detecting location...</span>';
+                
+                const loadMap = (lat, lon) => {
+                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`;
+                };
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); },
+                        (error) => { 
+                            if (window.myLat && window.myLon) { loadMap(window.myLat, window.myLon); } 
+                            else { mapContainer.innerHTML = '<span class="text-red-400">Failed to get location.</span>'; }
+                        },
+                        { timeout: 5000 }
+                    );
+                } else { 
+                    if (window.myLat && window.myLon) { loadMap(window.myLat, window.myLon); } 
+                    else { mapContainer.innerHTML = 'Geolocation is not supported.'; }
+                }
+            }
+            window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); }
+
             // --- БИЗНЕС-ЛОГИКА: УПРАВЛЕНИЕ ПРОФИЛЕМ ---
             window.handleCountryChange = function(selectElement) {
                 const flagCode = selectElement.value;
@@ -1414,8 +1469,8 @@
                 const modalBtn = document.getElementById('profile-modal-btn');
 
                 if (window.isGuest) {
-                    modalTitle.innerHTML = '<i class="fa-solid fa-user-plus text-[#a29bfe] mr-2"></i> Registration';
-                    modalBtn.innerHTML = 'Complete Registration';
+                    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-user-plus text-[#a29bfe] mr-2"></i> Registration';
+                    if (modalBtn) modalBtn.innerHTML = 'Complete Registration';
                     
                     document.getElementById('edit-name').value = '';
                     window.currentPhotoData = 'https://ui-avatars.com/api/?name=New+User&background=a29bfe&color=fff';
@@ -1428,8 +1483,8 @@
                     document.getElementById('edit-langs').value = '';
                     document.getElementById('edit-desc').value = '';
                 } else {
-                    modalTitle.innerHTML = '<i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile';
-                    modalBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes';
+                    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile';
+                    if (modalBtn) modalBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes';
 
                     document.getElementById('edit-name').value = myProfileInfo.name.replace(' (You)', '');
                     window.currentPhotoData = myProfileInfo.photo || 'https://ui-avatars.com/api/?name=User';
@@ -1508,30 +1563,44 @@
                 const descContainer = document.getElementById('modal-desc');
                 const actionButtons = document.getElementById('modal-action-buttons');
                 
-                const cDesc = p.countryDesc || (countryData[p.flagCode] ? countryData[p.flagCode].desc : 'Country information is not available.');
-                const displayDesc = p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? `${cDesc}<br><br><b class="text-[#a29bfe]">About Me:</b><br>${p.desc}` : cDesc;
+                const cInfo = countryData[p.flagCode] || countryData['un'];
+                const cDesc = p.countryDesc || cInfo.desc;
+                const pDesc = p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? p.desc : 'No personal bio provided.';
 
                 if (mode === 'chat' || id === 'ai') {
                     descContainer.innerHTML = `
                         <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Seas:</b> <span class="text-gray-300 text-base">${p.seas}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
+                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages || 'Auto'}</span></div>
+                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop || cInfo.pop}</span></div>
+                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Seas:</b> <span class="text-gray-300 text-base">${p.seas || cInfo.seas}</span></div>
+                        <div class="mt-3 pt-3 border-t border-[#4a4e53]">
+                            <p class="text-xs text-[#a29bfe] font-bold uppercase tracking-wider mb-1">Country Info</p>
+                            <div class="text-sm text-gray-400 italic">${cDesc}</div>
+                        </div>`;
                     actionButtons.style.display = 'none'; 
                 } else {
                     descContainer.innerHTML = `
                         <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Profession:</b> <span class="text-gray-300 text-base">${p.profession}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Phone:</b> <span class="text-gray-300 text-base">${p.phone}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Email:</b> <span class="text-gray-300 text-base">${p.email}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
+                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Profession:</b> <span class="text-gray-300 text-base">${p.profession || 'User'}</span></div>
+                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages || 'Auto'}</span></div>
+                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Phone:</b> <span class="text-gray-300 text-base">${p.phone || 'Hidden'}</span></div>
+                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Email:</b> <span class="text-gray-300 text-base">${p.email || 'Hidden'}</span></div>
+                        
+                        <div class="mt-3 pt-3 border-t border-[#4a4e53]">
+                            <p class="text-xs text-[#a29bfe] font-bold uppercase tracking-wider mb-1">Country Details</p>
+                            <div class="text-sm text-gray-300 mb-1"><b>Population:</b> ${p.pop || cInfo.pop}</div>
+                            <div class="text-sm text-gray-300 mb-1"><b>Seas:</b> ${p.seas || cInfo.seas}</div>
+                            <div class="text-sm text-gray-400 italic mt-1 leading-tight">${cDesc}</div>
+                        </div>
+
+                        <div class="mt-3 pt-3 border-t border-[#4a4e53]">
+                            <p class="text-xs text-[#a29bfe] font-bold uppercase tracking-wider mb-1">About Me</p>
+                            <div class="text-sm text-gray-300 leading-relaxed">${pDesc}</div>
+                        </div>`;
                     actionButtons.style.display = 'flex'; 
                     document.getElementById('modal-email-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.openEmailModal(); };
                     document.getElementById('modal-chat-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); };
-                    document.getElementById('modal-sms-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.location.href = `sms:${p.phone.replace(/\s+/g, '')}`; };
+                    document.getElementById('modal-sms-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; };
                 }
                 document.getElementById('avatar-modal').classList.add('active');
             };
