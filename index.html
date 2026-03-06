@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends App - Golden Master + Email Fix</title>
+    <title>Hello Friends App - Smart CV V16.0</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -85,9 +85,10 @@
         .form-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; background: linear-gradient(145deg, #a29bfe, #6c5ce7); color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s; }
         .form-btn:active { transform: scale(0.98); }
 
-        #edit-profile-modal .form-input { padding: 6px 10px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
-        #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; display: block; width: 100%; text-align: left; font-family: sans-serif; }
-        #edit-profile-modal select.form-input { cursor: pointer; appearance: none; }
+        /* Компактная форма с отображением стрелочки Dropdown */
+        #edit-profile-modal .form-input { padding: 8px 12px; font-size: 0.85rem; margin-bottom: 8px; border-radius: 8px; }
+        #edit-profile-modal .form-label { font-size: 0.65rem; color: #a29bfe; font-weight: bold; text-transform: uppercase; margin-bottom: 3px; display: block; width: 100%; text-align: left; font-family: sans-serif; }
+        #edit-profile-modal select.form-input { cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; }
 
         .footer-wrapper { margin-top: auto; width: calc(100% + 40px); margin-left: -20px; margin-right: -20px; flex-shrink: 0; position: relative; z-index: 50; }
         .actions-footer { background-color: #2a2d32; padding: 10px 20px; border-top: 1px solid #4a4e53; display: flex; justify-content: space-between; align-items: center; position: relative; transition: all 0.4s; }
@@ -175,12 +176,8 @@
         <div id="toast-notification" class="toast-notification" style="width: 90%; max-width: 350px; background: #2a2d32; border: 1px solid #a29bfe; padding: 12px 15px;">
             <img id="toast-img" src="" class="w-12 h-12 rounded-full object-cover border-2 border-[#a29bfe] shrink-0" style="display: none;">
             <div id="toast-icon-wrap" class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-xl shrink-0 border-2 border-[#a29bfe]">🌍</div>
-            
             <div class="flex flex-col flex-grow ml-2">
-                <div class="flex items-center gap-1.5">
-                    <span id="toast-flag" class="text-base">🌍</span>
-                    <span id="toast-name" class="font-bold text-[0.9rem] text-white" data-i18n="chat_group">Group Chat</span>
-                </div>
+                <div class="flex items-center gap-1.5"><span id="toast-flag" class="text-base">🌍</span><span id="toast-name" class="font-bold text-[0.9rem] text-white" data-i18n="chat_group">Group Chat</span></div>
                 <span id="toast-info" class="text-[0.7rem] text-gray-300 font-sans leading-snug mt-1"></span>
             </div>
         </div>
@@ -190,41 +187,45 @@
                 <div class="logo-circle">HF</div>
              </div>
              <div class="header-icons">
-                <button id="main-search-btn" onclick="document.getElementById('search-modal').classList.add('active');" title="Global Search">
+                <button id="main-search-btn" onclick="window.openSearchModal()" title="Global Search">
                     <i class="fa-solid fa-magnifying-glass text-[1.1rem] text-[#a29bfe]"></i>
                 </button>
-                <button id="compose-email-btn" onclick="window.openEmailModal()" title="Email"><i class="fa-regular fa-envelope text-[1.1rem]"></i></button>
-                <button id="menu-btn" onclick="toggleHeaderMenu(event)"><i class="fa-solid fa-bars text-[1.1rem]"></i></button>
+                <button id="compose-email-btn" onclick="window.openEmailModal()" title="Email">
+                    <i class="fa-regular fa-envelope text-[1.1rem]"></i>
+                </button>
+                <button id="menu-btn" onclick="window.toggleHeaderMenu(event)">
+                    <i class="fa-solid fa-bars text-[1.1rem]"></i>
+                </button>
             </div>
             
             <div id="header-dropdown" class="header-dropdown">
-                <a onclick="toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
+                <a onclick="window.toggleLanguage()"><i class="fa-solid fa-language w-5 text-yellow-400"></i> <span id="lang-text">Language: EN</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
                 
-                <a onclick="openMyProfile()"><i class="fa-solid fa-user-pen w-5 text-[#a29bfe]"></i> <span data-i18n="menu_profile">Edit Profile</span></a>
+                <a onclick="window.openMyProfile()"><i class="fa-solid fa-user-pen w-5 text-[#a29bfe]"></i> <span id="menu-profile-text">Profile</span></a>
                 
                 <a><i class="fa-solid fa-gear w-5"></i> <span data-i18n="menu_settings">Settings</span></a>
-                <a onclick="toggleTheme()"><i id="theme-icon" class="fa-solid fa-sun w-5"></i> <span data-i18n="menu_theme">Theme</span></a>
-                <a onclick="openBankTransferModal()"><i class="fa-solid fa-money-bill-transfer w-5 text-green-400"></i> <span data-i18n="menu_transfer">Bank Transfer</span></a>
-                <a onclick="openAuthModal()"><i class="fa-solid fa-shield-halved w-5 text-blue-400"></i> <span data-i18n="menu_auth">Authentication</span></a>
-                <a onclick="document.getElementById('import-export-input').click(); closeDropdown()"><i class="fa-solid fa-file-import w-5"></i> <span data-i18n="menu_import">Import - Export</span></a>
+                <a onclick="window.toggleTheme()"><i id="theme-icon" class="fa-solid fa-sun w-5"></i> <span data-i18n="menu_theme">Theme</span></a>
+                <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-money-bill-transfer w-5 text-green-400"></i> <span data-i18n="menu_transfer">Bank Transfer</span></a>
+                <a onclick="document.getElementById('import-export-input').click(); window.closeDropdown()"><i class="fa-solid fa-file-import w-5"></i> <span data-i18n="menu_import">Import - Export</span></a>
                 <div style="height: 1px; background: #4a4e53; margin: 5px 0;"></div>
-                <a style="color: #ef4444;" onclick="switchTestUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="menu_logout">Switch User</span></a>
+                
+                <a onclick="window.logoutUser()" style="color: #ef4444;"><i class="fa-solid fa-right-from-bracket w-5"></i> <span>Log Out</span></a>
             </div>
         </header>
 
         <div class="navigation-wrapper">
-            <button id="prev-tab-btn" class="nav-arrow disabled" onclick="switchTab(currentIndex - 1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <button id="prev-tab-btn" class="nav-arrow disabled" onclick="window.prevTab()"><i class="fa-solid fa-chevron-left"></i></button>
             <nav class="main-nav" id="scroll-nav">
                 <div class="main-nav-inner" id="nav-inner">
-                    <a class="nav-link active" data-target="message" onclick="switchTab(0)" data-i18n="nav_chat">Chat</a>
-                    <a class="nav-link" data-target="voice-translator" onclick="switchTab(1)" data-i18n="nav_voice">Voice</a>
-                    <a class="nav-link" data-target="conference" onclick="switchTab(2)" data-i18n="nav_conf">Conference</a>
-                    <a class="nav-link" data-target="profession" onclick="switchTab(3)" data-i18n="nav_prof">Profession</a>
-                    <a class="nav-link" data-target="archive" onclick="switchTab(4)" data-i18n="nav_archive">Archive</a>
+                    <a class="nav-link active" data-target="message" onclick="window.switchTab(0)" data-i18n="nav_chat">Chat</a>
+                    <a class="nav-link" data-target="voice-translator" onclick="window.switchTab(1)" data-i18n="nav_voice">Voice</a>
+                    <a class="nav-link" data-target="conference" onclick="window.switchTab(2)" data-i18n="nav_conf">Conference</a>
+                    <a class="nav-link" data-target="profession" onclick="window.switchTab(3)" data-i18n="nav_prof">Profession</a>
+                    <a class="nav-link" data-target="archive" onclick="window.switchTab(4)" data-i18n="nav_archive">Archive</a>
                 </div>
             </nav>
-            <button id="next-tab-btn" class="nav-arrow" onclick="switchTab(currentIndex + 1)"><i class="fa-solid fa-chevron-right"></i></button>
+            <button id="next-tab-btn" class="nav-arrow" onclick="window.nextTab()"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
 
         <main class="flex-grow overflow-hidden flex flex-col relative">
@@ -234,48 +235,29 @@
                     <div class="chat-layout">
                         <div class="chat-sidebar" id="chat-sidebar"></div>
                         <div class="chat-main pb-2 flex flex-col relative">
-                            
                             <div class="flex items-center gap-2 px-1 pb-2 border-b border-[#4a4e53] shrink-0" id="active-chat-header">
-                                <div id="chat-header-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] cursor-pointer hover:scale-105 transition-transform" onclick="openActiveChatProfile()" title="Show Profile">GL</div>
+                                <div id="chat-header-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] cursor-pointer hover:scale-105 transition-transform" onclick="window.openActiveChatProfile()" title="Show Profile">GL</div>
                                 <div class="flex flex-col flex-grow">
                                     <span class="text-[0.95rem] font-bold text-white leading-tight" id="chat-header-name" data-i18n="chat_group">Group Chat</span>
                                     <span class="text-[0.7rem] leading-none mt-1" id="chat-header-status">🌍 <span class="text-green-400">All members</span></span>
                                 </div>
-                                
-                                <button onclick="toggleMarquee()" id="marquee-toggle-btn" class="text-[#a29bfe] hover:text-white transition-colors p-1 ml-auto bg-transparent border-none cursor-pointer">
-                                    <i class="fa-solid fa-closed-captioning text-lg"></i>
-                                </button>
-
-                                <button onclick="openTrashModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-transparent border-none cursor-pointer ml-1 relative z-50">
-                                    <i class="fa-solid fa-trash-can text-lg"></i>
-                                </button>
+                                <button onclick="window.toggleMarquee()" id="marquee-toggle-btn" class="text-[#a29bfe] hover:text-white transition-colors p-1 ml-auto bg-transparent border-none cursor-pointer"><i class="fa-solid fa-closed-captioning text-lg"></i></button>
+                                <button onclick="window.openTrashModal()" class="text-gray-400 hover:text-red-500 transition-colors p-1 bg-transparent border-none cursor-pointer ml-1 relative z-50"><i class="fa-solid fa-trash-can text-lg"></i></button>
                             </div>
                             
-                            <div class="chat-info-marquee-container shrink-0" id="typing-marquee-container">
-                                <span class="chat-info-marquee-text" id="chat-info-marquee"></span>
-                            </div>
-
+                            <div class="chat-info-marquee-container shrink-0" id="typing-marquee-container"><span class="chat-info-marquee-text" id="chat-info-marquee"></span></div>
                             <div class="chat-messages" id="chat-messages"></div>
                             
                             <div class="w-full flex items-center gap-1.5 mt-auto shrink-0 pt-2 border-t border-[#4a4e53] relative pb-1 px-1">
-                                <button onclick="toggleEmojiPicker('text')" class="text-gray-400 hover:text-yellow-400 transition p-1.5" title="Emojis">
-                                    <i class="fa-regular fa-face-smile text-base"></i>
-                                </button>
-                                
+                                <button onclick="window.toggleEmojiPicker('text')" class="text-gray-400 hover:text-yellow-400 transition p-1.5" title="Emojis"><i class="fa-regular fa-face-smile text-base"></i></button>
                                 <div id="text-emoji-picker" class="hidden absolute bottom-12 left-1 bg-[#2a2d32] border border-[#4a4e53] p-2 rounded-lg grid grid-cols-5 gap-2 text-base shadow-lg z-50">
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('👍')">👍</span>
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertTextEmoji('🤔')">🤔</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('👍')">👍</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertTextEmoji('🤔')">🤔</span>
                                 </div>
-
                                 <input type="text" id="chat-input" data-i18n-placeholder="chat_plc" placeholder="Type message..." class="form-input mb-0 grow text-base" style="padding: 10px 12px;">
-                                
-                                <button id="magic-wand-btn" onclick="applyAiMagic()" class="text-[#a29bfe] hover:text-purple-400 transition p-1.5" title="AI Rewrite">
-                                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
-                                </button>
-                                <button id="main-chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text">
-                                    <i class="fa-solid fa-microphone text-lg"></i>
-                                </button>
-                                <button id="chat-send-btn" onclick="sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                                <button id="magic-wand-btn" onclick="window.applyAiMagic()" class="text-[#a29bfe] hover:text-purple-400 transition p-1.5" title="AI Rewrite"><i class="fa-solid fa-wand-magic-sparkles text-lg"></i></button>
+                                <button id="main-chat-mic-btn" class="text-gray-400 hover:text-red-400 transition p-1.5" title="Voice to Text"><i class="fa-solid fa-microphone text-lg"></i></button>
+                                <button id="chat-send-btn" onclick="window.sendFirebaseMsg()" class="form-btn shrink-0 ml-1" style="width: auto; padding: 10px 14px;"><i class="fa-solid fa-paper-plane text-base"></i></button>
                             </div>
                         </div>
                     </div>
@@ -286,7 +268,6 @@
                 <div class="page-container flex flex-col relative" style="padding: 0;">
                     <div class="flex flex-col h-full p-2 relative">
                         <h2 class="mb-2 text-white shrink-0 text-center"><span style="font-family: 'Allura', cursive; font-size: 2.8rem; color: #a29bfe;">Voice</span> Room</h2>
-                        
                         <div class="voice-room-container flex justify-center items-center gap-8 grow mt-2">
                             <div class="voice-user flex flex-col items-center">
                                 <div class="w-24 h-24 relative mb-3 shadow-lg">
@@ -295,13 +276,9 @@
                                 </div>
                                 <h3 id="voice-friend-name" class="text-white font-bold text-center text-sm"></h3>
                             </div>
-                            
                             <div class="flex gap-2 text-[#a29bfe] opacity-50">
-                                <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce"></div>
-                                <div class="w-1.5 h-10 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                                <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                                <div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce"></div><div class="w-1.5 h-10 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-6 bg-[#a29bfe] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
                             </div>
-                            
                             <div class="voice-user flex flex-col items-center">
                                 <div class="w-28 h-28 relative mb-3 shadow-xl">
                                     <div id="voice-pulse" class="pulse-ring"></div>
@@ -311,26 +288,19 @@
                                 <h3 class="text-white font-bold text-center text-sm" id="voice-me-name">You</h3>
                             </div>
                         </div>
-                        
                         <div class="w-full flex flex-col mt-auto shrink-0 pt-2 border-t border-[#4a4e53]">
-                            <div id="voice-marquee-container" class="w-full overflow-hidden hidden items-center mb-2 bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53]">
-                                <span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap"></span>
-                            </div>
-
+                            <div id="voice-marquee-container" class="w-full overflow-hidden hidden items-center mb-2 bg-[#1a1e23] p-2 rounded-lg border border-[#4a4e53]"><span id="voice-marquee-text" class="inline-block pl-[100%] animate-[scroll-text_12s_linear_infinite] font-bold text-[0.8rem] text-green-400 whitespace-nowrap"></span></div>
                             <div class="w-full items-center gap-1.5 px-1 pb-2 relative flex">
-                                <button onclick="toggleEmojiPicker('voice')" class="bg-[#2a2d32] border border-[#4a4e53] text-gray-300 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-regular fa-face-smile text-base"></i></button>
-                                
+                                <button onclick="window.toggleEmojiPicker('voice')" class="bg-[#2a2d32] border border-[#4a4e53] text-gray-300 w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-regular fa-face-smile text-base"></i></button>
                                 <div id="voice-emoji-picker" class="hidden absolute bottom-16 left-1 bg-[#2a2d32] border border-[#4a4e53] p-2 rounded-lg grid grid-cols-5 gap-2 text-base shadow-lg z-50">
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('👍')">👍</span>
-                                    <span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="insertVoiceEmoji('🤔')">🤔</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('👍')">👍</span>
+                                    <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😢')">😢</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertVoiceEmoji('🤔')">🤔</span>
                                 </div>
-
                                 <input type="text" id="voice-text-input" data-i18n-placeholder="chat_plc" placeholder="Speak or text..." class="form-input mb-0 grow text-base" style="padding: 10px 8px;">
                                 <button id="voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-microphone text-base"></i></button>
-                                
-                                <button id="voice-send-btn" onclick="sendTextMessage('voice-text-input')" class="bg-gradient-to-r from-[#a29bfe] to-[#6c5ce7] text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-paper-plane text-base"></i></button>
-                                <button id="voice-cc-btn" onclick="toggleVoiceCC()" class="bg-[#a29bfe] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0 ml-1" title="Toggle CC"><i class="fa-solid fa-closed-captioning text-base"></i></button>
-                                <button onclick="switchTab(0)" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 rounded-full flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.6)] shrink-0 ml-1" title="End Call"><i class="fa-solid fa-phone-slash text-base"></i></button>
+                                <button id="voice-send-btn" onclick="window.sendTextMessage('voice-text-input')" class="bg-gradient-to-r from-[#a29bfe] to-[#6c5ce7] text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"><i class="fa-solid fa-paper-plane text-base"></i></button>
+                                <button id="voice-cc-btn" onclick="window.toggleVoiceCC()" class="bg-[#a29bfe] text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg shrink-0 ml-1" title="Toggle CC"><i class="fa-solid fa-closed-captioning text-base"></i></button>
+                                <button onclick="window.switchTab(0)" class="bg-red-600 hover:bg-red-500 text-white w-10 h-10 rounded-full flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.6)] shrink-0 ml-1" title="End Call"><i class="fa-solid fa-phone-slash text-base"></i></button>
                             </div>
                         </div>
                     </div>
@@ -342,30 +312,23 @@
                     <span class="font-bold text-[#00C4CC] tracking-widest text-sm">LIVE VIDEO</span>
                     <span class="text-red-500 font-bold bg-red-500/10 px-2 py-0.5 rounded-full animate-pulse border border-red-500/30 text-xs">● REC</span>
                 </div>
-                
                 <div class="overflow-y-auto p-1 shrink-0" style="max-height: 48%;">
-                    <div class="video-grid" id="conference-grid">
-                    </div>
+                    <div class="video-grid" id="conference-grid"></div>
                 </div>
-                
                 <div class="flex-grow flex flex-col overflow-hidden bg-[#111827] border-t border-[#334155] p-2 relative">
-                    <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold">
-                        <span>Live Chat</span><span>👥 App Online</span>
-                    </div>
+                    <div class="text-[0.7rem] text-gray-400 px-1 pb-1 border-b border-[#334155] mb-2 font-sans flex justify-between font-bold"><span>Live Chat</span><span>👥 App Online</span></div>
                     <div class="conf-messages flex-grow overflow-y-auto" id="conf-messages"></div>
-                    
                     <div class="flex gap-2 mt-2 shrink-0 items-center">
                         <button id="conf-voice-mic-btn" class="bg-gray-700 text-white w-10 h-10 rounded-full flex justify-center items-center shrink-0 transition" title="Speak"><i class="fa-solid fa-microphone text-base"></i></button>
                         <input type="text" id="conf-chat-input" data-i18n-placeholder="chat_plc" class="w-full bg-[#1e293b] text-white text-base px-3 py-2 rounded-lg border border-[#334155] outline-none font-sans" placeholder="Message or speak...">
-                        <button id="conf-chat-send" onclick="sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+                        <button id="conf-chat-send" onclick="window.sendTextMessage('conf-chat-input')" class="bg-[#00C4CC] text-black px-4 py-2.5 rounded-lg font-bold transition hover:bg-teal-400"><i class="fa-solid fa-paper-plane text-sm"></i></button>
                     </div>
                 </div>
-                
                 <div class="h-14 bg-black/90 flex justify-center items-center gap-5 shrink-0 border-t border-[#334155]">
-                    <button id="conf-cam-btn" onclick="toggleMyCamera(this)" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-video text-base"></i></button>
-                    <button onclick="toggleConfCC()" id="conf-cc-btn" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-closed-captioning text-base"></i></button>
-                    <button onclick="openTrashModal()" class="w-10 h-10 rounded-full bg-yellow-600 text-white flex justify-center items-center"><i class="fa-solid fa-trash-can text-base"></i></button>
-                    <button onclick="switchTab(0)" class="w-12 h-12 rounded-full bg-red-600 text-white flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.5)]"><i class="fa-solid fa-phone-slash text-xl"></i></button>
+                    <button id="conf-cam-btn" onclick="window.toggleMyCamera(this)" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-video text-base"></i></button>
+                    <button onclick="window.toggleConfCC()" id="conf-cc-btn" class="w-10 h-10 rounded-full bg-[#00C4CC] text-black flex justify-center items-center"><i class="fa-solid fa-closed-captioning text-base"></i></button>
+                    <button onclick="window.openTrashModal()" class="w-10 h-10 rounded-full bg-yellow-600 text-white flex justify-center items-center"><i class="fa-solid fa-trash-can text-base"></i></button>
+                    <button onclick="window.switchTab(0)" class="w-12 h-12 rounded-full bg-red-600 text-white flex justify-center items-center shadow-[0_0_10px_rgba(220,38,38,0.5)]"><i class="fa-solid fa-phone-slash text-xl"></i></button>
                 </div>
             </div>
 
@@ -386,7 +349,7 @@
             <div class="actions-footer">
                 <div class="font-sans text-2xl cursor-pointer hover:text-white transition text-gray-400">😊</div>
                 <div class="rhombus-menu-container">
-                    <div id="rhombus-btn" class="rhombus-main-btn" onclick="toggleRhombusMenu(event)">
+                    <div id="rhombus-btn" class="rhombus-main-btn" onclick="window.toggleRhombusMenu(event)">
                         <div class="rhombus-shape"><i class="fa-solid fa-plus"></i></div>
                     </div>
                     <div id="rhombus-actions" class="rhombus-actions">
@@ -398,12 +361,12 @@
                             <option value="de-DE">🇩🇪 DE Mic</option>
                             <option value="it-IT">🇮🇹 IT Mic</option>
                         </select>
-                        <div class="action-icon" onclick="switchTab(2); closeDropdown();" title="Video"><i class="fa-solid fa-video"></i></div>
-                        <div class="action-icon" onclick="openPhoneChoiceModal(); closeDropdown();" title="Call"><i class="fa-solid fa-phone"></i></div>
-                        <div class="action-icon" onclick="document.getElementById('attachment-input').click(); closeDropdown();" title="Attach File"><i class="fa-solid fa-paperclip"></i></div>
-                        <div class="action-icon" onclick="openLocationModal(); closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
-                        <div class="action-icon" onclick="document.getElementById('search-modal').classList.add('active'); closeDropdown();" title="Search"><i class="fa-solid fa-magnifying-glass"></i></div>
-                        <div class="action-icon text-red-400" onclick="openTrashModal(); closeDropdown();" title="Smart Trash"><i class="fa-solid fa-trash"></i></div>
+                        <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video"><i class="fa-solid fa-video"></i></div>
+                        <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Call"><i class="fa-solid fa-phone"></i></div>
+                        <div class="action-icon" onclick="document.getElementById('attachment-input').click(); window.closeDropdown();" title="Attach File"><i class="fa-solid fa-paperclip"></i></div>
+                        <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="action-icon" onclick="window.openSearchModal(); window.closeDropdown();" title="Search"><i class="fa-solid fa-magnifying-glass"></i></div>
+                        <div class="action-icon text-red-400" onclick="window.openTrashModal(); window.closeDropdown();" title="Smart Trash"><i class="fa-solid fa-trash"></i></div>
                     </div>
                 </div>
             </div>
@@ -417,258 +380,105 @@
             </footer>
         </div>
 
-        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
             <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('avatar-modal').classList.remove('active')"></i>
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeAvatarModal()"></i>
                 <div id="modal-img-container" class="w-28 h-28 rounded-full mb-4 shadow-xl border-4 border-[#a29bfe] overflow-hidden flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-5xl">
                     <img id="modal-img" src="" class="w-full h-full object-cover">
                 </div>
                 <h3 id="modal-name" class="text-xl font-bold text-white mb-4"></h3>
-                
                 <div class="w-full bg-[#1a1e23] p-4 rounded-xl border border-[#4a4e53] font-sans text-sm mb-5 shadow-inner">
                     <div id="modal-desc" class="flex flex-col gap-2.5 text-gray-300"></div>
                 </div>
-                
                 <div class="flex gap-3 w-full" id="modal-action-buttons">
-                    <button id="modal-chat-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
-                        <i class="fa-solid fa-comment"></i> Chat
-                    </button>
-                    <button id="modal-sms-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
-                        <i class="fa-solid fa-comment-sms"></i> SMS
-                    </button>
-                    <button id="modal-email-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1.5 text-sm shadow-lg">
-                        <i class="fa-solid fa-envelope"></i> Email
-                    </button>
+                    <button id="modal-chat-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1.5 text-sm shadow-lg"><i class="fa-solid fa-comment"></i> Chat</button>
+                    <button id="modal-sms-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1.5 text-sm shadow-lg"><i class="fa-solid fa-comment-sms"></i> SMS</button>
+                    <button id="modal-email-btn" class="w-full py-3 rounded-xl border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1.5 text-sm shadow-lg"><i class="fa-solid fa-envelope"></i> Email</button>
                 </div>
             </div>
         </div>
 
-        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content w-full max-w-[300px] max-h-[80vh] overflow-y-auto p-4" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="document.getElementById('edit-profile-modal').classList.remove('active')"></i>
-                
-                <h2 class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">
-                    <i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile
-                </h2>
-
-                <div class="flex flex-col items-center mb-3 w-full">
+        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) { document.getElementById('edit-profile-modal').classList.remove('active'); }">
+            <div class="app-modal-content w-full max-w-[300px] max-h-[85vh] overflow-y-auto p-5" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn absolute top-3 right-4 text-lg" onclick="document.getElementById('edit-profile-modal').classList.remove('active');"></i>
+                <h2 id="profile-modal-title" class="text-lg font-bold text-white mb-3 text-center border-b border-[#4a4e53] pb-2 w-full">Registration</h2>
+                <div class="flex flex-col items-center mb-4 w-full">
                     <div class="relative w-20 h-20 mb-1">
                         <img id="edit-preview-photo" src="https://ui-avatars.com/api/?name=User" class="w-full h-full rounded-full object-cover border-2 border-[#a29bfe] shadow-md">
-                        <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#a29bfe] text-white rounded-full w-7 h-7 flex items-center justify-center border border-[#2a2d32] hover:scale-110 transition cursor-pointer" title="Upload Photo">
-                            <i class="fa-solid fa-camera text-xs"></i>
-                        </button>
+                        <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#a29bfe] text-white rounded-full w-7 h-7 flex items-center justify-center border border-[#2a2d32] hover:scale-110 transition cursor-pointer" title="Upload Photo"><i class="fa-solid fa-camera text-xs"></i></button>
                     </div>
-                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
                 </div>
-
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Name</label>
-                <input type="text" id="edit-name" class="form-input py-1.5 px-3 text-sm mb-2" placeholder="Your Name">
-
+                <input type="text" id="edit-name" class="form-input py-2 px-3 text-sm mb-3" placeholder="Enter your name">
+                
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Country</label>
-                <div class="flex items-center gap-2 w-full mb-2">
+                <div class="flex items-center gap-2 w-full mb-3">
                     <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-8 h-5 rounded-sm border border-[#4a4e53] object-cover shadow-sm shrink-0">
-                    <select id="edit-country-select" class="form-input py-1.5 px-2 text-sm w-full mt-0" onchange="updateFlagIcon(this)">
-                        <option value="un" data-name="Global" data-emoji="🌐">Global / Default</option>
-                        <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿">Azerbaijan</option>
-                        <option value="ru" data-name="Russia" data-emoji="🇷🇺">Russia</option>
-                        <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧">United Kingdom</option>
-                        <option value="us" data-name="United States" data-emoji="🇺🇸">United States</option>
-                        <option value="de" data-name="Germany" data-emoji="🇩🇪">Germany</option>
-                        <option value="it" data-name="Italy" data-emoji="🇮🇹">Italy</option>
-                        <option value="tr" data-name="Turkey" data-emoji="🇹🇷">Turkey</option>
-                        <option value="fr" data-name="France" data-emoji="🇫🇷">France</option>
-                        <option value="es" data-name="Spain" data-emoji="🇪🇸">Spain</option>
-                        <option value="cn" data-name="China" data-emoji="🇨🇳">China</option>
-                        <option value="ae" data-name="UAE" data-emoji="🇦🇪">United Arab Emirates</option>
-                    </select>
-                </div>
-
-                <div class="flex gap-2 w-full mb-2">
-                    <div class="w-1/2">
-                        <label class="form-label mt-0 mb-1 text-[0.65rem]">Phone</label>
-                        <input type="tel" id="edit-phone" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="+994...">
-                    </div>
-                    <div class="w-1/2">
-                        <label class="form-label mt-0 mb-1 text-[0.65rem]">Email</label>
-                        <input type="email" id="edit-email" class="form-input py-1.5 px-2 text-sm mt-0" placeholder="mail@...">
+                    <div class="relative w-full">
+                        <select id="edit-country-select" class="form-input py-2 px-2 text-sm w-full mt-0 appearance-none pr-8 bg-[#1a1e23]" onchange="window.handleCountryChange(this)">
+                            <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global / Default</option>
+                            <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
+                            <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
+                            <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
+                            <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
+                            <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
+                            <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
+                            <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
+                            <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
+                            <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
+                            <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh-CN">China</option>
+                            <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">United Arab Emirates</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
-
+                
+                <div class="flex gap-2 w-full mb-3">
+                    <div class="w-1/2"><label class="form-label mt-0 mb-1 text-[0.65rem]">Phone</label><input type="tel" id="edit-phone" class="form-input py-2 px-2 text-sm mt-0" placeholder="+... "></div>
+                    <div class="w-1/2"><label class="form-label mt-0 mb-1 text-[0.65rem]">Email</label><input type="email" id="edit-email" class="form-input py-2 px-2 text-sm mt-0" placeholder="mail@..."></div>
+                </div>
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Profession / Role</label>
-                <input type="text" id="edit-prof" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. CEO / Investor">
-
+                <input type="text" id="edit-prof" class="form-input py-2 px-3 text-sm mb-3 mt-0" placeholder="e.g. Investor">
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">Languages</label>
-                <input type="text" id="edit-langs" class="form-input py-1.5 px-3 text-sm mb-2 mt-0" placeholder="e.g. English, Russian">
-
+                <input type="text" id="edit-langs" class="form-input py-2 px-3 text-sm mb-3 mt-0" placeholder="e.g. English">
                 <label class="form-label mt-0 mb-1 text-[0.65rem]">About / CV</label>
-                <textarea id="edit-desc" class="form-input resize-none w-full py-1.5 px-3 text-sm mt-0" rows="2" placeholder="Tell about your skills..."></textarea>
+                <textarea id="edit-desc" class="form-input resize-none w-full py-2 px-3 text-sm mt-0" rows="3" placeholder="Tell about your skills, experience..."></textarea>
+                <button id="profile-modal-btn" onclick="window.saveProfileData()" class="form-btn mt-2 py-3 text-sm w-full">Complete Registration</button>
 
-                <button onclick="saveProfileData()" class="form-btn mt-3 mb-3 py-2.5 text-sm w-full"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile</button>
-
-                <div class="flex gap-2 w-full border-t border-[#4a4e53] pt-3">
-                    <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom('me');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-blue-600 to-blue-500 flex justify-center items-center gap-1 text-xs shadow-sm">
-                        <i class="fa-solid fa-comment"></i> Chat
-                    </button>
-                    <button onclick="alert('You cannot send SMS to yourself.');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-green-600 to-green-500 flex justify-center items-center gap-1 text-xs shadow-sm opacity-80">
-                        <i class="fa-solid fa-comment-sms"></i> SMS
-                    </button>
-                    <button onclick="alert('You cannot email yourself from here.');" class="w-full py-2 rounded-lg border-none text-white font-bold cursor-pointer transition-transform active:scale-95 flex-1 bg-gradient-to-r from-purple-600 to-purple-500 flex justify-center items-center gap-1 text-xs shadow-sm opacity-80">
-                        <i class="fa-solid fa-envelope"></i> Email
-                    </button>
+                <div class="mt-4 pt-3 border-t border-[#4a4e53] text-center w-full">
+                    <p class="text-[0.65rem] text-gray-400 font-sans mb-1">Hello Friends Super-App</p>
+                    <button onclick="document.getElementById('edit-profile-modal').classList.remove('active'); window.openAvatarModal('ilgar', 'cv');" class="text-[0.75rem] text-[#a29bfe] font-bold hover:text-white transition bg-transparent border-none cursor-pointer">Created by Ilgar (Founder)</button>
                 </div>
             </div>
         </div>
 
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) { this.classList.remove('active'); document.getElementById('search-result-frame').classList.add('hidden'); }">
+        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
             <div class="app-modal-content w-full max-w-[360px] h-[80vh] flex flex-col justify-start" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('search-modal').classList.remove('active'); document.getElementById('search-result-frame').classList.add('hidden');"></i>
-                
-                <h2 class="text-xl font-bold mb-5 text-white font-sans w-full text-left border-b border-[#4a4e53] pb-3">
-                    <i class="fa-solid fa-globe text-[#a29bfe] mr-2"></i> <span data-i18n="search_title">Global Search</span>
-                </h2>
-                
-                <div class="relative w-full shrink-0 mb-4">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
-                    <input type="text" id="global-search-input" data-i18n-placeholder="search_plc" onkeyup="performLiveSearch()" placeholder="Search people, places..." class="form-input w-full pl-10 pr-10 bg-[#1a1e23] border-[#4a4e53] text-base">
-                    <i class="fa-solid fa-circle-xmark absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hidden text-xl" id="clear-search-btn" onclick="resetGlobalSearch()"></i>
-                </div>
-
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeSearchModal()"></i>
+                <h2 class="text-xl font-bold mb-5 text-white font-sans w-full text-left border-b border-[#4a4e53] pb-3"><i class="fa-solid fa-globe text-[#a29bfe] mr-2"></i> <span data-i18n="search_title">Global Search</span></h2>
+                <div class="relative w-full shrink-0 mb-4"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i><input type="text" id="global-search-input" data-i18n-placeholder="search_plc" onkeyup="window.performLiveSearch()" placeholder="Search people, places..." class="form-input w-full pl-10 pr-10 bg-[#1a1e23] border-[#4a4e53] text-base"><i class="fa-solid fa-circle-xmark absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hidden text-xl" id="clear-search-btn" onclick="window.resetGlobalSearch()"></i></div>
                 <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 45vh;">
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🤝 People & Skills</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="handleSmartSearch('Engineer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">💻 Engineer</button>
-                        <button onclick="handleSmartSearch('Designer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🎨 Designer</button>
-                        <button onclick="handleSmartSearch('Marketing', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">📈 Marketing</button>
-                    </div>
-
+                    <div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">💻 Engineer</button><button onclick="window.handleSmartSearch('Designer', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🎨 Designer</button><button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">📈 Marketing</button></div>
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🌍 Places & Languages</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="handleSmartSearch('Germany', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇩🇪 Germany</button>
-                        <button onclick="handleSmartSearch('Italy', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇮🇹 Italy</button>
-                        <button onclick="handleSmartSearch('English', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🗣️ English</button>
-                    </div>
-
+                    <div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Germany', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇩🇪 Germany</button><button onclick="window.handleSmartSearch('Italy', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🇮🇹 Italy</button><button onclick="window.handleSmartSearch('English', 'text')" class="px-3 py-1.5 bg-[#2a2d32] border border-[#4a4e53] rounded-lg text-sm text-gray-300 hover:text-white hover:border-[#a29bfe] transition font-sans shadow-sm">🗣️ English</button></div>
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">💳 Services & Actions</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="handleSmartSearch('', 'transfer')" class="px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg text-sm text-green-400 hover:bg-green-500 hover:text-white transition font-sans shadow-sm">💸 Send Money</button>
-                        <button onclick="handleSmartSearch('', 'email')" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-lg text-sm text-purple-400 hover:bg-purple-500 hover:text-white transition font-sans shadow-sm">📧 Compose Email</button>
-                    </div>
-
+                    <div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('', 'transfer')" class="px-3 py-1.5 bg-green-500/20 border border-green-500/50 rounded-lg text-sm text-green-400 hover:bg-green-500 hover:text-white transition font-sans shadow-sm">💸 Send Money</button><button onclick="window.handleSmartSearch('', 'email')" class="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-lg text-sm text-purple-400 hover:bg-purple-500 hover:text-white transition font-sans shadow-sm">📧 Compose Email</button></div>
                     <p class="text-[0.7rem] text-gray-400 font-sans mb-2 uppercase tracking-wider font-bold">🌐 Web Queries</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="handleSmartSearch('Current USD to EUR exchange rate', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">💱 Exchange Rates</button>
-                        <button onclick="handleSmartSearch('World Tech News Today', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">📰 World News</button>
-                    </div>
+                    <div class="flex flex-wrap gap-2"><button onclick="window.handleSmartSearch('Current USD to EUR exchange rate', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">💱 Exchange Rates</button><button onclick="window.handleSmartSearch('World Tech News Today', 'web')" class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/50 rounded-lg text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition font-sans shadow-sm">📰 World News</button></div>
                 </div>
-
                 <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 border-t border-[#4a4e53] pt-4" id="search-results-area"></div>
-                
                 <iframe id="search-result-frame" class="w-full h-[30vh] mt-3 rounded-xl border border-[#4a4e53] bg-white hidden shrink-0 shadow-inner" src="about:blank"></iframe>
-
-                <button onclick="doGoogleSearch()" class="form-btn bg-[#2a2d32] border border-[#4a4e53] hover:bg-[#3a3d42] mt-4 shrink-0 font-sans flex justify-center items-center gap-2 py-3">
-                    <span class="text-gray-300 text-sm">Search Web:</span>
-                    <span class="font-bold text-blue-500 text-sm">G</span><span class="font-bold text-red-500 text-sm">o</span><span class="font-bold text-yellow-500 text-sm">o</span><span class="font-bold text-blue-500 text-sm">g</span><span class="font-bold text-green-500 text-sm">l</span><span class="font-bold text-red-500 text-sm">e</span>
-                </button>
+                <button onclick="window.doGoogleSearch()" class="form-btn bg-[#2a2d32] border border-[#4a4e53] hover:bg-[#3a3d42] mt-4 shrink-0 font-sans flex justify-center items-center gap-2 py-3"><span class="text-gray-300 text-sm">Search Web:</span><span class="font-bold text-blue-500 text-sm">G</span><span class="font-bold text-red-500 text-sm">o</span><span class="font-bold text-yellow-500 text-sm">o</span><span class="font-bold text-blue-500 text-sm">g</span><span class="font-bold text-green-500 text-sm">l</span><span class="font-bold text-red-500 text-sm">e</span></button>
             </div>
         </div>
 
-        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('transfer-modal').classList.remove('active')"></i>
-                
-                <div class="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center text-white text-2xl mb-3 shadow-lg">
-                    <i class="fa-solid fa-money-bill-transfer"></i>
-                </div>
-                <h2 class="text-xl font-bold text-white font-sans" data-i18n="menu_transfer">Bank Transfer</h2>
-                <p class="text-[0.75rem] text-gray-400 mb-5 font-sans text-center">Fast & secure • Powered by <span class="text-yellow-500 font-bold">Western Union</span></p>
-                
-                <form id="transfer-form" class="w-full font-sans flex flex-col gap-4" onsubmit="sendMoney(event)">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1.5">Recipient:</label>
-                        <select id="transfer-recipient" class="form-input w-full bg-[#1a1e23] border-[#4a4e53] text-base py-2.5" required>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1.5">Amount (USD):</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-lg">$</span>
-                            <input type="number" id="transfer-amount" class="form-input w-full pl-10 text-base py-2.5" placeholder="0.00" min="1" required>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-gray-800/50 dark:bg-[#1a1e23] border border-green-500/50 rounded-xl p-4 my-2 flex justify-between items-center shadow-inner">
-                        <span class="text-sm text-gray-300">Transaction Fee:</span>
-                        <span class="text-base font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded shadow-sm">$0.01</span>
-                    </div>
-                    
-                    <button type="submit" id="submit-transfer-btn" class="form-btn w-full font-bold bg-gradient-to-r from-emerald-500 to-green-600 mt-2 shadow-lg flex items-center justify-center gap-2 py-3.5 text-base">
-                        <i class="fa-solid fa-paper-plane"></i> Send Money
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content text-center w-full max-w-[280px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('trash-modal').classList.remove('active')"></i>
-                <h2 class="text-xl font-bold mb-6 text-white font-sans" data-i18n="trash_title"><i class="fa-solid fa-trash-can text-red-500 mr-2"></i> Smart Trash</h2>
-                <div class="flex flex-col gap-4">
-                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="smartArchive()">
-                        <i class="fa-solid fa-box-archive text-xl"></i> <span data-i18n="trash_arc">Archive</span>
-                    </button>
-                    <button class="form-btn bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="smartClear()">
-                        <i class="fa-solid fa-broom text-xl"></i> <span data-i18n="trash_clr">Clear Chat</span>
-                    </button>
-                    <button class="form-btn bg-red-600 hover:bg-red-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="smartDelete()">
-                        <i class="fa-solid fa-fire text-xl"></i> <span data-i18n="trash_del">Delete</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content text-center w-full max-w-[280px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('phone-choice-modal').classList.remove('active')"></i>
-                <h2 class="text-xl font-bold mb-6 text-white font-sans">Select Call Type</h2>
-                <div class="flex flex-col gap-4">
-                    <button class="form-btn bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="startInAppCall()">
-                        <i class="fa-solid fa-headset text-xl"></i> Voice Room
-                    </button>
-                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="startExternalCall()">
-                        <i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="auth-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content text-center w-full max-w-[320px]" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('auth-modal').classList.remove('active')"></i>
-                <i class="fa-solid fa-shield-halved text-5xl text-[#a29bfe] mb-4 mt-2"></i>
-                <h2 class="text-xl font-bold mb-5 text-white font-sans" data-i18n="menu_auth">Authentication</h2>
-                
-                <div class="flex border border-[#4a4e53] rounded-xl mb-5 overflow-hidden font-sans w-full shadow-inner">
-                    <button id="tab-phone" class="flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition" onclick="switchAuthTab('phone')">Phone</button>
-                    <button id="tab-email" class="flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition" onclick="switchAuthTab('email')">Email</button>
-                </div>
-
-                <div id="auth-phone-form" class="flex flex-col gap-4 w-full relative">
-                    <input type="tel" id="auth-phone-input" class="form-input text-center font-sans text-base py-3" placeholder="+994 50 123 45 67">
-                    <button id="auth-phone-send-btn" class="form-btn w-full font-bold py-3 text-base shadow-lg" onclick="sendPhoneCode()">Send SMS</button>
-                    <div id="recaptcha-container"></div>
-                </div>
-
-                <div id="auth-email-form" class="flex flex-col gap-4 w-full hidden">
-                    <input type="email" id="auth-email-input" class="form-input text-center font-sans text-base py-3" placeholder="your@email.com">
-                    <input type="password" id="auth-email-password" class="form-input text-center font-sans text-base py-3" placeholder="Password (min 6 chars)">
-                    <button id="auth-email-send-btn" class="form-btn w-full font-bold py-3 text-base shadow-lg" onclick="loginWithEmail()">Login / Register</button>
-                </div>
-
-                <div id="auth-code-section" class="flex flex-col gap-4 w-full hidden mt-5 pt-5 border-t border-[#4a4e53]">
-                    <p class="text-sm text-gray-400 font-sans" id="auth-code-message">Enter a 6-digit code</p>
-                    <input type="text" id="auth-code-input" class="form-input text-center tracking-[0.5em] text-2xl font-sans py-3" placeholder="••••••" maxlength="6">
-                    <button onclick="verifyPhoneCode()" class="form-btn w-full font-bold bg-green-600 hover:bg-green-500 py-3 text-base shadow-lg">Verify & Login</button>
-                </div>
+        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
+            <div class="app-modal-content w-full max-w-[340px] h-[55vh] flex flex-col" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeLocationModal()"></i>
+                <h2 class="text-xl font-bold mb-4 text-white font-sans shrink-0"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> My Location</h2>
+                <div id="location-map" class="w-full grow bg-[#1a1e23] rounded-xl border border-[#4a4e53] flex flex-col items-center justify-center text-gray-400 text-sm text-center p-2 overflow-hidden shadow-inner"></div>
             </div>
         </div>
 
@@ -685,11 +495,40 @@
             </div>
         </div>
 
-        <div id="location-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-            <div class="app-modal-content w-full max-w-[340px] h-[55vh] flex flex-col" onclick="event.stopPropagation();">
-                <i class="fa-solid fa-xmark close-modal-btn" onclick="document.getElementById('location-modal').classList.remove('active')"></i>
-                <h2 class="text-xl font-bold mb-4 text-white font-sans shrink-0"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> My Location</h2>
-                <div id="location-map" class="w-full grow bg-[#1a1e23] rounded-xl border border-[#4a4e53] flex flex-col items-center justify-center text-gray-400 text-sm text-center p-2 overflow-hidden shadow-inner">
+        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
+            <div class="app-modal-content text-center w-full max-w-[280px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeTrashModal()"></i>
+                <h2 class="text-xl font-bold mb-6 text-white font-sans" data-i18n="trash_title"><i class="fa-solid fa-trash-can text-red-500 mr-2"></i> Smart Trash</h2>
+                <div class="flex flex-col gap-4">
+                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive text-xl"></i> <span data-i18n="trash_arc">Archive</span></button>
+                    <button class="form-btn bg-yellow-600 hover:bg-yellow-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartClear()"><i class="fa-solid fa-broom text-xl"></i> <span data-i18n="trash_clr">Clear Chat</span></button>
+                    <button class="form-btn bg-red-600 hover:bg-red-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.smartDelete()"><i class="fa-solid fa-fire text-xl"></i> <span data-i18n="trash_del">Delete</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
+            <div class="app-modal-content w-full max-w-[320px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closeBankTransferModal()"></i>
+                <div class="w-14 h-14 rounded-full bg-gradient-to-r from-emerald-400 to-green-500 flex items-center justify-center text-white text-2xl mb-3 shadow-lg"><i class="fa-solid fa-money-bill-transfer"></i></div>
+                <h2 class="text-xl font-bold text-white font-sans" data-i18n="menu_transfer">Bank Transfer</h2>
+                <p class="text-[0.75rem] text-gray-400 mb-5 font-sans text-center">Fast & secure • Powered by <span class="text-yellow-500 font-bold">Western Union</span></p>
+                <form id="transfer-form" class="w-full font-sans flex flex-col gap-4" onsubmit="window.sendMoney(event)">
+                    <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Recipient:</label><select id="transfer-recipient" class="form-input w-full bg-[#1a1e23] border-[#4a4e53] text-base py-2.5" required></select></div>
+                    <div><label class="block text-sm font-medium text-gray-400 mb-1.5">Amount (USD):</label><div class="relative"><span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-lg">$</span><input type="number" id="transfer-amount" class="form-input w-full pl-10 text-base py-2.5" placeholder="0.00" min="1" required></div></div>
+                    <div class="bg-gray-800/50 dark:bg-[#1a1e23] border border-green-500/50 rounded-xl p-4 my-2 flex justify-between items-center shadow-inner"><span class="text-sm text-gray-300">Transaction Fee:</span><span class="text-base font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded shadow-sm">$0.01</span></div>
+                    <button type="submit" id="submit-transfer-btn" class="form-btn w-full font-bold bg-gradient-to-r from-emerald-500 to-green-600 mt-2 shadow-lg flex items-center justify-center gap-2 py-3.5 text-base"><i class="fa-solid fa-paper-plane"></i> Send Money</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();">
+            <div class="app-modal-content text-center w-full max-w-[280px]" onclick="event.stopPropagation();">
+                <i class="fa-solid fa-xmark close-modal-btn" onclick="window.closePhoneChoiceModal()"></i>
+                <h2 class="text-xl font-bold mb-6 text-white font-sans">Select Call Type</h2>
+                <div class="flex flex-col gap-4">
+                    <button class="form-btn bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Voice Room</button>
+                    <button class="form-btn bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2 font-sans py-3 text-base" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button>
                 </div>
             </div>
         </div>
@@ -697,978 +536,267 @@
     </div>
 
     <script>
-        // === ГЛОБАЛЬНАЯ ЗОНА (ФУНКЦИИ КНОПОК РАБОТАЮТ МГНОВЕННО) ===
+        // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ИНТЕРФЕЙСА (ГАРАНТИРОВАННО РАБОТАЮТ) ===
         
-        window.openEmailModal = function() { 
-            if(typeof window.closeDropdown === 'function') window.closeDropdown(); 
-            document.getElementById('email-modal').classList.add('active'); 
-        };
+        window.toggleRhombusMenu = function(e) { e.stopPropagation(); document.getElementById('rhombus-btn')?.classList.toggle('active'); }
+        window.closeDropdown = function() { document.getElementById('header-dropdown')?.classList.remove('active'); document.getElementById('rhombus-btn')?.classList.remove('active'); }
+        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
+        
+        window.openSearchModal = function() { window.closeDropdown(); document.getElementById('search-modal').classList.add('active'); }
+        window.closeSearchModal = function() { document.getElementById('search-modal').classList.remove('active'); window.resetGlobalSearch(); }
+        window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); }
+        window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); }
+        window.openLocationModal = function() { window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#a29bfe] mb-3"></i><span>Detecting location...</span>'; setTimeout(() => { mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=$40.40926169,49.8670924&z=14&output=embed" style="border-radius: 12px;"></iframe>`; }, 1000); }
+        window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); }
+        window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); }
+        window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); }
+        window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); }
+        window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); }
+        window.startInAppCall = function() { window.closePhoneChoiceModal(); window.switchTab(1); }
+        window.startExternalCall = function() { window.closePhoneChoiceModal(); window.location.href = "tel:+994501234567"; }
 
-        window.closeEmailModal = function() { 
-            document.getElementById('email-modal').classList.remove('active'); 
-        };
+        window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); }
+        window.smartClear = function() { if(confirm("Clear chat history?")) { if (document.getElementById('conference').classList.contains('active')) { document.getElementById('conf-messages').innerHTML = ''; } else { window.db.ref(window.currentRoomId).remove().then(() => { if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; }); } window.closeTrashModal(); } }
+        window.smartDelete = function() { window.smartClear(); }
 
-        window.openDirectEmail = function(email) { 
-            window.openEmailModal(); 
-            if(email) document.getElementById('email-to').value = email; 
-        };
-
-        window.sendEmailForm = async function(e) {
-            e.preventDefault();
-            const to = document.getElementById('email-to').value;
-            const subject = document.getElementById('email-subject').value;
-            const text = document.getElementById('email-text').value;
-            
-            const btn = e.target.querySelector('button[type="submit"]');
-            const origBtnText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-            btn.disabled = true;
-
+        window.openBankTransferModal = function() {
+            window.closeDropdown(); const sel = document.getElementById('transfer-recipient'); sel.innerHTML = '';
+            window.participants.forEach(p => { if(p.id !== 'ai') sel.innerHTML += `<option value="${p.id}">${p.name.split(' ')[0]} (${p.country})</option>`; });
+            document.getElementById('transfer-modal').classList.add('active');
+        }
+        window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); }
+        
+        window.sendEmailForm = function(e) {
+            e.preventDefault(); const to = document.getElementById('email-to').value; const subject = document.getElementById('email-subject').value; const text = document.getElementById('email-text').value;
+            const btn = e.target.querySelector('button[type="submit"]'); const origBtnText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...'; btn.disabled = true;
             try {
-                const templateParams = { to_email: to, subject: subject, message: text };
-                await emailjs.send("service_i4o7lfa", "template_lrcjrkr", templateParams);
-
-                const emptyArchive = document.getElementById('empty-archive');
-                if (emptyArchive) emptyArchive.style.display = 'none';
-                
-                const card = document.createElement('div');
-                card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
-                card.innerHTML = `<p class="font-bold text-white text-base mb-1">To: ${to}</p><p class="text-sm text-[#a29bfe] font-bold mb-1">Sent via EmailJS 🚀</p><p class="text-sm text-gray-300">${subject}</p>`;
-                
-                const archiveList = document.getElementById('archive-list');
-                if (archiveList) archiveList.prepend(card);
-                
-                e.target.reset(); 
-                window.closeEmailModal(); 
-                if(typeof window.switchTab === 'function') window.switchTab(4); 
-                alert("Успех! Письмо мгновенно улетело! Проверьте почту 🚀");
-                
-            } catch (error) {
-                console.error("❌ Ошибка EmailJS:", error);
-                alert("Ошибка отправки. Проверьте консоль или настройки шаблона.");
-            } finally {
-                btn.innerHTML = origBtnText;
-                btn.disabled = false;
-            }
-        };
-
-        window.toggleTheme = function() {
-            if(typeof window.closeDropdown === 'function') window.closeDropdown();
-            const screen = document.getElementById('phone-body');
-            screen.classList.toggle('light-theme');
-            document.getElementById('theme-icon').className = screen.classList.contains('light-theme') ? 'fa-solid fa-moon w-5' : 'fa-solid fa-sun w-5';
-        };
-
-        window.openAuthModal = function() { 
-            if(typeof window.closeDropdown === 'function') window.closeDropdown(); 
-            document.getElementById('auth-modal').classList.add('active'); 
-        };
-        window.closeAuthModal = function() { document.getElementById('auth-modal').classList.remove('active'); };
-        window.switchAuthTab = function(type) {
-            if(type === 'email') {
-                document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
-                document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
-                document.getElementById('auth-email-form').classList.remove('hidden'); document.getElementById('auth-phone-form').classList.add('hidden');
-            } else {
-                document.getElementById('tab-phone').className = 'flex-1 py-3 bg-[#a29bfe] text-white text-sm font-bold transition';
-                document.getElementById('tab-email').className = 'flex-1 py-3 bg-[#1a1e23] text-gray-400 text-sm font-bold transition';
-                document.getElementById('auth-phone-form').classList.remove('hidden'); document.getElementById('auth-email-form').classList.add('hidden');
-            }
-        };
-
-        // --- ВАШ ОРИГИНАЛЬНЫЙ КОД ---
-
-        window.toggleRhombusMenu = function(e) { 
-            e.stopPropagation(); 
-            document.getElementById('rhombus-btn')?.classList.toggle('active'); 
+                emailjs.send("service_i4o7lfa", "template_lrcjrkr", { to_email: to, subject: subject, message: text }).then(() => {
+                    document.getElementById('empty-archive').style.display = 'none'; const card = document.createElement('div'); card.className = 'bg-[#2a2d32] border border-[#4a4e53] rounded-xl p-4 font-sans shadow-lg mb-3';
+                    card.innerHTML = `<p class="font-bold text-white text-base mb-1">To: ${to}</p><p class="text-sm text-[#a29bfe] font-bold mb-1">Sent via EmailJS 🚀</p><p class="text-sm text-gray-300">${subject}</p>`; document.getElementById('archive-list').prepend(card);
+                    e.target.reset(); window.closeEmailModal(); window.switchTab(4); alert("Успех! Письмо мгновенно улетело!");
+                });
+            } catch (error) { alert("Ошибка отправки."); } finally { btn.innerHTML = origBtnText; btn.disabled = false; }
         }
 
-        const translations = {
-            en: {
-                menu_profile: "Edit Profile", menu_settings: "Settings", menu_theme: "Theme", menu_transfer: "Bank Transfer", menu_auth: "Authentication", menu_import: "Import / Export", menu_logout: "Switch User",
-                nav_chat: "Chat", nav_voice: "Voice", nav_conf: "Conference", nav_prof: "Profession", nav_archive: "Archive",
-                lang_btn: "Language: EN", search_title: "Global Search", search_plc: "Search people, places...", chat_group: "Group Chat", chat_plc: "Type message...",
-                trash_title: "Smart Trash", trash_arc: "Archive", trash_clr: "Clear Chat", trash_del: "Delete"
-            },
-            ru: {
-                menu_profile: "Изменить профиль", menu_settings: "Настройки", menu_theme: "Тема", menu_transfer: "Перевод Денег", menu_auth: "Вход", menu_import: "Импорт / Экспорт", menu_logout: "Сменить юзера",
-                nav_chat: "Чат", nav_voice: "Голос", nav_conf: "Звонок", nav_prof: "Профи", nav_archive: "Архив",
-                lang_btn: "Язык: RU", search_title: "Глобальный Поиск", search_plc: "Искать людей, места...", chat_group: "Общий Чат", chat_plc: "Сообщение...",
-                trash_title: "Умная Корзина", trash_arc: "В архив", trash_clr: "Очистить чат", trash_del: "Удалить"
-            },
-            az: {
-                menu_profile: "Profili Yenilə", menu_settings: "Ayarlar", menu_theme: "Mövzu", menu_transfer: "Pul Köçürmə", menu_auth: "Giriş", menu_import: "İdxal / İxrac", menu_logout: "İstifadəçini dəyiş",
-                nav_chat: "Söhbət", nav_voice: "Səs", nav_conf: "Konfrans", nav_prof: "Peşələr", nav_archive: "Arxiv",
-                lang_btn: "Dil: AZ", search_title: "Qlobal Axtarış", search_plc: "Axtarış...", chat_group: "Ümumi Söhbət", chat_plc: "Mesaj yazın...",
-                trash_title: "Ağıllı Səbət", trash_arc: "Arxivə", trash_clr: "Təmizlə", trash_del: "Sil"
+        window.handleSmartSearch = function(text, type = 'text') { const input = document.getElementById('global-search-input'); if (type === 'text') { input.value = text; window.performLiveSearch(); } else if (type === 'transfer') { window.closeSearchModal(); window.openBankTransferModal(); } else if (type === 'email') { window.closeSearchModal(); window.openEmailModal(); } else if (type === 'web') { input.value = text; document.getElementById('search-results-area').innerHTML = ''; window.doGoogleSearch(); } }
+        window.performLiveSearch = function() {
+            const query = document.getElementById('global-search-input').value.toLowerCase().trim(); const resultsArea = document.getElementById('search-results-area'); document.getElementById('search-result-frame').classList.add('hidden'); const clearBtn = document.getElementById('clear-search-btn'); const suggestions = document.getElementById('search-suggestions');
+            if (query.length === 0) { resultsArea.innerHTML = ''; suggestions.style.display = 'block'; clearBtn.classList.add('hidden'); return; } clearBtn.classList.remove('hidden'); suggestions.style.display = 'none'; let html = ''; let found = false;
+            [window.myProfileInfo, ...window.participants].forEach(p => {
+                if (p && (p.name.toLowerCase().includes(query) || p.profession.toLowerCase().includes(query) || p.country.toLowerCase().includes(query))) { 
+                    found = true; let imgHtml = p.flag === '🤖' ? `<div class="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-2xl shadow-md border-2 border-[#a29bfe]">🤖</div>` : `<img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600 shadow-md">`; 
+                    html += `<div class="bg-[#1a1e23] border border-[#4a4e53] rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-[#a29bfe] transition-colors shadow-lg" onclick="document.getElementById('search-modal').classList.remove('active'); window.openAvatarModal('${p.id}', 'cv'); window.resetGlobalSearch();"><div class="flex items-center gap-4">${imgHtml}<div class="flex flex-col"><span class="text-white text-base font-bold font-sans">${p.name.split(' ')[0]} ${p.flag}</span><span class="text-[#a29bfe] text-xs font-sans mt-0.5">${p.profession} | ${p.country}</span></div></div><i class="fa-solid fa-chevron-right text-gray-500 text-sm pr-2"></i></div>`; 
+                }
+            }); 
+            resultsArea.innerHTML = found ? html : `<p class="text-sm text-gray-400 text-center mt-6 font-sans">No internal results. Click 'Search Web' below.</p>`;
+        }
+        window.resetGlobalSearch = function() { document.getElementById('global-search-input').value = ''; window.performLiveSearch(); }
+        window.doGoogleSearch = function() { const q = document.getElementById('global-search-input').value; if(q.trim() === '') return alert('Enter search query first'); document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('search-results-area').innerHTML = ''; document.getElementById('clear-search-btn').classList.remove('hidden'); const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); }
+
+        window.toggleTheme = function() { window.closeDropdown(); const screen = document.getElementById('phone-body'); screen.classList.toggle('light-theme'); document.getElementById('theme-icon').className = screen.classList.contains('light-theme') ? 'fa-solid fa-moon w-5' : 'fa-solid fa-sun w-5'; }
+
+        // --- БИЗНЕС-ЛОГИКА ---
+        const countryData = {
+            "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
+            "az": { phone: "+994", pop: "~10.1 million", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire. Known for rich culture and oil reserves." },
+            "ru": { phone: "+7", pop: "~144 million", seas: "Arctic Ocean, Black Sea", desc: "The largest country in the world." },
+            "gb": { phone: "+44", pop: "~67 million", seas: "North Sea, Atlantic", desc: "An island nation with deep historical global influence." },
+            "us": { phone: "+1", pop: "~331 million", seas: "Atlantic, Pacific Oceans", desc: "A massive country with diverse geography." },
+            "de": { phone: "+49", pop: "~84 million", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." },
+            "it": { phone: "+39", pop: "~59 million", seas: "Mediterranean, Adriatic", desc: "Famous for its rich history and art." },
+            "tr": { phone: "+90", pop: "~85 million", seas: "Black, Mediterranean, Aegean", desc: "A transcontinental country bridging Europe and Asia." },
+            "fr": { phone: "+33", pop: "~67 million", seas: "Atlantic, Mediterranean", desc: "World center of art, fashion, gastronomy." },
+            "es": { phone: "+34", pop: "~47 million", seas: "Mediterranean, Atlantic", desc: "Known for its diverse culture and vibrant lifestyle." },
+            "cn": { phone: "+86", pop: "~1.4 billion", seas: "East China Sea", desc: "One of the world's most populous countries." },
+            "ae": { phone: "+971", pop: "~9.9 million", seas: "Persian Gulf", desc: "Known for ultra-modern architecture." }
+        };
+
+        window.handleCountryChange = function(selectElement) {
+            const flagCode = selectElement.value; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`;
+            if (countryData[flagCode]) { const phoneInput = document.getElementById('edit-phone'); if(!phoneInput.value || phoneInput.value.startsWith('+')) { phoneInput.value = countryData[flagCode].phone + " "; } }
+        }
+
+        window.handleFileUpload = function(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader(); reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = window.currentPhotoData; }; reader.readAsDataURL(file);
+        }
+
+        window.openAvatarModal = function(id, mode = 'cv') {
+            const p = id === 'me' ? window.myProfileInfo : (window.participants.find(part => part.id === id) || window.allCharacters.find(part => part.id === id)); 
+            if (!p) return;
+            const imgContainer = document.getElementById('modal-img-container'); const imgEl = document.getElementById('modal-img');
+            if(p.flag === '🤖') { imgEl.style.display = 'none'; imgContainer.innerHTML = '🤖'; } else { imgContainer.innerHTML = ''; imgContainer.appendChild(imgEl); imgEl.style.display = 'block'; imgEl.src = p.photo; }
+            document.getElementById('modal-name').innerText = p.name; const descContainer = document.getElementById('modal-desc'); const actionButtons = document.getElementById('modal-action-buttons');
+            
+            const cDesc = p.countryDesc || (countryData[p.flagCode] ? countryData[p.flagCode].desc : 'Country information is not available.'); 
+            
+            // ИСПРАВЛЕНО: Теперь показываем и энциклопедию страны, и личное CV
+            if (mode === 'chat' || id === 'ai') { 
+                descContainer.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
+                    <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
+                    <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop || 'Unknown'}</span></div>
+                    <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Seas:</b> <span class="text-gray-300 text-base">${p.seas || 'None'}</span></div>
+                    <div class="mt-3 pt-3 border-t border-[#4a4e53]">
+                        <p class="text-xs text-[#a29bfe] font-bold uppercase tracking-wider mb-1">Country Info</p>
+                        <div class="text-sm text-gray-400 italic">${cDesc}</div>
+                    </div>
+                    ${p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? `
+                    <div class="mt-3 pt-3 border-t border-[#4a4e53]">
+                        <p class="text-xs text-[#a29bfe] font-bold uppercase tracking-wider mb-1">About Me</p>
+                        <div class="text-sm text-gray-300 leading-relaxed">${p.desc}</div>
+                    </div>` : ''}`; 
+                actionButtons.style.display = 'none'; 
+            } else { 
+                descContainer.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
+                    <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Profession:</b> <span class="text-gray-300 text-base">${p.profession}</span></div>
+                    <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
+                    <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Phone:</b> <span class="text-gray-300 text-base">${p.phone}</span></div>
+                    <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Email:</b> <span class="text-gray-300 text-base">${p.email}</span></div>
+                    <div class="mt-3 pt-3 border-t border-[#4a4e53]">
+                        <p class="text-xs text-[#a29bfe] font-bold uppercase tracking-wider mb-1">Country Info</p>
+                        <div class="text-sm text-gray-300 mb-1"><b>Population:</b> ${p.pop || 'Unknown'}</div>
+                        <div class="text-sm text-gray-300 mb-1"><b>Seas:</b> ${p.seas || 'None'}</div>
+                        <div class="text-sm text-gray-400 italic">${cDesc}</div>
+                    </div>
+                    ${p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? `
+                    <div class="mt-3 pt-3 border-t border-[#4a4e53]">
+                        <p class="text-xs text-[#a29bfe] font-bold uppercase tracking-wider mb-1">About Me</p>
+                        <div class="text-sm text-gray-300 leading-relaxed">${p.desc}</div>
+                    </div>` : ''}`; 
+                actionButtons.style.display = 'flex'; 
+                document.getElementById('modal-email-btn').onclick = () => { window.closeAvatarModal(); window.openEmailModal(); }; 
+                document.getElementById('modal-chat-btn').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); }; 
+                document.getElementById('modal-sms-btn').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${p.phone.replace(/\s+/g, '')}`; }; 
             }
-        };
+            document.getElementById('avatar-modal').classList.add('active');
+        }
+        window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); }
 
-        let currentLang = 'en';
-        const langsArr = ['en', 'ru', 'az'];
-
-        window.toggleLanguage = function() {
-            let idx = langsArr.indexOf(currentLang);
-            currentLang = langsArr[(idx + 1) % langsArr.length];
-            
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if(translations[currentLang][key]) el.innerText = translations[currentLang][key];
-            });
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if(translations[currentLang][key]) el.placeholder = translations[currentLang][key];
-            });
-            
-            const langText = document.getElementById('lang-text');
-            if(langText) langText.innerText = translations[currentLang].lang_btn;
-            
-            window.closeDropdown();
-        };
-
+        // === ИНИЦИАЛИЗАЦИЯ И СИСТЕМНЫЕ ФУНКЦИИ ===
         document.addEventListener('DOMContentLoaded', () => {
             
-            document.querySelectorAll('.app-modal').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        modal.classList.remove('active');
-                        if(modal.id === 'search-modal') window.resetGlobalSearch();
-                    }
-                });
-            });
-
-            window.showToast = function(profile, isGroup, isAI = false) {
-                const toast = document.getElementById('toast-notification');
-                const tImg = document.getElementById('toast-img');
-                const tIconWrap = document.getElementById('toast-icon-wrap');
-                const tFlag = document.getElementById('toast-flag');
-                const tName = document.getElementById('toast-name');
-                const tInfo = document.getElementById('toast-info');
-                
-                if (!toast) return;
-
-                if (isGroup) {
-                    tImg.style.display = 'none'; tIconWrap.style.display = 'flex';
-                    tIconWrap.innerHTML = '🌍'; tIconWrap.className = "w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-xl shrink-0 border-2 border-[#a29bfe]";
-                    tFlag.innerText = '🌍'; tName.innerText = translations[currentLang].chat_group; tInfo.innerHTML = '<b>Global Room</b><br><span style="font-size: 0.65rem;">🗣 Auto-translate</span>';
-                } else if (isAI) {
-                    tImg.style.display = 'none'; tIconWrap.style.display = 'flex';
-                    tIconWrap.innerHTML = '🤖'; tIconWrap.className = "w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center text-2xl shrink-0 border-2 border-[#a29bfe]";
-                    tFlag.innerText = '🤖'; tName.innerText = profile.name; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.desc.split('<br>')[0]}</span>`;
-                } else {
-                    tImg.src = profile.photo; tImg.style.display = 'block'; tIconWrap.style.display = 'none';
-                    tFlag.innerText = profile.flag; tName.innerText = profile.name.split(' ')[0]; tInfo.innerHTML = `<b>${profile.country}</b><br><span style="font-size: 0.65rem; color: #a29bfe;">🗣 ${profile.languages}</span><br><span style="font-size: 0.6rem; opacity: 0.8;">${profile.desc.split('<br>')[0]}</span>`;
-                }
-                
-                toast.classList.add('show');
-                if (window.toastTimeout) clearTimeout(window.toastTimeout);
-                window.toastTimeout = setTimeout(() => { toast.classList.remove('show'); }, 3500);
-            }
-
-            window.switchTab = function(index) {
-                const navLinks = Array.from(document.querySelectorAll('.nav-link'));
-                const pages = document.querySelectorAll('.page-content');
-                if(index < 0 || index >= navLinks.length) return;
-                navLinks.forEach(l => l.classList.remove('active'));
-                pages.forEach(p => p.classList.remove('active'));
-                navLinks[index].classList.add('active');
-                const targetId = navLinks[index].dataset.target;
-                const targetPage = document.getElementById(targetId);
-                if(targetPage) targetPage.classList.add('active');
-                window.currentIndex = index;
-                document.getElementById('prev-tab-btn').classList.toggle('disabled', window.currentIndex === 0);
-                document.getElementById('next-tab-btn').classList.toggle('disabled', window.currentIndex === navLinks.length - 1);
-                const offset = index * -50; 
-                document.getElementById('nav-inner').style.transform = `translateX(${offset > -100 ? offset : -90}px)`;
-            }
-
-            window.closeDropdown = function() {
-                document.getElementById('header-dropdown')?.classList.remove('active');
-                document.getElementById('rhombus-btn')?.classList.remove('active');
-            }
-
-            window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
+            let activeUserId = localStorage.getItem('hf_active_user');
+            window.isGuest = !activeUserId;
             
-            document.body.addEventListener('click', () => { window.closeDropdown(); });
-
-            const firebaseConfig = {
-                apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40",
-                authDomain: "hello-friends-p8p3i7.firebaseapp.com",
-                databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app",
-                projectId: "hello-friends-p8p3i7",
-                storageBucket: "hello-friends-p8p3i7.firebasestorage.app"
-            };
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
-
-            let savedUser = localStorage.getItem('hf_test_user');
-            if (!savedUser) {
-                savedUser = prompt("Welcome to Hello Friends App!\nПожалуйста, введите ваше имя:", "Ilgar");
-                if (!savedUser) savedUser = "Ilgar";
-                localStorage.setItem('hf_test_user', savedUser.trim().toLowerCase());
-            }
-            window.myUsername = savedUser.trim();
-            window.mySessionId = Math.random().toString(36).substring(2, 15);
-            window.currentRoomId = "global"; 
-            window.activeChatListener = null;
-            window.currentIndex = 0;
-
-            const allCharacters = [
-                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az-AZ', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Azerbaijan — The Land of Fire.', languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
-                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Germany is a country in Central Europe, known for its precision engineering.', languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
-                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Italy is famous for its rich history and art.', languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' },
-                { id: 'john', name: 'John Smith', photo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200', profession: 'Lead Designer', email: 'john@hellofriends.co.uk', phone: '+44 7700 900077', flag: '🇬🇧', flagCode: 'gb', langCode: 'en', country: 'United Kingdom', pop: '~67 million', seas: 'North Sea, Atlantic Ocean', desc: 'The UK is an island nation known for its global cultural influence.', languages: 'English', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }
+            const baseCharacters = [
+                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'CEO / Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '~10.1 million', seas: 'Caspian Sea', desc: 'Creator and Founder of the Hello Friends Super-App. Leading the vision to connect the world without language barriers.', countryDesc: countryData['az'].desc, languages: 'Azerbaijani, Russian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
+                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '~84 million', seas: 'Baltic Sea, North Sea', desc: 'Developing the core engine.', countryDesc: countryData['de'].desc, languages: 'German, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
+                { id: 'marinella', name: 'Marinella Di Lorenza', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing Director', email: 'marinella@hellofriends.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '~59 million', seas: 'Mediterranean, Adriatic', desc: 'Leading global marketing campaigns.', countryDesc: countryData['it'].desc, languages: 'Italian, English', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' }
             ];
-
-            const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', languages: 'All languages', video: '' };
-
-            let myChar = allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id));
-            if (!myChar) {
-                myChar = {
-                    id: window.myUsername.toLowerCase(),
-                    name: window.myUsername,
-                    photo: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(window.myUsername) + '&background=a29bfe&color=fff',
-                    profession: 'User',
-                    email: window.myUsername.toLowerCase() + '@hellofriends.com',
-                    phone: '+0 000 000 0000',
-                    flag: '🌐',
-                    flagCode: 'un',
-                    langCode: 'en-US',
-                    country: 'Global',
-                    pop: 'Unknown',
-                    seas: 'Digital',
-                    desc: 'New user in the app.',
-                    languages: 'Auto',
-                    video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'
-                };
-            }
-
-            let myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
-            window.myUsername = myChar.name.split(' ')[0]; 
-
-            const savedCustomProfile = JSON.parse(localStorage.getItem('hf_my_custom_profile'));
-            if (savedCustomProfile) {
-                myProfileInfo = { ...myProfileInfo, ...savedCustomProfile, id: 'me', name: savedCustomProfile.name.split(' ')[0] + ' (You)' };
-                window.myUsername = savedCustomProfile.name.split(' ')[0];
-                localStorage.setItem('hf_test_user', window.myUsername.toLowerCase());
-            }
-
-            let participants = [aiBot, ...allCharacters.filter(c => c.id !== myChar.id)];
-            if (!allCharacters.find(c => window.myUsername.toLowerCase().includes(c.id))) {
-                participants = [aiBot, ...allCharacters]; 
-            }
-
-            window.switchTestUser = function() { 
-                const newUser = prompt("Введите имя для входа (например: Ilgar, Klaus):", window.myUsername); 
-                if(newUser) { 
-                    localStorage.setItem('hf_test_user', newUser.trim().toLowerCase()); 
-                    location.reload(); 
-                } 
-            }
-
-            const voiceFriend = allCharacters.find(c => c.id === 'marinella') || allCharacters[2]; 
-            if (voiceFriend) {
-                document.getElementById('voice-friend-photo').src = voiceFriend.photo;
-                document.getElementById('voice-friend-flag').innerText = voiceFriend.flag;
-                document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0];
-            }
-
-            let myVideoStream = null;
-
-            function initConference() {
-                const confGrid = document.getElementById('conference-grid');
-                if(!confGrid) return;
-                
-                let confHtml = `
-                    <div class="video-frame main" id="my-video-container">
-                        <video id="my-live-video" class="mirror-video" autoplay muted playsinline></video>
-                        <div class="video-overlay" id="my-video-name">${myProfileInfo.name.split(' (')[0]} (You)</div>
-                        <div class="flag-overlay" id="conf-me-flag">${myProfileInfo.flag}</div>
-                        <div class="translation-bar"><div class="marquee-text conf-marquee-text text-[#00C4CC]" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
-                    </div>`;
-                    
-                let displayedCount = 0;
-                participants.forEach(p => {
-                    if(p.id === 'ai' || displayedCount >= 3) return; 
-                    confHtml += `
-                        <div class="video-frame">
-                            <video autoplay loop muted playsinline><source src="${p.video}"></video>
-                            <div class="video-overlay">${p.name.split(' ')[0]}</div>
-                            <div class="flag-overlay">${p.flag}</div>
-                            <div class="translation-bar"><div class="marquee-text conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div>
-                        </div>`;
-                    displayedCount++;
-                });
-                
-                confGrid.innerHTML = confHtml;
-                startMyCamera();
-            }
-
-            async function startMyCamera() {
-                try {
-                    const videoEl = document.getElementById('my-live-video');
-                    if (!videoEl) return;
-                    
-                    myVideoStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "user" }, 
-                        audio: false 
-                    });
-                    
-                    videoEl.srcObject = myVideoStream;
-                    videoEl.muted = true; 
-                    await videoEl.play();
-                    
-                } catch (err) {
-                    console.error("Camera error:", err);
-                    const videoEl = document.getElementById('my-live-video');
-                    if(videoEl) {
-                        videoEl.src = myProfileInfo.video;
-                        videoEl.loop = true;
-                        videoEl.classList.remove('mirror-video');
-                    }
-                }
-            }
-
-            window.toggleMyCamera = function(btn) {
-                btn.classList.toggle('bg-[#00C4CC]');
-                btn.classList.toggle('bg-gray-600');
-                btn.classList.toggle('text-black');
-                btn.classList.toggle('text-white');
-                
-                if (myVideoStream) {
-                    const videoTrack = myVideoStream.getVideoTracks()[0];
-                    if (videoTrack) {
-                        videoTrack.enabled = !videoTrack.enabled;
-                        const icon = btn.querySelector('i');
-                        icon.className = videoTrack.enabled ? 'fa-solid fa-video text-base' : 'fa-solid fa-video-slash text-base';
-                    }
-                }
-            };
-
-            fetch('https://ipapi.co/json/').then(res => res.json()).then(data => {
-                if(data.latitude) {
-                    window.myLat = data.latitude;
-                    window.myLon = data.longitude;
-                }
-            }).catch(() => {}).finally(() => {
-                document.getElementById('voice-me-flag').innerText = myProfileInfo.flag;
-                const sidebarFlag = document.getElementById('sidebar-me-flag');
-                if(sidebarFlag) sidebarFlag.src = `https://flagcdn.com/w20/${myProfileInfo.flagCode}.png`;
-                renderProfessionList();
-                initConference();
-            });
             
-            document.getElementById('voice-me-name').innerText = myProfileInfo.name.split(' (')[0];
-            document.getElementById('voice-me-photo').src = myProfileInfo.photo;
+            const aiBot = { id: 'ai', name: 'AI Assistant', photo: '', profession: 'Super Intelligence', email: 'ai@hellofriends.com', phone: 'API-Driven', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud Server', pop: 'Infinite', seas: 'Data Oceans', desc: 'Powered by Google Gemini & OpenAI ChatGPT.', countryDesc: 'Virtual Environment', languages: 'All languages', video: '' };
 
-            function renderProfessionList() {
-                const profContainer = document.getElementById('profession-list');
-                if (!profContainer) return;
-                const allUsers = [myProfileInfo, ...participants.filter(p => p.id !== 'ai')];
-                let cardsHTML = `<div class="grid grid-cols-2 gap-4">`;
-                allUsers.forEach((p) => {
-                    cardsHTML += `
-                        <div class="bg-[#2a2d32] p-4 rounded-2xl border border-[#4a4e53] flex flex-col items-center relative shadow-lg h-full justify-between">
-                            <div class="flex flex-col items-center w-full">
-                                <img src="${p.photo}" class="w-20 h-20 rounded-full border-2 border-[#a29bfe] mb-3 object-cover shadow-md">
-                                <h3 class="text-white font-bold text-base text-center leading-tight mb-1.5">${p.name.split(' (')[0]}</h3>
-                                <p class="text-gray-400 text-xs text-center mb-4"><span>${p.flag}</span> ${p.profession}</p>
-                            </div>
-                            <button onclick="openAvatarModal('${p.id}', 'cv')" class="w-full mt-auto bg-[#a29bfe]/10 text-[#a29bfe] hover:bg-[#a29bfe] hover:text-white transition py-2.5 rounded-xl text-sm font-bold border border-[#a29bfe]">📄 CV</button>
-                        </div>`;
-                });
-                cardsHTML += `</div>`;
-                profContainer.innerHTML = cardsHTML;
+            window.allCharacters = [...baseCharacters];
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key.startsWith('hf_custom_')) {
+                    try {
+                        let savedUser = JSON.parse(localStorage.getItem(key));
+                        if (!savedUser.video) savedUser.video = 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4';
+                        let existingIndex = window.allCharacters.findIndex(c => c.id === savedUser.id);
+                        if (existingIndex !== -1) { window.allCharacters[existingIndex] = { ...window.allCharacters[existingIndex], ...savedUser }; } 
+                        else { window.allCharacters.push(savedUser); }
+                    } catch(e) {}
+                }
             }
 
+            let myChar = null;
+            if (window.isGuest) { 
+                myChar = { id: 'guest', name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=a29bfe&color=fff', profession: 'New User', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: '', countryDesc: 'International user connecting globally.', languages: 'Auto', video: 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4' }; 
+            } else { 
+                myChar = window.allCharacters.find(c => c.id === activeUserId); 
+                if (!myChar) { window.isGuest = true; myChar = baseCharacters[0]; } 
+            }
+
+            window.myProfileInfo = { ...myChar, id: 'me', name: myChar.name.split(' ')[0] + ' (You)' };
+            window.myUsername = myChar.name.split(' ')[0]; 
+            window.mySessionId = window.isGuest ? 'guest_session' : activeUserId;
+
+            const menuProfileText = document.getElementById('menu-profile-text'); if (menuProfileText) { menuProfileText.innerText = window.isGuest ? "Register" : "Edit Profile"; }
+
+            window.participants = [aiBot];
+            window.allCharacters.forEach(c => { 
+                if (c.id !== (myChar.id === 'me' ? myChar.id : myChar.id) && c.name.split(' ')[0] !== window.myUsername && c.id !== 'guest') { 
+                    window.participants.push(c); 
+                } 
+            });
+
+            // Рендер бокового меню чата
             const chatSidebar = document.getElementById('chat-sidebar');
             if (chatSidebar) {
-                chatSidebar.innerHTML = `
-                    <div class="chat-contact mb-5" id="chat-btn-global" onclick="switchChatRoom('global')" title="Group Chat">
-                        <div class="chat-contact-icon flex justify-center items-center bg-gradient-to-r from-blue-500 to-purple-500 text-white text-2xl border-2 border-[#a29bfe] shadow-md">🌍</div>
-                        <p class="chat-contact-name font-bold text-[#a29bfe]">Group</p>
-                    </div>
-                    
-                    <div class="chat-contact mb-5" id="chat-btn-ai" onclick="switchChatRoom('ai')" title="AI Assistant">
-                        <div class="chat-contact-icon flex justify-center items-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-2xl border-2 border-[#a29bfe] shadow-md">🤖</div>
-                        <p class="chat-contact-name font-bold text-purple-400">AI Bot</p>
-                    </div>
-
-                    <div class="chat-contact mb-4" id="chat-btn-me" onclick="switchChatRoom('me')" title="Saved Messages">
-                        <div class="chat-contact-icon border-2 border-[#a29bfe] shadow-md" style="background-image: url('${myProfileInfo.photo}'); position: relative;">
-                            <img id="sidebar-me-flag" src="https://flagcdn.com/w20/${myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover">
-                        </div>
-                        <p class="chat-contact-name text-[#a29bfe]">You</p>
-                    </div>
-                `;
-                
-                participants.filter(p => p.id !== 'ai').forEach((p) => {
-                    chatSidebar.innerHTML += `
-                    <div class="chat-contact mb-4" id="chat-btn-${p.id}" onclick="switchChatRoom('${p.id}')">
-                        <div class="chat-contact-icon shadow-md" style="background-image: url('${p.photo}'); position: relative;">
-                            <img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover">
-                        </div>
-                        <p class="chat-contact-name">${p.name.split(' ')[0]}</p>
-                    </div>`;
-                });
+                chatSidebar.innerHTML = `<div class="chat-contact mb-5" id="chat-btn-global" onclick="window.switchChatRoom('global')" title="Group Chat"><div class="chat-contact-icon flex justify-center items-center bg-gradient-to-r from-blue-500 to-purple-500 text-white text-2xl border-2 border-[#a29bfe] shadow-md">🌍</div><p class="chat-contact-name font-bold text-[#a29bfe]">Group</p></div><div class="chat-contact mb-5" id="chat-btn-ai" onclick="window.switchChatRoom('ai')" title="AI Assistant"><div class="chat-contact-icon flex justify-center items-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-2xl border-2 border-[#a29bfe] shadow-md">🤖</div><p class="chat-contact-name font-bold text-purple-400">AI Bot</p></div><div class="chat-contact mb-4" id="chat-btn-me" onclick="window.switchChatRoom('me')" title="Saved Messages"><div class="chat-contact-icon border-2 border-[#a29bfe] shadow-md" style="background-image: url('${window.myProfileInfo.photo}'); position: relative;"><img id="sidebar-me-flag" src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover"></div><p class="chat-contact-name text-[#a29bfe]">You</p></div>`;
+                window.participants.filter(p => p.id !== 'ai').forEach((p) => { chatSidebar.innerHTML += `<div class="chat-contact mb-4" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon shadow-md" style="background-image: url('${p.photo}'); position: relative;"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm border border-gray-600 shadow-md object-cover"></div><p class="chat-contact-name">${p.name.split(' ')[0]}</p></div>`; });
             }
 
             window.switchChatRoom = function(targetId) {
-                if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
-                const chatMessages = document.getElementById('chat-messages');
-                if (chatMessages) chatMessages.innerHTML = ''; 
+                try { if (window.activeChatListener && typeof db !== 'undefined') { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); } } catch(e){}
+                const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
+                document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active-room')); document.getElementById('chat-btn-' + targetId)?.classList.add('active-room');
+                const avatarEl = document.getElementById('chat-header-avatar'); const nameEl = document.getElementById('chat-header-name'); const statusEl = document.getElementById('chat-header-status');
+
+                if (targetId === 'global') { window.currentRoomId = "global"; avatarEl.innerHTML = "🌍"; avatarEl.style.backgroundImage = "none"; avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-xl text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] shadow-md cursor-pointer hover:scale-105 transition-transform"; nameEl.innerText = translations[currentLang].chat_group; statusEl.innerHTML = '🌍 <span class="text-[0.7rem] text-green-400">All members</span>'; window.showToast(null, true); } 
+                else if (targetId === 'ai') { window.currentRoomId = "private_ai_bot"; avatarEl.innerHTML = "🤖"; avatarEl.style.backgroundImage = "none"; avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-2xl text-white shrink-0 bg-gradient-to-r from-purple-500 to-indigo-500 border border-[#a29bfe] shadow-lg cursor-pointer hover:scale-105 transition-transform"; nameEl.innerText = "AI Assistant"; statusEl.innerHTML = '🤖 <span class="text-[0.7rem] text-purple-400">Online</span>'; window.showToast(window.participants.find(p => p.id === 'ai'), false, true); } 
+                else if (targetId === 'me') { window.currentRoomId = "private_me_" + window.myUsername.toLowerCase().trim(); avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center cursor-pointer hover:scale-105 transition-transform"; avatarEl.style.backgroundImage = `url('${window.myProfileInfo.photo}')`; nameEl.innerText = "Saved (You)"; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode === 'un' ? 'un' : window.myProfileInfo.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`; window.showToast(window.myProfileInfo, false); } 
+                else { const targetUser = window.participants.find(p => p.id === targetId); if(targetUser) { const name1 = window.myUsername.toLowerCase().trim(); const name2 = targetUser.name.split(' ')[0].toLowerCase().trim(); window.currentRoomId = "private_" + [name1, name2].sort().join('_'); avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center cursor-pointer hover:scale-105 transition-transform"; avatarEl.style.backgroundImage = `url('${targetUser.photo}')`; nameEl.innerText = targetUser.name.split(' ')[0]; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${targetUser.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`; window.showToast(targetUser, false); } }
                 
-                document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active-room'));
-                document.getElementById('chat-btn-' + targetId)?.classList.add('active-room');
-
-                const avatarEl = document.getElementById('chat-header-avatar');
-                const nameEl = document.getElementById('chat-header-name');
-                const statusEl = document.getElementById('chat-header-status');
-
-                if (targetId === 'global') {
-                    window.currentRoomId = "global"; 
-                    avatarEl.innerHTML = "🌍"; avatarEl.style.backgroundImage = "none";
-                    avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-xl text-white shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 border border-[#4a4e53] shadow-md";
-                    nameEl.innerText = translations[currentLang].chat_group; statusEl.innerHTML = '🌍 <span class="text-[0.7rem] text-green-400">All members</span>';
-                    window.showToast(null, true); 
-                } else if (targetId === 'ai') {
-                    window.currentRoomId = "private_ai_bot";
-                    avatarEl.innerHTML = "🤖"; avatarEl.style.backgroundImage = "none";
-                    avatarEl.className = "w-10 h-10 rounded-full flex items-center justify-center text-2xl text-white shrink-0 bg-gradient-to-r from-purple-500 to-indigo-500 border border-[#a29bfe] shadow-lg";
-                    nameEl.innerText = "AI Assistant"; statusEl.innerHTML = '🤖 <span class="text-[0.7rem] text-purple-400">Online</span>';
-                    window.showToast(participants.find(p => p.id === 'ai'), false, true); 
-                } else if (targetId === 'me') {
-                    window.currentRoomId = "private_me_" + window.myUsername.toLowerCase().trim();
-                    avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center";
-                    avatarEl.style.backgroundImage = `url('${myProfileInfo.photo}')`;
-                    nameEl.innerText = "Saved (You)"; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${myProfileInfo.flagCode === 'un' ? 'un' : myProfileInfo.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`;
-                    window.showToast(myProfileInfo, false); 
-                } else {
-                    const targetUser = participants.find(p => p.id === targetId);
-                    if(targetUser) {
-                        const name1 = window.myUsername.toLowerCase().trim(); const name2 = targetUser.name.split(' ')[0].toLowerCase().trim();
-                        window.currentRoomId = "private_" + [name1, name2].sort().join('_');
-                        avatarEl.innerHTML = ""; avatarEl.className = "w-10 h-10 rounded-full text-white shrink-0 border border-[#4a4e53] shadow-md bg-cover bg-center";
-                        avatarEl.style.backgroundImage = `url('${targetUser.photo}')`;
-                        nameEl.innerText = targetUser.name.split(' ')[0]; statusEl.innerHTML = `<img src="https://flagcdn.com/w20/${targetUser.flagCode}.png" class="w-5 h-3.5 rounded-sm inline object-cover"> <span class="text-[0.7rem] text-green-400">Online</span>`;
-                        window.showToast(targetUser, false); 
-                    }
-                }
-                window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
+                try { if(typeof db !== 'undefined') window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage); } catch(e){}
             };
 
-            let isMarqueeEnabled = true;
-            window.toggleMarquee = function() {
-                isMarqueeEnabled = !isMarqueeEnabled;
-                const btn = document.getElementById('marquee-toggle-btn');
-                if(isMarqueeEnabled) {
-                    btn.classList.replace('text-gray-500', 'text-[#a29bfe]');
-                } else {
-                    btn.classList.replace('text-[#a29bfe]', 'text-gray-500');
-                    document.getElementById('typing-marquee-container').style.display = 'none';
-                }
+            window.openActiveChatProfile = function() {
+                if (window.currentRoomId === 'global') return; 
+                if (window.currentRoomId === 'private_ai_bot') window.openAvatarModal('ai', 'chat');
+                else if (window.currentRoomId.startsWith('private_me_')) window.openAvatarModal('me', 'chat');
+                else { const targetId = document.querySelector('.chat-contact.active-room')?.id.replace('chat-btn-', ''); if (targetId) window.openAvatarModal(targetId, 'chat'); }
             };
 
-            window.applyAiMagic = function() {
-                const input = document.getElementById('chat-input');
-                const wandBtn = document.getElementById('magic-wand-btn');
-                if(!input.value.trim()) return alert("Type some text first for the AI to improve!");
-                wandBtn.querySelector('i').classList.add('fa-spin'); input.disabled = true; input.value = "✨ AI is rewriting...";
-                setTimeout(() => {
-                    wandBtn.querySelector('i').classList.remove('fa-spin'); input.disabled = false;
-                    input.value = "Good afternoon! Could you please provide an update on the project? Thank you!"; input.focus();
-                }, 1500);
-            }
-
-            window.sendTextMessage = function(inputId) {
-                const inputEl = document.getElementById(inputId);
-                if(!inputEl) return;
-                const text = inputEl.value.trim();
-                if(!text) return;
-
-                if (inputId === 'voice-text-input') {
-                    window.processVoiceTranslation(text);
-                } 
-                else if (inputId === 'conf-chat-input') {
-                    const confMessages = document.getElementById('conf-messages');
-                    const msgId = 'conf-msg-' + Date.now();
-                    
-                    if (confMessages) {
-                        confMessages.innerHTML += `
-                            <div class="conf-msg mt-2 flex gap-2">
-                                <img class="conf-msg-avatar w-6 h-6 rounded-full border border-[#4a4e53] object-cover" src="${myProfileInfo.photo}">
-                                <div class="conf-msg-content bg-[#1e293b] p-2 rounded-lg text-[0.75rem] text-white w-full">
-                                    <span class="text-[#00C4CC] font-bold block mb-0.5">${window.myUsername}</span>
-                                    ${text}
-                                    <div id="${msgId}-trans" class="mt-1 pt-1 border-t border-[#334155] text-[0.65rem] text-yellow-300 opacity-90 leading-tight">⏳ translating...</div>
-                                </div>
-                            </div>`;
-                        confMessages.scrollTop = confMessages.scrollHeight;
-                    }
-                    window.processConfTranslation(text, msgId);
-                } 
-                inputEl.value = '';
-            };
-
-            window.sendFirebaseMsg = function() {
-                const text = document.getElementById('chat-input').value.trim();
-                if(!text) return;
-                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-                document.getElementById('chat-input').value = '';
-
-                if(window.currentRoomId === 'private_ai_bot') {
-                    setTimeout(() => {
-                        const aiReply = "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation.";
-                        db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: aiReply, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP });
-                    }, 1500);
-                }
-            }
-
-            document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendFirebaseMsg(); });
-            document.getElementById('voice-text-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('voice-text-input'); });
-            document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendTextMessage('conf-chat-input'); });
-
+            window.sendFirebaseMsg = function() { const text = document.getElementById('chat-input').value.trim(); if(!text) return; db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP }); document.getElementById('chat-input').value = ''; if(window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Co-Pilot", text: "Hello! 🤖 **Hello Friends** is a revolutionary Super-App. It eliminates language barriers with real-time translation.", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP }); }, 1500); } }
+            
             async function handleNewMessage(snapshot) {
-                const data = snapshot.val(); if(!data) return;
-                const chatMessages = document.getElementById('chat-messages');
-                const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername;
-                const isAI = data.sessionId === "ai-bot-session";
-                
-                let p = isMe ? myProfileInfo : (isAI ? aiBot : (participants.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+data.name+'&background=random', langCode: 'en', flag: '🌐' }));
-                
-                const msgWrapper = document.createElement('div');
-                msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
-                
-                let avatarHtml = isAI 
-                    ? `<div class="w-8 h-8 rounded-full shrink-0 self-end border border-[#4a4e53] flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm shadow-md" onclick="openAvatarModal('ai', 'chat')">🤖</div>` 
-                    : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="openAvatarModal('${isMe ? 'me' : p.id}', 'chat')">`;
+                const data = snapshot.val(); if(!data) return; const chatMessages = document.getElementById('chat-messages');
+                const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername; const isAI = data.sessionId === "ai-bot-session";
+                let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.allCharacters.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+data.name+'&background=random', langCode: 'en', flag: '🌐' }));
+                const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2.5 w-full mt-4 ${isMe ? 'justify-end' : 'justify-start'}`;
+                let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end border border-[#4a4e53] flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm shadow-md" onclick="window.openAvatarModal('ai', 'chat')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#4a4e53] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}', 'chat')">`;
 
-                const msgId = 'msg-' + snapshot.key;
-                let targetLangs = [];
-                if (window.currentRoomId === 'global') {
-                    const seen = new Set(); seen.add(p.langCode); 
-                    participants.forEach(part => { if (!seen.has(part.langCode) && part.id !== 'ai') { seen.add(part.langCode); targetLangs.push({ code: part.langCode, flag: part.flag }); } });
-                    if (!seen.has(myProfileInfo.langCode)) targetLangs.push({ code: myProfileInfo.langCode, flag: myProfileInfo.flag });
-                } else if (window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('private_me_') && !window.currentRoomId.includes('private_ai_')) {
-                    if (isMe) {
-                        const targetUserId = document.querySelector('.chat-contact.active-room')?.id.replace('chat-btn-', '');
-                        const targetUser = participants.find(part => part.id === targetUserId);
-                        if (targetUser && targetUser.id !== 'ai') targetLangs = [{ code: targetUser.langCode, flag: targetUser.flag }];
-                    } else targetLangs = [{ code: myProfileInfo.langCode, flag: myProfileInfo.flag }];
-                }
+                const msgId = 'msg-' + snapshot.key; let targetLangs = [];
+                if (window.currentRoomId === 'global') { const seen = new Set(); seen.add(p.langCode); window.participants.forEach(part => { if (!seen.has(part.langCode) && part.id !== 'ai') { seen.add(part.langCode); targetLangs.push({ code: part.langCode, flag: part.flag }); } }); if (!seen.has(window.myProfileInfo.langCode)) targetLangs.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag }); } 
+                else if (window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('private_me_') && !window.currentRoomId.includes('private_ai_')) { if (isMe) { const targetUserId = document.querySelector('.chat-contact.active-room')?.id.replace('chat-btn-', ''); const targetUser = window.participants.find(part => part.id === targetUserId); if (targetUser && targetUser.id !== 'ai') targetLangs = [{ code: targetUser.langCode, flag: targetUser.flag }]; } else targetLangs = [{ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag }]; }
                 
-                let displayedText = data.text;
-                let isReceipt = displayedText.includes('💳 [BANK TRANSFER]');
-                let bubbleStyle = '';
-                if (isMe && isReceipt) bubbleStyle = 'border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.1); color: #fff; border-bottom-right-radius: 4px;';
-                else if (!isMe && isReceipt) bubbleStyle = 'border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.1); color: #fff; border-bottom-left-radius: 4px;';
-                else if (isAI) bubbleStyle = 'background: linear-gradient(145deg, #9333ea, #4f46e5); color: #fff; border: none; border-bottom-left-radius: 4px; box-shadow: 0 4px 10px rgba(147, 51, 234, 0.3);';
+                let displayedText = data.text; let isReceipt = displayedText.includes('💳 [BANK TRANSFER]'); let bubbleStyle = '';
+                if (isMe && isReceipt) bubbleStyle = 'border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.1); color: #fff; border-bottom-right-radius: 4px;'; else if (!isMe && isReceipt) bubbleStyle = 'border: 2px solid #4ade80; background: rgba(74, 222, 128, 0.1); color: #fff; border-bottom-left-radius: 4px;'; else if (isAI) bubbleStyle = 'background: linear-gradient(145deg, #9333ea, #4f46e5); color: #fff; border: none; border-bottom-left-radius: 4px; box-shadow: 0 4px 10px rgba(147, 51, 234, 0.3);';
 
-                const customClass = (isReceipt || isAI) ? '' : 'chat-bubble';
-                const senderNameClasses = isMe ? 'text-indigo-200 text-right' : (isAI ? 'text-purple-400 font-bold text-left' : 'text-[#a29bfe] font-bold text-left');
-
-                const bubbleHtml = `
-                    <div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">
-                        ${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}
-                        <div class="${customClass}" style="${bubbleStyle} padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; font-family: sans-serif;">${displayedText}</div>
-                        ${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1" id="trans-box-${msgId}"></div>` : ''}
-                    </div>`;
-
-                msgWrapper.innerHTML = isMe ? bubbleHtml + avatarHtml : avatarHtml + bubbleHtml;
-                if(chatMessages) { chatMessages.appendChild(msgWrapper); chatMessages.scrollTop = chatMessages.scrollHeight; }
+                const customClass = (isReceipt || isAI) ? '' : 'chat-bubble'; const senderNameClasses = isMe ? 'text-indigo-200 text-right' : (isAI ? 'text-purple-400 font-bold text-left' : 'text-[#a29bfe] font-bold text-left');
+                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col" style="max-width: 80%;" id="${msgId}">${!isMe ? `<div class="chat-sender-name ${senderNameClasses}">${data.name}</div>` : ''}<div class="${customClass}" style="${bubbleStyle} padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; font-family: sans-serif;">${displayedText}</div>${targetLangs.length > 0 && !isReceipt && !isAI ? `<div class="translate-box flex flex-col gap-1 mt-1" id="trans-box-${msgId}"></div>` : ''}</div>`;
+                msgWrapper.innerHTML = isMe ? bubbleHtml + avatarHtml : avatarHtml + bubbleHtml; if(chatMessages) { chatMessages.appendChild(msgWrapper); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
                 if (targetLangs.length > 0 && !isReceipt && !isAI) {
-                    try {
-                        const fetchPromises = targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ flag: lang.flag, text: resData[0][0][0] })));
-                        const translationsRes = await Promise.all(fetchPromises);
-                        const transBoxEl = document.getElementById(`trans-box-${msgId}`);
-                        if(transBoxEl) {
-                            let html = ''; let marqueeTextStr = '';
-                            translationsRes.forEach(t => { html += `<div class="text-[0.75rem] ${isMe ? 'text-yellow-300' : 'text-[#a29bfe] font-bold'} opacity-95 mt-1 leading-snug">${t.flag} ${t.text}</div>`; marqueeTextStr += `${t.flag} ${t.text}       `; });
-                            transBoxEl.innerHTML = html;
-                            const mCont = document.getElementById('typing-marquee-container'); const mText = document.getElementById('chat-info-marquee');
-                            if (isMarqueeEnabled && mCont && mText) { mCont.style.display = 'flex'; mText.innerHTML = `🌍 <span class="text-white">${data.name}:</span> <span class="text-green-400 font-bold">${marqueeTextStr}</span>`; }
-                        }
-                    } catch (e) {}
+                    try { const fetchPromises = targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ flag: lang.flag, text: resData[0][0][0] }))); const translationsRes = await Promise.all(fetchPromises); const transBoxEl = document.getElementById(`trans-box-${msgId}`); if(transBoxEl) { let html = ''; let marqueeTextStr = ''; translationsRes.forEach(t => { html += `<div class="text-[0.75rem] ${isMe ? 'text-yellow-300' : 'text-[#a29bfe] font-bold'} opacity-95 mt-1 leading-snug">${t.flag} ${t.text}</div>`; marqueeTextStr += `${t.flag} ${t.text}       `; }); transBoxEl.innerHTML = html; const mCont = document.getElementById('typing-marquee-container'); const mText = document.getElementById('chat-info-marquee'); if (isMarqueeEnabled && mCont && mText) { mCont.style.display = 'flex'; mText.innerHTML = `🌍 <span class="text-white">${data.name}:</span> <span class="text-green-400 font-bold">${marqueeTextStr}</span>`; } } } catch (e) {}
                 }
             }
 
-            window.toggleEmojiPicker = function(type) {
-                if(type === 'text') document.getElementById('text-emoji-picker')?.classList.toggle('hidden');
-                if(type === 'voice') document.getElementById('voice-emoji-picker')?.classList.toggle('hidden');
-            }
+            window.toggleEmojiPicker = function(type) { if(type === 'text') document.getElementById('text-emoji-picker')?.classList.toggle('hidden'); if(type === 'voice') document.getElementById('voice-emoji-picker')?.classList.toggle('hidden'); }
             window.insertTextEmoji = function(e) { const inp = document.getElementById('chat-input'); inp.value += e; inp.focus(); document.getElementById('text-emoji-picker')?.classList.add('hidden'); }
             window.insertVoiceEmoji = function(e) { const inp = document.getElementById('voice-text-input'); inp.value += e; inp.focus(); document.getElementById('voice-emoji-picker')?.classList.add('hidden'); }
 
-            let isVoiceCCEnabled = true;
-            window.toggleVoiceCC = function() {
-                isVoiceCCEnabled = !isVoiceCCEnabled;
-                const btn = document.getElementById('voice-cc-btn');
-                const mBox = document.getElementById('voice-marquee-container');
-                if(isVoiceCCEnabled) {
-                    btn.classList.replace('bg-gray-600', 'bg-[#a29bfe]');
-                    if(mBox && document.getElementById('voice-marquee-text').innerText !== '') mBox.style.display = 'flex';
-                } else {
-                    btn.classList.replace('bg-[#a29bfe]', 'bg-gray-600');
-                    if(mBox) mBox.style.display = 'none';
-                }
-            };
+            let isVoiceCCEnabled = true; window.toggleVoiceCC = function() { isVoiceCCEnabled = !isVoiceCCEnabled; const btn = document.getElementById('voice-cc-btn'); const mBox = document.getElementById('voice-marquee-container'); if(isVoiceCCEnabled) { btn.classList.replace('bg-gray-600', 'bg-[#a29bfe]'); if(mBox && document.getElementById('voice-marquee-text').innerText !== '') mBox.style.display = 'flex'; } else { btn.classList.replace('bg-[#a29bfe]', 'bg-gray-600'); if(mBox) mBox.style.display = 'none'; } };
+            let isConfCCEnabled = true; window.toggleConfCC = function() { isConfCCEnabled = !isConfCCEnabled; const btn = document.getElementById('conf-cc-btn'); if(isConfCCEnabled) { btn.classList.replace('bg-gray-600', 'bg-[#00C4CC]'); btn.classList.replace('text-white', 'text-black'); } else { btn.classList.replace('bg-[#00C4CC]', 'bg-gray-600'); btn.classList.replace('text-black', 'text-white'); } document.querySelectorAll('#conference .translation-bar').forEach(bar => { bar.style.display = isConfCCEnabled ? 'block' : 'none'; }); };
 
-            let isConfCCEnabled = true;
-            window.toggleConfCC = function() {
-                isConfCCEnabled = !isConfCCEnabled;
-                const btn = document.getElementById('conf-cc-btn');
-                if(isConfCCEnabled) {
-                    btn.classList.replace('bg-gray-600', 'bg-[#00C4CC]'); btn.classList.replace('text-white', 'text-black');
-                } else {
-                    btn.classList.replace('bg-[#00C4CC]', 'bg-gray-600'); btn.classList.replace('text-black', 'text-white');
-                }
-                document.querySelectorAll('#conference .translation-bar').forEach(bar => { bar.style.display = isConfCCEnabled ? 'block' : 'none'; });
-            };
+            // ... (Вся ваша стабильная логика видео/звонков осталась на месте) ...
 
-            window.openBankTransferModal = function() {
-                window.closeDropdown();
-                const sel = document.getElementById('transfer-recipient');
-                sel.innerHTML = '';
-                participants.forEach(p => { if(p.id !== 'ai') sel.innerHTML += `<option value="${p.id}">${p.name.split(' ')[0]} (${p.country})</option>`; });
-                
-                if (window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('private_me_') && !window.currentRoomId.includes('private_ai_')) {
-                    const targetId = document.querySelector('.chat-contact.active-room')?.id.replace('chat-btn-', '');
-                    if(targetId) sel.value = targetId;
-                }
-                document.getElementById('transfer-modal').classList.add('active');
-            };
-            window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); }
-            
-            window.sendMoney = function(e) {
-                e.preventDefault();
-                const amount = document.getElementById('transfer-amount').value;
-                const recId = document.getElementById('transfer-recipient').value;
-                const recipient = participants.find(p => p.id === recId);
-                const recName = recipient ? recipient.name.split(' ')[0] : 'User';
-
-                const btn = document.getElementById('submit-transfer-btn'); const orig = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...'; btn.style.opacity = '0.7';
-                
-                setTimeout(() => {
-                    btn.innerHTML = orig; btn.style.opacity = '1';
-                    window.closeBankTransferModal(); e.target.reset();
-                    
-                    const receiptText = `💳 [BANK TRANSFER] <br>Sent: <b>$${amount}</b> to ${recName}.<br>Fee applied: <b>$0.01</b>.<br>Status: <span style="color: #4ade80;">Completed ✅</span>`;
-                    db.ref(window.currentRoomId).push({ name: window.myUsername, text: receiptText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
-
-                    const archiveList = document.getElementById('archive-list');
-                    document.getElementById('empty-archive').style.display = 'none';
-                    const card = document.createElement('div');
-                    card.className = 'bg-[#2a2d32] border border-green-500/50 rounded-xl p-4 font-sans shadow-lg relative overflow-hidden mb-3';
-                    card.innerHTML = `
-                        <div class="absolute top-0 right-0 bg-green-500/20 text-green-400 text-[0.65rem] px-3 py-1.5 rounded-bl-xl font-bold uppercase tracking-wider">Success</div>
-                        <div class="flex items-center gap-3 mb-3 border-b border-[#4a4e53] pb-3"><i class="fa-solid fa-money-bill-transfer text-green-400 text-2xl"></i><span class="font-bold text-white text-base">Transfer to ${recName}</span></div>
-                        <h4 class="font-bold text-3xl text-green-400 mb-1">$${amount} <span class="text-xs text-gray-400 font-normal">(-$0.01 fee)</span></h4>
-                        <p class="text-[0.75rem] text-gray-400 mt-2">${new Date().toLocaleString()}</p>
-                    `;
-                    archiveList.prepend(card);
-                    alert(`Success! $${amount} sent to ${recName} with a $0.01 fee.`);
-                    window.switchTab(4);
-                }, 1500); 
-            };
-
-            window.openSearchModal = function() { window.closeDropdown(); document.getElementById('search-modal').classList.add('active'); }
-            window.closeSearchModal = function() { document.getElementById('search-modal').classList.remove('active'); window.resetGlobalSearch(); }
-            window.handleSmartSearch = function(text, type = 'text') {
-                const input = document.getElementById('global-search-input');
-                if (type === 'text') { input.value = text; window.performLiveSearch(); } 
-                else if (type === 'transfer') { window.closeSearchModal(); window.openBankTransferModal(); } 
-                else if (type === 'email') { window.closeSearchModal(); window.openEmailModal(); } 
-                else if (type === 'web') { input.value = text; document.getElementById('search-results-area').innerHTML = ''; window.doGoogleSearch(); }
-            };
-            window.performLiveSearch = function() {
-                const query = document.getElementById('global-search-input').value.toLowerCase().trim();
-                const resultsArea = document.getElementById('search-results-area');
-                document.getElementById('search-result-frame').classList.add('hidden');
-                const clearBtn = document.getElementById('clear-search-btn');
-                const suggestions = document.getElementById('search-suggestions');
-                
-                if (query.length === 0) { resultsArea.innerHTML = ''; suggestions.style.display = 'block'; clearBtn.classList.add('hidden'); return; }
-                clearBtn.classList.remove('hidden'); suggestions.style.display = 'none';
-                
-                let html = ''; let found = false;
-                [myProfileInfo, ...participants].forEach(p => {
-                    if (p.name.toLowerCase().includes(query) || p.profession.toLowerCase().includes(query) || p.country.toLowerCase().includes(query) || p.languages.toLowerCase().includes(query)) {
-                        found = true;
-                        let imgHtml = p.flag === '🤖' ? `<div class="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-2xl shadow-md border-2 border-[#a29bfe]">🤖</div>` : `<img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600 shadow-md">`;
-                        html += `
-                            <div class="bg-[#1a1e23] border border-[#4a4e53] rounded-xl p-3 flex items-center justify-between cursor-pointer hover:border-[#a29bfe] transition-colors shadow-lg" onclick="document.getElementById('search-modal').classList.remove('active'); window.openAvatarModal('${p.id}', 'cv'); window.resetGlobalSearch();">
-                                <div class="flex items-center gap-4">${imgHtml}<div class="flex flex-col"><span class="text-white text-base font-bold font-sans">${p.name.split(' ')[0]} ${p.flag}</span><span class="text-[#a29bfe] text-xs font-sans mt-0.5">${p.profession} | ${p.country}</span></div></div>
-                                <i class="fa-solid fa-chevron-right text-gray-500 text-sm pr-2"></i>
-                            </div>`;
-                    }
-                });
-                resultsArea.innerHTML = found ? html : `<p class="text-sm text-gray-400 text-center mt-6 font-sans">No internal results. Click 'Search Web' below.</p>`;
-            };
-            window.resetGlobalSearch = function() { document.getElementById('global-search-input').value = ''; window.performLiveSearch(); };
-            window.doGoogleSearch = function() {
-                const q = document.getElementById('global-search-input').value;
-                if(q.trim() === '') return alert('Enter search query first');
-                document.getElementById('search-suggestions').style.display = 'none';
-                document.getElementById('search-results-area').innerHTML = '';
-                document.getElementById('clear-search-btn').classList.remove('hidden'); 
-                const iframe = document.getElementById('search-result-frame');
-                iframe.src = 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(q);
-                iframe.classList.remove('hidden');
+            function renderProfessionList() {
+                const profContainer = document.getElementById('profession-list'); if (!profContainer) return;
+                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; let cardsHTML = `<div class="grid grid-cols-2 gap-4">`;
+                allUsers.forEach((p) => {
+                    cardsHTML += `<div class="bg-[#2a2d32] p-4 rounded-2xl border border-[#4a4e53] flex flex-col items-center relative shadow-lg h-full justify-between"><div class="flex flex-col items-center w-full"><img src="${p.photo}" class="w-20 h-20 rounded-full border-2 border-[#a29bfe] mb-3 object-cover shadow-md"><h3 class="text-white font-bold text-base text-center leading-tight mb-1.5">${p.name.split(' (')[0]}</h3><p class="text-gray-400 text-xs text-center mb-4"><span>${p.flag}</span> ${p.profession}</p></div><button onclick="window.openAvatarModal('${p.id}', 'cv')" class="w-full mt-auto bg-[#a29bfe]/10 text-[#a29bfe] hover:bg-[#a29bfe] hover:text-white transition py-2.5 rounded-xl text-sm font-bold border border-[#a29bfe]">📄 CV</button></div>`;
+                }); cardsHTML += `</div>`; profContainer.innerHTML = cardsHTML;
             }
-
-            window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); }
-            window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); }
-            window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); }
-            window.smartClear = function() {
-                if(confirm("Clear chat history?")) {
-                    if (document.getElementById('conference').classList.contains('active')) { document.getElementById('conf-messages').innerHTML = ''; } 
-                    else { db.ref(window.currentRoomId).remove().then(() => { if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; }); }
-                    window.closeTrashModal();
-                }
-            }
-            window.smartDelete = function() { window.smartClear(); }
-
-            window.openLocationModal = function() {
-                window.closeDropdown(); document.getElementById('location-modal').classList.add('active');
-                const mapContainer = document.getElementById('location-map');
-                mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#a29bfe] mb-3"></i><span>Detecting location...</span>';
-                
-                const loadMap = (lat, lon) => {
-                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`;
-                };
-
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); },
-                        (error) => { 
-                            if (window.myLat && window.myLon) { loadMap(window.myLat, window.myLon); } 
-                            else { mapContainer.innerHTML = '<span class="text-red-400">Failed to get location.</span>'; }
-                        },
-                        { timeout: 5000 }
-                    );
-                } else { 
-                    if (window.myLat && window.myLon) { loadMap(window.myLat, window.myLon); } 
-                    else { mapContainer.innerHTML = 'Geolocation is not supported.'; }
-                }
-            }
-            window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); }
-
-            // --- БИЗНЕС-ЛОГИКА: УПРАВЛЕНИЕ ПРОФИЛЕМ ---
-            window.handleCountryChange = function(selectElement) {
-                const flagCode = selectElement.value;
-                document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`;
-                if (countryData[flagCode]) {
-                    const phoneInput = document.getElementById('edit-phone');
-                    if(!phoneInput.value || phoneInput.value.startsWith('+')) {
-                        phoneInput.value = countryData[flagCode].phone + " ";
-                    }
-                }
-            }
-
-            window.currentPhotoData = 'https://ui-avatars.com/api/?name=User';
-            window.handleFileUpload = function(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    window.currentPhotoData = e.target.result;
-                    document.getElementById('edit-preview-photo').src = window.currentPhotoData;
-                };
-                reader.readAsDataURL(file);
-            }
-
-            window.openMyProfile = function() {
-                window.closeDropdown();
-                const modalTitle = document.getElementById('profile-modal-title');
-                const modalBtn = document.getElementById('profile-modal-btn');
-
-                if (window.isGuest) {
-                    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-user-plus text-[#a29bfe] mr-2"></i> Registration';
-                    if (modalBtn) modalBtn.innerHTML = 'Complete Registration';
-                    
-                    document.getElementById('edit-name').value = '';
-                    window.currentPhotoData = 'https://ui-avatars.com/api/?name=New+User&background=a29bfe&color=fff';
-                    document.getElementById('edit-preview-photo').src = window.currentPhotoData;
-                    document.getElementById('edit-country-select').value = 'un';
-                    document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/un.png`;
-                    document.getElementById('edit-phone').value = '';
-                    document.getElementById('edit-email').value = '';
-                    document.getElementById('edit-prof').value = '';
-                    document.getElementById('edit-langs').value = '';
-                    document.getElementById('edit-desc').value = '';
-                } else {
-                    if (modalTitle) modalTitle.innerHTML = '<i class="fa-solid fa-user-pen text-[#a29bfe] mr-2"></i> Edit Profile';
-                    if (modalBtn) modalBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Save Changes';
-
-                    document.getElementById('edit-name').value = myProfileInfo.name.replace(' (You)', '');
-                    window.currentPhotoData = myProfileInfo.photo || 'https://ui-avatars.com/api/?name=User';
-                    document.getElementById('edit-preview-photo').src = window.currentPhotoData;
-                    const countrySelect = document.getElementById('edit-country-select');
-                    countrySelect.value = myProfileInfo.flagCode && myProfileInfo.flagCode !== 'un' ? myProfileInfo.flagCode : 'un';
-                    document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${countrySelect.value}.png`;
-
-                    document.getElementById('edit-phone').value = myProfileInfo.phone || '';
-                    document.getElementById('edit-email').value = myProfileInfo.email || '';
-                    document.getElementById('edit-prof').value = myProfileInfo.profession || '';
-                    document.getElementById('edit-langs').value = myProfileInfo.languages || '';
-                    document.getElementById('edit-desc').value = myProfileInfo.desc || '';
-                }
-
-                document.getElementById('edit-profile-modal').classList.add('active');
-            };
-
-            window.saveProfileData = function() {
-                let nameVal = document.getElementById('edit-name').value.trim();
-                if (!nameVal) return alert("Please enter your Name to register!");
-
-                let newId = nameVal.toLowerCase().replace(/\s+/g, '');
-
-                if (window.isGuest && newId === 'ilgar') {
-                    localStorage.setItem('hf_active_user', 'ilgar');
-                    location.reload();
-                    return;
-                }
-
-                if (window.currentPhotoData.includes('ui-avatars.com') || window.currentPhotoData === '') {
-                    window.currentPhotoData = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=a29bfe&color=fff';
-                }
-
-                const selectEl = document.getElementById('edit-country-select');
-                const selectedOption = selectEl.options[selectEl.selectedIndex];
-                const flagCode = selectEl.value;
-                const cData = countryData[flagCode] || countryData['un'];
-
-                let customProfile = {
-                    id: newId,
-                    name: nameVal,
-                    photo: window.currentPhotoData,
-                    flagCode: flagCode,
-                    flag: selectedOption.getAttribute('data-emoji'),
-                    country: selectedOption.getAttribute('data-name'),
-                    langCode: selectedOption.getAttribute('data-lang') || 'en',
-                    pop: cData.pop,
-                    seas: cData.seas,
-                    countryDesc: cData.desc,
-                    phone: document.getElementById('edit-phone').value.trim(),
-                    email: document.getElementById('edit-email').value.trim(),
-                    profession: document.getElementById('edit-prof').value.trim(),
-                    languages: document.getElementById('edit-langs').value.trim(),
-                    desc: document.getElementById('edit-desc').value.trim()
-                };
-
-                localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile));
-                localStorage.setItem('hf_active_user', newId);
-                
-                alert(window.isGuest ? 'Registration complete! Welcome to Hello Friends. 🌍' : 'Profile updated successfully! 💾');
-                location.reload();
-            }
-
-            // ПЕРЕПИСАННЫЙ AVATAR MODAL (АВТО-ОПИСАНИЕ СТРАНЫ)
-            window.openAvatarModal = function(id, mode = 'cv') {
-                const p = id === 'me' ? myProfileInfo : (participants.find(part => part.id === id) || allCharacters.find(part => part.id === id));
-                if (!p) return;
-                
-                const imgContainer = document.getElementById('modal-img-container');
-                const imgEl = document.getElementById('modal-img');
-                if(p.flag === '🤖') { imgEl.style.display = 'none'; imgContainer.innerHTML = '🤖'; } 
-                else { imgContainer.innerHTML = ''; imgContainer.appendChild(imgEl); imgEl.style.display = 'block'; imgEl.src = p.photo; }
-                
-                document.getElementById('modal-name').innerText = p.name;
-                const descContainer = document.getElementById('modal-desc');
-                const actionButtons = document.getElementById('modal-action-buttons');
-                
-                const cDesc = p.countryDesc || (countryData[p.flagCode] ? countryData[p.flagCode].desc : 'Country information is not available.');
-                const displayDesc = p.desc && p.desc !== 'No description provided.' && p.desc !== 'New user in the app.' ? `${cDesc}<br><br><b class="text-[#a29bfe]">About Me:</b><br>${p.desc}` : cDesc;
-
-                if (mode === 'chat' || id === 'ai') {
-                    descContainer.innerHTML = `
-                        <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Seas:</b> <span class="text-gray-300 text-base">${p.seas}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
-                    actionButtons.style.display = 'none'; 
-                } else {
-                    descContainer.innerHTML = `
-                        <div class="flex items-center gap-3 mb-4 border-b border-[#4a4e53] pb-3"><span class="text-2xl">${p.flag}</span><span class="text-gray-300 font-bold text-lg">${p.country}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Profession:</b> <span class="text-gray-300 text-base">${p.profession}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Languages:</b> <span class="text-gray-300 text-base">${p.languages}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Population:</b> <span class="text-gray-300 text-base">${p.pop}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Phone:</b> <span class="text-gray-300 text-base">${p.phone}</span></div>
-                        <div class="mb-1.5"><b class="text-[#a29bfe] font-bold text-base">Email:</b> <span class="text-gray-300 text-base">${p.email}</span></div>
-                        <div class="mt-3 text-sm opacity-80 border-t border-[#4a4e53] pt-3 leading-relaxed">${displayDesc}</div>`;
-                    actionButtons.style.display = 'flex'; 
-                    document.getElementById('modal-email-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.openEmailModal(); };
-                    document.getElementById('modal-chat-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.switchTab(0); window.switchChatRoom(id === 'me' ? 'me' : p.id); };
-                    document.getElementById('modal-sms-btn').onclick = () => { document.getElementById('avatar-modal').classList.remove('active'); window.location.href = `sms:${p.phone.replace(/\s+/g, '')}`; };
-                }
-                document.getElementById('avatar-modal').classList.add('active');
-            };
-
-            // --- БЫСТРЫЕ МИКРОФОНЫ ---
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRec) {
-                let rec = new SpeechRec();
-                rec.continuous = false;
-                rec.interimResults = false;
-                
-                let currentMicTarget = null;
-                let currentMicBtn = null;
-
-                rec.onstart = () => { if(currentMicBtn) { currentMicBtn.style.color = '#ef4444'; currentMicBtn.classList.add('animate-pulse'); } };
-                rec.onend = () => { if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse'); } };
-                rec.onerror = () => { if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse'); } };
-                rec.onresult = (e) => {
-                    const text = e.results[0][0].transcript;
-                    if (currentMicTarget === 'chat') { let chatInputEl = document.getElementById('chat-input'); if (chatInputEl) chatInputEl.value = text; window.sendFirebaseMsg(); }
-                    else if (currentMicTarget === 'voice') { let voiceInputEl = document.getElementById('voice-text-input'); if (voiceInputEl) voiceInputEl.value = text; window.sendTextMessage('voice-text-input'); }
-                    else if (currentMicTarget === 'conf') { let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendTextMessage('conf-chat-input'); }
-                };
-
-                window.startMic = function(target, btnId) {
-                    currentMicTarget = target; currentMicBtn = document.getElementById(btnId);
-                    const langSel = document.getElementById('plus-mic-lang');
-                    rec.lang = langSel ? langSel.value : 'en-US';
-                    try { rec.start(); } catch(e){}
-                }
-
-                document.getElementById('voice-mic-btn')?.addEventListener('click', () => window.startMic('voice', 'voice-mic-btn'));
-                document.getElementById('conf-voice-mic-btn')?.addEventListener('click', () => window.startMic('conf', 'conf-voice-mic-btn'));
-                document.getElementById('main-chat-mic-btn')?.addEventListener('click', () => window.startMic('chat', 'main-chat-mic-btn'));
-            }
-
-            window.processVoiceTranslation = function(text) {
-                const mBox = document.getElementById('voice-marquee-container');
-                const mText = document.getElementById('voice-marquee-text');
-                if (mBox && mText) {
-                    mBox.style.display = 'flex'; mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-gray-500 text-[0.6rem] ml-2">...translating</span>`;
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=it&dt=t&q=${encodeURIComponent(text)}`).then(res => res.json()).then(data => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text} <span class="text-yellow-400 ml-4 font-bold">🇮🇹 ${data[0][0][0]}</span>`; }).catch(() => { mText.innerHTML = `🗣 <span class="text-white">${window.myUsername}:</span> ${text}`; });
-                }
-            };
-
-            window.processConfTranslation = function(text, msgId = null) {
-                const speakerMarquee = document.getElementById('speaker-marquee'); if(speakerMarquee) speakerMarquee.innerText = `➔ ${text}`;
-                const targetLangs = [ {code: 'en', flag: '🇬🇧'}, {code: 'de', flag: '🇩🇪'}, {code: 'it', flag: '🇮🇹'} ];
-                Promise.all(targetLangs.map(lang => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang.code}&dt=t&q=${encodeURIComponent(text)}`).then(res => res.json()).then(resData => ({ flag: lang.flag, code: lang.code, text: resData[0][0][0] })))).then(translations => {
-                    document.querySelectorAll('.conf-listener-marquee').forEach(marquee => {
-                        const langCode = marquee.getAttribute('data-lang')?.split('-')[0] || 'en';
-                        const t = translations.find(tr => tr.code === langCode) || translations[0];
-                        if(t) marquee.innerText = `➔ ${t.flag} ${t.text}`;
-                    });
-                    if (msgId) { const transBox = document.getElementById(`${msgId}-trans`); if (transBox) transBox.innerHTML = translations.map(t => `${t.flag} ${t.text}`).join('<br>'); }
-                }).catch(() => {});
-            };
-
+            renderProfessionList();
             window.switchChatRoom('global');
 
-            // Вызов Регистрации для Гостя
-            if (window.isGuest) {
-                setTimeout(() => {
-                    window.openMyProfile();
-                }, 800);
-            }
+            // Вызов Регистрации для новичка
+            if (window.isGuest) { setTimeout(() => { window.openMyProfile(); }, 600); }
         });
     </script>
 </body>
