@@ -1,346 +1,52 @@
 <!DOCTYPE html>
-<html lang="en" translate="no">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="google" content="notranslate">
-    <title>Hello Friends - Original 20.1</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Allura&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+    <title>Crash Test</title>
     <style>
-        :root { --wa-bg: #0b141a; --wa-panel: #111b21; --wa-border: #202c33; --wa-green: #00a884; --wa-msg-out: #005c4b; --wa-msg-in: #202c33; --wa-text: #e9edef; --wa-text-muted: #8696a0; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: #0b141a; color: white; font-family: sans-serif; display: flex; flex-direction: column; overflow: hidden; }
         
-        body { background-color: #000; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        /* КОНТЕЙНЕР ДЛЯ ЭКРАНОВ */
+        .screens-container { flex-grow: 1; position: relative; overflow: hidden; }
         
-        /* ВАШ ОРИГИНАЛЬНЫЙ КАРКАС (БЕЗ ABSOLUTE) */
-        .mobile-screen { width: 100%; max-width: 400px; height: 100vh; background: var(--wa-bg); display: flex; flex-direction: column; color: var(--wa-text); position: relative; }
-        @media (min-height: 700px) and (min-width: 500px) { .mobile-screen { height: 85vh; border-radius: 40px; border: 4px solid #1f2937; box-shadow: 0 25px 60px rgba(0,0,0,0.8); } }
+        /* САМИ ЭКРАНЫ */
+        .screen { display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 2rem; }
+        .screen.active { display: flex; }
 
-        /* ВАША ИЗОЛЯЦИЯ ЭКРАНОВ */
-        .page-content { display: none; flex-grow: 1; flex-direction: column; overflow: hidden; background: var(--wa-bg); }
-        .page-content.active { display: flex; }
-
-        /* HEADER */
-        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 100; flex-shrink: 0; }
-        .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; }
-
-        /* МЕНЮ */
-        .header-dropdown { position: absolute; top: 60px; right: 10px; width: 230px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 14px 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; gap: 4px; z-index: 200; }
-        .header-dropdown.active { display: flex; }
-        .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .header-dropdown a:hover { background: var(--wa-border); }
-
-        /* ЧАТ */
-        .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid var(--wa-border); overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; background: var(--wa-panel); }
-        .chat-messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 16px; gap: 4px; }
-        .chat-bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; max-width: 85%; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-
-        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; border-top: 1px solid var(--wa-border);}
-        .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
-        .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; }
-
-        /* МАРКИ (БЕГУЩАЯ СТРОКА) */
-        .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
-        .chat-info-marquee-text { display: inline-block; white-space: nowrap; animation: scroll-text 12s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; }
-        @keyframes scroll-text { 0% { transform: translateX(100%); } 100% { transform: translateX(-150%); } }
-
-        /* NAV (ПОДВАЛ) */
-        .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px 16px 10px; flex-shrink: 0; z-index: 50; }
-        .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; cursor: pointer; flex: 1; }
-        .nav-item.active { color: var(--wa-green); }
-
-        /* РОМБ */
-        .rhombus-wrapper { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
-        .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; }
-        .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
-
-        /* ШТОРКИ (ПРОФИЛЬ И CV) */
-        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; justify-content: center; z-index: 9999; }
-        .app-modal.active { display: flex; }
-        .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .close-sheet-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; background: var(--wa-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: var(--wa-text-muted); cursor: pointer; z-index: 50; }
-
-        .btn-primary { width: 100%; padding: 16px; border-radius: 16px; background: var(--wa-green); color: #111b21; font-weight: bold; cursor: pointer; border: none; }
-        .form-input-box { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--wa-border); background: var(--wa-bg); color: white; outline: none; margin-bottom: 12px; }
-
-        ::-webkit-scrollbar { width: 0px; }
+        /* НАВИГАЦИЯ ВНИЗУ */
+        .bottom-nav { height: 70px; background: #111b21; display: flex; border-top: 1px solid #202c33; flex-shrink: 0; }
+        .nav-btn { flex: 1; display: flex; align-items: center; justify-content: center; color: #8696a0; font-weight: bold; cursor: pointer; }
+        .nav-btn.active { color: #00a884; }
     </style>
 </head>
 <body>
 
-    <div class="mobile-screen" id="phone-body">
-        
-        <header class="app-header">
-             <div class="flex items-center gap-3">
-                <div class="logo-circle">HF</div>
-                <span class="font-bold text-white text-lg">Hello Friends</span>
-             </div>
-             <div class="flex gap-5 text-[#8696a0] text-2xl items-center">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <i class="fa-solid fa-ellipsis-vertical cursor-pointer menu-trigger" onclick="window.toggleHeaderMenu(event)"></i>
-            </div>
-            
-            <div id="header-dropdown" class="header-dropdown">
-                <div class="flex justify-between items-center mb-2 border-b border-[#202c33] pb-2">
-                    <span class="text-white text-[0.8rem] font-bold uppercase tracking-widest">Settings</span>
-                    <i class="fa-solid fa-xmark text-gray-500 cursor-pointer" onclick="window.closeDropdown()"></i>
-                </div>
-                <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> My Profile</a>
-                <a onclick="window.toggleLanguage()"><i class="fa-solid fa-globe text-blue-400 w-5"></i> <span id="lang-text">Lang: EN</span></a>
-                <div class="h-[1px] bg-[#202c33] my-1"></div>
-                <a onclick="window.exportData()"><i class="fa-solid fa-file-export text-blue-300 w-5"></i> Export JSON</a>
-                <div class="mt-2 pt-2 border-t border-[#202c33] text-center"><span class="text-[#00a884] text-[10px] font-bold">AUTHOR: ILGAR</span></div>
-            </div>
-        </header>
-
-        <main class="flex-grow overflow-hidden flex flex-col relative">
-            
-            <div id="screen-chat" class="page-content active">
-                <div class="chat-info-marquee-container">
-                    <button class="text-[#00a884] px-2"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
-                    <div class="overflow-hidden flex-grow flex items-center h-full">
-                        <span class="chat-info-marquee-text" id="chat-info-marquee">AI Translation System Active...</span>
-                    </div>
-                </div>
-                <div class="flex flex-grow overflow-hidden bg-[#0b141a]">
-                    <div class="chat-sidebar" id="chat-sidebar"></div>
-                    <div class="flex flex-col flex-grow relative">
-                        <div class="chat-messages" id="chat-messages"></div>
-                        <div class="chat-input-area">
-                            <i class="fa-regular fa-face-smile text-[#8696a0] text-xl"></i>
-                            <div class="chat-input-pill"><input type="text" id="chat-input" placeholder="Message..."></div>
-                            <button class="w-10 h-10 rounded-full bg-[#00a884] flex items-center justify-center" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane text-black"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="screen-voice" class="page-content">
-                <div class="flex justify-center py-6 bg-[#111b21] border-b border-[#202c33]">
-                    <h2 class="text-3xl text-[#a29bfe]" style="font-family: 'Allura', cursive;">Voice Room</h2>
-                </div>
-                <div class="flex-grow flex flex-col items-center justify-center gap-8">
-                    <div class="flex items-center gap-6">
-                        <img id="v-friend-photo" src="https://ui-avatars.com/api/?name=Friend" class="w-20 h-20 rounded-full border-2 border-gray-600">
-                        <div class="flex gap-1"><div class="w-1 h-8 bg-[#00a884] animate-bounce"></div><div class="w-1 h-12 bg-[#00a884] animate-bounce" style="animation-delay: 0.2s"></div></div>
-                        <img id="v-me-photo" src="" class="w-20 h-20 rounded-full border-4 border-[#00a884]">
-                    </div>
-                    <div class="text-center px-6"><span class="text-xs font-bold text-[#00a884]" id="voice-marquee">Ready to translate...</span></div>
-                </div>
-                <div class="chat-input-area bg-[#111b21]">
-                    <div class="chat-input-pill flex-grow"><input type="text" id="voice-chat-input" placeholder="Voice Chat..."></div>
-                    <button class="w-11 h-11 rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942]" onclick="window.startMic()"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="w-11 h-11 rounded-full bg-[#00a884] text-black" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane"></i></button>
-                    <button class="w-11 h-11 rounded-full bg-red-500 text-white shadow-lg" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
-                </div>
-            </div>
-
-            <div id="screen-meet" class="page-content">
-                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] font-bold text-xs uppercase text-[#00a884]"><span>Conference</span><span class="text-red-500 animate-pulse">● REC</span></div>
-                <div class="flex-grow overflow-y-auto p-2" id="conference-grid"></div>
-                <div class="flex justify-center gap-6 py-4 bg-[#111b21]">
-                    <button class="w-12 h-12 rounded-full bg-[#202c33] text-white" onclick="window.toggleCam()"><i class="fa-solid fa-video"></i></button>
-                    <button class="w-12 h-12 rounded-full bg-red-500 text-white" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
-                </div>
-            </div>
-
-            <div id="screen-cv" class="page-content">
-                <div class="p-4 h-full overflow-y-auto">
-                    <h2 class="text-xl font-bold mb-4">Global Talents</h2>
-                    <div id="profession-list" class="grid grid-cols-2 gap-4 pb-20"></div>
-                </div>
-            </div>
-
-        </main>
-
-        <div class="bottom-nav-container">
-            <div class="nav-item active" onclick="window.switchTab(0)"><i class="fa-solid fa-message text-xl"></i><span>Chat</span></div>
-            <div class="nav-item" onclick="window.switchTab(1)"><i class="fa-solid fa-microphone-lines text-xl"></i><span>Voice</span></div>
-            <div class="nav-item" onclick="window.switchTab(2)"><i class="fa-solid fa-video text-xl"></i><span>Meet</span></div>
-            <div class="nav-item" onclick="window.switchTab(3)"><i class="fa-solid fa-briefcase text-xl"></i><span>CV</span></div>
-            <div class="rhombus-wrapper">
-                <div class="rhombus-btn" onclick="window.toggleRhombus(event)"><i class="fa-solid fa-plus"></i></div>
-                <div id="rhombus-menu" class="header-dropdown" style="bottom: 70px; right: 0;">
-                    <a onclick="window.clearChat()"><i class="fa-solid fa-trash text-red-500"></i> Clear Chat</a>
-                </div>
-            </div>
-        </div>
+    <div class="screens-container">
+        <div id="screen-0" class="screen active" style="background: #1e1e1e;">Экран 1: ЧАТ</div>
+        <div id="screen-1" class="screen" style="background: #2d3436;">Экран 2: ГОЛОС</div>
+        <div id="screen-2" class="screen" style="background: #2d2a32;">Экран 3: ЗВОНОК</div>
+        <div id="screen-3" class="screen" style="background: #1a252c;">Экран 4: ПРОФИЛИ</div>
     </div>
 
-    <div id="edit-profile-modal" class="app-modal">
-        <div class="app-modal-content">
-            <div class="close-sheet-btn" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
-            <h2 class="text-xl font-bold text-white text-center mb-6">Identity Card</h2>
-            <div class="flex justify-center mb-6"><div class="relative"><img id="edit-preview-photo" src="" class="w-20 h-20 rounded-full border-2 border-[#00a884] object-cover"><button onclick="document.getElementById('file-in').click()" class="absolute bottom-0 right-0 bg-[#00a884] w-7 h-7 rounded-full flex items-center justify-center border-2 border-black"><i class="fa-solid fa-camera text-[10px]"></i></button></div></div>
-            <input type="file" id="file-in" class="hidden" onchange="window.previewPhoto(event)">
-            <input type="text" id="edit-name" class="form-input-box" placeholder="Name">
-            <select id="edit-country-select" class="form-input-box">
-                <option value="un" data-flag="🌐" data-lang="en">Global</option>
-                <option value="az" data-flag="🇦🇿" data-lang="az">Azerbaijan</option>
-                <option value="ru" data-flag="🇷🇺" data-lang="ru">Russia</option>
-                <option value="us" data-flag="🇺🇸" data-lang="en">USA</option>
-            </select>
-            <input type="tel" id="edit-phone" class="form-input-box" placeholder="Phone">
-            <button onclick="window.saveProfileData()" class="btn-primary mt-2">SAVE & CLOSE</button>
-        </div>
-    </div>
-
-    <div id="cv-modal" class="app-modal">
-        <div class="app-modal-content">
-            <div class="close-sheet-btn" onclick="window.closeCVModal()"><i class="fa-solid fa-xmark"></i></div>
-            <div id="cv-data-box" class="text-white text-center"></div>
-            <div class="flex gap-3 mt-8">
-                <button class="flex-1 p-4 bg-[#202c33] rounded-2xl" onclick="window.switchTab(0); window.closeCVModal();"><i class="fa-solid fa-comment text-[#00a884] text-2xl"></i></button>
-                <button class="flex-1 p-4 bg-[#202c33] rounded-2xl"><i class="fa-solid fa-phone text-blue-400 text-2xl"></i></button>
-                <button class="flex-1 p-4 bg-[#202c33] rounded-2xl"><i class="fa-solid fa-envelope text-red-400 text-2xl"></i></button>
-            </div>
-        </div>
+    <div class="bottom-nav">
+        <div class="nav-btn active" onclick="switchTab(0)">1. Чат</div>
+        <div class="nav-btn" onclick="switchTab(1)">2. Голос</div>
+        <div class="nav-btn" onclick="switchTab(2)">3. Звонок</div>
+        <div class="nav-btn" onclick="switchTab(3)">4. CV</div>
     </div>
 
     <script>
-        // CONFIG
-        const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        window.myUid = localStorage.getItem('hf_uid_20') || 'u_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('hf_uid_20', window.myUid);
-        window.myProf = JSON.parse(localStorage.getItem('hf_prof_20')) || { name: 'Guest', photo: 'https://ui-avatars.com/api/?name=G&background=00a884', flag: '🌐', lang: 'en' };
-        window.participants = [];
-
-        // ВАША ОРИГИНАЛЬНАЯ НАВИГАЦИЯ
-        window.switchTab = (idx) => {
-            const screens = ['screen-chat', 'screen-voice', 'screen-meet', 'screen-cv'];
-            const navs = document.querySelectorAll('.nav-item');
+        function switchTab(index) {
+            // Скрываем все экраны и отключаем кнопки
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             
-            document.querySelectorAll('.page-content').forEach((p, i) => {
-                if (i === idx) p.classList.add('active');
-                else p.classList.remove('active');
-            });
-            
-            navs.forEach((n, i) => {
-                if (i === idx) n.classList.add('active');
-                else n.classList.remove('active');
-            });
-            window.closeDropdown();
-        };
-
-        // ВАШЕ ИЗМЕНЕНИЕ: ЗАКРЫТИЕ ПО КЛИКУ
-        window.toggleHeaderMenu = (e) => { e.stopPropagation(); document.getElementById('header-dropdown').classList.toggle('active'); };
-        window.toggleRhombus = (e) => { e.stopPropagation(); document.getElementById('rhombus-menu').classList.toggle('active'); };
-        window.closeDropdown = () => { 
-            document.getElementById('header-dropdown').classList.remove('active'); 
-            document.getElementById('rhombus-menu')?.classList.remove('active'); 
-        };
-
-        // Глобальный клик
-        document.addEventListener('click', (e) => {
-            if(!e.target.closest('.menu-trigger')) {
-                window.closeDropdown();
-            }
-        });
-
-        // МУЛЬТИПЛЕЕР (КАК БЫЛО В 20.1)
-        window.sendFirebaseMsg = () => {
-            const input = document.getElementById('chat-input');
-            if(!input.value.trim()) return;
-            db.ref("global_v20").push({
-                text: input.value, 
-                sender: window.myProf.name, 
-                uid: window.myUid,
-                photo: window.myProf.photo, 
-                flag: window.myProf.flag, 
-                lang: window.myProf.lang
-            });
-            input.value = '';
-        };
-
-        db.ref("global_v20").on("child_added", async (snap) => {
-            const data = snap.val(); if(!data) return;
-            const isMe = data.uid === window.myUid;
-            
-            if(!isMe && !window.participants.find(p => p.id === data.uid)) {
-                window.participants.push({ name: data.sender, photo: data.photo, flag: data.flag, lang: data.lang, id: data.uid });
-                window.renderSidebar();
-            }
-
-            const box = document.getElementById('chat-messages');
-            const row = document.createElement('div');
-            row.className = `flex gap-2 w-full mt-2 ${isMe ? 'justify-end' : 'justify-start'}`;
-            row.innerHTML = `
-                ${!isMe ? `<img src="${data.photo}" class="w-9 h-9 rounded-full self-end object-cover border border-[#202c33]" onclick="window.openCV('${data.uid}')">` : ''}
-                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                    ${!isMe ? `<div class="text-[10px] font-bold text-green-400 ml-1">${data.sender}</div>` : ''}
-                    <div class="chat-bubble ${isMe ? 'bg-[#005c4b]' : 'bg-[#202c33] shadow-md'}">${data.text}</div>
-                </div>
-            `;
-            box.appendChild(row);
-            box.scrollTop = box.scrollHeight;
-
-            if(!isMe) {
-                try {
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${window.myProf.lang}&dt=t&q=${encodeURIComponent(data.text)}`).then(r => r.json());
-                    const translated = res[0][0][0];
-                    const tDiv = document.createElement('div');
-                    tDiv.className = `flex w-full mt-1 ${isMe ? 'justify-end' : 'justify-start pl-11'}`;
-                    tDiv.innerHTML = `<div class="text-yellow-400 text-[11px] font-bold opacity-90">${data.flag} ${translated}</div>`;
-                    box.appendChild(tDiv);
-                    document.getElementById('chat-marquee').innerHTML = `${data.sender}: ${translated}`;
-                } catch(e) {}
-            }
-        });
-
-        window.renderSidebar = () => {
-            const side = document.getElementById('chat-sidebar');
-            side.innerHTML = '<div class="w-12 h-12 rounded-full bg-[#005c4b] flex items-center justify-center text-white text-xl">🌍</div>';
-            window.participants.forEach(p => {
-                side.innerHTML += `<div class="relative" onclick="window.openCV('${p.id}')"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border-2 border-white/5"><span class="absolute -bottom-1 -right-1 text-[10px] bg-black px-1 rounded-full">${p.flag}</span></div>`;
-            });
-        };
-
-        // ПРОФИЛЬ И ШТОРКИ
-        window.closeProfileModal = () => document.getElementById('edit-profile-modal').classList.remove('active');
-        window.openMyProfile = () => { document.getElementById('edit-profile-modal').classList.add('active'); window.closeDropdown(); };
-        
-        window.openCV = (uid) => {
-            const u = window.participants.find(p => p.id === uid) || (uid === window.myUid ? window.myProf : null);
-            if(!u) return;
-            document.getElementById('cv-data-box').innerHTML = `<img src="${u.photo}" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-[#00a884] object-cover"><h3 class="text-2xl font-bold">${u.name || u.sender}</h3><p class="text-gray-400 mt-2">Language: ${(u.lang || 'en').toUpperCase()}</p>`;
-            document.getElementById('cv-modal').classList.add('active');
-        };
-        window.closeCVModal = () => document.getElementById('cv-modal').classList.remove('active');
-
-        window.saveProfileData = () => {
-            const country = document.getElementById('edit-country-select');
-            const opt = country.options[country.selectedIndex];
-            window.myProf = {
-                name: document.getElementById('edit-name').value || 'User',
-                photo: window.tempImg || window.myProf.photo,
-                flag: opt.getAttribute('data-flag'),
-                lang: opt.getAttribute('data-lang')
-            };
-            localStorage.setItem('hf_prof_20', JSON.stringify(window.myProf));
-            window.closeProfileModal();
-            location.reload();
-        };
-
-        window.previewPhoto = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => { window.tempImg = ev.target.result; document.getElementById('edit-preview-photo').src = ev.target.result; };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
-        // СТАРТ
-        if(!localStorage.getItem('hf_prof_20')) window.openMyProfile();
-        document.getElementById('v-me-photo').src = window.myProf.photo;
-        document.getElementById('edit-preview-photo').src = window.myProf.photo;
-        document.getElementById('edit-name').value = window.myProf.name;
+            // Включаем нужный экран и кнопку
+            document.getElementById('screen-' + index).classList.add('active');
+            document.querySelectorAll('.nav-btn')[index].classList.add('active');
+        }
     </script>
+
 </body>
 </html>
