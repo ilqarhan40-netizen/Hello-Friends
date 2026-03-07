@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V20.1</title>
+    <title>Hello Friends - Golden Master V20.1 Fixed</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -19,6 +19,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+        /* НАТИВНАЯ ТИПОГРАФИКА И ЦВЕТА WHATSAPP DARK */
         :root { --wa-bg: #0b141a; --wa-panel: #111b21; --wa-border: #202c33; --wa-green: #00a884; --wa-msg-out: #005c4b; --wa-msg-in: #202c33; --wa-text: #e9edef; --wa-text-muted: #8696a0; --hf-purple: #a29bfe; }
         
         body { background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -27,7 +28,7 @@
         
         @media (max-width: 500px) { .mobile-screen { max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; } }
 
-        /* HEADER */
+        /* ВЕРХНИЙ ХЕДЕР */
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 50; flex-shrink: 0; }
         .logo-container { display: flex; align-items: center; gap: 12px; }
         .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; box-shadow: 0 0 10px rgba(0,168,132,0.4); }
@@ -36,16 +37,18 @@
         .header-icons i { cursor: pointer; transition: 0.2s; }
         .header-icons i:hover { color: var(--wa-green); }
 
+        /* ГЛАВНОЕ МЕНЮ */
         .header-dropdown { position: absolute; top: 60px; right: 10px; width: 230px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 14px 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; gap: 4px; z-index: 100; transform-origin: top right; animation: scaleIn 0.2s; }
         .header-dropdown.active { display: flex; }
         .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
         .header-dropdown a:hover { background: var(--wa-border); }
 
-        /* ПАНЕЛИ И ЧАТ */
+        /* ЭКРАНЫ */
         .page-content { display: none; flex-grow: 1; flex-direction: column; overflow: hidden; animation: fadeIn 0.3s; background: var(--wa-bg); }
         .page-content.active { display: flex; }
         .page-container { width: 100%; height: 100%; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
         
+        /* ВЕРТИКАЛЬНЫЕ КОНТАКТЫ СЛЕВА В ЧАТЕ */
         .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid var(--wa-border); overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; background: var(--wa-panel); }
         .chat-sidebar::-webkit-scrollbar { display: none; }
         .chat-contact { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 100%; transition: 0.2s;}
@@ -55,6 +58,7 @@
         .chat-contact-name { font-size: 0.6rem; color: var(--wa-text-muted); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 65px; text-align: center; }
         .chat-contact.active-room .chat-contact-name { color: var(--wa-green); font-weight: bold; }
 
+        /* ЧАТ И БЕГУЩАЯ СТРОКА */
         .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
         
@@ -67,6 +71,7 @@
         .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
         .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
 
+        /* ЖЕСТКО ЗАКРЕПЛЕННОЕ ПОЛЕ ВВОДА ЧАТА */
         .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border);}
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
         .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; padding: 4px 0; }
@@ -77,7 +82,7 @@
         .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); color: #111b21; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .send-btn:active { transform: scale(0.9); }
 
-        /* РОМБ И НАВИГАЦИЯ */
+        /* НИЖНЯЯ НАВИГАЦИЯ С ИНТЕГРИРОВАННЫМ РОМБОМ */
         .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px 16px 10px; flex-shrink: 0; position: relative; z-index: 50; width: 100%; }
         .nav-links-wrapper { display: flex; justify-content: space-around; flex-grow: 1; padding-right: 10px; }
         .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: color 0.3s; flex: 1; }
@@ -85,11 +90,13 @@
         .nav-item.active { color: var(--wa-green); }
         .nav-item.active i { transform: scale(1.15); }
 
+        /* ЧИСТЫЙ CSS ДЛЯ РОМБА БЕЗ ТЕЙЛВИНДА */
         .rhombus-wrapper { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
         .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(162, 155, 254, 0.4); transition: transform 0.3s; }
         .rhombus-btn.active { transform: rotate(180deg); }
         .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
         
+        /* ВЫПАДАЮЩЕЕ МЕНЮ РОМБА */
         .rhombus-menu { position: absolute; bottom: 65px; right: 0; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 12px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 100; }
         .rhombus-menu.active { display: grid; animation: scaleIn 0.2s;}
         .action-icon { width: 44px; height: 44px; background-color: var(--wa-border); color: var(--wa-text); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 1.1rem;}
@@ -112,7 +119,7 @@
         .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary:active { transform: scale(0.98); }
 
-        /* ВИДЕО */
+        /* ВИДЕО И АНИМАЦИИ (MEET) */
         .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
         .video-frame.main { grid-column: 1 / 3; padding-top: 65%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
@@ -161,15 +168,6 @@
 
     <div class="mobile-screen" id="phone-body">
         
-        <div id="toast-notification" class="absolute top-5 left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white px-4 py-3 rounded-2xl shadow-2xl z-[3000] flex items-center gap-3 w-[90%] opacity-0 pointer-events-none transition-all duration-300">
-            <div id="toast-icon-wrap" class="w-10 h-10 rounded-full bg-[#005c4b] flex items-center justify-center text-lg shrink-0">🌍</div>
-            <img id="toast-img" src="" class="w-10 h-10 rounded-full object-cover hidden shrink-0">
-            <div class="flex flex-col">
-                <span id="toast-name" class="font-bold text-[0.9rem]">Group Chat</span>
-                <span id="toast-info" class="text-[0.7rem] text-gray-400">Global Room</span>
-            </div>
-        </div>
-
         <header class="app-header">
              <div class="logo-container">
                 <div class="logo-circle">HF</div>
@@ -185,6 +183,7 @@
                     <span class="text-white font-bold text-[0.95rem] tracking-wide" data-i18n="menu">Settings</span>
                     <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeDropdown()"></i>
                 </div>
+                
                 <a onclick="window.openMyProfile(true)"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 <a onclick="window.toggleLanguage()"><i class="fa-solid fa-globe text-blue-400 w-5"></i> <span id="lang-text" data-i18n="lang">Lang: EN</span></a>
                 <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
@@ -193,6 +192,7 @@
                 <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
                 <a onclick="document.getElementById('import-file-input').click(); window.closeDropdown()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
                 <a style="color: #ef4444;" onclick="window.logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="logout">Log Out</span></a>
+                
                 <div class="mt-2 pt-3 border-t border-[#202c33] flex justify-center items-center">
                     <span class="text-[#00a884] text-[0.65rem] font-bold tracking-widest uppercase">Author: Ilgar</span>
                 </div>
@@ -203,12 +203,18 @@
             
             <div id="message" class="page-content active h-full flex flex-col">
                 <div class="flex justify-between items-center px-4 py-2.5 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <button class="text-white font-bold flex items-center gap-2 hover:text-[#00a884] transition" onclick="window.switchChatRoom('global')"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> Global Chat</button>
-                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
+                    <button class="text-white font-bold flex items-center gap-2 hover:text-[#00a884] transition" onclick="window.switchChatRoom('global')" title="Global Room">
+                        <i class="fa-solid fa-globe text-[#00a884] text-xl"></i> Global Chat
+                    </button>
+                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition" title="Show Contacts">
+                        <i class="fa-solid fa-users text-lg"></i> Contacts
+                    </button>
                 </div>
                 
                 <div class="chat-info-marquee-container">
-                    <button onclick="window.toggleMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Auto-Translate"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+                    <button onclick="window.toggleMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Auto-Translate">
+                        <i class="fa-solid fa-closed-captioning text-xl"></i>
+                    </button>
                     <div id="typing-marquee-container" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
                         <span class="chat-info-marquee-text" id="chat-info-marquee">AI Translation System Active...</span>
                     </div>
@@ -219,9 +225,10 @@
                     <div class="flex flex-col flex-grow h-full overflow-hidden relative">
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input-area">
-                            <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
-                                <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('text')"></i>
-                                <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                            <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-1" onclick="window.toggleEmojiPicker('text')"></i>
+                            <div class="chat-input-pill">
+                                <input type="text" id="chat-input" placeholder="Message...">
+                                <i class="fa-solid fa-wand-magic-sparkles text-[#a29bfe] ml-2 cursor-pointer hover:text-white" onclick="window.applyAiMagic()" title="AI Rewrite"></i>
                             </div>
                             <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')" title="Voice to Text"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -236,7 +243,9 @@
                 </div>
 
                 <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+                    <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Voice Translation">
+                        <i class="fa-solid fa-closed-captioning text-xl"></i>
+                    </button>
                     <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
                         <span class="chat-info-marquee-text" id="voice-info-marquee">Waiting for voice input...</span>
                     </div>
@@ -268,9 +277,9 @@
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                     </div>
-                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 hover:text-red-500 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
             </div>
 
@@ -313,10 +322,18 @@
                 <div class="page-container bg-[#0b141a] flex flex-col items-center justify-center h-full">
                     <h2 class="text-2xl font-bold text-white mb-8">Social Networks</h2>
                     <div class="grid grid-cols-2 gap-6 w-full max-w-[280px]">
-                        <a href="https://facebook.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#1877F2] transition shadow-lg"><i class="fa-brands fa-facebook text-4xl text-[#1877F2]"></i><span class="text-sm font-bold text-white">Facebook</span></a>
-                        <a href="https://instagram.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#E1306C] transition shadow-lg"><i class="fa-brands fa-instagram text-4xl text-[#E1306C]"></i><span class="text-sm font-bold text-white">Instagram</span></a>
-                        <a href="https://telegram.org" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#229ED9] transition shadow-lg"><i class="fa-brands fa-telegram text-4xl text-[#229ED9]"></i><span class="text-sm font-bold text-white">Telegram</span></a>
-                        <a href="https://linkedin.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#0A66C2] transition shadow-lg"><i class="fa-brands fa-linkedin text-4xl text-[#0A66C2]"></i><span class="text-sm font-bold text-white">LinkedIn</span></a>
+                        <a href="https://facebook.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#1877F2] transition shadow-lg">
+                            <i class="fa-brands fa-facebook text-4xl text-[#1877F2]"></i><span class="text-sm font-bold text-white">Facebook</span>
+                        </a>
+                        <a href="https://instagram.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#E1306C] transition shadow-lg">
+                            <i class="fa-brands fa-instagram text-4xl text-[#E1306C]"></i><span class="text-sm font-bold text-white">Instagram</span>
+                        </a>
+                        <a href="https://telegram.org" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#229ED9] transition shadow-lg">
+                            <i class="fa-brands fa-telegram text-4xl text-[#229ED9]"></i><span class="text-sm font-bold text-white">Telegram</span>
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#0A66C2] transition shadow-lg">
+                            <i class="fa-brands fa-linkedin text-4xl text-[#0A66C2]"></i><span class="text-sm font-bold text-white">LinkedIn</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -358,7 +375,7 @@
             </div>
         </div>
 
-        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
+        <div id="avatar-modal" class="app-modal">
             <div class="app-modal-content" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
@@ -371,7 +388,7 @@
             </div>
         </div>
 
-        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
+        <div id="edit-profile-modal" class="app-modal">
             <div class="app-modal-content" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="sheet-handle" onclick="window.closeProfileModal()"></div>
@@ -420,7 +437,7 @@
             </div>
         </div>
 
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
+        <div id="search-modal" class="app-modal">
             <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="sheet-handle" onclick="window.closeSearchModal()"></div>
@@ -438,11 +455,6 @@
                         <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
                         <button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">📈 Marketing</button>
                     </div>
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">Web & Actions</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.closeSearchModal(); window.openBankTransferModal();" class="px-4 py-2 bg-[#005c4b] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💸 Send Money</button>
-                        <button onclick="window.handleSmartSearch('Tech News', 'web')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition border border-[#2a3942]">📰 Web News</button>
-                    </div>
                 </div>
 
                 <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
@@ -451,27 +463,11 @@
             </div>
         </div>
 
-        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
-                <div class="sheet-handle" onclick="window.closeBankTransferModal()"></div>
-                <div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto"><i class="fa-solid fa-wallet"></i></div>
-                <h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2>
-                <form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)">
-                    <select id="transfer-recipient" class="form-input-box" required></select>
-                    <input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required min="1">
-                    <button type="submit" class="btn-primary">Transfer</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closePhoneChoiceModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closePhoneChoiceModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Make a Call</h2><div class="flex flex-col gap-3"><button class="btn-primary flex justify-center items-center gap-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Free Voice Room</button><button class="btn-primary !bg-[#202c33] !text-white flex justify-center items-center gap-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button></div></div></div>
-        
-        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeTrashModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Manage Chat</h2><div class="flex flex-col gap-3"><button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button><button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button></div></div></div>
-        
-        <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeEmailModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> Send Email</h2><form class="w-full flex flex-col" onsubmit="window.sendEmailForm(event)"><input type="email" id="email-to" class="form-input-box" placeholder="To" required><input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required><textarea id="email-text" class="form-input-box resize-none" placeholder="Message" rows="4" required></textarea><button type="submit" class="btn-primary mt-2">Send</button></form></div></div>
-        
-        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();"><div class="app-modal-content h-[60vh]"><div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeLocationModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> Location</h2><div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div></div></div>
+        <div id="transfer-modal" class="app-modal"><div class="app-modal-content" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeBankTransferModal()"></div><div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto"><i class="fa-solid fa-wallet"></i></div><h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2><form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)"><select id="transfer-recipient" class="form-input-box" required></select><input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required><button type="submit" class="btn-primary">Transfer</button></form></div></div>
+        <div id="phone-choice-modal" class="app-modal"><div class="app-modal-content" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closePhoneChoiceModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closePhoneChoiceModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Make a Call</h2><div class="flex flex-col gap-3"><button class="btn-primary flex justify-center items-center gap-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Free Voice Room</button><button class="btn-primary !bg-[#202c33] !text-white flex justify-center items-center gap-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button></div></div></div>
+        <div id="trash-modal" class="app-modal"><div class="app-modal-content" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeTrashModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Manage Chat</h2><div class="flex flex-col gap-3"><button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button><button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button></div></div></div>
+        <div id="email-modal" class="app-modal"><div class="app-modal-content" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeEmailModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> Send Email</h2><form class="w-full flex flex-col" onsubmit="window.sendEmailForm(event)"><input type="email" id="email-to" class="form-input-box" placeholder="To" required><input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required><textarea id="email-text" class="form-input-box resize-none" placeholder="Message" rows="4" required></textarea><button type="submit" class="btn-primary mt-2">Send</button></form></div></div>
+        <div id="location-modal" class="app-modal"><div class="app-modal-content h-[60vh]" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeLocationModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> Location</h2><div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div></div></div>
     </div>
 
     <script>
@@ -485,6 +481,14 @@
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
         window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
 
+        // ЗАКРЫТИЕ МЕНЮ И РОМБА
+        window.closeDropdown = function() { 
+            document.getElementById('header-dropdown')?.classList.remove('active'); 
+            document.getElementById('rhombus-actions')?.classList.remove('active'); 
+            document.getElementById('rhombus-btn')?.classList.remove('active');
+        }
+        
+        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             const actions = document.getElementById('rhombus-actions');
@@ -495,15 +499,31 @@
                 actions.classList.add('active'); btn.classList.add('active');
             }
         }
-        
-        window.closeDropdown = function() { 
-            document.getElementById('header-dropdown')?.classList.remove('active'); 
-            document.getElementById('rhombus-actions')?.classList.remove('active'); 
-            document.getElementById('rhombus-btn')?.classList.remove('active');
-        }
-        
-        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
-        document.body.addEventListener('click', () => { window.closeDropdown(); });
+
+        // === ИСПРАВЛЕНИЕ: ЗАКРЫТИЕ МЕНЮ ПРИ ЛЮБОМ КЛИКЕ (Global Click) ===
+        const handleGlobalClick = (e) => {
+            const dropdown = document.getElementById('header-dropdown');
+            const rhombus = document.getElementById('rhombus-actions');
+            const modals = document.querySelectorAll('.app-modal');
+            
+            // Закрываем меню настроек
+            if (dropdown && dropdown.classList.contains('active') && !e.target.closest('.fa-ellipsis-vertical')) {
+                dropdown.classList.remove('active');
+            }
+            // Закрываем меню ромба
+            if (rhombus && rhombus.classList.contains('active') && !e.target.closest('.rhombus-wrapper')) {
+                rhombus.classList.remove('active');
+                document.getElementById('rhombus-btn')?.classList.remove('active');
+            }
+            // Закрываем шторки, если клик был по черному фону
+            modals.forEach(m => {
+                if (m.classList.contains('active') && e.target === m) {
+                    m.classList.remove('active');
+                }
+            });
+        };
+        document.addEventListener('click', handleGlobalClick);
+        document.addEventListener('touchstart', handleGlobalClick, {passive: true});
 
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
         window.startInAppCall = function() { window.closePhoneChoiceModal(); window.switchTab(1); };
@@ -519,11 +539,11 @@
 
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
-        window.sendEmailForm = function(e) { e.preventDefault(); alert("Email sent successfully!"); window.closeEmailModal(); }
 
-        // === ИНИЦИАЛИЗАЦИЯ И ЛОГИКА ===
+        // === ИНИЦИАЛИЗАЦИЯ И ЛОГИКА (БАЗА 20.1) ===
         document.addEventListener('DOMContentLoaded', () => {
 
+            // СИСТЕМА ЛОКАЛИЗАЦИИ
             const i18n = {
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN" },
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU" },
@@ -611,23 +631,20 @@
             window.participants = [aiBot];
             window.allCharacters.forEach(c => { if (c.id !== myChar.id && c.id !== 'guest') window.participants.push(c); });
 
-            // МУЛЬТИПЛЕЕР: Функция отрисовки сайдбара
-            window.renderSidebar = function() {
-                const chatSidebar = document.getElementById('chat-sidebar');
-                if (!chatSidebar) return;
-                chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" id="chat-btn-global" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" id="chat-btn-ai" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myUsername.toLowerCase().trim()) ? 'active-room' : ''}" id="chat-btn-me" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
+            const chatSidebar = document.getElementById('chat-sidebar');
+            if (chatSidebar) {
+                chatSidebar.innerHTML = `<div class="chat-contact active-room" id="chat-btn-global" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact" id="chat-btn-ai" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact" id="chat-btn-me" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
                 window.participants.filter(p => p.id !== 'ai').forEach(p => {
-                    let expectedId = "private_" + [window.myUsername.toLowerCase().trim(), p.name.split(' ')[0].toLowerCase().trim()].sort().join('_');
-                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${p.name.split(' ')[0]}</span></div>`;
+                    chatSidebar.innerHTML += `<div class="chat-contact" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${p.name.split(' ')[0]}</span></div>`;
                 });
-            };
-            window.renderSidebar();
+            }
 
             window.switchChatRoom = function(targetId) {
                 if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
                 const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
+                document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active-room')); document.getElementById('chat-btn-' + targetId)?.classList.add('active-room');
                 
                 if (targetId === 'global') window.currentRoomId = "global";
                 else if (targetId === 'ai') window.currentRoomId = "private_ai_bot";
@@ -636,14 +653,12 @@
                     const targetUser = window.participants.find(p => p.id === targetId);
                     if(targetUser) window.currentRoomId = "private_" + [window.myUsername.toLowerCase().trim(), targetUser.name.split(' ')[0].toLowerCase().trim()].sort().join('_'); 
                 }
-                
-                window.renderSidebar(); // Обновляем активный класс
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim(); if(!text) return;
-                // ОТПРАВЛЯЕМ ПОЛНЫЕ ДАННЫЕ ПРОФИЛЯ ДЛЯ ДРУГИХ УСТРОЙСТВ
+                // СИНХРОНИЗАЦИЯ: передаем фото и флаг
                 db.ref(window.currentRoomId).push({ 
                     name: window.myUsername, 
                     text: text, 
@@ -665,7 +680,7 @@
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername; 
                 const isAI = data.sessionId === "ai-bot-session";
                 
-                // ДИНАМИЧЕСКОЕ ДОБАВЛЕНИЕ НЕИЗВЕСТНЫХ ПОЛЬЗОВАТЕЛЕЙ (С ДРУГИХ ТЕЛЕФОНОВ)
+                // === СИНХРОНИЗАЦИЯ НОВЫХ ПОЛЬЗОВАТЕЛЕЙ (АМЕРИКАНЕЦ) ===
                 let knownUser = window.participants.find(part => part.name === data.name);
                 if (!knownUser && !isMe && !isAI && data.name) {
                     let newUser = {
@@ -677,7 +692,12 @@
                         langCode: data.langCode || 'en'
                     };
                     window.participants.push(newUser);
-                    window.renderSidebar(); // Обновляем сайдбар
+                    // Добавляем в сайдбар на лету
+                    const chatSidebar = document.getElementById('chat-sidebar');
+                    if (chatSidebar) {
+                        let activeId = window.currentRoomId.replace('private_', '').split('_').find(id => id !== window.myUsername.toLowerCase().trim());
+                        chatSidebar.innerHTML += `<div class="chat-contact ${activeId === newUser.id ? 'active-room' : ''}" id="chat-btn-${newUser.id}" onclick="window.switchChatRoom('${newUser.id}')"><div class="chat-contact-icon" style="background-image: url('${newUser.photo}');"><img src="https://flagcdn.com/w20/${newUser.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${newUser.name.split(' ')[0]}</span></div>`;
+                    }
                 }
 
                 let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.name === data.name) || { photo: 'https://ui-avatars.com/api/?name='+data.name, langCode: 'en', flag: '🌐' }));
@@ -694,12 +714,10 @@
                 messageGroup.appendChild(msgWrapper);
                 if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-                // ПЕРЕВОД ДЛЯ ВСЕХ УЧАСТНИКОВ (ФИКС: БЕЗ ФИЛЬТРАЦИИ ПО ЯЗЫКУ)
                 let targetUsers = [];
                 if (window.currentRoomId === 'global' && !isAI) { 
                     let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
                     allMembers.forEach(member => {
-                        // Переводим для всех, КРОМЕ отправителя
                         if (member.name !== data.name && member.langCode !== 'un') {
                             targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo });
                         }
@@ -750,7 +768,7 @@
                         if (window.isMarqueeEnabled !== false && mText) { 
                             mText.innerHTML = `<span class="text-white mr-2">${data.name}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
                             mText.style.animation = 'none'; 
-                            void mText.offsetWidth; // Жесткий рефлоу
+                            void mText.offsetWidth; // Trigger reflow
                             mText.style.animation = null; 
                         } 
                     } catch (e) {}
@@ -865,7 +883,7 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; });
             }
 
-            // ШТОРКА CV
+            // === ИСПРАВЛЕНИЕ: 3 КНОПКИ В CV ===
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : (window.participants.find(part => part.id === id) || window.allCharacters.find(part => part.id === id));
                 if (!p) return;
@@ -874,14 +892,11 @@
                 document.getElementById('modal-prof').innerText = p.profession || 'User';
                 const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
                 document.getElementById('modal-desc').innerHTML = `<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div></div>${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#00a884] font-bold block mb-1">OVERVIEW</span><p class="leading-relaxed text-[0.9rem]">${cDesc} ${p.desc ? '<br><br><b class="text-[#a29bfe]">Bio:</b> ' + p.desc : ''}</p></div>`;
-                
                 const actionButtons = document.getElementById('modal-action-buttons');
                 if (id === 'ai') { actionButtons.style.display = 'none'; } 
-                else if (id === 'me') { 
-                    actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile(true);" class="btn-primary flex justify-center items-center gap-2"><i class="fa-solid fa-pen"></i> Edit Profile & CV</button>`; 
-                    actionButtons.style.display = 'flex'; 
-                } 
+                else if (id === 'me') { actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile(true);" class="btn-primary flex justify-center items-center gap-2"><i class="fa-solid fa-pen"></i> Edit Profile & CV</button>`; actionButtons.style.display = 'flex'; } 
                 else {
+                    // 3 Кнопки: Чат, СМС, Email
                     actionButtons.innerHTML = `
                         <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-xs transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
                         <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-xs transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
@@ -890,14 +905,13 @@
                     setTimeout(() => { 
                         document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
                         document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                        document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
+                        document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); };
                     }, 50);
                     actionButtons.style.display = 'flex'; 
                 }
                 document.getElementById('avatar-modal').classList.add('active');
             };
 
-            // РЕГИСТРАЦИЯ И АВТО-ПРЕФИКС
             window.openMyProfile = function(isCV = false) {
                 window.closeDropdown(); const cvFields = document.getElementById('cv-extended-fields');
                 if (window.isGuest && !isCV) { document.getElementById('profile-modal-title').innerText = 'Registration'; cvFields.style.display = 'none'; document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } 
@@ -925,40 +939,9 @@
                 const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; const cData = countryData[sel.value] || countryData['un'];
                 let customProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji'), country: opt.getAttribute('data-name'), langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value, profession: document.getElementById('edit-prof').value, languages: document.getElementById('edit-langs').value, desc: document.getElementById('edit-desc').value };
                 localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile)); localStorage.setItem('hf_active_user', newId); 
-                window.closeProfileModal(); 
-                location.reload(); 
+                window.closeProfileModal(); // АВТОЗАКРЫТИЕ ФОРМЫ
+                location.reload();
             }
-
-            window.openBankTransferModal = function() {
-                window.closeDropdown();
-                const recipientSelect = document.getElementById('transfer-recipient');
-                recipientSelect.innerHTML = '<option value="" disabled selected>Select Recipient</option>';
-                window.participants.forEach(p => {
-                    if(p.id !== 'ai' && p.id !== 'guest') {
-                        recipientSelect.innerHTML += `<option value="${p.id}">${p.name} ${p.flag}</option>`;
-                    }
-                });
-                document.getElementById('transfer-amount').value = '';
-                document.getElementById('transfer-modal').classList.add('active');
-            };
-
-            window.sendMoney = function(e) {
-                e.preventDefault();
-                const recipient = document.getElementById('transfer-recipient').value;
-                const amount = document.getElementById('transfer-amount').value;
-                if (!recipient || !amount) return alert('Please fill all fields!');
-                
-                const recName = window.participants.find(p => p.id === recipient)?.name || 'User';
-                alert(`✅ Successfully sent $${amount} to ${recName}!`);
-                window.closeBankTransferModal();
-                
-                db.ref(window.currentRoomId).push({ 
-                    name: window.myUsername, 
-                    text: `💸 I just sent $${amount} to ${recName}!`, 
-                    sessionId: window.mySessionId, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP 
-                });
-            };
 
             window.exportData = function() {
                 window.closeDropdown();
@@ -1008,26 +991,11 @@
             }
             renderProfessionList();
 
-            // БЕЗОПАСНАЯ ЛОКАЦИЯ (HTTPS Карта)
+            // === ИСПРАВЛЕНИЕ ЛОКАЦИИ (HTTPS) ===
             window.openLocationModal = function() {
-                window.closeDropdown(); 
-                document.getElementById('location-modal').classList.add('active'); 
-                const mapContainer = document.getElementById('location-map'); 
-                mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>';
-                
-                const loadMap = (lat, lon) => { 
-                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; 
-                };
-                
-                if (navigator.geolocation) { 
-                    navigator.geolocation.getCurrentPosition( 
-                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, 
-                        (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, 
-                        { timeout: 5000 } 
-                    ); 
-                } else { 
-                    mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; 
-                }
+                window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>';
+                const loadMap = (lat, lon) => { mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; };
+                if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Check permissions.</span>'; }, { timeout: 5000 } ); } else { mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation not supported by browser.</span>'; }
             }
 
             window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); }
