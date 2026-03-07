@@ -2,16 +2,11 @@
 <html lang="en" translate="no">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="google" content="notranslate">
     <title>Hello Friends - Golden Master Fixed</title>
     
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Allura&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -21,451 +16,339 @@
     <style>
         :root { --wa-bg: #0b141a; --wa-panel: #111b21; --wa-border: #202c33; --wa-green: #00a884; --wa-msg-out: #005c4b; --wa-msg-in: #202c33; --wa-text: #e9edef; --wa-text-muted: #8696a0; --hf-purple: #a29bfe; }
         
-        body { background-color: #000; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        /* БЛОКИРОВКА ЭКРАНА ОТ ПРОКРУТКИ */
+        body, html { background-color: #000; font-family: -apple-system, sans-serif; margin: 0; padding: 0; height: 100dvh; width: 100vw; overflow: hidden; display: flex; justify-content: center; }
         
-        .mobile-screen { width: 100%; max-width: 400px; height: 85vh; max-height: 850px; background: var(--wa-bg); border-radius: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); border: 4px solid #1f2937; display: flex; flex-direction: column; color: var(--wa-text); overflow: hidden; position: relative; }
-        @media (max-width: 500px) { .mobile-screen { max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; } }
+        .mobile-screen { width: 100%; max-width: 450px; height: 100%; background: var(--wa-bg); display: flex; flex-direction: column; position: relative; }
+        @media (min-width: 500px) { .mobile-screen { height: 90vh; margin-top: 5vh; border-radius: 30px; border: 4px solid #1f2937; overflow: hidden; } }
 
-        /* ВЕРХНИЙ ХЕДЕР */
-        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 50; flex-shrink: 0; }
-        .logo-container { display: flex; align-items: center; gap: 12px; }
-        .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; box-shadow: 0 0 10px rgba(0,168,132,0.4); }
-        .header-title { font-size: 1.1rem; font-weight: bold; color: var(--wa-text); }
-        .header-icons { display: flex; gap: 18px; color: var(--wa-text-muted); font-size: 1.2rem; align-items: center;}
+        /* НАМЕРТВО ЗАКРЕПЛЕННЫЕ ШАПКА И ПОДВАЛ */
+        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 0 16px; height: 60px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 100; flex-shrink: 0; }
+        .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); flex-shrink: 0; z-index: 100; width: 100%; height: 75px; }
 
-        /* ГЛАВНОЕ МЕНЮ */
-        .header-dropdown { position: absolute; top: 60px; right: 10px; width: 230px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 14px 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; gap: 4px; z-index: 100; }
+        /* ИЗОЛЯТОР ЭКРАНОВ (Ключевой фикс) */
+        .main-container { flex-grow: 1; position: relative; width: 100%; overflow: hidden; }
+        .page-content { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none !important; flex-direction: column; background: var(--wa-bg); z-index: 1; overflow: hidden; }
+        .page-content.active { display: flex !important; z-index: 10; }
+
+        /* ЭЛЕМЕНТЫ ШАПКИ */
+        .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; }
+        .header-dropdown { position: absolute; top: 60px; right: 10px; width: 230px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 14px 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; gap: 4px; z-index: 200; }
         .header-dropdown.active { display: flex; }
         .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        
-        /* === АБСОЛЮТНАЯ ИЗОЛЯЦИЯ ЭКРАНОВ === */
-        .page-content { display: none !important; width: 100%; height: 100%; flex-direction: column; flex-grow: 1; overflow: hidden; background: var(--wa-bg); }
-        .page-content.active { display: flex !important; animation: fadeIn 0.3s; }
-        .page-container { width: 100%; height: 100%; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
-        
-        /* ЧАТ СЛЕВА */
+
+        /* ЧАТ МЕХАНИКА */
         .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid var(--wa-border); overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; background: var(--wa-panel); }
-        .chat-sidebar::-webkit-scrollbar { display: none; }
         .chat-contact { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 100%; }
-        .chat-contact-icon { width: 48px; height: 48px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid transparent; padding: 2px; background-clip: content-box; position: relative; }
+        .chat-contact-icon { width: 48px; height: 48px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid transparent; position: relative; }
         .chat-contact.active-room .chat-contact-icon { border-color: var(--wa-green); }
-        .chat-contact-name { font-size: 0.6rem; color: var(--wa-text-muted); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 65px; text-align: center; }
-        .chat-contact.active-room .chat-contact-name { color: var(--wa-green); font-weight: bold; }
-
-        /* БЕГУЩАЯ СТРОКА */
-        .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
-        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
         
-        .chat-messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 16px; gap: 4px; scroll-behavior: smooth; }
-        .chat-bubble-wrapper { display: flex; flex-direction: column; max-width: 90%; }
-        .chat-bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .incoming { align-self: flex-start; }
-        .incoming .chat-bubble { background: var(--wa-msg-in); color: var(--wa-text); border-bottom-left-radius: 4px; }
-        .outgoing { align-self: flex-end; }
-        .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
-        .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
+        .chat-messages { flex-grow: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; padding: 16px; gap: 6px; }
+        .chat-bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; max-width: 85%; }
+        .incoming { align-self: flex-start; } .incoming .chat-bubble { background: var(--wa-msg-in); border-bottom-left-radius: 4px; }
+        .outgoing { align-self: flex-end; } .outgoing .chat-bubble { background: var(--wa-msg-out); border-bottom-right-radius: 4px; color: white; }
 
-        /* ПОЛЕ ВВОДА */
-        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border);}
+        /* ВВОД СООБЩЕНИЙ */
+        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; border-top: 1px solid var(--wa-border); height: 65px; }
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
-        .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; padding: 4px 0; }
-        .mic-btn-chat { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-border); color: var(--wa-text-muted); border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; }
-        .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); color: #111b21; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; }
+        .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 1rem; }
+        .circle-btn { width: 42px; height: 42px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; }
 
-        /* НИЖНЯЯ НАВИГАЦИЯ */
-        .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px 16px 10px; flex-shrink: 0; position: relative; z-index: 50; width: 100%; }
+        /* НАВИГАЦИЯ */
         .nav-links-wrapper { display: flex; justify-content: space-around; flex-grow: 1; padding-right: 10px; }
-        .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 600; cursor: pointer; flex: 1; }
+        .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 600; cursor: pointer; }
         .nav-item i { font-size: 1.3rem; }
         .nav-item.active { color: var(--wa-green); }
-        .nav-item.active i { transform: scale(1.15); }
 
         /* РОМБ */
         .rhombus-wrapper { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
         .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; }
         .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
-        .rhombus-menu { position: absolute; bottom: 65px; right: 0; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 12px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 100; }
-        .rhombus-menu.active { display: grid; animation: scaleIn 0.2s;}
-        .action-icon { width: 44px; height: 44px; background-color: var(--wa-border); color: var(--wa-text); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 1.1rem;}
+        .rhombus-menu { position: absolute; bottom: 65px; right: 0; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 12px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .rhombus-menu.active { display: grid; }
 
         /* ШТОРКИ */
-        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+        .app-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(5px); }
         .app-modal.active { display: flex !important; }
-        .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; display: flex; flex-direction: column; max-height: 90vh; overflow-y: auto; }
-        .close-sheet-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; background: var(--wa-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: var(--wa-text-muted); font-size: 1.2rem; cursor: pointer; z-index: 50; }
-        .sheet-handle { width: 40px; height: 5px; background: #374151; border-radius: 5px; margin: 0 auto 20px auto; flex-shrink: 0; cursor: pointer;}
+        .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 450px; border-radius: 30px 30px 0 0; padding: 25px; position: relative; max-height: 85vh; overflow-y: auto; }
+        .close-sheet-btn { position: absolute; top: 15px; right: 15px; width: 35px; height: 35px; background: var(--wa-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; cursor: pointer; z-index: 50; }
+
+        /* ВИДЕО И МАРКИ */
+        .marquee-bar { height: 35px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); overflow: hidden; display: flex; align-items: center; flex-shrink: 0;}
+        .marquee-text { white-space: nowrap; animation: scroll-wa 15s linear infinite; color: var(--wa-green); font-size: 0.75rem; font-weight: bold; padding-left: 100%; }
+        @keyframes scroll-wa { from { transform: translateX(0); } to { transform: translateX(-200%); } }
+
+        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; overflow-y: auto; min-height: 0; flex-grow: 1; }
+        .video-box { position: relative; border-radius: 15px; overflow: hidden; background: #000; aspect-ratio: 1; border: 1px solid var(--wa-border); }
+        .video-box.main { grid-column: 1 / 3; aspect-ratio: 16/9; border: 2px solid var(--wa-green); }
+        .video-box video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
         .form-input-box { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--wa-border); background: var(--wa-bg); color: white; font-size: 0.95rem; outline: none; margin-bottom: 12px; }
-        .form-label { font-size: 0.7rem; color: var(--wa-green); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; }
 
-        /* ВИДЕО */
-        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
-        .video-frame.main { grid-column: 1 / 3; padding-top: 65%; border: 2px solid var(--wa-green); }
-        .video-frame video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); padding: 4px 0; overflow: hidden; display: flex; align-items: center; z-index: 20; }
-        .conf-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes scroll-text { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-        .pulse-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--wa-green); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        ::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body>
 
-    <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
-
-    <div class="mobile-screen" id="phone-body">
+    <div class="mobile-screen">
         
         <header class="app-header">
              <div class="logo-container">
                 <div class="logo-circle">HF</div>
-                <span class="header-title">Hello Friends</span>
+                <span class="text-white font-bold text-lg">Hello Friends</span>
              </div>
-             <div class="header-icons">
-                <i class="fa-solid fa-ellipsis-vertical" onclick="window.toggleHeaderMenu(event)"></i>
+             <div class="flex gap-5 text-[#8696a0] text-2xl">
+                <i class="fa-solid fa-ellipsis-vertical cursor-pointer" onclick="window.toggleHeaderMenu(event)"></i>
             </div>
             
             <div id="header-dropdown" class="header-dropdown">
-                <div class="flex justify-between items-center px-1 pb-2 mb-2 border-b border-[#202c33]">
-                    <span class="text-white font-bold text-[0.95rem] tracking-wide">Settings</span>
-                    <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl" onclick="window.closeDropdown()"></i>
+                <div class="flex justify-between items-center mb-3 border-b border-[#202c33] pb-2">
+                    <span class="text-white text-xs font-bold uppercase tracking-widest">Settings</span>
+                    <i class="fa-solid fa-xmark text-gray-500 cursor-pointer" onclick="window.closeDropdown()"></i>
                 </div>
-                <a onclick="window.openMyProfile(true)"><i class="fa-solid fa-user text-[#00a884] w-5"></i> My Profile</a>
-                <a onclick="window.toggleLanguage()"><i class="fa-solid fa-globe text-blue-400 w-5"></i> <span id="lang-text">Lang: EN</span></a>
-                <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> Export Data</a>
-                <div class="mt-2 pt-3 border-t border-[#202c33] flex justify-center items-center"><span class="text-[#00a884] text-[0.65rem] font-bold tracking-widest uppercase">Author: Ilgar</span></div>
+                <a onclick="window.openProfile()"><i class="fa-solid fa-user text-[#00a884]"></i> My Profile</a>
+                <a onclick="window.toggleLang()"><i class="fa-solid fa-globe text-blue-400"></i> <span>Lang: EN</span></a>
+                <a onclick="window.openLocation()"><i class="fa-solid fa-location-dot text-red-500"></i> Location</a>
             </div>
         </header>
 
-        <main class="flex-grow overflow-hidden flex flex-col relative">
+        <main class="main-container">
             
             <div id="message" class="page-content active">
-                <div class="flex justify-between items-center px-4 py-2.5 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <button class="text-white font-bold flex items-center gap-2" onclick="window.switchChatRoom('global')">
-                        <i class="fa-solid fa-globe text-[#00a884] text-xl"></i> Global Chat
-                    </button>
-                    <button class="text-[#8696a0] font-bold flex items-center gap-2"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
+                <div class="marquee-bar">
+                    <i class="fa-solid fa-closed-captioning text-[#00a884] ml-3"></i>
+                    <div class="marquee-text" id="chat-marquee">AI Translation Active...</div>
                 </div>
-                
-                <div class="chat-info-marquee-container">
-                    <button class="text-[#00a884] px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
-                    <div id="typing-marquee-container" class="overflow-hidden flex-grow flex items-center h-full">
-                        <span class="chat-info-marquee-text" id="chat-info-marquee">AI Translation System Active...</span>
-                    </div>
-                </div>
-
-                <div class="flex h-full overflow-hidden w-full bg-[#0b141a]">
-                    <div class="chat-sidebar" id="chat-sidebar"></div>
-                    <div class="flex flex-col flex-grow h-full overflow-hidden relative">
-                        <div class="chat-messages" id="chat-messages"></div>
+                <div class="flex flex-grow overflow-hidden">
+                    <div class="chat-sidebar" id="sidebar"></div>
+                    <div class="flex flex-col flex-grow bg-[#0b141a]">
+                        <div class="chat-messages" id="chat-box"></div>
                         <div class="chat-input-area">
-                            <div class="chat-input-pill">
-                                <input type="text" id="chat-input" placeholder="Message...">
-                            </div>
-                            <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')"><i class="fa-solid fa-microphone"></i></button>
-                            <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                            <div class="chat-input-pill"><input type="text" id="chat-input" placeholder="Message..."></div>
+                            <button class="circle-btn bg-[#00a884] text-black" onclick="window.sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div id="voice-translator" class="page-content bg-[#0b141a]">
-                <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <h2 class="font-bold text-white" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
+                <div class="flex justify-center py-5 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <h2 class="text-3xl text-white" style="font-family: 'Allura', cursive; color: var(--hf-purple);">Voice Room</h2>
                 </div>
-
-                <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <button class="text-[#00a884] px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
-                    <div class="overflow-hidden flex-grow flex items-center h-full">
-                        <span class="chat-info-marquee-text" id="voice-info-marquee">Waiting for voice input...</span>
+                <div class="flex-grow flex flex-col items-center justify-center gap-8">
+                    <div class="flex items-center gap-6">
+                        <img id="v-friend-img" src="https://ui-avatars.com/api/?name=Friend&background=random" class="w-24 h-24 rounded-full border-2 border-gray-600 object-cover">
+                        <div class="flex gap-2 text-[#00a884]"><div class="w-1.5 h-8 bg-[#00a884] rounded-full animate-bounce"></div><div class="w-1.5 h-12 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.2s"></div></div>
+                        <img id="v-me-img" src="" class="w-24 h-24 rounded-full border-4 border-[#00a884] object-cover">
                     </div>
+                    <div class="marquee-bar w-full"><div class="marquee-text" id="voice-marquee">Ready for voice...</div></div>
                 </div>
-                
-                <div class="flex-grow flex flex-col justify-center items-center relative">
-                    <div class="flex justify-center items-center gap-6 w-full">
-                        <div class="flex flex-col items-center">
-                            <div class="w-24 h-24 relative mb-3">
-                                <img id="voice-friend-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-600">
-                                <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-xl bg-[#111b21] rounded-full p-1 shadow"></span>
-                            </div>
-                            <h3 id="voice-friend-name" class="text-gray-300 font-bold text-sm"></h3>
-                        </div>
-                        <div class="flex gap-2 text-[#00a884]"><div class="w-1.5 h-8 bg-[#00a884] rounded-full animate-bounce"></div><div class="w-1.5 h-12 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div></div>
-                        <div class="flex flex-col items-center">
-                            <div class="w-28 h-28 relative mb-3">
-                                <div class="pulse-ring"></div>
-                                <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] relative z-10">
-                                <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#111b21] rounded-full p-1 shadow"></span>
-                            </div>
-                            <h3 class="text-white font-bold text-sm">You</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
-                        <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                    </div>
-                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
+                <div class="chat-input-area">
+                    <div class="chat-input-pill"><input type="text" id="voice-input" placeholder="Translate voice..."></div>
+                    <button class="circle-btn bg-[#202c33] text-[#8696a0] border border-[#2a3942]" onclick="alert('Mic Active!')"><i class="fa-solid fa-microphone"></i></button>
+                    <button class="circle-btn bg-[#00a884] text-black" onclick="window.sendVoice()"><i class="fa-solid fa-paper-plane"></i></button>
+                    <button class="circle-btn bg-red-500 text-white" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
             </div>
 
             <div id="conference" class="page-content bg-[#000]">
-                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <span class="font-bold text-[#00a884] tracking-widest text-[1rem] flex items-center gap-2"><i class="fa-solid fa-video"></i> CONFERENCE</span>
-                    <div class="flex items-center gap-4"><span class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full animate-pulse text-xs">● REC</span></div>
+                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] font-bold text-xs uppercase text-[#00a884] shrink-0">
+                    <span>CONFERENCE</span><span class="text-red-500 animate-pulse">● REC</span>
                 </div>
-
-                <div class="flex-grow overflow-y-auto p-2 relative"><div class="video-grid" id="conference-grid"></div></div>
-                
-                <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0">
-                    <button class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl"><i class="fa-solid fa-closed-captioning"></i></button>
-                    <button class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video"></i></button>
-                    <button class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
+                <div id="conf-grid" class="video-grid"></div>
+                <div class="chat-input-area justify-center gap-6">
+                    <button class="circle-btn bg-[#202c33] text-[#00a884]"><i class="fa-solid fa-closed-captioning"></i></button>
+                    <button class="circle-btn bg-[#202c33] text-white"><i class="fa-solid fa-video"></i></button>
+                    <button class="circle-btn bg-red-500 text-white" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
             </div>
 
-            <div id="profession" class="page-content">
-                <div class="page-container bg-[#0b141a]">
-                    <h2 class="text-xl font-bold text-left px-2 mb-4 text-white">Global Talents</h2>
-                    <div id="profession-list" class="pb-24"></div>
+            <div id="profession" class="page-content bg-[#0b141a]">
+                <div class="flex-grow overflow-y-auto p-4 min-height-0">
+                    <h2 class="text-2xl font-bold text-white mb-6">Global Talents</h2>
+                    <div id="prof-list" class="grid grid-cols-2 gap-4 pb-10"></div>
                 </div>
             </div>
-            
-            <div id="social" class="page-content">
-                <div class="page-container bg-[#0b141a] flex flex-col items-center justify-center">
-                    <h2 class="text-2xl font-bold text-white mb-8">Social Networks</h2>
-                    <div class="grid grid-cols-2 gap-6 w-full max-w-[280px]">
-                        <a href="https://facebook.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] shadow-lg"><i class="fa-brands fa-facebook text-4xl text-[#1877F2]"></i><span class="text-sm font-bold text-white">Facebook</span></a>
-                        <a href="https://instagram.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] shadow-lg"><i class="fa-brands fa-instagram text-4xl text-[#E1306C]"></i><span class="text-sm font-bold text-white">Instagram</span></a>
+
+            <div id="social" class="page-content bg-[#0b141a]">
+                <div class="flex flex-col items-center justify-center h-full gap-8">
+                    <h2 class="text-3xl font-bold text-white">Social Hub</h2>
+                    <div class="grid grid-cols-2 gap-6">
+                        <a href="https://facebook.com" class="bg-[#202c33] p-8 rounded-3xl text-center"><i class="fa-brands fa-facebook text-5xl text-blue-500"></i></a>
+                        <a href="https://instagram.com" class="bg-[#202c33] p-8 rounded-3xl text-center"><i class="fa-brands fa-instagram text-5xl text-pink-500"></i></a>
                     </div>
                 </div>
             </div>
 
         </main>
 
-        <div class="bottom-nav-container">
+        <nav class="bottom-nav-container">
             <div class="nav-links-wrapper">
-                <a class="nav-item active" onclick="window.switchTab(0)"><i class="fa-solid fa-message"></i><span>Chat</span></a>
-                <a class="nav-item" onclick="window.switchTab(1)"><i class="fa-solid fa-microphone-lines"></i><span>Voice</span></a>
-                <a class="nav-item" onclick="window.switchTab(2)"><i class="fa-solid fa-video"></i><span>Meet</span></a>
-                <a class="nav-item" onclick="window.switchTab(3)"><i class="fa-solid fa-briefcase"></i><span>CV</span></a>
-                <a class="nav-item" onclick="window.switchTab(4)"><i class="fa-solid fa-hashtag"></i><span>Social</span></a>
+                <div class="nav-item active" onclick="window.switchTab(0)"><i class="fa-solid fa-message"></i><span>Chat</span></div>
+                <div class="nav-item" onclick="window.switchTab(1)"><i class="fa-solid fa-microphone-lines"></i><span>Voice</span></div>
+                <div class="nav-item" onclick="window.switchTab(2)"><i class="fa-solid fa-video"></i><span>Meet</span></div>
+                <div class="nav-item" onclick="window.switchTab(3)"><i class="fa-solid fa-briefcase"></i><span>CV</span></div>
+                <div class="nav-item" onclick="window.switchTab(4)"><i class="fa-solid fa-hashtag"></i><span>Social</span></div>
             </div>
             <div class="rhombus-wrapper">
-                <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
-                <div id="rhombus-actions" class="rhombus-menu">
-                    <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();"><i class="fa-solid fa-location-dot"></i></div>
-                    <div class="action-icon text-red-500" onclick="window.clearChat(); window.closeDropdown();"><i class="fa-solid fa-trash"></i></div>
+                <div id="rh-btn" class="rhombus-btn" onclick="window.toggleRhombus(event)"><i class="fa-solid fa-plus"></i></div>
+                <div id="rh-menu" class="rhombus-menu">
+                    <div class="action-icon" onclick="window.clearChat()"><i class="fa-solid fa-trash text-red-500"></i></div>
+                    <div class="action-icon" onclick="window.switchTab(2)"><i class="fa-solid fa-video text-blue-400"></i></div>
                 </div>
             </div>
-        </div>
+        </nav>
+    </div>
 
-        <div id="avatar-modal" class="app-modal">
-            <div class="app-modal-content" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
-                <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
-                <div class="flex items-center gap-4 mb-4 mt-2">
-                    <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
-                    <div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div>
-                </div>
-                <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
-                <div class="flex gap-2 w-full mt-auto" id="modal-action-buttons"></div>
+    <div id="modal-identity" class="app-modal" onclick="if(event.target===this) window.closeModals()">
+        <div class="app-modal-content">
+            <div class="close-sheet-btn" onclick="window.closeModals()"><i class="fa-solid fa-xmark"></i></div>
+            <h2 class="text-xl font-bold text-white text-center mb-6 uppercase tracking-widest">My Profile</h2>
+            <div class="flex justify-center mb-6"><div class="relative"><img id="p-img" src="" class="w-24 h-24 rounded-full border-2 border-[#00a884] object-cover"><button onclick="document.getElementById('file-in').click()" class="absolute bottom-0 right-0 bg-[#00a884] w-8 h-8 rounded-full flex items-center justify-center text-black"><i class="fa-solid fa-camera"></i></button></div></div>
+            <input type="file" id="file-in" class="hidden" onchange="window.doPreview(event)">
+            <input type="text" id="p-name" class="form-input-box" placeholder="Name">
+            <select id="p-country" class="form-input-box">
+                <option value="un">Global 🌐</option><option value="az">Azerbaijan 🇦🇿</option><option value="ru">Russia 🇷🇺</option><option value="us">USA 🇺🇸</option>
+            </select>
+            <input type="tel" id="p-phone" class="form-input-box" placeholder="Phone">
+            <button onclick="window.saveProfile()" class="btn-primary">SAVE</button>
+        </div>
+    </div>
+
+    <div id="modal-cv" class="app-modal" onclick="if(event.target===this) window.closeModals()">
+        <div class="app-modal-content text-white text-center">
+            <div class="close-sheet-btn" onclick="window.closeModals()"><i class="fa-solid fa-xmark"></i></div>
+            <div id="cv-body"></div>
+            <div class="flex gap-3 mt-8">
+                <button class="flex-1 p-4 bg-[#202c33] rounded-2xl" onclick="window.switchTab(0); window.closeModals()"><i class="fa-solid fa-comment text-[#00a884] text-2xl"></i></button>
+                <button class="flex-1 p-4 bg-[#202c33] rounded-2xl"><i class="fa-solid fa-phone text-blue-400 text-2xl"></i></button>
+                <button class="flex-1 p-4 bg-[#202c33] rounded-2xl"><i class="fa-solid fa-envelope text-red-400 text-2xl"></i></button>
             </div>
         </div>
+    </div>
 
-        <div id="edit-profile-modal" class="app-modal">
-            <div class="app-modal-content" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
-                <div class="sheet-handle" onclick="window.closeProfileModal()"></div>
-                <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-6 text-center">Identity</h2>
-                <div class="flex flex-col items-center mb-4 shrink-0">
-                    <div class="relative w-20 h-20">
-                        <img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-[#00a884]">
-                        <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-7 h-7 flex justify-center items-center border-2 border-[#111b21]"><i class="fa-solid fa-camera text-xs"></i></button>
-                    </div>
-                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
-                </div>
-                <label class="form-label">Full Name</label><input type="text" id="edit-name" class="form-input-box" placeholder="Name">
-                <label class="form-label">Country</label>
-                <select id="edit-country-select" class="form-input-box mb-4" onchange="window.handleCountryChange(this)">
-                    <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option>
-                    <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
-                    <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
-                    <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">USA</option>
-                    <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
-                </select>
-                <label class="form-label">Phone</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+...">
-                <button onclick="window.saveProfileData()" class="btn-primary mt-2">Save Profile</button>
-            </div>
+    <div id="modal-map" class="app-modal" onclick="if(event.target===this) window.closeModals()">
+        <div class="app-modal-content h-[75vh]">
+            <div class="close-sheet-btn" onclick="window.closeModals()"><i class="fa-solid fa-xmark"></i></div>
+            <div id="map-target" class="w-full h-full rounded-2xl bg-black flex items-center justify-center text-[#8696a0] overflow-hidden">GPS LOADING...</div>
         </div>
-
-        <div id="location-modal" class="app-modal"><div class="app-modal-content h-[60vh]" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeLocationModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> Location</h2><div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div></div></div>
     </div>
 
     <script>
-        // ИСПРАВЛЕНО ЗАКРЫТИЕ ПО ЛЮБОМУ КЛИКУ
-        window.closeDropdown = function() { 
-            document.getElementById('header-dropdown')?.classList.remove('active'); 
-            document.getElementById('rhombus-actions')?.classList.remove('active'); 
-            document.getElementById('rhombus-btn')?.classList.remove('active');
-        }
-        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
-        window.toggleRhombusMenu = function(e) { 
-            e.stopPropagation(); 
-            const actions = document.getElementById('rhombus-actions');
-            const btn = document.getElementById('rhombus-btn');
-            actions.classList.toggle('active'); btn.classList.toggle('active');
-        }
-        
-        const handleGlobalClick = (e) => {
-            const dropdown = document.getElementById('header-dropdown');
-            const rhombus = document.getElementById('rhombus-actions');
-            const modals = document.querySelectorAll('.app-modal');
-            if (dropdown && dropdown.classList.contains('active') && !e.target.closest('.fa-ellipsis-vertical')) dropdown.classList.remove('active');
-            if (rhombus && rhombus.classList.contains('active') && !e.target.closest('.rhombus-wrapper')) { rhombus.classList.remove('active'); document.getElementById('rhombus-btn')?.classList.remove('active'); }
-            modals.forEach(m => { if (m.classList.contains('active') && e.target === m) m.classList.remove('active'); });
-        };
-        document.addEventListener('click', handleGlobalClick);
-        document.addEventListener('touchstart', handleGlobalClick, {passive: true});
+        const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
-        window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
-        window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
+        window.myUid = localStorage.getItem('hf_uid_24') || 'u_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('hf_uid_24', window.myUid);
+        window.myProf = JSON.parse(localStorage.getItem('hf_prof_24')) || { name: 'Guest', flag: '🌐', lang: 'en', photo: 'https://ui-avatars.com/api/?name=Guest&background=random' };
+        window.users = [];
 
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // ИСПРАВЛЕНО ПЕРЕКЛЮЧЕНИЕ ТАБОВ (Без тейлвинд классов)
-            window.switchTab = function(index) {
-                const navLinks = document.querySelectorAll('.nav-item'); 
-                const pages = document.querySelectorAll('.page-content');
-                
-                pages.forEach(p => p.classList.remove('active'));
-                navLinks.forEach(l => l.classList.remove('active')); 
-                
-                const screens = ['message', 'voice-translator', 'conference', 'profession', 'social'];
-                const targetId = screens[index]; 
-                
-                const targetEl = document.getElementById(targetId);
-                if(targetEl) targetEl.classList.add('active');
-                if (navLinks[index]) navLinks[index].classList.add('active');
-                
-                window.closeDropdown();
-            }
-
-            const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
-
-            window.mySessionId = Math.random().toString(36).substring(2, 15);
-            window.myProfileInfo = JSON.parse(localStorage.getItem('hf_prof_fixed')) || { id: 'me', name: 'Guest (You)', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', flag: '🌐', flagCode: 'un', langCode: 'en' };
-            window.myUsername = window.myProfileInfo.name.split(' ')[0];
-            window.participants = [];
-
-            window.currentRoomId = "global_room_fixed";
-
-            const chatSidebar = document.getElementById('chat-sidebar');
-            if (chatSidebar) {
-                chatSidebar.innerHTML = `<div class="chat-contact active-room" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
-            }
-
-            window.sendFirebaseMsg = function() {
-                const text = document.getElementById('chat-input').value.trim(); if(!text) return;
-                db.ref(window.currentRoomId).push({ 
-                    name: window.myUsername, text: text, sessionId: window.mySessionId, 
-                    photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode
-                });
-                document.getElementById('chat-input').value = '';
-            }
-
-            db.ref(window.currentRoomId).on("child_added", async (snapshot) => {
-                const data = snapshot.val(); if(!data) return; 
-                const chatMessages = document.getElementById('chat-messages');
-                const isMe = data.sessionId === window.mySessionId; 
-                
-                if (!isMe && !window.participants.find(part => part.name === data.name)) {
-                    let newUser = { id: 'u_' + Math.random().toString(36).substr(2,9), name: data.name, photo: data.photo, flag: data.flag, flagCode: data.flagCode, langCode: data.langCode };
-                    window.participants.push(newUser);
-                    if (chatSidebar) chatSidebar.innerHTML += `<div class="chat-contact" onclick="window.openAvatarModal('${newUser.id}')"><div class="chat-contact-icon" style="background-image: url('${newUser.photo}');"><img src="https://flagcdn.com/w20/${newUser.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${newUser.name}</span></div>`;
-                }
-
-                let p = isMe ? window.myProfileInfo : window.participants.find(part => part.name === data.name);
-                
-                const messageGroup = document.createElement('div');
-                messageGroup.className = "flex flex-col w-full mt-3 mb-2";
-                const msgWrapper = document.createElement('div'); 
-                msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
-                
-                let avatarHtml = `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover border border-[#2a3942]" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? data.name : ''}</div><div class="chat-bubble">${data.text}</div></div>`;
-                msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
-                messageGroup.appendChild(msgWrapper);
-                if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
-
-                if (!isMe) {
-                    try {
-                        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${window.myProfileInfo.langCode}&dt=t&q=${encodeURIComponent(data.text)}`).then(r => r.json());
-                        const trans = res[0][0][0];
-                        const transContainer = document.createElement('div');
-                        transContainer.className = `flex flex-col gap-2 mt-2 w-full items-start pl-10`;
-                        transContainer.innerHTML = `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl rounded-tl-sm px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold">${data.flag} ${trans}</div>`; 
-                        messageGroup.appendChild(transContainer);
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                        const mText = document.getElementById('chat-info-marquee');
-                        if (mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${trans}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
-                    } catch (e) {}
-                }
-            });
-
-            // CV МОДАЛКА - 3 КНОПКИ
-            window.openAvatarModal = function(id) {
-                const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id);
-                if (!p) return;
-                document.getElementById('modal-img').src = p.photo;
-                document.getElementById('modal-name').innerText = p.name.split(' (')[0];
-                document.getElementById('modal-prof').innerText = 'User';
-                document.getElementById('modal-desc').innerHTML = `<div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.langCode.toUpperCase()}</span></div>`;
-                const actionButtons = document.getElementById('modal-action-buttons');
-                if (id === 'me') { actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile(true);" class="btn-primary"><i class="fa-solid fa-pen"></i> Edit Profile</button>`; } 
-                else {
-                    actionButtons.innerHTML = `
-                        <button class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] flex flex-col items-center justify-center gap-1" onclick="window.closeAvatarModal(); window.switchTab(0);"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                        <button class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                        <button class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
-                    `;
-                }
-                document.getElementById('avatar-modal').classList.add('active');
-            };
-
-            window.openMyProfile = function() {
-                window.closeDropdown(); document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode;
-                document.getElementById('edit-profile-modal').classList.add('active');
-            };
-
-            window.saveProfileData = function() {
-                let nameVal = document.getElementById('edit-name').value.trim() || 'Guest';
-                const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex];
-                window.myProfileInfo = { id: 'me', name: nameVal + ' (You)', photo: window.currentPhotoData || window.myProfileInfo.photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji'), langCode: opt.getAttribute('data-lang') || 'en' };
-                localStorage.setItem('hf_prof_fixed', JSON.stringify(window.myProfileInfo)); 
-                window.closeProfileModal(); location.reload();
-            }
+        // БЕЗОШИБОЧНАЯ НАВИГАЦИЯ
+        window.switchTab = (idx) => {
+            const screens = ['message', 'voice-translator', 'conference', 'profession', 'social'];
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            window.handleFileUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; reader.readAsDataURL(file); }
-            window.openLocationModal = function() { window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); navigator.geolocation.getCurrentPosition( (position) => { mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" src="https://maps.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}&z=14&output=embed"></iframe>`; }, () => { mapContainer.innerHTML = '<span class="text-red-500">Failed to get location.</span>'; }); }
-            window.clearChat = function() { if(confirm("Clear chat?")) { db.ref(window.currentRoomId).remove().then(() => { document.getElementById('chat-messages').innerHTML = ''; }); } }
+            document.getElementById(screens[idx]).classList.add('active');
+            const navItems = document.querySelectorAll('.nav-item');
+            if(navItems[idx]) navItems[idx].classList.add('active');
+            window.closeDropdown();
+        };
 
-            if (!localStorage.getItem('hf_prof_fixed')) window.openMyProfile();
-            document.getElementById('voice-me-photo').src = window.myProfileInfo.photo;
-            document.getElementById('voice-me-flag').innerText = window.myProfileInfo.flag;
+        // ЧАТ И АМЕРИКАНЕЦ
+        window.sendMsg = () => {
+            const inp = document.getElementById('chat-input');
+            if(!inp.value.trim()) return;
+            db.ref("global_fixed_24").push({ text: inp.value, name: window.myProf.name, uid: window.myUid, flag: window.myProf.flag, lang: window.myProf.lang, photo: window.myProf.photo });
+            inp.value = '';
+        };
+
+        db.ref("global_fixed_24").on("child_added", async (snap) => {
+            const d = snap.val(); const isMe = d.uid === window.myUid;
+            
+            if(!isMe && !window.users.find(u => u.uid === d.uid)) {
+                window.users.push(d); window.drawSidebar();
+            }
+
+            const box = document.getElementById('chat-box');
+            const row = document.createElement('div');
+            row.className = `flex gap-2 w-full mt-2 ${isMe ? 'justify-end' : 'justify-start'}`;
+            row.innerHTML = `
+                ${!isMe ? `<img src="${d.photo}" class="w-10 h-10 rounded-full self-end object-cover border border-[#202c33]" onclick="window.openCV('${d.uid}')">` : ''}
+                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                    ${!isMe ? `<div class="text-[10px] font-bold text-[#00a884] ml-1 mb-1">${d.name}</div>` : ''}
+                    <div class="chat-bubble ${isMe ? 'bg-[#005c4b]' : 'bg-[#202c33]'}">${d.text}</div>
+                </div>
+            `;
+            box.appendChild(row);
+
+            if(!isMe) {
+                try {
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${window.myProf.lang}&dt=t&q=${encodeURIComponent(d.text)}`).then(r => r.json());
+                    const trans = res[0][0][0];
+                    const tDiv = document.createElement('div');
+                    tDiv.className = `flex w-full mt-1 ${isMe ? 'justify-end' : 'justify-start pl-12'}`;
+                    tDiv.innerHTML = `<div class="text-yellow-400 text-[11px] font-bold">${d.flag} ${trans}</div>`;
+                    box.appendChild(tDiv);
+                } catch(e){}
+            }
+            box.scrollTop = box.scrollHeight;
         });
+
+        window.drawSidebar = () => {
+            const side = document.getElementById('sidebar');
+            side.innerHTML = '<div class="w-12 h-12 rounded-full bg-[#005c4b] flex items-center justify-center text-white border border-[#202c33]">🌍</div>';
+            window.users.forEach(u => {
+                side.innerHTML += `<div class="relative" onclick="window.openCV('${u.uid}')"><img src="${u.photo}" class="w-12 h-12 rounded-full object-cover border border-[#202c33]"><span class="absolute -bottom-1 -right-1 text-[10px] bg-black px-1 rounded-full">${u.flag}</span></div>`;
+            });
+        };
+
+        // ЗАКРЫТИЕ ПО КЛИКУ
+        window.closeDropdown = () => { document.getElementById('header-dropdown')?.classList.remove('active'); document.getElementById('rh-menu')?.classList.remove('active'); };
+        window.toggleHeaderMenu = (e) => { e.stopPropagation(); document.getElementById('header-dropdown').classList.toggle('active'); };
+        window.toggleRhombus = (e) => { e.stopPropagation(); document.getElementById('rh-menu').classList.toggle('active'); };
+        document.body.addEventListener('click', () => { window.closeDropdown(); });
+
+        window.closeModals = () => document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
+        window.openProfile = () => { document.getElementById('modal-identity').classList.add('active'); window.closeDropdown(); };
+        
+        window.openCV = (uid) => {
+            const u = window.users.find(x => x.uid === uid) || (uid === window.myUid ? window.myProf : null);
+            if(!u) return;
+            document.getElementById('cv-body').innerHTML = `<img src="${u.photo}" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-[#00a884] object-cover"><h3 class="text-2xl font-bold">${u.name}</h3><p class="text-gray-400 mt-2">Language: ${u.lang.toUpperCase()}</p>`;
+            document.getElementById('modal-cv').classList.add('active');
+        };
+
+        window.openLocation = () => {
+            document.getElementById('modal-map').classList.add('active'); window.closeDropdown();
+            navigator.geolocation.getCurrentPosition(p => {
+                document.getElementById('map-target').innerHTML = `<iframe width="100%" height="100%" src="https://maps.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}&z=15&output=embed" style="border:none;"></iframe>`;
+            });
+        };
+
+        window.saveProfile = () => {
+            const name = document.getElementById('p-name').value || 'User';
+            const c = document.getElementById('p-country').value;
+            const flags = { un: '🌐', az: '🇦🇿', ru: '🇷🇺', us: '🇺🇸' };
+            const langs = { un: 'en', az: 'az', ru: 'ru', us: 'en' };
+            window.myProf = { name: name, flag: flags[c], lang: langs[c], photo: window.tempImg || `https://ui-avatars.com/api/?name=${name}&background=random` };
+            localStorage.setItem('hf_prof_24', JSON.stringify(window.myProf));
+            window.closeModals(); location.reload();
+        };
+
+        window.doPreview = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => { window.tempImg = ev.target.result; document.getElementById('p-img').src = ev.target.result; };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        // STARTUP
+        if(!localStorage.getItem('hf_prof_24')) window.openProfile();
+        document.getElementById('v-me-img').src = window.myProf.photo;
+        document.getElementById('p-img').src = window.myProf.photo;
+        document.getElementById('p-name').value = window.myProf.name;
     </script>
 </body>
 </html>
