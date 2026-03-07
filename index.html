@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V20.1</title>
+    <title>Hello Friends - Golden Master V20.0</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -19,6 +19,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+        /* НАТИВНАЯ ТИПОГРАФИКА И ЦВЕТА WHATSAPP DARK */
         :root { --wa-bg: #0b141a; --wa-panel: #111b21; --wa-border: #202c33; --wa-green: #00a884; --wa-msg-out: #005c4b; --wa-msg-in: #202c33; --wa-text: #e9edef; --wa-text-muted: #8696a0; --hf-purple: #a29bfe; }
         
         body { background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
@@ -27,7 +28,7 @@
         
         @media (max-width: 500px) { .mobile-screen { max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; border: none; } }
 
-        /* HEADER */
+        /* ВЕРХНИЙ ХЕДЕР */
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 50; flex-shrink: 0; }
         .logo-container { display: flex; align-items: center; gap: 12px; }
         .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; box-shadow: 0 0 10px rgba(0,168,132,0.4); }
@@ -36,16 +37,18 @@
         .header-icons i { cursor: pointer; transition: 0.2s; }
         .header-icons i:hover { color: var(--wa-green); }
 
+        /* МЕНЮ НАСТРОЕК */
         .header-dropdown { position: absolute; top: 60px; right: 10px; width: 230px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 14px 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; gap: 4px; z-index: 100; transform-origin: top right; animation: scaleIn 0.2s; }
         .header-dropdown.active { display: flex; }
         .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
         .header-dropdown a:hover { background: var(--wa-border); }
 
-        /* ПАНЕЛИ И ЧАТ */
+        /* ЭКРАНЫ */
         .page-content { display: none; flex-grow: 1; flex-direction: column; overflow: hidden; animation: fadeIn 0.3s; background: var(--wa-bg); }
         .page-content.active { display: flex; }
         .page-container { width: 100%; height: 100%; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
         
+        /* ВЕРТИКАЛЬНЫЕ КОНТАКТЫ СЛЕВА В ЧАТЕ */
         .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid var(--wa-border); overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; background: var(--wa-panel); }
         .chat-sidebar::-webkit-scrollbar { display: none; }
         .chat-contact { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 100%; transition: 0.2s;}
@@ -55,6 +58,7 @@
         .chat-contact-name { font-size: 0.6rem; color: var(--wa-text-muted); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 65px; text-align: center; }
         .chat-contact.active-room .chat-contact-name { color: var(--wa-green); font-weight: bold; }
 
+        /* ЧАТ И БЕГУЩАЯ СТРОКА */
         .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
         .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
         
@@ -67,6 +71,7 @@
         .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
         .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
 
+        /* ЖЕСТКО ЗАКРЕПЛЕННОЕ ПОЛЕ ВВОДА ЧАТА */
         .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border);}
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
         .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; padding: 4px 0; }
@@ -77,7 +82,7 @@
         .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); color: #111b21; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .send-btn:active { transform: scale(0.9); }
 
-        /* РОМБ И НАВИГАЦИЯ */
+        /* НИЖНЯЯ НАВИГАЦИЯ С ИНТЕГРИРОВАННЫМ РОМБОМ */
         .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px 16px 10px; flex-shrink: 0; position: relative; z-index: 50; width: 100%; }
         .nav-links-wrapper { display: flex; justify-content: space-around; flex-grow: 1; padding-right: 10px; }
         .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: color 0.3s; flex: 1; }
@@ -85,24 +90,28 @@
         .nav-item.active { color: var(--wa-green); }
         .nav-item.active i { transform: scale(1.15); }
 
+        /* ЧИСТЫЙ CSS ДЛЯ РОМБА БЕЗ ТЕЙЛВИНДА */
         .rhombus-wrapper { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
         .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(162, 155, 254, 0.4); transition: transform 0.3s; }
         .rhombus-btn.active { transform: rotate(180deg); }
         .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
         
+        /* ВЫПАДАЮЩЕЕ МЕНЮ РОМБА */
         .rhombus-menu { position: absolute; bottom: 65px; right: 0; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 12px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 100; }
         .rhombus-menu.active { display: grid; animation: scaleIn 0.2s;}
         .action-icon { width: 44px; height: 44px; background-color: var(--wa-border); color: var(--wa-text); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 1.1rem;}
         .action-icon:hover { background-color: var(--wa-green); color: #111b21; }
 
-        /* УМНЫЕ ШТОРКИ И КРЕСТИКИ */
+        /* УМНЫЕ ШТОРКИ И ИХ КНОПКИ ЗАКРЫТИЯ (КРЕСТИКИ) */
         .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
         .app-modal.active { display: flex !important; animation: fadeInBg 0.3s; }
         .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; display: flex; flex-direction: column; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .app-modal.active .app-modal-content { transform: translateY(0); }
         
+        /* ВЫДЕЛЕННЫЙ КРЕСТИК ЗАКРЫТИЯ ФОРМЫ */
         .close-sheet-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; background: var(--wa-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: var(--wa-text-muted); font-size: 1.2rem; cursor: pointer; transition: 0.2s; z-index: 50; }
         .close-sheet-btn:hover { background: #ef4444; color: white; }
+        
         .sheet-handle { width: 40px; height: 5px; background: #374151; border-radius: 5px; margin: 0 auto 20px auto; flex-shrink: 0; cursor: pointer;}
 
         /* ФОРМЫ */
@@ -112,7 +121,7 @@
         .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary:active { transform: scale(0.98); }
 
-        /* ВИДЕО */
+        /* ВИДЕО И АНИМАЦИИ (MEET) */
         .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
         .video-frame.main { grid-column: 1 / 3; padding-top: 65%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
@@ -185,6 +194,7 @@
                     <span class="text-white font-bold text-[0.95rem] tracking-wide" data-i18n="menu">Settings</span>
                     <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeDropdown()"></i>
                 </div>
+                
                 <a onclick="window.openMyProfile(true)"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 <a onclick="window.toggleLanguage()"><i class="fa-solid fa-globe text-blue-400 w-5"></i> <span id="lang-text" data-i18n="lang">Lang: EN</span></a>
                 <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
@@ -193,6 +203,7 @@
                 <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
                 <a onclick="document.getElementById('import-file-input').click(); window.closeDropdown()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
                 <a style="color: #ef4444;" onclick="window.logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="logout">Log Out</span></a>
+                
                 <div class="mt-2 pt-3 border-t border-[#202c33] flex justify-center items-center">
                     <span class="text-[#00a884] text-[0.65rem] font-bold tracking-widest uppercase">Author: Ilgar</span>
                 </div>
@@ -203,12 +214,18 @@
             
             <div id="message" class="page-content active h-full flex flex-col">
                 <div class="flex justify-between items-center px-4 py-2.5 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <button class="text-white font-bold flex items-center gap-2 hover:text-[#00a884] transition" onclick="window.switchChatRoom('global')"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> Global Chat</button>
-                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
+                    <button class="text-white font-bold flex items-center gap-2 hover:text-[#00a884] transition" onclick="window.switchChatRoom('global')" title="Global Room">
+                        <i class="fa-solid fa-globe text-[#00a884] text-xl"></i> Global Chat
+                    </button>
+                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition" title="Show Contacts">
+                        <i class="fa-solid fa-users text-lg"></i> Contacts
+                    </button>
                 </div>
                 
                 <div class="chat-info-marquee-container">
-                    <button onclick="window.toggleMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Auto-Translate"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+                    <button onclick="window.toggleMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Auto-Translate">
+                        <i class="fa-solid fa-closed-captioning text-xl"></i>
+                    </button>
                     <div id="typing-marquee-container" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
                         <span class="chat-info-marquee-text" id="chat-info-marquee">AI Translation System Active...</span>
                     </div>
@@ -219,9 +236,10 @@
                     <div class="flex flex-col flex-grow h-full overflow-hidden relative">
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input-area">
-                            <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
-                                <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('text')"></i>
-                                <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                            <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-1" onclick="window.toggleEmojiPicker('text')"></i>
+                            <div class="chat-input-pill">
+                                <input type="text" id="chat-input" placeholder="Message...">
+                                <i class="fa-solid fa-wand-magic-sparkles text-[#a29bfe] ml-2 cursor-pointer hover:text-white" onclick="window.applyAiMagic()" title="AI Rewrite"></i>
                             </div>
                             <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')" title="Voice to Text"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -236,7 +254,9 @@
                 </div>
 
                 <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+                    <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Voice Translation">
+                        <i class="fa-solid fa-closed-captioning text-xl"></i>
+                    </button>
                     <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
                         <span class="chat-info-marquee-text" id="voice-info-marquee">Waiting for voice input...</span>
                     </div>
@@ -313,10 +333,18 @@
                 <div class="page-container bg-[#0b141a] flex flex-col items-center justify-center h-full">
                     <h2 class="text-2xl font-bold text-white mb-8">Social Networks</h2>
                     <div class="grid grid-cols-2 gap-6 w-full max-w-[280px]">
-                        <a href="https://facebook.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#1877F2] transition shadow-lg"><i class="fa-brands fa-facebook text-4xl text-[#1877F2]"></i><span class="text-sm font-bold text-white">Facebook</span></a>
-                        <a href="https://instagram.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#E1306C] transition shadow-lg"><i class="fa-brands fa-instagram text-4xl text-[#E1306C]"></i><span class="text-sm font-bold text-white">Instagram</span></a>
-                        <a href="https://telegram.org" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#229ED9] transition shadow-lg"><i class="fa-brands fa-telegram text-4xl text-[#229ED9]"></i><span class="text-sm font-bold text-white">Telegram</span></a>
-                        <a href="https://linkedin.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#0A66C2] transition shadow-lg"><i class="fa-brands fa-linkedin text-4xl text-[#0A66C2]"></i><span class="text-sm font-bold text-white">LinkedIn</span></a>
+                        <a href="https://facebook.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#1877F2] transition shadow-lg">
+                            <i class="fa-brands fa-facebook text-4xl text-[#1877F2]"></i><span class="text-sm font-bold text-white">Facebook</span>
+                        </a>
+                        <a href="https://instagram.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#E1306C] transition shadow-lg">
+                            <i class="fa-brands fa-instagram text-4xl text-[#E1306C]"></i><span class="text-sm font-bold text-white">Instagram</span>
+                        </a>
+                        <a href="https://telegram.org" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#229ED9] transition shadow-lg">
+                            <i class="fa-brands fa-telegram text-4xl text-[#229ED9]"></i><span class="text-sm font-bold text-white">Telegram</span>
+                        </a>
+                        <a href="https://linkedin.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#0A66C2] transition shadow-lg">
+                            <i class="fa-brands fa-linkedin text-4xl text-[#0A66C2]"></i><span class="text-sm font-bold text-white">LinkedIn</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -362,11 +390,13 @@
             <div class="app-modal-content" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
+                
                 <div class="flex items-center gap-4 mb-4 mt-2">
                     <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
                     <div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div>
                 </div>
                 <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
+                
                 <div class="flex gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
         </div>
@@ -524,6 +554,7 @@
         // === ИНИЦИАЛИЗАЦИЯ И ЛОГИКА ===
         document.addEventListener('DOMContentLoaded', () => {
 
+            // СИСТЕМА ЛОКАЛИЗАЦИИ
             const i18n = {
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN" },
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU" },
@@ -611,23 +642,20 @@
             window.participants = [aiBot];
             window.allCharacters.forEach(c => { if (c.id !== myChar.id && c.id !== 'guest') window.participants.push(c); });
 
-            // МУЛЬТИПЛЕЕР: Функция отрисовки сайдбара
-            window.renderSidebar = function() {
-                const chatSidebar = document.getElementById('chat-sidebar');
-                if (!chatSidebar) return;
-                chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" id="chat-btn-global" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" id="chat-btn-ai" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myUsername.toLowerCase().trim()) ? 'active-room' : ''}" id="chat-btn-me" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
+            const chatSidebar = document.getElementById('chat-sidebar');
+            if (chatSidebar) {
+                chatSidebar.innerHTML = `<div class="chat-contact active-room" id="chat-btn-global" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact" id="chat-btn-ai" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact" id="chat-btn-me" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
                 window.participants.filter(p => p.id !== 'ai').forEach(p => {
-                    let expectedId = "private_" + [window.myUsername.toLowerCase().trim(), p.name.split(' ')[0].toLowerCase().trim()].sort().join('_');
-                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${p.name.split(' ')[0]}</span></div>`;
+                    chatSidebar.innerHTML += `<div class="chat-contact" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${p.name.split(' ')[0]}</span></div>`;
                 });
-            };
-            window.renderSidebar();
+            }
 
             window.switchChatRoom = function(targetId) {
                 if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
                 const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
+                document.querySelectorAll('.chat-contact').forEach(el => el.classList.remove('active-room')); document.getElementById('chat-btn-' + targetId)?.classList.add('active-room');
                 
                 if (targetId === 'global') window.currentRoomId = "global";
                 else if (targetId === 'ai') window.currentRoomId = "private_ai_bot";
@@ -636,24 +664,12 @@
                     const targetUser = window.participants.find(p => p.id === targetId);
                     if(targetUser) window.currentRoomId = "private_" + [window.myUsername.toLowerCase().trim(), targetUser.name.split(' ')[0].toLowerCase().trim()].sort().join('_'); 
                 }
-                
-                window.renderSidebar(); // Обновляем активный класс
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim(); if(!text) return;
-                // ОТПРАВЛЯЕМ ПОЛНЫЕ ДАННЫЕ ПРОФИЛЯ ДЛЯ ДРУГИХ УСТРОЙСТВ
-                db.ref(window.currentRoomId).push({ 
-                    name: window.myUsername, 
-                    text: text, 
-                    sessionId: window.mySessionId, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    photo: window.myProfileInfo.photo,
-                    flag: window.myProfileInfo.flag,
-                    flagCode: window.myProfileInfo.flagCode,
-                    langCode: window.myProfileInfo.langCode
-                });
+                db.ref(window.currentRoomId).push({ name: window.myUsername, text: text, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP });
                 document.getElementById('chat-input').value = '';
                 if(window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Assistant", text: "Translating global connections! 🚀", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP }); }, 1500); }
             }
@@ -664,23 +680,7 @@
                 const chatMessages = document.getElementById('chat-messages');
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername; 
                 const isAI = data.sessionId === "ai-bot-session";
-                
-                // ДИНАМИЧЕСКОЕ ДОБАВЛЕНИЕ НЕИЗВЕСТНЫХ ПОЛЬЗОВАТЕЛЕЙ (С ДРУГИХ ТЕЛЕФОНОВ)
-                let knownUser = window.participants.find(part => part.name === data.name);
-                if (!knownUser && !isMe && !isAI && data.name) {
-                    let newUser = {
-                        id: 'user_' + Math.random().toString(36).substr(2,9),
-                        name: data.name,
-                        photo: data.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(data.name) + '&background=00a884&color=fff',
-                        flag: data.flag || '🌐',
-                        flagCode: data.flagCode || 'un',
-                        langCode: data.langCode || 'en'
-                    };
-                    window.participants.push(newUser);
-                    window.renderSidebar(); // Обновляем сайдбар
-                }
-
-                let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.name === data.name) || { photo: 'https://ui-avatars.com/api/?name='+data.name, langCode: 'en', flag: '🌐' }));
+                let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.name.includes(data.name)) || { photo: 'https://ui-avatars.com/api/?name='+data.name, langCode: 'en', flag: '🌐' }));
                 
                 const messageGroup = document.createElement('div');
                 messageGroup.className = "flex flex-col w-full mt-3 mb-2";
@@ -694,13 +694,15 @@
                 messageGroup.appendChild(msgWrapper);
                 if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-                // ПЕРЕВОД ДЛЯ ВСЕХ УЧАСТНИКОВ (ФИКС: БЕЗ ФИЛЬТРАЦИИ ПО ЯЗЫКУ)
                 let targetUsers = [];
                 if (window.currentRoomId === 'global' && !isAI) { 
+                    let senderLang = p.langCode || 'en';
+                    let seen = new Set([senderLang]); 
+                    
                     let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
                     allMembers.forEach(member => {
-                        // Переводим для всех, КРОМЕ отправителя
-                        if (member.name !== data.name && member.langCode !== 'un') {
+                        if (!seen.has(member.langCode) && member.langCode !== 'un') {
+                            seen.add(member.langCode);
                             targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo });
                         }
                     });
@@ -750,7 +752,7 @@
                         if (window.isMarqueeEnabled !== false && mText) { 
                             mText.innerHTML = `<span class="text-white mr-2">${data.name}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
                             mText.style.animation = 'none'; 
-                            void mText.offsetWidth; // Жесткий рефлоу
+                            void mText.offsetWidth;
                             mText.style.animation = null; 
                         } 
                     } catch (e) {}
@@ -865,7 +867,9 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; });
             }
 
-            // ШТОРКА CV
+            // =========================================================================
+            // ОБНОВЛЕННЫЕ КНОПКИ CV (CHAT, SMS, EMAIL)
+            // =========================================================================
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : (window.participants.find(part => part.id === id) || window.allCharacters.find(part => part.id === id));
                 if (!p) return;
@@ -897,7 +901,7 @@
                 document.getElementById('avatar-modal').classList.add('active');
             };
 
-            // РЕГИСТРАЦИЯ И АВТО-ПРЕФИКС
+            // РЕГИСТРАЦИЯ И АВТО-ПРЕФИКС (С ЗАКРЫТИЕМ ПРИ СОХРАНЕНИИ)
             window.openMyProfile = function(isCV = false) {
                 window.closeDropdown(); const cvFields = document.getElementById('cv-extended-fields');
                 if (window.isGuest && !isCV) { document.getElementById('profile-modal-title').innerText = 'Registration'; cvFields.style.display = 'none'; document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } 
@@ -925,8 +929,8 @@
                 const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; const cData = countryData[sel.value] || countryData['un'];
                 let customProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji'), country: opt.getAttribute('data-name'), langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value, profession: document.getElementById('edit-prof').value, languages: document.getElementById('edit-langs').value, desc: document.getElementById('edit-desc').value };
                 localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile)); localStorage.setItem('hf_active_user', newId); 
-                window.closeProfileModal(); 
-                location.reload(); 
+                window.closeProfileModal(); // Авто-закрытие
+                location.reload(); // Перезагрузка для обновления данных везде
             }
 
             window.openBankTransferModal = function() {
@@ -960,6 +964,7 @@
                 });
             };
 
+            // ЭКСПОРТ И ИМПОРТ ФАЙЛОВ
             window.exportData = function() {
                 window.closeDropdown();
                 let data = {};
@@ -1008,7 +1013,9 @@
             }
             renderProfessionList();
 
-            // БЕЗОПАСНАЯ ЛОКАЦИЯ (HTTPS Карта)
+            // =========================================================================
+            // ИСПРАВЛЕННАЯ ЛОГИКА ГЕОЛОКАЦИИ (РАБОТАЮЩАЯ КАРТА HTTPS)
+            // =========================================================================
             window.openLocationModal = function() {
                 window.closeDropdown(); 
                 document.getElementById('location-modal').classList.add('active'); 
@@ -1016,6 +1023,7 @@
                 mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>';
                 
                 const loadMap = (lat, lon) => { 
+                    // Правильный HTTPS протокол для встраивания Google Maps
                     mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; 
                 };
                 
