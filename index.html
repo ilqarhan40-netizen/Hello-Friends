@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V20.2</title>
+    <title>Hello Friends - Golden Master V20.3</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -23,26 +23,25 @@
         
         body { background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
         
-        .mobile-screen { width: 100%; max-width: 400px; height: 100vh; background: var(--wa-bg); border-radius: 0; display: flex; flex-direction: column; color: var(--wa-text); overflow: hidden; position: relative; }
+        .mobile-screen { width: 100%; max-width: 400px; height: 100vh; background: var(--wa-bg); display: flex; flex-direction: column; color: var(--wa-text); overflow: hidden; position: relative; }
         @media (min-height: 700px) and (min-width: 500px) { .mobile-screen { height: 85vh; border-radius: 40px; border: 4px solid #1f2937; box-shadow: 0 25px 60px rgba(0,0,0,0.8); } }
 
         /* HEADER */
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 100; flex-shrink: 0; }
         .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; }
         
-        /* ГЛАВНОЕ МЕНЮ */
         .header-dropdown { position: absolute; top: 60px; right: 10px; width: 230px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 14px 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; gap: 4px; z-index: 200; transform-origin: top right; }
         .header-dropdown.active { display: flex; }
-        .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
         .header-dropdown a:hover { background: var(--wa-border); }
 
-        /* ЭКРАНЫ - ЖЕСТКАЯ БЛОКИРОВКА ОТОБРАЖЕНИЯ */
-        .page-content { display: none !important; flex-grow: 1; flex-direction: column; overflow: hidden; background: var(--wa-bg); height: 100%; width: 100%; }
-        .page-content.active { display: flex !important; animation: fadeIn 0.2s ease-in-out; }
+        /* ГЛАВНЫЙ ФИКС: ЭКРАНЫ */
+        .page-content { display: none !important; flex-grow: 1; flex-direction: column; overflow: hidden; background: var(--wa-bg); height: 100%; width: 100%; position: absolute; top: 0; left: 0; }
+        .page-content.active { display: flex !important; position: relative; animation: fadeIn 0.2s ease-in-out; }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* ЧАТ */
+        /* ЧАТ ЛОГИКА */
         .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid var(--wa-border); overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; background: var(--wa-panel); }
         .chat-contact-icon { width: 48px; height: 48px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid transparent; position: relative; }
         .chat-contact.active-room .chat-contact-icon { border-color: var(--wa-green); }
@@ -56,28 +55,31 @@
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
         .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; }
 
-        /* БЕГУЩАЯ СТРОКА */
+        /* МАРКИ (БЕГУЩАЯ СТРОКА) */
         .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
         .chat-info-marquee-text { display: inline-block; white-space: nowrap; animation: scroll-text 10s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; }
         @keyframes scroll-text { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
 
-        /* НИЖНЯЯ НАВИГАЦИЯ */
+        /* НАВИГАЦИЯ */
         .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px 16px 10px; flex-shrink: 0; z-index: 100; }
-        .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; cursor: pointer; flex: 1; }
-        .nav-item.active { color: var(--wa-green); }
+        .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; cursor: pointer; flex: 1; transition: 0.2s; }
+        .nav-item.active { color: var(--wa-green); transform: translateY(-2px); }
 
         /* РОМБ */
         .rhombus-wrapper { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
-        .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; }
+        .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 12px rgba(162, 155, 254, 0.4); }
         .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
         .rhombus-menu { position: absolute; bottom: 65px; right: 0; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 12px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 300; }
-        .rhombus-menu.active { display: grid; }
+        .rhombus-menu.active { display: grid; animation: scaleIn 0.2s; }
+        @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         /* ШТОРКИ */
-        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(5px); }
         .app-modal.active { display: flex !important; }
-        .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; max-height: 90vh; overflow-y: auto; }
-        .close-sheet-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; background: var(--wa-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; cursor: pointer; z-index: 100; }
+        .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; max-height: 90vh; overflow-y: auto; transform: translateY(0); animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .close-sheet-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; background: var(--wa-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; cursor: pointer; z-index: 100; transition: 0.2s; }
         .close-sheet-btn:hover { background: #ef4444; }
 
         /* ВИДЕО */
@@ -85,10 +87,11 @@
         .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
         .video-frame.main { grid-column: 1 / 3; padding-top: 65%; border: 2px solid var(--wa-green); }
         .video-frame video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); padding: 4px 0; z-index: 20; }
+        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.7); padding: 4px 0; z-index: 20; }
         
-        .light-theme { background: #efeae2; color: #111b21; }
-        .light-theme .app-header, .light-theme .bottom-nav-container { background: white; }
+        .form-input-box { width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--wa-border); background: var(--wa-bg); color: white; outline: none; margin-bottom: 12px; }
+        .btn-primary { width: 100%; padding: 16px; border-radius: 16px; background: var(--wa-green); color: #111b21; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary:active { transform: scale(0.98); }
 
         ::-webkit-scrollbar { width: 0px; }
     </style>
@@ -125,9 +128,9 @@
             </div>
         </header>
 
-        <main class="flex-grow relative flex flex-col overflow-hidden">
+        <main class="flex-grow relative overflow-hidden">
             
-            <div id="message" class="page-content active">
+            <div id="screen-chat" class="page-content active">
                 <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0 text-sm">
                     <button class="text-white font-bold" onclick="window.switchChatRoom('global')">🌍 Global Chat</button>
                     <button class="text-[#8696a0] font-bold">👥 Contacts</button>
@@ -143,66 +146,59 @@
                     <div class="flex flex-col flex-grow h-full overflow-hidden relative">
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input-area">
-                            <i class="fa-regular fa-face-smile text-[#8696a0] text-xl cursor-pointer" onclick="window.toggleEmojiPicker('text')"></i>
+                            <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer" onclick="window.toggleEmojiPicker('text')"></i>
                             <div class="chat-input-pill"><input type="text" id="chat-input" placeholder="Message..."></div>
-                            <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')"><i class="fa-solid fa-microphone"></i></button>
+                            <button id="main-chat-mic-btn" class="w-10 h-10 rounded-full bg-[#202c33] text-[#8696a0]" onclick="window.startMic('chat', 'main-chat-mic-btn')"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane"></i></button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="voice-translator" class="page-content">
-                <div class="flex justify-center items-center py-4 bg-[#111b21] shrink-0 border-b border-[#202c33]">
+            <div id="screen-voice" class="page-content">
+                <div class="flex justify-center items-center py-4 bg-[#111b21] border-b border-[#202c33]">
                     <h2 class="text-3xl" style="font-family: 'Allura', cursive; color: var(--hf-purple);">Voice Room</h2>
                 </div>
-                <div class="chat-info-marquee-container"><div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full"><span class="chat-info-marquee-text" id="voice-info-marquee">Waiting for voice input...</span></div></div>
+                <div class="chat-info-marquee-container"><div class="overflow-hidden flex-grow flex items-center h-full"><span class="chat-info-marquee-text" id="voice-info-marquee">Waiting for voice input...</span></div></div>
                 <div class="flex-grow flex flex-col justify-center items-center">
                     <div class="flex justify-center items-center gap-8">
-                        <img id="voice-friend-photo" src="" class="w-24 h-24 rounded-full border-2 border-gray-600 object-cover">
+                        <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=F&background=random" class="w-24 h-24 rounded-full border-2 border-gray-600 object-cover">
                         <div class="flex gap-2 text-[#00a884]"><div class="w-1.5 h-8 bg-[#00a884] rounded-full animate-bounce"></div><div class="w-1.5 h-12 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div></div>
                         <div class="relative"><div class="pulse-ring"></div><img id="voice-me-photo" src="" class="w-24 h-24 rounded-full border-4 border-[#00a884] relative z-10 object-cover"></div>
                     </div>
                 </div>
                 <div class="chat-input-area bg-[#111b21]">
-                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-4 py-2 border border-[#2a3942]">
-                        <i class="fa-regular fa-face-smile text-[#8696a0] text-xl mr-2"></i>
-                        <input type="text" id="voice-chat-input" placeholder="Voice Message..." class="bg-transparent text-white w-full outline-none">
-                    </div>
-                    <button class="w-10 h-10 rounded-full bg-red-500 text-white shadow-lg" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
-                    <button id="voice-mic-btn-input" class="w-10 h-10 rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942]" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
+                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-4 py-2 border border-[#2a3942]"><input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent text-white w-full outline-none"></div>
+                    <button class="w-10 h-10 rounded-full bg-red-500 text-white" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
+                    <button id="voice-mic-btn-input" class="w-10 h-10 rounded-full bg-[#202c33] text-[#8696a0]" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-10 h-10 rounded-full bg-[#00a884] text-[#111b21]" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
 
-            <div id="conference" class="page-content">
-                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <span class="font-bold text-[#00a884] tracking-widest uppercase"><i class="fa-solid fa-video"></i> Conference</span>
-                    <span class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full animate-pulse text-xs">● REC</span>
-                </div>
+            <div id="screen-meet" class="page-content">
+                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] text-sm font-bold uppercase"><span class="text-[#00a884]">Conference</span><span class="text-red-500 animate-pulse">● REC</span></div>
                 <div class="flex-grow overflow-y-auto p-2"><div class="video-grid" id="conference-grid"></div></div>
                 <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0">
                     <button onclick="window.toggleMeetMarquee()" class="w-11 h-11 rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl"><i class="fa-solid fa-closed-captioning"></i></button>
-                    <button id="conf-cam-btn" class="w-11 h-11 rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video"></i></button>
+                    <button id="conf-cam-btn" class="w-11 h-11 rounded-full bg-[#202c33] text-white" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video"></i></button>
                     <button class="w-11 h-11 rounded-full bg-red-500 text-white shadow-lg" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
                 <div class="chat-input-area bg-[#111b21]">
-                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-4 py-2 border border-[#2a3942]"><input type="text" id="conf-chat-input" placeholder="Message Conf..." class="bg-transparent text-white w-full outline-none"></div>
-                    <button id="conf-mic-btn-input" class="w-10 h-10 rounded-full bg-[#202c33] text-[#8696a0]" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
+                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-4 py-2 border border-[#2a3942]"><input type="text" id="conf-chat-input" placeholder="Message..." class="bg-transparent text-white w-full outline-none"></div>
                     <button class="w-10 h-10 rounded-full bg-[#00a884] text-[#111b21]" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
 
-            <div id="profession" class="page-content">
+            <div id="screen-cv" class="page-content">
                 <div class="p-4 h-full overflow-y-auto"><h2 class="text-xl font-bold mb-4">Global Talents</h2><div id="profession-list" class="grid grid-cols-2 gap-4 pb-20"></div></div>
             </div>
 
-            <div id="social" class="page-content">
-                <div class="flex flex-col items-center justify-center h-full gap-6">
+            <div id="screen-social" class="page-content">
+                <div class="flex flex-col items-center justify-center h-full gap-8">
                     <h2 class="text-2xl font-bold">Social Networks</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <a href="#" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-2"><i class="fa-brands fa-facebook text-4xl text-blue-500"></i><span>Facebook</span></a>
-                        <a href="#" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-2"><i class="fa-brands fa-instagram text-4xl text-pink-500"></i><span>Instagram</span></a>
+                    <div class="grid grid-cols-2 gap-6">
+                        <a href="https://facebook.com" target="_blank" class="bg-[#202c33] p-8 rounded-3xl flex flex-col items-center gap-2"><i class="fa-brands fa-facebook text-5xl text-blue-500"></i><span>Facebook</span></a>
+                        <a href="https://instagram.com" target="_blank" class="bg-[#202c33] p-8 rounded-3xl flex flex-col items-center gap-2"><i class="fa-brands fa-instagram text-5xl text-pink-500"></i><span>Instagram</span></a>
                     </div>
                 </div>
             </div>
@@ -210,7 +206,7 @@
         </main>
 
         <div class="bottom-nav-container">
-            <div class="nav-links-wrapper flex grow justify-around">
+            <div class="flex grow justify-around">
                 <div class="nav-item active" onclick="window.switchTab(0)"><i class="fa-solid fa-message text-xl"></i><span data-i18n="chat">Chat</span></div>
                 <div class="nav-item" onclick="window.switchTab(1)"><i class="fa-solid fa-microphone-lines text-xl"></i><span data-i18n="voice">Voice</span></div>
                 <div class="nav-item" onclick="window.switchTab(2)"><i class="fa-solid fa-video text-xl"></i><span data-i18n="meet">Meet</span></div>
@@ -220,7 +216,7 @@
             <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu">
-                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] text-[#00a884] p-1 rounded-lg text-xs font-bold outline-none border border-[#2a3942]">
+                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] text-[#00a884] p-1 rounded-lg text-xs font-bold border border-[#2a3942]">
                         <option value="en-US">🇬🇧 EN</option><option value="az-AZ">🇦🇿 AZ</option><option value="ru-RU">🇷🇺 RU</option><option value="it-IT">🇮🇹 IT</option>
                     </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown()"><i class="fa-solid fa-video"></i></div>
@@ -238,7 +234,7 @@
                     <img id="modal-img" src="" class="w-20 h-20 rounded-full border-2 border-[#00a884] object-cover">
                     <div><h3 id="modal-name" class="text-2xl font-bold"></h3><span id="modal-prof" class="text-[#a29bfe] font-bold"></span></div>
                 </div>
-                <div id="modal-desc" class="text-sm mb-6 space-y-4"></div>
+                <div id="modal-desc" class="text-sm mb-6 space-y-4 text-gray-300"></div>
                 <div class="flex gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
         </div>
@@ -249,17 +245,17 @@
                 <h2 class="text-xl font-bold mb-6 text-center">My Profile</h2>
                 <div class="flex justify-center mb-6"><div class="relative"><img id="edit-preview-photo" src="" class="w-20 h-20 rounded-full border-2 border-[#00a884] object-cover"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] w-7 h-7 rounded-full text-xs text-[#111b21] border-2 border-[#111b21]"><i class="fa-solid fa-camera"></i></button></div></div>
                 <input type="file" id="photo-upload-input" class="hidden" onchange="window.handleFileUpload(event)">
-                <label class="form-label">Full Name</label><input type="text" id="edit-name" class="form-input-box">
-                <label class="form-label">Country</label>
+                <label class="form-label text-xs font-bold text-[#00a884] uppercase">Full Name</label><input type="text" id="edit-name" class="form-input-box">
+                <label class="form-label text-xs font-bold text-[#00a884] uppercase">Country</label>
                 <select id="edit-country-select" class="form-input-box" onchange="window.handleCountryChange(this)">
-                    <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option>
-                    <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
-                    <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
-                    <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
-                    <option value="us" data-name="USA" data-emoji="🇺🇸" data-lang="en">USA</option>
+                    <option value="un" data-emoji="🌐" data-lang="en">Global</option>
+                    <option value="az" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
+                    <option value="ru" data-emoji="🇷🇺" data-lang="ru">Russia</option>
+                    <option value="it" data-emoji="🇮🇹" data-lang="it">Italy</option>
+                    <option value="us" data-emoji="🇺🇸" data-lang="en">USA</option>
                 </select>
-                <label class="form-label">Phone</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
-                <label class="form-label">Bio / CV</label><textarea id="edit-desc" class="form-input-box h-20"></textarea>
+                <label class="form-label text-xs font-bold text-[#00a884] uppercase">Phone</label><input type="tel" id="edit-phone" class="form-input-box">
+                <label class="form-label text-xs font-bold text-[#00a884] uppercase">Bio / CV</label><textarea id="edit-desc" class="form-input-box h-20"></textarea>
                 <button onclick="window.saveProfileData()" class="btn-primary">Save Changes</button>
             </div>
         </div>
@@ -267,7 +263,7 @@
         <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
             <div class="app-modal-content h-[70vh]">
                 <div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> Location</h2>
+                <h2 class="text-xl font-bold mb-4">Location</h2>
                 <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl overflow-hidden flex items-center justify-center"></div>
             </div>
         </div>
@@ -287,37 +283,37 @@
 
     <script>
         // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ЗАКРЫТИЯ ===
-        window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
-        window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
-        window.closeSearchModal = function() { document.getElementById('search-modal')?.classList.remove('active'); };
-        window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
-        window.closeTrashModal = function() { document.getElementById('trash-modal')?.classList.remove('active'); };
-        window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal')?.classList.remove('active'); };
-        window.closeEmailModal = function() { document.getElementById('email-modal')?.classList.remove('active'); };
-        window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
-        window.closeDropdown = function() { 
+        window.closeAvatarModal = () => document.getElementById('avatar-modal').classList.remove('active');
+        window.closeProfileModal = () => document.getElementById('edit-profile-modal').classList.remove('active');
+        window.closeBankTransferModal = () => document.getElementById('transfer-modal').classList.remove('active');
+        window.closeLocationModal = () => document.getElementById('location-modal').classList.remove('active');
+        window.closeDropdown = () => { 
             document.getElementById('header-dropdown')?.classList.remove('active'); 
             document.getElementById('rhombus-actions')?.classList.remove('active'); 
         }
-        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
-        window.toggleRhombusMenu = function(e) { e.stopPropagation(); document.getElementById('rhombus-actions')?.classList.toggle('active'); }
-        document.body.addEventListener('click', () => { window.closeDropdown(); });
+        window.toggleHeaderMenu = (e) => { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); }
+        window.toggleRhombusMenu = (e) => { e.stopPropagation(); document.getElementById('rhombus-actions')?.classList.toggle('active'); }
+        document.body.addEventListener('click', () => window.closeDropdown());
 
         document.addEventListener('DOMContentLoaded', () => {
-            // FIREBASE
             const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            // TAB SWITCHING (ROBUST)
+            // ЖЕСТКОЕ ПЕРЕКЛЮЧЕНИЕ ТАБОВ
             window.switchTab = function(index) {
-                const pages = document.querySelectorAll('.page-content');
-                const items = document.querySelectorAll('.nav-item');
-                pages.forEach(p => p.classList.remove('active'));
-                items.forEach(i => i.classList.remove('active'));
-                pages[index].classList.add('active');
-                items[index].classList.add('active');
+                const screens = ['screen-chat', 'screen-voice', 'screen-meet', 'screen-cv', 'screen-social'];
+                const navItems = document.querySelectorAll('.nav-item');
+                
+                document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+                navItems.forEach(i => i.classList.remove('active'));
+                
+                const target = document.getElementById(screens[index]);
+                if (target) target.classList.add('active');
+                navItems[index].classList.add('active');
+                
                 if(index === 2) window.initConference();
+                window.closeDropdown();
             };
 
             // i18n
@@ -328,11 +324,11 @@
                 it: { chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Profilo", wallet: "Banca", theme: "Tema", export: "Esporta", import: "Importa", logout: "Esci", lang: "Lingua: IT" }
             };
             window.appLang = localStorage.getItem('hf_app_lang') || 'en';
-            window.applyTranslations = function() {
+            window.applyTranslations = () => {
                 const dict = i18n[window.appLang];
                 document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = dict[el.getAttribute('data-i18n')] || el.innerText; });
             };
-            window.toggleLanguage = function() {
+            window.toggleLanguage = () => {
                 const langs = ['en','ru','az','it'];
                 window.appLang = langs[(langs.indexOf(window.appLang) + 1) % langs.length];
                 localStorage.setItem('hf_app_lang', window.appLang);
@@ -341,35 +337,18 @@
             };
             window.applyTranslations();
 
-            // USER PROFILE & SYNC
-            let activeUserId = localStorage.getItem('hf_active_user');
-            window.isGuest = !activeUserId;
+            // ПРОФИЛЬ
+            window.myProfileInfo = JSON.parse(localStorage.getItem('hf_custom_me')) || { name: 'Guest', photo: 'https://ui-avatars.com/api/?name=G&background=00a884', flagCode: 'un', flag: '🌐', langCode: 'en' };
             window.mySessionId = Math.random().toString(36).substring(2, 15);
             window.currentRoomId = "global";
-
-            const countryData = {
-                "un": { phone: "+", desc: "Global user" },
-                "az": { phone: "+994", desc: "Azerbaijan - Land of Fire" },
-                "ru": { phone: "+7", desc: "Russia" },
-                "it": { phone: "+39", desc: "Italy" },
-                "us": { phone: "+1", desc: "USA" }
-            };
-
-            window.myProfileInfo = JSON.parse(localStorage.getItem('hf_custom_me')) || { 
-                name: 'Guest', 
-                photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff',
-                flagCode: 'un', flag: '🌐', langCode: 'en'
-            };
-            window.myUsername = window.myProfileInfo.name;
-
             window.participants = [];
 
-            // CHAT LOGIC
+            // ЧАТ (МУЛЬТИПЛЕЕР)
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim();
                 if(!text) return;
-                db.ref(window.currentRoomId).push({
-                    name: window.myUsername, text: text, sessionId: window.mySessionId,
+                db.ref("global").push({
+                    name: window.myProfileInfo.name, text: text, sessionId: window.mySessionId,
                     photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag,
                     langCode: window.myProfileInfo.langCode, flagCode: window.myProfileInfo.flagCode
                 });
@@ -381,41 +360,36 @@
                 const isMe = data.sessionId === window.mySessionId;
                 const chatMessages = document.getElementById('chat-messages');
 
-                // Dynamic Participant Add
                 if (!isMe && !window.participants.find(u => u.name === data.name)) {
                     window.participants.push({ name: data.name, photo: data.photo, flag: data.flag, langCode: data.langCode, id: data.sessionId, flagCode: data.flagCode });
                     window.renderSidebar();
                 }
 
                 const wrapper = document.createElement('div');
-                wrapper.className = `flex gap-2 w-full mt-2 ${isMe ? 'justify-end' : 'justify-start'} ${isMe ? 'outgoing' : 'incoming'}`;
+                wrapper.className = `flex gap-2 w-full mt-2 ${isMe ? 'justify-end' : 'justify-start'}`;
                 wrapper.innerHTML = `
                     ${!isMe ? `<img src="${data.photo}" class="w-8 h-8 rounded-full self-end object-cover">` : ''}
-                    <div class="chat-bubble-wrapper flex flex-col">
-                        <div class="chat-sender-name">${!isMe ? data.name : ''}</div>
-                        <div class="chat-bubble">${data.text}</div>
+                    <div class="chat-bubble flex flex-col ${isMe ? 'bg-[#005c4b]' : 'bg-[#202c33]'}">
+                        <div class="text-[0.6rem] text-[#00a884] font-bold">${!isMe ? data.name : ''}</div>
+                        <div class="text-white">${data.text}</div>
                     </div>
                 `;
                 chatMessages.appendChild(wrapper);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                // Translations
-                if (window.currentRoomId === 'global' && !isMe) {
-                    let transText = '';
+                if (!isMe) {
                     const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${window.myProfileInfo.langCode}&dt=t&q=${encodeURIComponent(data.text)}`).then(r => r.json());
                     const translated = res[0][0][0];
-                    
                     const transRow = document.createElement('div');
                     transRow.className = "pl-10 text-yellow-400 text-xs font-bold mt-1";
                     transRow.innerText = `${data.flag} ${translated}`;
                     chatMessages.appendChild(transRow);
                     chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                    // Marquee update
+                    
                     const mText = document.getElementById('chat-info-marquee');
-                    if(mText) {
-                        mText.innerHTML = `${data.name}: ${translated}`;
-                        mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
+                    if(mText) { 
+                        mText.innerHTML = `${data.name}: ${translated}`; 
+                        mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; 
                     }
                 }
             }
@@ -425,77 +399,67 @@
                 const sidebar = document.getElementById('chat-sidebar');
                 sidebar.innerHTML = `<div class="chat-contact active-room" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] flex justify-center items-center text-white text-xl">🌍</div></div>`;
                 window.participants.forEach(p => {
-                    sidebar.innerHTML += `<div class="chat-contact" onclick="window.openAvatarModal('${p.id}')"><div class="chat-contact-icon" style="background-image:url(${p.photo})"><span class="absolute -bottom-1 -right-1 text-[10px]">${p.flag}</span></div></div>`;
+                    sidebar.innerHTML += `<div class="chat-contact" onclick="window.openAvatarModal('${p.id}')"><div class="chat-contact-icon" style="background-image:url(${p.photo})"><span class="absolute -bottom-1 -right-1 text-[10px] bg-black rounded-full">${p.flag}</span></div></div>`;
                 });
             };
 
-            // BANKING
-            window.openBankTransferModal = function() {
-                window.closeDropdown();
-                const sel = document.getElementById('transfer-recipient');
-                sel.innerHTML = '<option value="" disabled selected>Select Recipient</option>';
-                window.participants.forEach(p => { sel.innerHTML += `<option value="${p.name}">${p.name} ${p.flag}</option>`; });
-                document.getElementById('transfer-modal').classList.add('active');
-            };
-            window.sendMoney = function(e) {
-                e.preventDefault();
-                const name = document.getElementById('transfer-recipient').value;
-                const amt = document.getElementById('transfer-amount').value;
-                alert(`Successfully sent $${amt} to ${name}!`);
-                window.closeBankTransferModal();
-                db.ref(window.currentRoomId).push({ name: window.myUsername, text: `💸 Sent $${amt} to ${name}`, sessionId: window.mySessionId, photo: window.myProfileInfo.photo, flag: '💰' });
+            // CV МОДАЛКА (3 КНОПКИ)
+            window.openAvatarModal = function(id) {
+                const p = window.participants.find(part => part.id === id); if(!p) return;
+                document.getElementById('modal-img').src = p.photo;
+                document.getElementById('modal-name').innerText = p.name;
+                document.getElementById('modal-desc').innerText = `Native Language: ${p.langCode.toUpperCase()}`;
+                const btns = document.getElementById('modal-action-buttons');
+                btns.innerHTML = `
+                    <button class="flex-1 p-3 bg-[#202c33] rounded-xl text-xs font-bold" onclick="window.closeAvatarModal(); window.switchTab(0);"><i class="fa-solid fa-comment text-[#00a884] mb-1 block"></i> Chat</button>
+                    <button class="flex-1 p-3 bg-[#202c33] rounded-xl text-xs font-bold"><i class="fa-solid fa-phone text-blue-400 mb-1 block"></i> SMS</button>
+                    <button class="flex-1 p-3 bg-[#202c33] rounded-xl text-xs font-bold"><i class="fa-solid fa-envelope text-red-400 mb-1 block"></i> Email</button>
+                `;
+                document.getElementById('avatar-modal').classList.add('active');
             };
 
-            // PROFILE & AUTO-PREFIX
-            window.handleCountryChange = function(sel) {
-                const code = countryData[sel.value]?.phone || '+';
-                document.getElementById('edit-phone').value = code + " ";
+            // BANK
+            window.sendMoney = (e) => {
+                e.preventDefault();
+                alert(`Successfully sent to ${document.getElementById('transfer-recipient').value}!`);
+                window.closeBankTransferModal();
+                db.ref("global").push({ name: window.myProfileInfo.name, text: "💸 Sent a transfer!", photo: window.myProfileInfo.photo, flag: '💰' });
             };
-            window.saveProfileData = function() {
-                const name = document.getElementById('edit-name').value;
+
+            // LOCATION (HTTPS FIX)
+            window.openLocationModal = () => {
+                window.closeDropdown();
+                document.getElementById('location-modal').classList.add('active');
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    document.getElementById('location-map').innerHTML = `<iframe width="100%" height="100%" src="https://maps.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}&z=15&output=embed"></iframe>`;
+                }, () => { document.getElementById('location-map').innerHTML = "Allow GPS to see map"; });
+            };
+
+            // SAVE PROFILE
+            window.saveProfileData = () => {
                 const flagSel = document.getElementById('edit-country-select');
                 const opt = flagSel.options[flagSel.selectedIndex];
                 window.myProfileInfo = {
-                    name: name, photo: window.currentPhotoData || window.myProfileInfo.photo,
+                    name: document.getElementById('edit-name').value || 'Guest',
+                    photo: window.currentPhotoData || window.myProfileInfo.photo,
                     flagCode: flagSel.value, flag: opt.getAttribute('data-emoji'),
                     langCode: opt.getAttribute('data-lang'), phone: document.getElementById('edit-phone').value
                 };
-                localStorage.setItem('hf_active_user', 'me');
                 localStorage.setItem('hf_custom_me', JSON.stringify(window.myProfileInfo));
+                localStorage.setItem('hf_active_user', 'me');
                 window.closeProfileModal();
                 location.reload();
             };
 
-            // LOCATION
-            window.openLocationModal = function() {
-                window.closeDropdown();
-                document.getElementById('location-modal').classList.add('active');
-                const map = document.getElementById('location-map');
-                map.innerHTML = 'Detecting...';
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    const lat = pos.coords.latitude; const lon = pos.coords.longitude;
-                    map.innerHTML = `<iframe width="100%" height="100%" src="https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed"></iframe>`;
-                }, () => { map.innerHTML = "Access Denied"; });
-            };
-
-            // EXPORT/IMPORT
-            window.exportData = function() {
-                const data = JSON.stringify(localStorage);
-                const blob = new Blob([data], {type: 'application/json'});
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'backup.json'; a.click();
-            };
-            window.importData = function(e) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const data = JSON.parse(event.target.result);
-                    for (let key in data) localStorage.setItem(key, data[key]);
-                    location.reload();
-                };
-                reader.readAsText(e.target.files[0]);
+            window.handleCountryChange = (sel) => {
+                const codes = { az: '+994 ', ru: '+7 ', it: '+39 ', us: '+1 ', un: '+ ' };
+                document.getElementById('edit-phone').value = codes[sel.value] || '+ ';
             };
 
             // STARTUP
-            if(window.isGuest) window.openMyProfile();
+            if(!localStorage.getItem('hf_active_user')) window.openMyProfile();
+            document.getElementById('edit-name').value = window.myProfileInfo.name;
+            document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo;
             document.getElementById('voice-me-photo').src = window.myProfileInfo.photo;
         });
     </script>
