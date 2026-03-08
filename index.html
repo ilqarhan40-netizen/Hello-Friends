@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V20.1 (Fixed)</title>
+    <title>Hello Friends - Golden Master V23.0 STABLE</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -186,7 +186,18 @@
                     <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeDropdown()"></i>
                 </div>
                 <a onclick="window.openMyProfile(true)"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
-                <a onclick="window.toggleLanguage()"><i class="fa-solid fa-globe text-blue-400 w-5"></i> <span id="lang-text" data-i18n="lang">Lang: EN</span></a>
+                
+                <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
+                    <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
+                    <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
+                        <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
+                        <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
+                        <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                        <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-xs pointer-events-none"></i>
+                </div>
+
                 <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
                 <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
                 <a onclick="window.toggleTheme()"><i class="fa-solid fa-sun text-yellow-400 w-5" id="theme-icon"></i> <span data-i18n="theme">Theme</span></a>
@@ -304,7 +315,12 @@
 
             <div id="profession" class="page-content h-full">
                 <div class="page-container bg-[#0b141a]">
-                    <h2 class="text-xl font-bold text-left px-2 mb-4 text-white">Global Talents</h2>
+                    <div class="flex justify-between items-center px-2 mb-4">
+                        <h2 class="text-xl font-bold text-white">Global Talents</h2>
+                        <button onclick="window.openMyProfile(true)" class="bg-[#202c33] text-[#00a884] px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942] shadow-md">
+                            <i class="fa-solid fa-pen mr-1"></i> Edit My CV
+                        </button>
+                    </div>
                     <div id="profession-list" class="pb-24"></div>
                 </div>
             </div>
@@ -372,9 +388,9 @@
         </div>
 
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
-            <div class="app-modal-content" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%;" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-6 text-center mt-4">Registration</h2>
+            <div class="app-modal-content" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding-top: 40px;" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #ef4444; color: white;" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-6 text-center">Registration</h2>
 
                 <div class="flex flex-col items-center mb-4 shrink-0">
                     <div class="relative w-20 h-20">
@@ -533,20 +549,21 @@
             window.appLang = localStorage.getItem('hf_app_lang') || 'en';
             const langOrder = ['en', 'ru', 'az', 'it'];
 
+            window.changeAppLanguage = function(langCode) {
+                window.appLang = langCode;
+                localStorage.setItem('hf_app_lang', window.appLang);
+                window.applyTranslations();
+                window.closeDropdown();
+            };
+
             window.applyTranslations = function() {
                 const dict = i18n[window.appLang] || i18n['en'];
                 document.querySelectorAll('[data-i18n]').forEach(el => {
                     const key = el.getAttribute('data-i18n');
                     if(dict[key]) el.innerText = dict[key];
                 });
-            };
-
-            window.toggleLanguage = function() {
-                let currIdx = langOrder.indexOf(window.appLang);
-                window.appLang = langOrder[(currIdx + 1) % langOrder.length];
-                localStorage.setItem('hf_app_lang', window.appLang);
-                window.applyTranslations();
-                window.closeDropdown();
+                const langSelect = document.getElementById('app-lang-select');
+                if(langSelect) langSelect.value = window.appLang;
             };
             window.applyTranslations();
 
@@ -610,7 +627,6 @@
             window.participants = [aiBot];
             window.allCharacters.forEach(c => { if (c.id !== myChar.id && c.id !== 'guest') window.participants.push(c); });
 
-            // МУЛЬТИПЛЕЕР: Функция отрисовки сайдбара
             window.renderSidebar = function() {
                 const chatSidebar = document.getElementById('chat-sidebar');
                 if (!chatSidebar) return;
@@ -636,13 +652,12 @@
                     if(targetUser) window.currentRoomId = "private_" + [window.myUsername.toLowerCase().trim(), targetUser.name.split(' ')[0].toLowerCase().trim()].sort().join('_'); 
                 }
                 
-                window.renderSidebar(); // Обновляем активный класс
+                window.renderSidebar(); 
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim(); if(!text) return;
-                // ОТПРАВЛЯЕМ ПОЛНЫЕ ДАННЫЕ ПРОФИЛЯ ДЛЯ ДРУГИХ УСТРОЙСТВ
                 db.ref(window.currentRoomId).push({ 
                     name: window.myUsername, 
                     text: text, 
@@ -664,7 +679,6 @@
                 const isMe = data.sessionId === window.mySessionId || data.name === window.myUsername; 
                 const isAI = data.sessionId === "ai-bot-session";
                 
-                // ДИНАМИЧЕСКОЕ ДОБАВЛЕНИЕ НЕИЗВЕСТНЫХ ПОЛЬЗОВАТЕЛЕЙ (С ДРУГИХ ТЕЛЕФОНОВ)
                 let knownUser = window.participants.find(part => part.name === data.name);
                 if (!knownUser && !isMe && !isAI && data.name) {
                     let newUser = {
@@ -676,7 +690,7 @@
                         langCode: data.langCode || 'en'
                     };
                     window.participants.push(newUser);
-                    window.renderSidebar(); // Обновляем сайдбар
+                    window.renderSidebar(); 
                 }
 
                 let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.name === data.name) || { photo: 'https://ui-avatars.com/api/?name='+data.name, langCode: 'en', flag: '🌐' }));
@@ -693,12 +707,10 @@
                 messageGroup.appendChild(msgWrapper);
                 if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-                // ПЕРЕВОД ДЛЯ ВСЕХ УЧАСТНИКОВ (ФИКС: БЕЗ ФИЛЬТРАЦИИ ПО ЯЗЫКУ)
                 let targetUsers = [];
                 if (window.currentRoomId === 'global' && !isAI) { 
                     let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
                     allMembers.forEach(member => {
-                        // Переводим для всех, КРОМЕ отправителя
                         if (member.name !== data.name && member.langCode !== 'un') {
                             targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo });
                         }
@@ -749,7 +761,7 @@
                         if (window.isMarqueeEnabled !== false && mText) { 
                             mText.innerHTML = `<span class="text-white mr-2">${data.name}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
                             mText.style.animation = 'none'; 
-                            void mText.offsetWidth; // Жесткий рефлоу
+                            void mText.offsetWidth; 
                             mText.style.animation = null; 
                         } 
                     } catch (e) {}
@@ -816,7 +828,6 @@
                 confGrid.innerHTML = confHtml; 
                 
                 const videoEl = document.getElementById('my-live-video');
-                // Видео теперь не запускается само при старте, чтобы не блокировалось браузером.
                 if(videoEl) {
                     videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
                     videoEl.loop = true; 
@@ -827,19 +838,16 @@
             }
             initConference(); 
             
-            // --- РЕАЛЬНАЯ КАМЕРА ---
             window.toggleMyCamera = async function(btn) {
                 const videoEl = document.getElementById('my-live-video');
                 
                 if (window.myVideoStream) {
-                    // Выключить камеру
                     window.myVideoStream.getTracks().forEach(t => t.stop());
                     window.myVideoStream = null;
                     if(videoEl) videoEl.srcObject = null;
                     btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]');
                     btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]';
                 } else {
-                    // Включить камеру
                     try {
                         window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                         if(videoEl) {
@@ -889,7 +897,6 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; });
             }
 
-            // ШТОРКА CV (оставил как было, т.к. просили только форму регистрации на весь экран)
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : (window.participants.find(part => part.id === id) || window.allCharacters.find(part => part.id === id));
                 if (!p) return;
@@ -921,7 +928,6 @@
                 document.getElementById('avatar-modal').classList.add('active');
             };
 
-            // РЕГИСТРАЦИЯ И АВТО-ПРЕФИКС
             window.openMyProfile = function(isCV = false) {
                 window.closeDropdown(); const cvFields = document.getElementById('cv-extended-fields');
                 if (window.isGuest && !isCV) { document.getElementById('profile-modal-title').innerText = 'Registration'; cvFields.style.display = 'none'; document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } 
@@ -1032,7 +1038,6 @@
             }
             renderProfessionList();
 
-            // БЕЗОПАСНАЯ ЛОКАЦИЯ (HTTPS Карта)
             window.openLocationModal = function() {
                 window.closeDropdown(); 
                 document.getElementById('location-modal').classList.add('active'); 
@@ -1058,7 +1063,6 @@
             window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); window.switchTab(5); }
             window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { if (document.getElementById('conference').classList.contains('active')) { document.getElementById('conf-messages').innerHTML = ''; } else { db.ref(window.currentRoomId).remove().then(() => { if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; }); } window.closeTrashModal(); } }
 
-            // --- РЕАЛЬНЫЙ МИКРОФОН + РАСПОЗНАВАНИЕ РЕЧИ ---
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false;
@@ -1075,7 +1079,6 @@
                 window.startMic = async function(target, btnId) {
                     currentMicTarget = target; currentMicBtn = document.getElementById(btnId);
                     
-                    // Аппаратный запрос доступа к микрофону
                     try { if (!window.globalMicStream) { window.globalMicStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } } catch(err) { console.error("Mic access denied", err); }
                     
                     let myLang = window.myProfileInfo.langCode || 'en';
