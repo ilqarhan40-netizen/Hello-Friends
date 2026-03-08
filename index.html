@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V24.0 (GitHub Fix)</title>
+    <title>Hello Friends - Golden Master V26.0</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -41,7 +41,7 @@
         .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
         .header-dropdown a:hover { background: var(--wa-border); }
 
-        /* ПАНЕЛИ И ЧАТ - ДОБАВЛЕН !IMPORTANT ДЛЯ ЗАЩИТЫ ОТ GITHUB */
+        /* ПАНЕЛИ И ЧАТ */
         .page-content { display: none !important; flex-grow: 1; flex-direction: column; overflow: hidden; animation: fadeIn 0.3s; background: var(--wa-bg); }
         .page-content.active { display: flex !important; }
         .page-container { width: 100%; height: 100%; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
@@ -390,7 +390,9 @@
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
             <div class="app-modal-content" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding-top: 40px;" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #ef4444; color: white;" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-6 text-center">Registration</h2>
+                
+                <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-1 text-center mt-2" data-i18n="reg_title">Welcome to Hello Friends!</h2>
+                <p id="profile-modal-subtitle" class="text-[0.8rem] text-[#8696a0] text-center mb-6" data-i18n="reg_subtitle">Please complete registration</p>
 
                 <div class="flex flex-col items-center mb-4 shrink-0">
                     <div class="relative w-20 h-20">
@@ -400,10 +402,10 @@
                     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
                 </div>
 
-                <label class="form-label">Full Name</label>
+                <label class="form-label" data-i18n="reg_name">Full Name</label>
                 <input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
 
-                <label class="form-label">Country (Auto-Translate)</label>
+                <label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label>
                 <div class="flex items-center gap-3 mb-4 shrink-0">
                     <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
                     <div class="relative w-full">
@@ -421,17 +423,17 @@
                     </div>
                 </div>
 
-                <label class="form-label">Phone Number (Auto Prefix)</label>
+                <label class="form-label" data-i18n="reg_phone">Phone Number</label>
                 <input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
 
                 <div id="cv-extended-fields" class="shrink-0">
-                    <label class="form-label">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
-                    <label class="form-label">Role / Profession</label><input type="text" id="edit-prof" class="form-input-box" placeholder="Designer">
-                    <label class="form-label">Languages Spoken</label><input type="text" id="edit-langs" class="form-input-box" placeholder="EN, ES">
-                    <label class="form-label">Bio / CV</label><textarea id="edit-desc" class="form-input-box resize-none" rows="2" placeholder="Tell us about yourself..."></textarea>
+                    <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    <label class="form-label" data-i18n="reg_prof">Role / Profession</label><input type="text" id="edit-prof" class="form-input-box" placeholder="Designer">
+                    <label class="form-label" data-i18n="reg_langs">Languages Spoken</label><input type="text" id="edit-langs" class="form-input-box" placeholder="EN, ES">
+                    <label class="form-label" data-i18n="reg_bio">Bio / CV</label><textarea id="edit-desc" class="form-input-box resize-none" rows="2" placeholder="..."></textarea>
                 </div>
 
-                <button onclick="window.saveProfileData()" class="btn-primary mt-2">Save Profile</button>
+                <button onclick="window.saveProfileData()" class="btn-primary mt-2" data-i18n="reg_save">Save Profile</button>
             </div>
         </div>
 
@@ -540,13 +542,16 @@
         document.addEventListener('DOMContentLoaded', () => {
 
             const i18n = {
-                en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN" },
-                ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU" },
-                az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", lang: "Dil: AZ" },
-                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", logout: "Esci", lang: "Lingua: IT" }
+                en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile & CV", edit_subtitle: "Update your information" },
+                ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль и CV", edit_subtitle: "Обновите свои данные" },
+                az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim və CV", edit_subtitle: "Məlumatları yenilə" },
+                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", logout: "Esci", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo e CV", edit_subtitle: "Aggiorna i tuoi dati" }
             };
 
-            window.appLang = localStorage.getItem('hf_app_lang') || 'en';
+            // УМНЫЙ ДЕТЕКТОР ЯЗЫКА СИСТЕМЫ
+            let sysLang = navigator.language.slice(0, 2);
+            let defLang = ['en', 'ru', 'az', 'it'].includes(sysLang) ? sysLang : 'en';
+            window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             const langOrder = ['en', 'ru', 'az', 'it'];
 
             window.changeAppLanguage = function(langCode) {
@@ -930,11 +935,20 @@
 
             window.openMyProfile = function(isCV = false) {
                 window.closeDropdown(); const cvFields = document.getElementById('cv-extended-fields');
-                if (window.isGuest && !isCV) { document.getElementById('profile-modal-title').innerText = 'Registration'; cvFields.style.display = 'none'; document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } 
-                else {
-                    document.getElementById('profile-modal-title').innerText = 'Edit CV & Profile'; cvFields.style.display = 'block';
+                
+                if (window.isGuest && !isCV) { 
+                    document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title');
+                    document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle');
+                    cvFields.style.display = 'none'; 
+                    document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
+                } else {
+                    document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title');
+                    document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle');
+                    cvFields.style.display = 'block';
                     document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; document.getElementById('edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('edit-desc').value = window.myProfileInfo.desc || '';
                 }
+                
+                window.applyTranslations();
                 document.getElementById('edit-profile-modal').classList.add('active');
             };
 
@@ -1094,8 +1108,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
