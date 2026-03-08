@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V26.0</title>
+    <title>Hello Friends - Golden Master V27.0 (Hybrid Mic)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -233,6 +233,7 @@
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                                 <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('text')"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                                <select id="chat-mic-lang" class="bg-transparent text-[#00a884] text-[0.7rem] font-bold outline-none ml-2 cursor-pointer appearance-none text-center"><option value="en-US">EN</option><option value="ru-RU">RU</option><option value="az-AZ">AZ</option><option value="it-IT">IT</option></select>
                             </div>
                             <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')" title="Voice to Text"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -278,6 +279,7 @@
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                        <select id="voice-mic-lang" class="bg-transparent text-[#00a884] text-[0.7rem] font-bold outline-none ml-2 cursor-pointer appearance-none text-center"><option value="en-US">EN</option><option value="ru-RU">RU</option><option value="az-AZ">AZ</option><option value="it-IT">IT</option></select>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -307,6 +309,7 @@
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                        <select id="conf-mic-lang" class="bg-transparent text-[#00a884] text-[0.7rem] font-bold outline-none ml-2 cursor-pointer appearance-none text-center"><option value="en-US">EN</option><option value="ru-RU">RU</option><option value="az-AZ">AZ</option><option value="it-IT">IT</option></select>
                     </div>
                     <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -970,6 +973,7 @@
                 let customProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji'), country: opt.getAttribute('data-name'), langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value, profession: document.getElementById('edit-prof').value, languages: document.getElementById('edit-langs').value, desc: document.getElementById('edit-desc').value };
                 localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile)); localStorage.setItem('hf_active_user', newId); 
                 window.closeProfileModal(); 
+                window.autoSetMicLang(); // Сразу обновляем микрофон после сохранения
                 location.reload(); 
             }
 
@@ -1077,32 +1081,62 @@
             window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); window.switchTab(5); }
             window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { if (document.getElementById('conference').classList.contains('active')) { document.getElementById('conf-messages').innerHTML = ''; } else { db.ref(window.currentRoomId).remove().then(() => { if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; }); } window.closeTrashModal(); } }
 
+            // === УМНЫЙ МИКРОФОН (Оригинал 17.1 + Гибридная логика) ===
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false;
                 let currentMicTarget = null; let currentMicBtn = null;
-                rec.onstart = () => { if(currentMicBtn) { currentMicBtn.classList.add('text-red-500', 'bg-red-500/20'); currentMicBtn.classList.remove('text-[#8696a0]'); } };
-                rec.onend = () => { if(currentMicBtn) { currentMicBtn.classList.remove('text-red-500', 'bg-red-500/20'); currentMicBtn.classList.add('text-[#8696a0]'); } };
-                rec.onerror = () => { if(currentMicBtn) { currentMicBtn.classList.remove('text-red-500', 'bg-red-500/20'); currentMicBtn.classList.add('text-[#8696a0]'); } };
+                
+                rec.onstart = () => { if(currentMicBtn) { currentMicBtn.style.color = '#ef4444'; currentMicBtn.classList.add('animate-pulse'); } };
+                rec.onend = () => { if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse'); } };
+                rec.onerror = () => { if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse'); } };
+                
                 rec.onresult = (e) => {
                     const text = e.results[0][0].transcript;
                     if (currentMicTarget === 'chat') { let chatInputEl = document.getElementById('chat-input'); if (chatInputEl) chatInputEl.value = text; window.sendFirebaseMsg(); }
                     else if (currentMicTarget === 'voice') { let voiceInputEl = document.getElementById('voice-chat-input'); if (voiceInputEl) voiceInputEl.value = text; window.sendVoiceMsg(); }
                     else if (currentMicTarget === 'conf') { let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendConfMsg(); }
                 };
-                window.startMic = async function(target, btnId) {
+
+                // Функция АВТОПИЛОТА: сканируем телефон и флаг
+                window.autoSetMicLang = function() {
+                    let phone = window.myProfileInfo.phone || "";
+                    let flag = window.myProfileInfo.flagCode || "un";
+                    let finalLang = 'en-US'; 
+                    if (phone.startsWith('+7')) finalLang = 'ru-RU'; 
+                    else if (phone.startsWith('+994')) finalLang = 'az-AZ'; 
+                    else if (phone.startsWith('+39')) finalLang = 'it-IT'; 
+                    else if (phone.startsWith('+49')) finalLang = 'de-DE'; 
+                    else if (flag === 'ru') finalLang = 'ru-RU'; 
+                    else if (flag === 'az') finalLang = 'az-AZ'; 
+                    else if (flag === 'it') finalLang = 'it-IT'; 
+                    else if (flag === 'de') finalLang = 'de-DE';
+                    
+                    ['chat-mic-lang', 'voice-mic-lang', 'conf-mic-lang'].forEach(id => {
+                        let el = document.getElementById(id);
+                        if(el) el.value = finalLang;
+                    });
+                };
+
+                window.startMic = function(target, btnId) {
                     currentMicTarget = target; currentMicBtn = document.getElementById(btnId);
                     
-                    try { if (!window.globalMicStream) { window.globalMicStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } } catch(err) { console.error("Mic access denied", err); }
+                    // Читаем язык ИЗ РУЧНОГО ПЕРЕКЛЮЧАТЕЛЯ перед каждым стартом
+                    let selectId = target === 'chat' ? 'chat-mic-lang' : (target === 'voice' ? 'voice-mic-lang' : 'conf-mic-lang');
+                    let langSelect = document.getElementById(selectId);
+                    rec.lang = langSelect ? langSelect.value : 'en-US';
                     
-                    let myLang = window.myProfileInfo.langCode || 'en';
-                    if (myLang === 'ru') rec.lang = 'ru-RU'; else if (myLang === 'az') rec.lang = 'az-AZ'; else if (myLang === 'it') rec.lang = 'it-IT'; else if (myLang === 'de') rec.lang = 'de-DE'; else rec.lang = 'en-US'; 
                     try { rec.start(); } catch(e){}
                 }
             }
 
             window.switchChatRoom('global');
-            if (window.isGuest) { setTimeout(() => { window.openMyProfile(); }, 800); }
+            if (window.isGuest) { 
+                setTimeout(() => { window.openMyProfile(); }, 800); 
+            } else {
+                // Запускаем автопилот для старых пользователей при входе
+                setTimeout(window.autoSetMicLang, 500);
+            }
             window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
     </script>
