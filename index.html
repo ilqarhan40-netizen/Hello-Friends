@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V28.0 (Core Network Fix)</title>
+    <title>Hello Friends - Golden Master V28.1 (Smart System)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -112,9 +112,16 @@
         .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary:active { transform: scale(0.98); }
 
-        /* ВСПЛЫВАЮЩАЯ ПОДСКАЗКА (TOAST) */
-        #toast-notification { top: -100px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        #toast-notification.show { top: 20px; opacity: 1 !important; pointer-events: auto !important; }
+        /* ВИДЕО */
+        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
+        .video-frame.main { grid-column: 1 / 3; padding-top: 65%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
+        .video-frame video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .video-overlay { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 8px; font-weight: bold; z-index: 10;}
+        .flag-overlay { position: absolute; top: 8px; right: 8px; font-size: 1.2rem; z-index: 10;}
+        
+        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); padding: 4px 0; overflow: hidden; display: flex; align-items: center; z-index: 20; transition: opacity 0.3s; }
+        .conf-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
 
         @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -144,6 +151,10 @@
         .light-theme .text-white { color: #111b21 !important; }
         .light-theme .chat-info-marquee-container { background: #f0f2f5; border-bottom: 1px solid #d1d7db; }
         .light-theme .header-dropdown { background: #ffffff; border-color: #d1d7db; }
+
+        /* ВСПЛЫВАЮЩАЯ ПОДСКАЗКА (TOAST) */
+        #toast-notification { top: -100px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #toast-notification.show { top: 20px; opacity: 1 !important; pointer-events: auto !important; }
 
         ::-webkit-scrollbar { width: 0px; background: transparent; }
     </style>
@@ -221,10 +232,9 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         <div class="chat-input-area">
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
-                                <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
+                                <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('text')"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                                <select id="chat-mic-lang" class="bg-transparent text-[#00a884] text-[0.7rem] font-bold outline-none ml-2 cursor-pointer appearance-none text-center"><option value="en-US">EN</option><option value="ru-RU">RU</option><option value="az-AZ">AZ</option><option value="it-IT">IT</option></select>
-                            </div>
+                                </div>
                             <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                         </div>
@@ -243,7 +253,7 @@
                     </div>
                 </div>
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]"><input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]"><select id="voice-mic-lang" class="bg-transparent text-[#00a884] text-[0.7rem] font-bold outline-none ml-2 cursor-pointer appearance-none text-center"><option value="en-US">EN</option><option value="ru-RU">RU</option><option value="az-AZ">AZ</option><option value="it-IT">IT</option></select></div>
+                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]"><input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]"></div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                 </div>
@@ -253,7 +263,7 @@
                 <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0"><span class="font-bold text-[#00a884] tracking-widest text-[1rem] flex items-center gap-2"><i class="fa-solid fa-video"></i> CONFERENCE</span><div class="flex items-center gap-4"><span class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full animate-pulse text-xs">● REC</span></div></div>
                 <div class="flex-grow overflow-y-auto p-2 relative"><div class="video-grid" id="conference-grid"></div></div>
                 <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0"><button onclick="window.toggleMeetMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700"><i class="fa-solid fa-closed-captioning"></i></button><button id="conf-cam-btn" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-gray-700" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video-slash text-[#8696a0]"></i></button><button class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg hover:bg-red-600" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button></div>
-                <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]"><div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]"><input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]"><select id="conf-mic-lang" class="bg-transparent text-[#00a884] text-[0.7rem] font-bold outline-none ml-2 cursor-pointer appearance-none text-center"><option value="en-US">EN</option><option value="ru-RU">RU</option><option value="az-AZ">AZ</option><option value="it-IT">IT</option></select></div><button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button><button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button></div>
+                <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]"><div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]"><input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]"></div><button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button><button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button></div>
             </div>
 
             <div id="profession" class="page-content h-full"><div class="page-container bg-[#0b141a]"><div class="flex justify-between items-center px-2 mb-4"><h2 class="text-xl font-bold text-white">Global Talents</h2><button onclick="window.openMyProfile(true)" class="bg-[#202c33] text-[#00a884] px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942] shadow-md"><i class="fa-solid fa-pen mr-1"></i> Edit My CV</button></div><div id="profession-list" class="pb-24"></div></div></div>
@@ -273,6 +283,9 @@
             <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu">
+                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2" onclick="event.stopPropagation()">
+                        <option value="en-US">🇬🇧 English</option><option value="az-AZ">🇦🇿 Azərbaycanca</option><option value="ru-RU">🇷🇺 Русский</option><option value="it-IT">🇮🇹 Italiano</option><option value="de-DE">🇩🇪 Deutsch</option>
+                    </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
                     <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
                     <div class="action-icon" onclick="window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
@@ -439,13 +452,13 @@
                 setTimeout(() => { toast.classList.remove('show'); }, 5000);
             }
 
-            // ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ (ИСПРАВЛЕНИЕ #1)
+            // ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ (SMART SYSTEM)
             db.ref('users').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     window.participants = [aiBot]; // Очищаем и загружаем заново
                     Object.values(data).forEach(u => {
-                        if (u.id !== window.myProfileInfo.id && u.id !== 'guest') {
+                        if (u.id !== window.myProfileInfo.id && u.id !== 'guest' && !u.id.startsWith('guest_')) {
                             window.participants.push(u);
                         }
                     });
@@ -459,13 +472,13 @@
                 chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" id="chat-btn-global" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" id="chat-btn-ai" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
                 window.participants.filter(p => p.id !== 'ai').forEach(p => {
-                    // ЖЕЛЕЗНАЯ СОРТИРОВКА ID
+                    // ЖЕЛЕЗНАЯ СОРТИРОВКА ID (Гарантирует одну комнату для двоих)
                     let expectedId = "private_" + [window.myProfileInfo.id, p.id].sort().join('_');
                     chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${p.name.split(' ')[0]}</span></div>`;
                 });
             };
 
-            // ИСПРАВЛЕННАЯ МАРШРУТИЗАЦИЯ И TOAST (ИСПРАВЛЕНИЕ #2 И #3)
+            // ИСПРАВЛЕННАЯ МАРШРУТИЗАЦИЯ И TOAST
             window.switchChatRoom = function(targetId) {
                 if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
                 const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
@@ -600,8 +613,9 @@
             
             window.saveProfileData = function() {
                 let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
-                let newId = nameVal.toLowerCase().replace(/\s+/g, '') + '_' + Math.random().toString(36).substr(2,4); // Уникальный ID
-                if (!window.isGuest) newId = window.myProfileInfo.id; // Сохраняем ID если уже есть
+                
+                // Генерируем ID только если это гость, иначе сохраняем старый ID
+                let newId = window.isGuest ? (nameVal.toLowerCase().replace(/\s+/g, '') + '_' + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
 
                 let photo = window.currentPhotoData || (window.myProfileInfo.photo !== 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff' ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=00a884&color=111b21');
                 let phoneVal = document.getElementById('edit-phone').value.trim(); if (window.isGuest && !phoneVal) return alert("Please enter your Phone Number!");
@@ -629,7 +643,7 @@
                 window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active');
             };
 
-            // МИКРОФОН (Оставлен гибридный, рабочий)
+            // МИКРОФОН (Привязан к Ромбу!)
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false;
@@ -647,14 +661,18 @@
                 window.autoSetMicLang = function() {
                     let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; 
                     if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE';
-                    ['chat-mic-lang', 'voice-mic-lang', 'conf-mic-lang'].forEach(id => { let el = document.getElementById(id); if(el) el.value = finalLang; });
+                    
+                    let rMic = document.getElementById('plus-mic-lang');
+                    if(rMic) rMic.value = finalLang;
                 };
 
                 window.startMic = function(target, btnId) {
                     currentMicTarget = target; currentMicBtn = document.getElementById(btnId);
-                    let selectId = target === 'chat' ? 'chat-mic-lang' : (target === 'voice' ? 'voice-mic-lang' : 'conf-mic-lang');
-                    let langSelect = document.getElementById(selectId);
+                    
+                    // Читаем язык напрямую из меню в Ромбе
+                    let langSelect = document.getElementById('plus-mic-lang');
                     rec.lang = langSelect ? langSelect.value : 'en-US';
+                    
                     try { rec.start(); } catch(e){}
                 }
             }
