@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.10 (Houston Fixed)</title>
+    <title>Hello Friends - Golden Master V31.12 (Smart News)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -67,7 +67,7 @@
         .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
         .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
 
-        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border);}
+        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border); overflow: visible;}
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
         .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; padding: 4px 0; }
         .chat-input-pill i { color: var(--wa-text-muted); cursor: pointer; transition: 0.2s; font-size: 1.2rem; }
@@ -159,6 +159,7 @@
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
         
@@ -215,10 +216,14 @@
             <div id="message" class="page-content active h-full flex flex-col">
                 <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition" onclick="window.switchChatRoom('global')">
-                        <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global Chat</span></span>
-                        <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
+                        <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global</span></span>
                     </div>
-                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
+                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="Local News">
+                        <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
+                    </button>
+                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition">
+                        <i class="fa-solid fa-users text-lg"></i> <span class="text-sm">Contacts</span>
+                    </button>
                 </div>
                 
                 <div class="chat-info-marquee-container">
@@ -234,7 +239,15 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         
                         <div class="chat-input-area">
-                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                            <div class="relative flex items-center">
+                                <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.toggleAttachMenu(event, 'attach-menu-chat')" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                                <div id="attach-menu-chat" class="attach-menu-dropdown absolute bottom-12 left-0 bg-[#202c33] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 shadow-2xl z-50 min-w-[160px]">
+                                    <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="document.getElementById('media-upload-input').click();"><div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center"><i class="fa-solid fa-image"></i></div> Photo / Video</button>
+                                    <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="window.sendLocationToChat();"><div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center"><i class="fa-solid fa-location-dot"></i></div> Location</button>
+                                    <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="document.getElementById('file-upload-input').click();"><div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center"><i class="fa-solid fa-file"></i></div> Document</button>
+                                </div>
+                            </div>
+                            
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                                 <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
@@ -282,7 +295,15 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
+                    <div class="relative flex items-center">
+                        <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.toggleAttachMenu(event, 'attach-menu-voice')"><i class="fa-solid fa-paperclip"></i></button>
+                        <div id="attach-menu-voice" class="attach-menu-dropdown absolute bottom-12 left-0 bg-[#202c33] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 shadow-2xl z-50 min-w-[160px]">
+                            <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="document.getElementById('media-upload-input').click();"><div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center"><i class="fa-solid fa-image"></i></div> Photo / Video</button>
+                            <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="window.sendLocationToChat();"><div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center"><i class="fa-solid fa-location-dot"></i></div> Location</button>
+                            <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="document.getElementById('file-upload-input').click();"><div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center"><i class="fa-solid fa-file"></i></div> Document</button>
+                        </div>
+                    </div>
+
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
@@ -290,7 +311,6 @@
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
             </div>
 
@@ -313,7 +333,15 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
+                    <div class="relative flex items-center">
+                        <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.toggleAttachMenu(event, 'attach-menu-conf')"><i class="fa-solid fa-paperclip"></i></button>
+                        <div id="attach-menu-conf" class="attach-menu-dropdown absolute bottom-12 left-0 bg-[#202c33] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 shadow-2xl z-50 min-w-[160px]">
+                            <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="document.getElementById('media-upload-input').click();"><div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center"><i class="fa-solid fa-image"></i></div> Photo / Video</button>
+                            <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="window.sendLocationToChat();"><div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center"><i class="fa-solid fa-location-dot"></i></div> Location</button>
+                            <button class="flex items-center gap-3 text-white hover:bg-[#2a3942] p-2 rounded-xl text-sm transition" onclick="document.getElementById('file-upload-input').click();"><div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center"><i class="fa-solid fa-file"></i></div> Document</button>
+                        </div>
+                    </div>
+
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
@@ -528,23 +556,60 @@
             </div>
         </div>
 
-        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
-            <div class="app-modal-content h-[60vh]">
-                <div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4">Location</h2>
-                <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div>
-            </div>
-        </div>
     </div>
 
     <script>
-        // === ВОССТАНОВЛЕННЫЕ ДВЕРНЫЕ РУЧКИ (MODAL OPENERS) ===
+        // === ВСПЛЫВАЮЩЕЕ МЕНЮ СКРЕПКИ ===
+        window.toggleAttachMenu = function(e, menuId) {
+            e.stopPropagation();
+            document.querySelectorAll('.attach-menu-dropdown').forEach(m => {
+                if(m.id !== menuId) m.classList.add('hidden');
+            });
+            const menu = document.getElementById(menuId);
+            menu.classList.toggle('hidden');
+            menu.classList.toggle('flex');
+        };
+
+        window.closeAttachMenu = function() {
+            document.querySelectorAll('.attach-menu-dropdown').forEach(m => {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            });
+        };
+
+        document.body.addEventListener('click', () => { 
+            window.closeDropdown(); 
+            window.closeAttachMenu(); 
+        });
+
+        // === ИНТЕЛЛЕКТУАЛЬНЫЕ НОВОСТИ ===
+        window.openNewsFast = function() {
+            window.openSearchModal();
+            setTimeout(() => {
+                const c = window.myProfileInfo.country;
+                const lang = window.myProfileInfo.langCode;
+                let q = "World News"; // Дефолтный запрос
+                
+                if (c && c !== 'Global') {
+                    if (lang === 'ru') q = "Главные новости " + c;
+                    else if (lang === 'az') q = "Son xəbərlər " + c;
+                    else if (lang === 'de') q = "Aktuelle Nachrichten " + c;
+                    else if (lang === 'it') q = "Ultime notizie " + c;
+                    else if (lang === 'fr') q = "Actualités " + c;
+                    else if (lang === 'es') q = "Últimas noticias " + c;
+                    else q = "Latest news " + c;
+                }
+                
+                window.handleSmartSearch(q, 'web');
+            }, 300);
+        };
+
         window.openSearchModal = function() { 
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
             setTimeout(() => document.getElementById('global-search-input').focus(), 100);
         };
-        
+
         window.openBankTransferModal = function() { 
             window.closeDropdown(); 
             const recipientSelect = document.getElementById('transfer-recipient'); 
@@ -619,8 +684,7 @@
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
-        window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
-
+        
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
             const actions = document.getElementById('rhombus-actions'); 
@@ -645,8 +709,6 @@
             document.getElementById('header-dropdown')?.classList.toggle('active'); 
         };
 
-        document.body.addEventListener('click', () => { window.closeDropdown(); });
-
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
         window.startInAppCall = function() { window.closePhoneChoiceModal(); window.switchTab(1); };
         window.startExternalCall = function() { 
@@ -662,7 +724,7 @@
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         window.sendEmailForm = function(e) { e.preventDefault(); alert("Email sent successfully!"); window.closeEmailModal(); };
 
-        // === ЗАГРУЗКА МЕДИА ФАЙЛОВ ===
+        // === ЗАГРУЗКА МЕДИА (ФОТО/ВИДЕО) ===
         window.openFullscreenImage = function(src) {
             if(src) document.getElementById('fullscreen-img-src').src = src;
             document.getElementById('fullscreen-image-modal').classList.add('active');
@@ -674,6 +736,7 @@
         window.handleMediaUpload = function(event) {
             const file = event.target.files[0];
             if (!file) return;
+            window.closeAttachMenu();
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -695,6 +758,61 @@
                 });
             };
             reader.readAsDataURL(file);
+        };
+
+        // === ОТПРАВКА ДОКУМЕНТА ===
+        window.handleDocUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            window.closeAttachMenu();
+            
+            db.ref(window.currentRoomId).push({
+                userId: window.myProfileInfo.id,
+                name: window.myUsername,
+                text: "📄 " + file.name,
+                isFile: true,
+                fileName: file.name,
+                sessionId: window.mySessionId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                photo: window.myProfileInfo.photo,
+                flag: window.myProfileInfo.flag,
+                flagCode: window.myProfileInfo.flagCode,
+                langCode: window.myProfileInfo.langCode
+            });
+        };
+
+        // === ОТПРАВКА ЛОКАЦИИ (GPS) ===
+        window.sendLocationToChat = function() {
+            window.closeAttachMenu();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                        
+                        db.ref(window.currentRoomId).push({
+                            userId: window.myProfileInfo.id,
+                            name: window.myUsername,
+                            text: "📍 Shared Location",
+                            isLocation: true,
+                            lat: lat,
+                            lon: lon,
+                            mapLink: mapLink,
+                            sessionId: window.mySessionId,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            photo: window.myProfileInfo.photo,
+                            flag: window.myProfileInfo.flag,
+                            flagCode: window.myProfileInfo.flagCode,
+                            langCode: window.myProfileInfo.langCode
+                        });
+                    },
+                    (error) => { alert("Failed to get location. Please allow GPS access."); },
+                    { timeout: 5000 }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
         };
 
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); location.reload(); };
@@ -971,7 +1089,6 @@
                 let bubbleContent = data.text;
                 let bubbleClasses = `chat-bubble`;
                 
-                // РЕНДЕР МЕДИА ФАЙЛОВ
                 if (data.mediaUrl) {
                     if (data.mediaType === 'video') {
                         bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
@@ -980,9 +1097,7 @@
                     }
                     bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
                 }
-                
-                // РЕНДЕР ЧЕКА
-                if (data.isTransfer) {
+                else if (data.isTransfer) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
                         <div class="flex flex-col items-center p-4 min-w-[180px]">
@@ -992,6 +1107,18 @@
                             <div class="w-full h-[1px] bg-[#2a3942] mb-2"></div>
                             <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
                         </div>`;
+                }
+                else if (data.isLocation) {
+                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                    bubbleContent = `
+                        <div class="flex flex-col w-[200px] sm:w-[250px]">
+                            <iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${data.lat},${data.lon}&z=15&output=embed" style="pointer-events: none;"></iframe>
+                            <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
+                        </div>`;
+                }
+                else if (data.isFile) {
+                    bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
+                    bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
                 }
 
                 const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
@@ -1004,8 +1131,7 @@
                     chatMessages.scrollTop = chatMessages.scrollHeight; 
                 }
 
-                // АВТО-ПЕРЕВОД ТЕКСТА
-                if (!data.isTransfer && !data.mediaUrl) {
+                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
                     let targetUsers = [];
                     if (window.currentRoomId === 'global' && !isAI) { 
                         let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
@@ -1187,7 +1313,6 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
             };
 
-            // === V31.7: ОБНОВЛЕННАЯ ТЕМНАЯ КАРТОЧКА ===
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
                 if (!p) return;
@@ -1226,7 +1351,7 @@
                             <button id="btn-modal-sms-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
                             <button id="btn-modal-email-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
                         </div>
-                        <div class="flex w-full gap-2">
+                        <div class="flex w-full gap-2 mt-2">
                             <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
                             <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
                         </div>
@@ -1368,151 +1493,6 @@
                 window.closeEditCV();
                 if(window.renderProfessionList) window.renderProfessionList();
                 alert("CV Successfully Updated! 📄");
-            };
-
-            // ДОСКА ТАЛАНТОВ ОТКРЫВАЕТ ТЕМНУЮ ВИЗИТКУ
-            window.renderProfessionList = function() { 
-                const profContainer = document.getElementById('profession-list'); 
-                if (!profContainer) return; 
-                
-                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; 
-                const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest'));
-
-                let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
-                validUsers.forEach((p) => { 
-                    let isMe = p.id === window.myProfileInfo.id; 
-                    let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
-                    let btnText = isMe ? `View My CV` : `View CV`; 
-                    
-                    let nameTxt = (p.name||'User').split(' ')[0]; 
-                    if(isMe) nameTxt = nameTxt.replace(' (You)', '') + ' (You)'; 
-                    
-                    let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
-                    
-                    cardsHTML += `
-                    <div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div>
-                        <img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;">
-                        <h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3>
-                        <p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p>
-                        <button onclick="${avatarClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button>
-                    </div>`; 
-                }); 
-                profContainer.innerHTML = cardsHTML + `</div>`; 
-            };
-            if(document.getElementById('profession-list')) window.renderProfessionList();
-
-            window.sendMoney = function(e) { 
-                e.preventDefault(); 
-                const recipientId = document.getElementById('transfer-recipient').value; 
-                const amount = document.getElementById('transfer-amount').value; 
-                if (!recipientId || !amount) return alert('Please fill all fields!'); 
-                
-                const recUser = window.participants.find(p => p.id === recipientId); 
-                const recName = recUser ? recUser.name.split(' ')[0] : 'User'; 
-                
-                db.ref(window.currentRoomId).push({ 
-                    userId: window.myProfileInfo.id, 
-                    name: window.myUsername, 
-                    text: `Sent $${amount} to ${recName}`, 
-                    originalText: `Sent $${amount} to ${recName}`, 
-                    sessionId: window.mySessionId, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                    photo: window.myProfileInfo.photo, 
-                    flag: window.myProfileInfo.flag, 
-                    flagCode: window.myProfileInfo.flagCode, 
-                    langCode: window.myProfileInfo.langCode,
-                    isTransfer: true,
-                    amount: amount,
-                    recName: recName
-                }); 
-                
-                alert(`✅ Successfully sent $${amount} to ${recName}!`); 
-                window.closeBankTransferModal(); 
-                
-                const chatMsgs = document.getElementById('chat-messages'); 
-                if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); }
-            };
-
-            window.performLiveSearch = function() { 
-                const query = document.getElementById('global-search-input').value.toLowerCase().trim(); 
-                const resultsArea = document.getElementById('search-results-area'); 
-                const suggestions = document.getElementById('search-suggestions'); 
-                document.getElementById('search-result-frame').classList.add('hidden'); 
-                
-                if (query.length === 0) { 
-                    resultsArea.innerHTML = ''; 
-                    suggestions.style.display = 'block'; 
-                    return; 
-                } 
-                
-                suggestions.style.display = 'none'; 
-                let html = ''; 
-                let found = false; 
-                
-                window.participants.forEach(p => { 
-                    if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
-                        found = true; 
-                        html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; 
-                    } 
-                }); 
-                resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
-            };
-
-            window.handleSmartSearch = function(text, type = 'text') { 
-                const input = document.getElementById('global-search-input'); 
-                if (type === 'text') { 
-                    input.value = text; 
-                    window.performLiveSearch(); 
-                } else if (type === 'web') { 
-                    input.value = text; 
-                    document.getElementById('search-results-area').innerHTML = ''; 
-                    window.doGoogleSearch(); 
-                } 
-            };
-
-            window.doGoogleSearch = function() { 
-                const q = document.getElementById('global-search-input').value; 
-                if(q.trim() === '') return alert('Enter search query'); 
-                document.getElementById('search-suggestions').style.display = 'none'; 
-                document.getElementById('search-results-area').innerHTML = ''; 
-                const iframe = document.getElementById('search-result-frame'); 
-                iframe.src = 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(q); 
-                iframe.classList.remove('hidden'); 
-            };
-
-            window.openLocationModal = function() { 
-                window.closeDropdown(); 
-                document.getElementById('location-modal').classList.add('active'); 
-                const mapContainer = document.getElementById('location-map'); 
-                mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; 
-                const loadMap = (lat, lon) => { 
-                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; 
-                }; 
-                if (navigator.geolocation) { 
-                    navigator.geolocation.getCurrentPosition( 
-                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, 
-                        (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, 
-                        { timeout: 5000 } 
-                    ); 
-                } else { 
-                    mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; 
-                } 
-            };
-
-            window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
-            window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); window.switchTab(5); };
-            window.smartClear = function() { 
-                if(confirm("Are you sure you want to clear chat history?")) { 
-                    if (document.getElementById('conference').classList.contains('active')) { 
-                        document.getElementById('conf-messages').innerHTML = ''; 
-                    } else { 
-                        db.ref(window.currentRoomId).remove().then(() => { 
-                            if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; 
-                        }); 
-                    } 
-                    window.closeTrashModal(); 
-                } 
             };
 
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
