@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.7 (Dark CV Card)</title>
+    <title>Hello Friends - Golden Master V31.8 (Smart Inputs & Receipts)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -158,6 +158,7 @@
 <body>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
+    <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
         
@@ -187,7 +188,6 @@
                 </div>
                 
                 <a id="admin-menu-btn" style="display: none; color: #a29bfe;" onclick="window.openAdminModal()"><i class="fa-solid fa-crown w-5"></i> <span>Admin Panel</span></a>
-                
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
@@ -235,14 +235,18 @@
                     <div class="chat-sidebar" id="chat-sidebar"></div>
                     <div class="flex flex-col flex-grow h-full overflow-hidden relative">
                         <div class="chat-messages" id="chat-messages"></div>
+                        
                         <div class="chat-input-area">
+                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
-                                <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('text')"></i>
+                                <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                                <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Clear Chat" onclick="window.smartClear()"></i>
                             </div>
-                            <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')" title="Voice to Text"><i class="fa-solid fa-microphone"></i></button>
+                            <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -281,14 +285,16 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.smartClear()"></i>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
+
             </div>
 
             <div id="conference" class="page-content h-full flex flex-col bg-[#000]">
@@ -310,13 +316,16 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.smartClear()"></i>
                     </div>
                     <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                 </div>
+
             </div>
 
             <div id="profession" class="page-content h-full">
@@ -389,7 +398,7 @@
                     <div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div>
                 </div>
                 <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
-                <div class="flex gap-2 w-full mt-auto" id="modal-action-buttons"></div>
+                <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
         </div>
 
@@ -638,6 +647,11 @@
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         window.sendEmailForm = function(e) { e.preventDefault(); alert("Email sent successfully!"); window.closeEmailModal(); };
 
+        window.handleMediaUpload = function(e) {
+            const file = e.target.files[0];
+            if(file) alert("Media upload feature is ready for integration! File selected: " + file.name);
+        };
+
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); location.reload(); };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -649,7 +663,7 @@
             const i18n = { 
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Information" }, 
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль", edit_subtitle: "Основная информация" }, 
-                az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olпросы qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" }, 
+                az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" }, 
                 it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", logout: "Esci", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" } 
             };
 
@@ -909,7 +923,23 @@
                 
                 let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
                 
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="chat-bubble">${data.text}</div></div>`;
+                // Рендер ЧЕКА ПЕРЕВОДА ДЕНЕГ
+                let bubbleContent = data.text;
+                let bubbleClasses = `chat-bubble`;
+                
+                if (data.isTransfer) {
+                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                    bubbleContent = `
+                        <div class="flex flex-col items-center p-4 min-w-[180px]">
+                            <div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div>
+                            <span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1">Transfer Success</span>
+                            <span class="text-2xl font-bold text-white mb-2">$${data.amount}</span>
+                            <div class="w-full h-[1px] bg-[#2a3942] mb-2"></div>
+                            <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
+                        </div>`;
+                }
+
+                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
                 
                 msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
                 messageGroup.appendChild(msgWrapper);
@@ -919,49 +949,52 @@
                     chatMessages.scrollTop = chatMessages.scrollHeight; 
                 }
 
-                let targetUsers = [];
-                if (window.currentRoomId === 'global' && !isAI) { 
-                    let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
-                    allMembers.forEach(member => { 
-                        if (member.id !== data.userId && member.langCode !== 'un') { 
-                            targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
-                        } 
-                    });
-                } else if (window.currentRoomId.startsWith('private_') && !isAI) {
-                    if (isMe) {
-                        if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
-                            targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
-                        }
-                    } else {
-                        if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
-                            targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                // АВТО-ПЕРЕВОД (пропускаем чеки перевода)
+                if (!data.isTransfer) {
+                    let targetUsers = [];
+                    if (window.currentRoomId === 'global' && !isAI) { 
+                        let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
+                        allMembers.forEach(member => { 
+                            if (member.id !== data.userId && member.langCode !== 'un') { 
+                                targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
+                            } 
+                        });
+                    } else if (window.currentRoomId.startsWith('private_') && !isAI) {
+                        if (isMe) {
+                            if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
+                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                            }
+                        } else {
+                            if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
+                                targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                            }
                         }
                     }
-                }
 
-                if (targetUsers.length > 0) {
-                    try {
-                        const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
-                        const translationsRes = await Promise.all(fetchPromises); 
-                        const transContainer = document.createElement('div'); 
-                        transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
-                        let marqueeTextStr = ''; 
-                        
-                        translationsRes.forEach(t => { 
-                            transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
-                            marqueeTextStr += `${t.user.flag} ${t.text}       `; 
-                        }); 
-                        messageGroup.appendChild(transContainer); 
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                        
-                        const mText = document.getElementById('chat-info-marquee');
-                        if (window.isMarqueeEnabled !== false && mText) { 
-                            mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
-                            mText.style.animation = 'none'; 
-                            void mText.offsetWidth; 
-                            mText.style.animation = null; 
-                        } 
-                    } catch (e) {}
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
+                            const translationsRes = await Promise.all(fetchPromises); 
+                            const transContainer = document.createElement('div'); 
+                            transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
+                            let marqueeTextStr = ''; 
+                            
+                            translationsRes.forEach(t => { 
+                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
+                                marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                            }); 
+                            messageGroup.appendChild(transContainer); 
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                            
+                            const mText = document.getElementById('chat-info-marquee');
+                            if (window.isMarqueeEnabled !== false && mText) { 
+                                mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
+                                mText.style.animation = 'none'; 
+                                void mText.offsetWidth; 
+                                mText.style.animation = null; 
+                            } 
+                        } catch (e) {}
+                    }
                 }
             }
 
@@ -1099,7 +1132,6 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
             };
 
-            // === V31.7: ОБНОВЛЕННАЯ ТЕМНАЯ КАРТОЧКА (С НАВЫКАМИ И ОПЫТОМ) ===
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
                 if (!p) return;
@@ -1133,15 +1165,29 @@
                     actionButtons.style.display = 'none'; 
                 } else if (id === 'me') { 
                     actionButtons.innerHTML = `
-                        <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
-                        <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
+                        <div class="flex w-full gap-2">
+                            <button id="btn-modal-chat-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
+                            <button id="btn-modal-sms-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
+                            <button id="btn-modal-email-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                        </div>
+                        <div class="flex w-full gap-2">
+                            <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
+                            <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
+                        </div>
                     `; 
+                    setTimeout(() => { 
+                        document.getElementById('btn-modal-chat-me').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('me'); }; 
+                        document.getElementById('btn-modal-sms-me').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
+                        document.getElementById('btn-modal-email-me').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
+                    }, 50);
                     actionButtons.style.display = 'flex'; 
                 } else {
                     actionButtons.innerHTML = `
-                        <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                        <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                        <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                        <div class="flex w-full gap-2">
+                            <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
+                            <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
+                            <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                        </div>
                     `;
                     setTimeout(() => { 
                         document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
@@ -1299,6 +1345,38 @@
                 profContainer.innerHTML = cardsHTML + `</div>`; 
             };
             if(document.getElementById('profession-list')) window.renderProfessionList();
+
+            window.sendMoney = function(e) { 
+                e.preventDefault(); 
+                const recipientId = document.getElementById('transfer-recipient').value; 
+                const amount = document.getElementById('transfer-amount').value; 
+                if (!recipientId || !amount) return alert('Please fill all fields!'); 
+                
+                const recUser = window.participants.find(p => p.id === recipientId); 
+                const recName = recUser ? recUser.name.split(' ')[0] : 'User'; 
+                
+                db.ref(window.currentRoomId).push({ 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: `Sent $${amount} to ${recName}`, 
+                    originalText: `Sent $${amount} to ${recName}`, 
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flag: window.myProfileInfo.flag, 
+                    flagCode: window.myProfileInfo.flagCode, 
+                    langCode: window.myProfileInfo.langCode,
+                    isTransfer: true,
+                    amount: amount,
+                    recName: recName
+                }); 
+                
+                alert(`✅ Successfully sent $${amount} to ${recName}!`); 
+                window.closeBankTransferModal(); 
+                
+                const chatMsgs = document.getElementById('chat-messages'); 
+                if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); }
+            };
 
             window.openLocationModal = function() { 
                 window.closeDropdown(); 
