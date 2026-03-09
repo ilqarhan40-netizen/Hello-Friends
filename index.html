@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.18 (Mic Fix)</title>
+    <title>Hello Friends - Golden Master V31.19 (Ultimate Fix)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -400,6 +400,9 @@
             <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu">
+                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2" onclick="event.stopPropagation()">
+                        <option value="en-US">🇬🇧 English</option><option value="az-AZ">🇦🇿 Azərbaycanca</option><option value="ru-RU">🇷🇺 Русский</option><option value="it-IT">🇮🇹 Italiano</option><option value="fr-FR">🇫🇷 Français</option><option value="ja-JP">🇯🇵 日本語</option><option value="es-ES">🇪🇸 Español</option><option value="zh-CN">🇨🇳 中文</option><option value="pt-PT">🇵🇹 Português</option>
+                    </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
                     <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
                     <div class="action-icon" onclick="window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
@@ -575,7 +578,6 @@
                 <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -602,7 +604,7 @@
             window.closeAttachMenu(); 
         });
 
-        // === ИНТЕЛЛЕКТУАЛЬНЫЕ НОВОСТИ ===
+        // === ИНТЕЛЛЕКТУАЛЬНЫЕ НОВОСТИ С КАТАЛОГОМ ===
         window.openNewsFast = function() {
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
@@ -656,6 +658,7 @@
             window.closeDropdown(); 
             document.getElementById('trash-modal').classList.add('active'); 
         };
+
 
         // === ЛОГИКА АДМИНА ===
         window.secretClicks = 0;
@@ -835,7 +838,7 @@
             });
         };
 
-        // === ИСПРАВЛЕННАЯ ЛОКАЦИЯ (GOOGLE MAPS) ===
+        // === ИСПРАВЛЕННАЯ ЛОКАЦИЯ (ОФИЦИАЛЬНЫЙ GOOGLE MAPS) ===
         window.sendLocationToChat = function() {
             window.closeAttachMenu();
             if (navigator.geolocation) {
@@ -843,8 +846,9 @@
                     (position) => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
+                        // НАДЕЖНАЯ ССЫЛКА НА GOOGLE MAPS
                         const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
-                        const mapLink = `https://maps.google.com/maps?q=${lat},${lon}`;
+                        const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
                         
                         db.ref(window.currentRoomId).push({
                             userId: window.myProfileInfo.id,
@@ -890,7 +894,6 @@
             let defLang = ['en', 'ru', 'az', 'it'].includes(sysLang) ? sysLang : 'en'; 
             window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             
-            // ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА ПРИЛОЖЕНИЯ ТЕПЕРЬ СИНХРОНИЗИРУЕТ И МИКРОФОН!
             window.changeAppLanguage = function(langCode) { 
                 window.appLang = langCode; 
                 localStorage.setItem('hf_app_lang', window.appLang); 
@@ -1074,7 +1077,6 @@
                 if (!rawText) return; 
                 inputField.value = ''; 
                 
-                // В V31.18 ОТПРАВЛЯЕМ ТЕКСТ В ОРИГИНАЛЕ (БЕЗ ПРИНУДИТЕЛЬНОГО ПЕРЕВОДА ПРИ ОТПРАВКЕ)
                 db.ref(window.currentRoomId).push({ 
                     userId: window.myProfileInfo.id, 
                     name: window.myUsername, 
@@ -1176,7 +1178,6 @@
                     chatMessages.scrollTop = chatMessages.scrollHeight; 
                 }
 
-                // АВТО-ПЕРЕВОД
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
                     let targetUsers = [];
                     if (window.currentRoomId === 'global' && !isAI) { 
@@ -1359,7 +1360,26 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
             };
 
-            // === МИКРОФОН (СВЯЗАН С ЯЗЫКОМ ПРИЛОЖЕНИЯ) ===
+            window.openLocationModal = function() { 
+                window.closeDropdown(); 
+                document.getElementById('location-modal').classList.add('active'); 
+                const mapContainer = document.getElementById('location-map'); 
+                mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; 
+                const loadMap = (lat, lon) => { 
+                    // ОФИЦИАЛЬНАЯ ССЫЛКА НА GOOGLE MAPS ДЛЯ ГЛОБАЛЬНОЙ КАРТЫ
+                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed" style="border-radius: 12px;"></iframe>`; 
+                }; 
+                if (navigator.geolocation) { 
+                    navigator.geolocation.getCurrentPosition( 
+                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, 
+                        (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, 
+                        { timeout: 5000 } 
+                    ); 
+                } else { 
+                    mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; 
+                } 
+            };
+
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false;
@@ -1383,17 +1403,39 @@
                     } 
                 };
                 
+                window.autoSetMicLang = function() { 
+                    let phone = window.myProfileInfo.phone || ""; 
+                    let flag = window.myProfileInfo.flagCode || "un"; 
+                    let finalLang = 'en-US'; 
+                    if (phone.startsWith('+7')) finalLang = 'ru-RU'; 
+                    else if (phone.startsWith('+994')) finalLang = 'az-AZ'; 
+                    else if (phone.startsWith('+39')) finalLang = 'it-IT'; 
+                    else if (phone.startsWith('+49')) finalLang = 'de-DE'; 
+                    else if (phone.startsWith('+33')) finalLang = 'fr-FR'; 
+                    else if (phone.startsWith('+81')) finalLang = 'ja-JP'; 
+                    else if (phone.startsWith('+34')) finalLang = 'es-ES'; 
+                    else if (phone.startsWith('+86')) finalLang = 'zh-CN'; 
+                    else if (phone.startsWith('+351')) finalLang = 'pt-PT'; 
+                    else if (flag === 'ru') finalLang = 'ru-RU'; 
+                    else if (flag === 'az') finalLang = 'az-AZ'; 
+                    else if (flag === 'it') finalLang = 'it-IT'; 
+                    else if (flag === 'de') finalLang = 'de-DE'; 
+                    else if (flag === 'fr') finalLang = 'fr-FR'; 
+                    else if (flag === 'jp') finalLang = 'ja-JP'; 
+                    else if (flag === 'es') finalLang = 'es-ES'; 
+                    else if (flag === 'cn') finalLang = 'zh-CN'; 
+                    else if (flag === 'pt') finalLang = 'pt-PT'; 
+                    let rMic = document.getElementById('plus-mic-lang'); 
+                    if(rMic) rMic.value = finalLang; 
+                };
+                
                 window.startMic = function(target, btnId) { 
                     currentMicTarget = target; 
                     currentMicBtn = document.getElementById(btnId); 
                     
-                    // ЯЗЫК МИКРОФОНА = ЯЗЫКУ ИНТЕРФЕЙСА
-                    let micLang = 'en-US';
-                    if (window.appLang === 'ru') micLang = 'ru-RU';
-                    else if (window.appLang === 'az') micLang = 'az-AZ';
-                    else if (window.appLang === 'it') micLang = 'it-IT';
-                    
-                    rec.lang = micLang; 
+                    // БЕРЕМ ЯЗЫК ИЗ МЕНЮ РОМБА!
+                    let langSelect = document.getElementById('plus-mic-lang'); 
+                    rec.lang = langSelect ? langSelect.value : 'en-US'; 
                     
                     try { 
                         rec.start(); 
@@ -1407,6 +1449,8 @@
             window.switchChatRoom('global');
             if (window.isGuest) { 
                 setTimeout(() => { window.openMyProfile(); }, 800); 
+            } else {
+                setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); 
             }
             
             window.toggleTheme = function() { 
