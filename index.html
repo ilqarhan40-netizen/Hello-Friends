@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V28.5 (Stable Core)</title>
+    <title>Hello Friends - Golden Master V30.0 (Global Expansion)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -362,7 +362,15 @@
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu">
                     <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2" onclick="event.stopPropagation()">
-                        <option value="en-US">🇬🇧 English</option><option value="az-AZ">🇦🇿 Azərbaycanca</option><option value="ru-RU">🇷🇺 Русский</option><option value="it-IT">🇮🇹 Italiano</option>
+                        <option value="en-US">🇬🇧 English</option>
+                        <option value="az-AZ">🇦🇿 Azərbaycanca</option>
+                        <option value="ru-RU">🇷🇺 Русский</option>
+                        <option value="it-IT">🇮🇹 Italiano</option>
+                        <option value="fr-FR">🇫🇷 Français</option>
+                        <option value="ja-JP">🇯🇵 日本語</option>
+                        <option value="es-ES">🇪🇸 Español</option>
+                        <option value="zh-CN">🇨🇳 中文</option>
+                        <option value="pt-PT">🇵🇹 Português</option>
                     </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
                     <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
@@ -418,6 +426,11 @@
                             <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
                             <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
                             <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option>
+                            <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
+                            <option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option>
+                            <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
+                            <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option>
+                            <option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
                     </div>
@@ -526,10 +539,9 @@
         window.startInAppCall = function() { window.closePhoneChoiceModal(); window.switchTab(1); };
         window.startExternalCall = function() { 
             window.closePhoneChoiceModal(); 
-            let targetId = window.currentRoomId.replace('private_', '').split('_').find(id => id !== window.myProfileInfo.id);
-            if (targetId && targetId !== 'global' && targetId !== 'ai') {
-                 let p = window.participants.find(part => part.id === targetId);
-                 if (p && p.phone) { window.location.href = `tel:${p.phone.replace(/\s+/g, '')}`; return; }
+            if (window.currentTargetUser && window.currentTargetUser.phone) {
+                window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; 
+                return;
             }
             alert('Open a user profile or private chat to make a cellular call.');
         };
@@ -537,6 +549,12 @@
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         window.sendEmailForm = function(e) { e.preventDefault(); alert("Email sent successfully!"); window.closeEmailModal(); }
+
+        // ФУНКЦИЯ ВЫХОДА ИЗ АККАУНТА (ДЛЯ СМЕНЫ ЛИЧНОСТИ)
+        window.logoutUser = function() {
+            localStorage.removeItem('hf_active_user');
+            location.reload();
+        };
 
         // === ИНИЦИАЛИЗАЦИЯ И ЛОГИКА ===
         document.addEventListener('DOMContentLoaded', () => {
@@ -593,7 +611,9 @@
 
             let activeUserId = localStorage.getItem('hf_active_user'); window.isGuest = !activeUserId;
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15);
+            window.currentTargetUser = null; 
 
+            // ДОБАВЛЕНЫ НОВЫЕ СТРАНЫ В БАЗУ ЗНАНИЙ
             const countryData = {
                 "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
                 "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." },
@@ -602,7 +622,12 @@
                 "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." },
                 "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." },
                 "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." },
-                "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }
+                "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." },
+                "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." },
+                "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." },
+                "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." },
+                "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." },
+                "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." }
             };
 
             window.allCharacters = [
@@ -615,7 +640,7 @@
             let myChar = null;
             if (window.isGuest) {
                 window.myUsername = "Guest"; 
-                myChar = { id: 'guest_' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: 'New User', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: 'New user in the app.', languages: 'Auto' };
+                myChar = { id: 'guest' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: 'New User', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: 'New user in the app.', languages: 'Auto' };
             } else {
                 try {
                     let saved = localStorage.getItem('hf_custom_' + activeUserId);
@@ -625,23 +650,18 @@
                 window.myUsername = (myChar && myChar.name) ? myChar.name.split(' ')[0] : "User";
             }
             window.myProfileInfo = { ...myChar, id: myChar.id, name: window.myUsername + ' (You)' };
-            
             window.participants = [aiBot, ...window.allCharacters];
 
-            // === 1. SMART MERGE (Умное склеивание) ===
+            // === 1. SMART MERGE ===
             db.ref('users').on('value', (snapshot) => {
                 const data = snapshot.val();
                 let mergedUsers = [...window.allCharacters]; 
-                
                 if (data) {
                     Object.values(data).forEach(u => {
                         if(!u.id) return;
                         let existingIdx = mergedUsers.findIndex(vip => vip.id === u.id);
-                        if (existingIdx === -1) {
-                            mergedUsers.push(u); 
-                        } else {
-                            mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; 
-                        }
+                        if (existingIdx === -1) mergedUsers.push(u); 
+                        else mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; 
                     });
                 }
                 window.participants = [aiBot, ...mergedUsers.filter(c => c.id !== window.myProfileInfo.id && !c.id.startsWith('guest'))];
@@ -651,46 +671,31 @@
                 }
             });
 
-            // === 2. БРОНЕБОЙНАЯ ПОДСКАЗКА ===
+            // === 2. БРОНЕБОЙНАЯ ПОДСКАЗКА С ТЕЛЕФОНОМ ===
             window.showToast = function(name, info, photoUrl) {
                 const toast = document.getElementById('toast-notification');
                 if(!toast) return;
-                
                 document.getElementById('toast-name').innerText = name || 'User';
                 document.getElementById('toast-info').innerText = info || '';
-                
                 const img = document.getElementById('toast-img');
                 const icon = document.getElementById('toast-icon-wrap');
-                
-                if(photoUrl && photoUrl !== '') { 
-                    img.src = photoUrl; img.style.display = 'block'; icon.style.display = 'none'; 
-                } else { 
-                    img.style.display = 'none'; icon.style.display = 'flex'; 
-                }
-                
-                toast.style.transition = 'all 0.4s ease';
-                toast.style.opacity = '1';
-                toast.style.transform = 'translate(-50%, 0)';
-                toast.style.top = '20px';
-                
-                setTimeout(() => { 
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translate(-50%, -20px)';
-                    toast.style.top = '-100px';
-                }, 4000);
+                if(photoUrl && photoUrl !== '') { img.src = photoUrl; img.style.display = 'block'; icon.style.display = 'none'; } 
+                else { img.style.display = 'none'; icon.style.display = 'flex'; }
+                toast.style.transition = 'all 0.4s ease'; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 0)'; toast.style.top = '20px';
+                setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px)'; toast.style.top = '-100px'; }, 4000);
             };
 
             window.renderSidebar = function() {
                 const chatSidebar = document.getElementById('chat-sidebar');
                 if (!chatSidebar) return;
-                chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" id="chat-btn-global" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" id="chat-btn-ai" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" id="chat-btn-me" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
+                chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
                 
                 window.participants.filter(p => p.id !== 'ai').forEach(p => {
                     let sortedIds = [window.myProfileInfo.id, p.id].sort();
-                    let expectedId = "private_" + sortedIds[0] + "_" + sortedIds[1];
-                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`;
+                    let expectedId = "private_" + sortedIds[0] + "-" + sortedIds[1];
+                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`;
                 });
             };
 
@@ -698,6 +703,8 @@
                 if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
                 const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
                 
+                window.currentTargetUser = null; 
+
                 if (targetId === 'global') {
                     window.currentRoomId = "global";
                     window.showToast("Global Chat", "International Public Room", "");
@@ -713,11 +720,14 @@
                 else {
                     const targetUser = window.participants.find(p => p.id === targetId);
                     if(targetUser) {
+                        window.currentTargetUser = targetUser; 
                         let sortedIds = [window.myProfileInfo.id, targetUser.id].sort();
-                        window.currentRoomId = "private_" + sortedIds[0] + "_" + sortedIds[1]; 
+                        window.currentRoomId = "private_" + sortedIds[0] + "-" + sortedIds[1]; 
+                        
                         let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network";
+                        let phoneStr = targetUser.phone ? targetUser.phone : "Hidden";
                         let uLangs = targetUser.languages || "Auto-Translate";
-                        window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc + " | Speaks: " + uLangs, targetUser.photo);
+                        window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc + " | 📞 " + phoneStr + " | Speaks: " + uLangs, targetUser.photo);
                     }
                 }
                 
@@ -727,7 +737,6 @@
 
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim(); if(!text) return;
-                
                 db.ref(window.currentRoomId).push({ 
                     userId: window.myProfileInfo.id,
                     name: window.myUsername, 
@@ -755,13 +764,11 @@
                 
                 const messageGroup = document.createElement('div');
                 messageGroup.className = "flex flex-col w-full mt-3 mb-2";
-                
                 const msgWrapper = document.createElement('div'); 
                 msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
                 const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="chat-bubble">${data.text}</div></div>`;
                 msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
-                
                 messageGroup.appendChild(msgWrapper);
                 if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
@@ -775,11 +782,8 @@
                     });
                 } else if (window.currentRoomId.startsWith('private_') && !isAI) {
                     if (isMe) {
-                        let ids = window.currentRoomId.replace('private_', '').split('_');
-                        let otherId = ids.find(id => id !== window.myProfileInfo.id);
-                        let otherUser = window.participants.find(part => part.id === otherId);
-                        if (otherUser && otherUser.langCode !== window.myProfileInfo.langCode) {
-                            targetUsers.push({ code: otherUser.langCode, flag: otherUser.flag, photo: otherUser.photo });
+                        if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) {
+                            targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo });
                         }
                     } else {
                         if (data.langCode && data.langCode !== window.myProfileInfo.langCode) {
@@ -1014,8 +1018,17 @@
             // === РЕГИСТРАЦИЯ И ОТПРАВКА НА СЕРВЕР ===
             window.saveProfileData = function() {
                 let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
-                let newId = window.isGuest ? (nameVal.toLowerCase().replace(/\s+/g, '') + '_' + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
-                let photo = window.currentPhotoData || (window.myProfileInfo.photo !== 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff' ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=00a884&color=111b21');
+                
+                let newId = window.isGuest ? (nameVal.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
+                let photo = window.currentPhotoData;
+                if (!photo) {
+                    if (window.isGuest || (window.myProfileInfo.photo && window.myProfileInfo.photo.includes('Guest'))) {
+                        photo = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=00a884&color=fff';
+                    } else {
+                        photo = window.myProfileInfo.photo;
+                    }
+                }
+                
                 let phoneVal = document.getElementById('edit-phone').value.trim(); if (window.isGuest && !phoneVal) return alert("Please enter your Phone Number!");
                 const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; const cData = countryData[sel.value] || countryData['un'];
                 
@@ -1111,31 +1124,17 @@
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
             window.openLocationModal = function() {
-                window.closeDropdown(); 
-                document.getElementById('location-modal').classList.add('active'); 
-                const mapContainer = document.getElementById('location-map'); 
+                window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); 
                 mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>';
-                
-                const loadMap = (lat, lon) => { 
-                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; 
-                };
-                
-                if (navigator.geolocation) { 
-                    navigator.geolocation.getCurrentPosition( 
-                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, 
-                        (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, 
-                        { timeout: 5000 } 
-                    ); 
-                } else { 
-                    mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; 
-                }
+                const loadMap = (lat, lon) => { mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; };
+                if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, { timeout: 5000 } ); } else { mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; }
             }
 
             window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); }
             window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); window.switchTab(5); }
             window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { if (document.getElementById('conference').classList.contains('active')) { document.getElementById('conf-messages').innerHTML = ''; } else { db.ref(window.currentRoomId).remove().then(() => { if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; }); } window.closeTrashModal(); } }
 
-            // === 3. МИКРОФОН В РОМБЕ ===
+            // === 5. МИКРОФОН С НОВЫМИ ЯЗЫКАМИ ===
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false;
@@ -1156,25 +1155,33 @@
                     let phone = window.myProfileInfo.phone || "";
                     let flag = window.myProfileInfo.flagCode || "un";
                     let finalLang = 'en-US'; 
+                    
                     if (phone.startsWith('+7')) finalLang = 'ru-RU'; 
                     else if (phone.startsWith('+994')) finalLang = 'az-AZ'; 
                     else if (phone.startsWith('+39')) finalLang = 'it-IT'; 
                     else if (phone.startsWith('+49')) finalLang = 'de-DE'; 
+                    else if (phone.startsWith('+33')) finalLang = 'fr-FR';
+                    else if (phone.startsWith('+81')) finalLang = 'ja-JP';
+                    else if (phone.startsWith('+34')) finalLang = 'es-ES';
+                    else if (phone.startsWith('+86')) finalLang = 'zh-CN';
+                    else if (phone.startsWith('+351')) finalLang = 'pt-PT';
                     else if (flag === 'ru') finalLang = 'ru-RU'; 
                     else if (flag === 'az') finalLang = 'az-AZ'; 
                     else if (flag === 'it') finalLang = 'it-IT'; 
                     else if (flag === 'de') finalLang = 'de-DE';
+                    else if (flag === 'fr') finalLang = 'fr-FR';
+                    else if (flag === 'jp') finalLang = 'ja-JP';
+                    else if (flag === 'es') finalLang = 'es-ES';
+                    else if (flag === 'cn') finalLang = 'zh-CN';
+                    else if (flag === 'pt') finalLang = 'pt-PT';
                     
-                    let rMic = document.getElementById('plus-mic-lang');
-                    if(rMic) rMic.value = finalLang;
+                    let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang;
                 };
 
                 window.startMic = function(target, btnId) {
                     currentMicTarget = target; currentMicBtn = document.getElementById(btnId);
-                    
                     let langSelect = document.getElementById('plus-mic-lang');
                     rec.lang = langSelect ? langSelect.value : 'en-US';
-                    
                     try { rec.start(); } catch(e){}
                 }
             }
