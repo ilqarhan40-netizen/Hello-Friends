@@ -1,4 +1,497 @@
-<script>
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="google" content="notranslate">
+    <title>Hello Friends - Golden Master V28.5 (Stable Core)</title>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Allura&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root { --wa-bg: #0b141a; --wa-panel: #111b21; --wa-border: #202c33; --wa-green: #00a884; --wa-msg-out: #005c4b; --wa-msg-in: #202c33; --wa-text: #e9edef; --wa-text-muted: #8696a0; --hf-purple: #a29bfe; }
+        
+        body { background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100dvh; margin: 0; overflow: hidden; }
+        
+        .mobile-screen { width: 100%; max-width: 400px; height: 85dvh; max-height: 850px; background: var(--wa-bg); border-radius: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); border: 4px solid #1f2937; display: flex; flex-direction: column; color: var(--wa-text); overflow: hidden; position: relative; }
+        
+        @media (max-width: 500px) { .mobile-screen { max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; border: none; } }
+
+        /* HEADER */
+        .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 50; flex-shrink: 0; }
+        .logo-container { display: flex; align-items: center; gap: 12px; }
+        .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; box-shadow: 0 0 10px rgba(0,168,132,0.4); }
+        .header-title { font-size: 1.1rem; font-weight: bold; color: var(--wa-text); }
+        .header-icons { display: flex; gap: 18px; color: var(--wa-text-muted); font-size: 1.2rem; align-items: center;}
+        .header-icons i { cursor: pointer; transition: 0.2s; }
+        .header-icons i:hover { color: var(--wa-green); }
+
+        .header-dropdown { position: absolute; top: 60px; right: 10px; width: 230px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 14px 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); display: none; flex-direction: column; gap: 4px; z-index: 100; transform-origin: top right; animation: scaleIn 0.2s; }
+        .header-dropdown.active { display: flex; }
+        .header-dropdown a { color: var(--wa-text); font-size: 0.9rem; padding: 10px 8px; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
+        .header-dropdown a:hover { background: var(--wa-border); }
+
+        /* ПАНЕЛИ И ЧАТ */
+        .page-content { display: none !important; flex-grow: 1; flex-direction: column; overflow: hidden; animation: fadeIn 0.3s; background: var(--wa-bg); }
+        .page-content.active { display: flex !important; }
+        .page-container { width: 100%; height: 100%; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
+        
+        .chat-sidebar { width: 75px; flex-shrink: 0; border-right: 1px solid var(--wa-border); overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 12px; background: var(--wa-panel); }
+        .chat-sidebar::-webkit-scrollbar { display: none; }
+        .chat-contact { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 100%; transition: 0.2s;}
+        .chat-contact:hover { opacity: 0.8; }
+        .chat-contact-icon { width: 48px; height: 48px; border-radius: 50%; background-size: cover; background-position: center; border: 2px solid transparent; padding: 2px; background-clip: content-box; position: relative; }
+        .chat-contact.active-room .chat-contact-icon { border-color: var(--wa-green); }
+        .chat-contact-name { font-size: 0.6rem; color: var(--wa-text-muted); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 65px; text-align: center; }
+        .chat-contact.active-room .chat-contact-name { color: var(--wa-green); font-weight: bold; }
+
+        .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
+        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
+        
+        .chat-messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 16px; gap: 4px; scroll-behavior: smooth; }
+        .chat-bubble-wrapper { display: flex; flex-direction: column; max-width: 90%; }
+        .chat-bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .incoming { align-self: flex-start; }
+        .incoming .chat-bubble { background: var(--wa-msg-in); color: var(--wa-text); border-bottom-left-radius: 4px; }
+        .outgoing { align-self: flex-end; }
+        .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
+        .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
+
+        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border);}
+        .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
+        .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; padding: 4px 0; }
+        .chat-input-pill i { color: var(--wa-text-muted); cursor: pointer; transition: 0.2s; font-size: 1.2rem; }
+        .chat-input-pill i:hover { color: var(--wa-green); }
+        .mic-btn-chat { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-border); color: var(--wa-text-muted); border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .mic-btn-chat:hover { color: #ef4444; }
+        .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); color: #111b21; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+        .send-btn:active { transform: scale(0.9); }
+
+        /* РОМБ И НАВИГАЦИЯ */
+        .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px 16px 10px; flex-shrink: 0; position: relative; z-index: 50; width: 100%; }
+        .nav-links-wrapper { display: flex; justify-content: space-around; flex-grow: 1; padding-right: 10px; }
+        .nav-item { color: var(--wa-text-muted); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: color 0.3s; flex: 1; }
+        .nav-item i { font-size: 1.3rem; transition: transform 0.2s; }
+        .nav-item.active { color: var(--wa-green); }
+        .nav-item.active i { transform: scale(1.15); }
+
+        .rhombus-wrapper { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
+        .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(162, 155, 254, 0.4); transition: transform 0.3s; }
+        .rhombus-btn.active { transform: rotate(180deg); }
+        .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
+        
+        .rhombus-menu { position: absolute; bottom: 65px; right: 0; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 12px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 100; }
+        .rhombus-menu.active { display: grid; animation: scaleIn 0.2s;}
+        .action-icon { width: 44px; height: 44px; background-color: var(--wa-border); color: var(--wa-text); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 1.1rem;}
+        .action-icon:hover { background-color: var(--wa-green); color: #111b21; }
+
+        /* УМНЫЕ ШТОРКИ И КРЕСТИКИ */
+        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+        .app-modal.active { display: flex !important; animation: fadeInBg 0.3s; }
+        .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; display: flex; flex-direction: column; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .app-modal.active .app-modal-content { transform: translateY(0); }
+        
+        .close-sheet-btn { position: absolute; top: 15px; right: 15px; width: 36px; height: 36px; background: var(--wa-border); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: var(--wa-text-muted); font-size: 1.2rem; cursor: pointer; transition: 0.2s; z-index: 50; }
+        .close-sheet-btn:hover { background: #ef4444; color: white; }
+        .sheet-handle { width: 40px; height: 5px; background: #374151; border-radius: 5px; margin: 0 auto 20px auto; flex-shrink: 0; cursor: pointer;}
+
+        /* ФОРМЫ */
+        .form-input-box { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--wa-border); background: var(--wa-bg); color: white; font-size: 0.95rem; outline: none; margin-bottom: 12px; transition: 0.2s; }
+        .form-input-box:focus { border-color: var(--wa-green); }
+        .form-label { font-size: 0.7rem; color: var(--wa-green); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        /* ВИДЕО */
+        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
+        .video-frame.main { grid-column: 1 / 3; padding-top: 65%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
+        .video-frame video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .video-overlay { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 8px; font-weight: bold; z-index: 10;}
+        .flag-overlay { position: absolute; top: 8px; right: 8px; font-size: 1.2rem; z-index: 10;}
+        
+        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); padding: 4px 0; overflow: hidden; display: flex; align-items: center; z-index: 20; transition: opacity 0.3s; }
+        .conf-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
+
+        @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes scroll-text { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        
+        .pulse-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--wa-green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+
+        /* СВЕТЛАЯ ТЕМА */
+        .light-theme { background: #efeae2; color: #111b21; border-color: #d1d7db; }
+        .light-theme .app-header { background: #ffffff; border-bottom: 1px solid #d1d7db; }
+        .light-theme .bottom-nav-container { background: #ffffff; border-top: 1px solid #d1d7db; }
+        .light-theme .chat-sidebar { background: #ffffff; border-right: 1px solid #d1d7db;}
+        .light-theme .chat-input-area { background: #ffffff; border-top: 1px solid #d1d7db;}
+        .light-theme .chat-input-pill { background: #f0f2f5; border-color: #d1d7db; }
+        .light-theme .chat-input-pill input { color: #111b21; }
+        .light-theme .mic-btn-chat { background: #f0f2f5; color: #54656f; }
+        .light-theme .incoming .chat-bubble { background: #ffffff; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
+        .light-theme .outgoing .chat-bubble { background: #d9fdd3; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
+        .light-theme .text-yellow-400, .light-theme .chat-info-marquee-text { color: #ea580c !important; }
+        .light-theme .app-modal-content { background: #ffffff; }
+        .light-theme .form-input-box { background: #f0f2f5; color: #111b21; border-color: #d1d7db; }
+        .light-theme .rhombus-menu { background: #ffffff; border-color: #d1d7db; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .light-theme .action-icon { background: #f0f2f5; border-color: #d1d7db; color: #111b21; }
+        .light-theme .action-icon:hover { background: var(--wa-green); color: white; }
+        .light-theme .text-white { color: #111b21 !important; }
+        .light-theme .chat-info-marquee-container { background: #f0f2f5; border-bottom: 1px solid #d1d7db; }
+        .light-theme .header-dropdown { background: #ffffff; border-color: #d1d7db; }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body>
+
+    <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
+
+    <div class="mobile-screen" id="phone-body">
+        
+        <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white px-4 py-3 rounded-2xl shadow-2xl z-[3000] flex items-center gap-3 w-[90%] opacity-0 pointer-events-none" style="top: -100px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <div id="toast-icon-wrap" class="w-10 h-10 rounded-full bg-[#005c4b] flex items-center justify-center text-lg shrink-0">🌍</div>
+            <img id="toast-img" src="" class="w-10 h-10 rounded-full object-cover hidden shrink-0 border border-[#00a884]">
+            <div class="flex flex-col">
+                <span id="toast-name" class="font-bold text-[0.9rem]">Group Chat</span>
+                <span id="toast-info" class="text-[0.7rem] text-gray-400">Global Room</span>
+            </div>
+        </div>
+
+        <header class="app-header">
+             <div class="logo-container">
+                <div class="logo-circle">HF</div>
+                <span class="header-title">Hello Friends</span>
+             </div>
+             <div class="header-icons">
+                <i class="fa-solid fa-magnifying-glass" onclick="window.openSearchModal()" title="Global Search"></i>
+                <i class="fa-solid fa-ellipsis-vertical" onclick="window.toggleHeaderMenu(event)"></i>
+            </div>
+            
+            <div id="header-dropdown" class="header-dropdown">
+                <div class="flex justify-between items-center px-1 pb-2 mb-2 border-b border-[#202c33]">
+                    <span class="text-white font-bold text-[0.95rem] tracking-wide" data-i18n="menu">Settings</span>
+                    <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeDropdown()"></i>
+                </div>
+                <a onclick="window.openMyProfile(true)"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
+                
+                <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
+                    <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
+                    <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
+                        <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
+                        <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
+                        <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                        <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-xs pointer-events-none"></i>
+                </div>
+
+                <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
+                <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
+                <a onclick="window.toggleTheme()"><i class="fa-solid fa-sun text-yellow-400 w-5" id="theme-icon"></i> <span data-i18n="theme">Theme</span></a>
+                <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
+                <a onclick="document.getElementById('import-file-input').click(); window.closeDropdown()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
+                <a style="color: #ef4444;" onclick="window.logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="logout">Log Out</span></a>
+                <div class="mt-2 pt-3 border-t border-[#202c33] flex justify-center items-center">
+                    <span class="text-[#00a884] text-[0.65rem] font-bold tracking-widest uppercase">Author: Ilgar</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow overflow-hidden flex flex-col relative">
+            
+            <div id="message" class="page-content active h-full flex flex-col">
+                <div class="flex justify-between items-center px-4 py-2.5 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <button class="text-white font-bold flex items-center gap-2 hover:text-[#00a884] transition" onclick="window.switchChatRoom('global')"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> Global Chat</button>
+                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
+                </div>
+                
+                <div class="chat-info-marquee-container">
+                    <button onclick="window.toggleMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Auto-Translate"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+                    <div id="typing-marquee-container" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
+                        <span class="chat-info-marquee-text" id="chat-info-marquee">AI Translation System Active...</span>
+                    </div>
+                </div>
+
+                <div class="flex h-full overflow-hidden w-full bg-[#0b141a]">
+                    <div class="chat-sidebar" id="chat-sidebar"></div>
+                    <div class="flex flex-col flex-grow h-full overflow-hidden relative">
+                        <div class="chat-messages" id="chat-messages"></div>
+                        <div class="chat-input-area">
+                            <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
+                                <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('text')"></i>
+                                <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                            </div>
+                            <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')" title="Voice to Text"><i class="fa-solid fa-microphone"></i></button>
+                            <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a]">
+                <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <h2 class="text-xl font-bold text-white" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
+                </div>
+
+                <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+                    <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
+                        <span class="chat-info-marquee-text" id="voice-info-marquee">Waiting for voice input...</span>
+                    </div>
+                </div>
+                
+                <div class="flex-grow flex flex-col justify-center items-center relative">
+                    <div class="flex justify-center items-center gap-6 w-full">
+                        <div class="flex flex-col items-center">
+                            <div class="w-24 h-24 relative mb-3">
+                                <img id="voice-friend-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-gray-600">
+                                <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-xl bg-[#111b21] rounded-full p-1 shadow"></span>
+                            </div>
+                            <h3 id="voice-friend-name" class="text-gray-300 font-bold text-sm"></h3>
+                        </div>
+                        <div class="flex gap-2 text-[#00a884]"><div class="w-1.5 h-8 bg-[#00a884] rounded-full animate-bounce"></div><div class="w-1.5 h-12 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-8 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.2s"></div></div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-28 h-28 relative mb-3">
+                                <div class="pulse-ring"></div>
+                                <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] relative z-10">
+                                <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#111b21] rounded-full p-1 shadow"></span>
+                            </div>
+                            <h3 class="text-white font-bold text-sm" id="voice-me-name">You</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
+                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
+                        <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
+                        <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                    </div>
+                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
+                    <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
+                </div>
+            </div>
+
+            <div id="conference" class="page-content h-full flex flex-col bg-[#000]">
+                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <span class="font-bold text-[#00a884] tracking-widest text-[1rem] flex items-center gap-2"><i class="fa-solid fa-video"></i> CONFERENCE</span>
+                    <div class="flex items-center gap-4">
+                        <span class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full animate-pulse text-xs">● REC</span>
+                    </div>
+                </div>
+
+                <div class="flex-grow overflow-y-auto p-2 relative">
+                    <div class="video-grid" id="conference-grid"></div>
+                </div>
+                
+                <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0">
+                    <button onclick="window.toggleMeetMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition" title="Toggle Video CC"><i class="fa-solid fa-closed-captioning"></i></button>
+                    <button id="conf-cam-btn" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-gray-700 transition" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video-slash text-[#8696a0]"></i></button>
+                    <button class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
+                </div>
+
+                <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
+                    <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
+                        <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
+                        <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                    </div>
+                    <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
+                    <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                </div>
+            </div>
+
+            <div id="profession" class="page-content h-full">
+                <div class="page-container bg-[#0b141a]">
+                    <div class="flex justify-between items-center px-2 mb-4">
+                        <h2 class="text-xl font-bold text-white">Global Talents</h2>
+                        <button onclick="window.openMyProfile(true)" class="bg-[#202c33] text-[#00a884] px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942] shadow-md">
+                            <i class="fa-solid fa-pen mr-1"></i> Edit My CV
+                        </button>
+                    </div>
+                    <div id="profession-list" class="pb-24"></div>
+                </div>
+            </div>
+
+            <div id="social" class="page-content h-full">
+                <div class="page-container bg-[#0b141a] flex flex-col items-center justify-center h-full">
+                    <h2 class="text-2xl font-bold text-white mb-8">Social Networks</h2>
+                    <div class="grid grid-cols-2 gap-6 w-full max-w-[280px]">
+                        <a href="https://facebook.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#1877F2] transition shadow-lg"><i class="fa-brands fa-facebook text-4xl text-[#1877F2]"></i><span class="text-sm font-bold text-white">Facebook</span></a>
+                        <a href="https://instagram.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#E1306C] transition shadow-lg"><i class="fa-brands fa-instagram text-4xl text-[#E1306C]"></i><span class="text-sm font-bold text-white">Instagram</span></a>
+                        <a href="https://telegram.org" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#229ED9] transition shadow-lg"><i class="fa-brands fa-telegram text-4xl text-[#229ED9]"></i><span class="text-sm font-bold text-white">Telegram</span></a>
+                        <a href="https://linkedin.com" target="_blank" class="bg-[#202c33] p-6 rounded-3xl flex flex-col items-center gap-3 border border-[#2a3942] hover:border-[#0A66C2] transition shadow-lg"><i class="fa-brands fa-linkedin text-4xl text-[#0A66C2]"></i><span class="text-sm font-bold text-white">LinkedIn</span></a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="archive" class="page-content h-full">
+                <div class="page-container">
+                    <div class="flex items-center gap-4 mb-4 px-2">
+                        <button onclick="window.switchTab(0)" class="text-[#00a884] text-xl"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2 class="text-xl font-bold text-white m-0">Archive</h2>
+                    </div>
+                    <p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-10">Archive is empty.</p>
+                    <div id="archive-list" class="flex flex-col gap-3 mt-2 px-2 pb-20"></div>
+                </div>
+            </div>
+        </main>
+
+        <div class="bottom-nav-container">
+            <div class="nav-links-wrapper">
+                <a class="nav-item active" onclick="window.switchTab(0)"><i class="fa-solid fa-message"></i><span data-i18n="chat">Chat</span></a>
+                <a class="nav-item" onclick="window.switchTab(1)"><i class="fa-solid fa-microphone-lines"></i><span data-i18n="voice">Voice</span></a>
+                <a class="nav-item" onclick="window.switchTab(2)"><i class="fa-solid fa-video"></i><span data-i18n="meet">Meet</span></a>
+                <a class="nav-item" onclick="window.switchTab(3)"><i class="fa-solid fa-briefcase"></i><span data-i18n="cv">CV</span></a>
+                <a class="nav-item" onclick="window.switchTab(4)"><i class="fa-solid fa-hashtag"></i><span data-i18n="social">Social</span></a>
+            </div>
+            
+            <div class="rhombus-wrapper">
+                <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
+                <div id="rhombus-actions" class="rhombus-menu">
+                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2" onclick="event.stopPropagation()">
+                        <option value="en-US">🇬🇧 English</option><option value="az-AZ">🇦🇿 Azərbaycanca</option><option value="ru-RU">🇷🇺 Русский</option><option value="it-IT">🇮🇹 Italiano</option>
+                    </select>
+                    <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
+                    <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
+                    <div class="action-icon" onclick="window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
+                    <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
+                    <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeDropdown();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
+                    <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeDropdown();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
+            <div class="app-modal-content" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
+                <div class="flex items-center gap-4 mb-4 mt-2">
+                    <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
+                    <div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div>
+                </div>
+                <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
+                <div class="flex gap-2 w-full mt-auto" id="modal-action-buttons"></div>
+            </div>
+        </div>
+
+        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
+            <div class="app-modal-content" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding-top: 40px;" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #ef4444; color: white;" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
+                
+                <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-1 text-center mt-2" data-i18n="reg_title">Welcome to Hello Friends!</h2>
+                <p id="profile-modal-subtitle" class="text-[0.8rem] text-[#8696a0] text-center mb-6" data-i18n="reg_subtitle">Please complete registration</p>
+
+                <div class="flex flex-col items-center mb-4 shrink-0">
+                    <div class="relative w-20 h-20">
+                        <img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-[#00a884]">
+                        <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-7 h-7 flex justify-center items-center border-2 border-[#111b21]"><i class="fa-solid fa-camera text-xs"></i></button>
+                    </div>
+                    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
+                </div>
+
+                <label class="form-label" data-i18n="reg_name">Full Name</label>
+                <input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
+
+                <label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label>
+                <div class="flex items-center gap-3 mb-4 shrink-0">
+                    <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
+                    <div class="relative w-full">
+                        <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
+                            <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option>
+                            <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
+                            <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
+                            <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
+                            <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
+                            <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
+                            <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
+                            <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <label class="form-label" data-i18n="reg_phone">Phone Number</label>
+                <input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
+
+                <div id="cv-extended-fields" class="shrink-0">
+                    <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    <label class="form-label" data-i18n="reg_prof">Role / Profession</label><input type="text" id="edit-prof" class="form-input-box" placeholder="Designer">
+                    <label class="form-label" data-i18n="reg_langs">Languages Spoken</label><input type="text" id="edit-langs" class="form-input-box" placeholder="EN, ES">
+                    <label class="form-label" data-i18n="reg_bio">Bio / CV</label><textarea id="edit-desc" class="form-input-box resize-none" rows="2" placeholder="..."></textarea>
+                </div>
+
+                <button onclick="window.saveProfileData()" class="btn-primary mt-2" data-i18n="reg_save">Save Profile</button>
+            </div>
+        </div>
+
+        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
+            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closeSearchModal()"></div>
+                <h2 class="text-xl font-bold text-white mb-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
+                
+                <div class="relative w-full mb-4 shrink-0">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
+                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
+                </div>
+
+                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
+                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
+                        <button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">📈 Marketing</button>
+                    </div>
+                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">Web & Actions</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="window.closeSearchModal(); window.openBankTransferModal();" class="px-4 py-2 bg-[#005c4b] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💸 Send Money</button>
+                        <button onclick="window.handleSmartSearch('Tech News', 'web')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition border border-[#2a3942]">📰 Web News</button>
+                    </div>
+                </div>
+
+                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
+                <iframe id="search-result-frame" class="w-full h-[30vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
+                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-google text-blue-400 mr-2"></i> Search Web</button>
+            </div>
+        </div>
+
+        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closeBankTransferModal()"></div>
+                <div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto"><i class="fa-solid fa-wallet"></i></div>
+                <h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2>
+                <form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)">
+                    <select id="transfer-recipient" class="form-input-box" required></select>
+                    <input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required min="1">
+                    <button type="submit" class="btn-primary">Transfer</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closePhoneChoiceModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closePhoneChoiceModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Make a Call</h2><div class="flex flex-col gap-3"><button class="btn-primary flex justify-center items-center gap-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Free Voice Room</button><button class="btn-primary !bg-[#202c33] !text-white flex justify-center items-center gap-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button></div></div></div>
+        
+        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeTrashModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Manage Chat</h2><div class="flex flex-col gap-3"><button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button><button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button></div></div></div>
+        
+        <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeEmailModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> Send Email</h2><form class="w-full flex flex-col" onsubmit="window.sendEmailForm(event)"><input type="email" id="email-to" class="form-input-box" placeholder="To" required><input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required><textarea id="email-text" class="form-input-box resize-none" placeholder="Message" rows="4" required></textarea><button type="submit" class="btn-primary mt-2">Send</button></form></div></div>
+        
+        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();"><div class="app-modal-content h-[60vh]"><div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeLocationModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> Location</h2><div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div></div></div>
+    </div>
+
+    <script>
         // === ГЛОБАЛЬНЫЕ ФУНКЦИИ ЗАКРЫТИЯ ===
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
@@ -112,7 +605,6 @@
                 "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }
             };
 
-            // БАЗОВЫЕ VIP ГЕРОИ (Они никогда не сотрутся)
             window.allCharacters = [
                 { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '10.1M', seas: 'Caspian Sea', desc: 'Creator of Hello Friends.', languages: 'AZ, RU, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
                 { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '84M', seas: 'Baltic Sea', desc: 'Developing the core engine.', languages: 'DE, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
@@ -120,43 +612,39 @@
             ];
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
 
-            // ЗАГРУЗКА ЛОКАЛЬНОГО ПРОФИЛЯ
             let myChar = null;
             if (window.isGuest) {
                 window.myUsername = "Guest"; 
                 myChar = { id: 'guest_' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: 'New User', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: 'New user in the app.', languages: 'Auto' };
             } else {
-                let saved = localStorage.getItem('hf_custom_' + activeUserId);
-                if(saved) {
-                    myChar = JSON.parse(saved);
-                } else {
-                    myChar = window.allCharacters.find(c => c.id === activeUserId) || window.allCharacters[0]; 
-                }
-                window.myUsername = myChar.name.split(' ')[0];
+                try {
+                    let saved = localStorage.getItem('hf_custom_' + activeUserId);
+                    if(saved) myChar = JSON.parse(saved);
+                } catch(e) {}
+                if(!myChar) myChar = window.allCharacters.find(c => c.id === activeUserId) || window.allCharacters[0]; 
+                window.myUsername = (myChar && myChar.name) ? myChar.name.split(' ')[0] : "User";
             }
-            window.myProfileInfo = { ...myChar, id: myChar.id, name: myChar.name.split(' ')[0] + ' (You)' };
+            window.myProfileInfo = { ...myChar, id: myChar.id, name: window.myUsername + ' (You)' };
             
             window.participants = [aiBot, ...window.allCharacters];
 
-            // === 1. SMART MERGE (Умное склеивание контактов из Firebase) ===
+            // === 1. SMART MERGE (Умное склеивание) ===
             db.ref('users').on('value', (snapshot) => {
                 const data = snapshot.val();
-                let mergedUsers = [...window.allCharacters]; // Берем за основу VIP базу
+                let mergedUsers = [...window.allCharacters]; 
                 
                 if (data) {
                     Object.values(data).forEach(u => {
+                        if(!u.id) return;
                         let existingIdx = mergedUsers.findIndex(vip => vip.id === u.id);
                         if (existingIdx === -1) {
-                            mergedUsers.push(u); // Добавляем новичков
+                            mergedUsers.push(u); 
                         } else {
-                            mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; // Обновляем инфу VIP, если они изменили профиль
+                            mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; 
                         }
                     });
                 }
-                
-                // Фильтруем себя и гостевые аккаунты из списка контактов
                 window.participants = [aiBot, ...mergedUsers.filter(c => c.id !== window.myProfileInfo.id && !c.id.startsWith('guest'))];
-                
                 if(window.renderSidebar) window.renderSidebar();
                 if(document.getElementById('profession') && document.getElementById('profession').classList.contains('active')) {
                     if(window.renderProfessionList) window.renderProfessionList();
@@ -180,13 +668,14 @@
                     img.style.display = 'none'; icon.style.display = 'flex'; 
                 }
                 
-                // Жесткое пробивание стилей Tailwind
                 toast.style.transition = 'all 0.4s ease';
                 toast.style.opacity = '1';
+                toast.style.transform = 'translate(-50%, 0)';
                 toast.style.top = '20px';
                 
                 setTimeout(() => { 
                     toast.style.opacity = '0';
+                    toast.style.transform = 'translate(-50%, -20px)';
                     toast.style.top = '-100px';
                 }, 4000);
             };
@@ -199,10 +688,9 @@
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" id="chat-btn-me" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
                 
                 window.participants.filter(p => p.id !== 'ai').forEach(p => {
-                    // === 3. ЖЕЛЕЗНАЯ СОРТИРОВКА ПО УНИКАЛЬНОМУ ID ===
                     let sortedIds = [window.myProfileInfo.id, p.id].sort();
                     let expectedId = "private_" + sortedIds[0] + "_" + sortedIds[1];
-                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${p.name.split(' ')[0]}</span></div>`;
+                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" id="chat-btn-${p.id}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`;
                 });
             };
 
@@ -227,10 +715,9 @@
                     if(targetUser) {
                         let sortedIds = [window.myProfileInfo.id, targetUser.id].sort();
                         window.currentRoomId = "private_" + sortedIds[0] + "_" + sortedIds[1]; 
-                        
                         let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network";
                         let uLangs = targetUser.languages || "Auto-Translate";
-                        window.showToast(targetUser.flag + " " + targetUser.name.split(' ')[0], cDesc + " | Speaks: " + uLangs, targetUser.photo);
+                        window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc + " | Speaks: " + uLangs, targetUser.photo);
                     }
                 }
                 
@@ -241,7 +728,6 @@
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim(); if(!text) return;
                 
-                // === 4. БОГАТЫЙ ПАКЕТ ДАННЫХ ПРИ ОТПРАВКЕ ===
                 db.ref(window.currentRoomId).push({ 
                     userId: window.myProfileInfo.id,
                     name: window.myUsername, 
@@ -251,10 +737,10 @@
                     photo: window.myProfileInfo.photo,
                     flag: window.myProfileInfo.flag,
                     flagCode: window.myProfileInfo.flagCode,
-                    langCode: window.myProfileInfo.langCode // Языковой паспорт летит вместе с сообщением
+                    langCode: window.myProfileInfo.langCode
                 });
                 document.getElementById('chat-input').value = '';
-                if(window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Assistant", text: "Translating global connections! 🚀", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en' }); }, 1500); }
+                if(window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Assistant", text: "Translating global connections! 🚀", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); }, 1500); }
             }
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendFirebaseMsg(); });
 
@@ -262,12 +748,10 @@
                 const data = snapshot.val(); if(!data) return; 
                 const chatMessages = document.getElementById('chat-messages');
                 
-                // Идентификация по Уникальному ID, а не по имени
                 const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id; 
                 const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
                 
-                // Берем данные отправителя прямо из сообщения, если профиль еще не загрузился
-                let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+data.name, langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
+                let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+(data.name||'U'), langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
                 
                 const messageGroup = document.createElement('div');
                 messageGroup.className = "flex flex-col w-full mt-3 mb-2";
@@ -298,8 +782,7 @@
                             targetUsers.push({ code: otherUser.langCode, flag: otherUser.flag, photo: otherUser.photo });
                         }
                     } else {
-                        // Если сообщение от Итальянца, переводим на МОЙ язык
-                        if (data.langCode !== window.myProfileInfo.langCode) {
+                        if (data.langCode && data.langCode !== window.myProfileInfo.langCode) {
                             targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo });
                         }
                     }
@@ -311,15 +794,14 @@
                             fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`)
                             .then(res => res.json())
                             .then(resData => ({ user: u, text: resData[0][0][0] }))
-                            .catch(e => ({ user: u, text: `[${u.code.toUpperCase()}] ${data.text}` })) 
+                            .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) 
                         );
                         
                         const translationsRes = await Promise.all(fetchPromises); 
-                        
                         const transContainer = document.createElement('div');
                         transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
-                        
                         let marqueeTextStr = ''; 
+                        
                         translationsRes.forEach(t => { 
                             transContainer.innerHTML += `
                             <div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}">
@@ -340,9 +822,7 @@
                         const mText = document.getElementById('chat-info-marquee');
                         if (window.isMarqueeEnabled !== false && mText) { 
                             mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
-                            mText.style.animation = 'none'; 
-                            void mText.offsetWidth; 
-                            mText.style.animation = null; 
+                            mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; 
                         } 
                     } catch (e) {}
                 }
@@ -362,7 +842,7 @@
             if (voiceFriend) { 
                 document.getElementById('voice-friend-photo').src = voiceFriend.photo; 
                 document.getElementById('voice-friend-flag').innerText = voiceFriend.flag; 
-                document.getElementById('voice-friend-name').innerText = voiceFriend.name.split(' ')[0]; 
+                document.getElementById('voice-friend-name').innerText = (voiceFriend.name||'User').split(' ')[0]; 
             }
             document.getElementById('voice-me-photo').src = window.myProfileInfo.photo;
             document.getElementById('voice-me-flag').innerText = window.myProfileInfo.flag;
@@ -378,7 +858,6 @@
                 try {
                     const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
                     const translated = res[0][0][0];
-                    
                     const mText = document.getElementById('voice-info-marquee');
                     if(mText) {
                         mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${voiceFriend.flag} ${translated}</span>`;
@@ -402,7 +881,7 @@
                 let displayedCount = 0;
                 window.participants.forEach(p => {
                     if(p.id === 'ai' || displayedCount >= 3) return; 
-                    confHtml += `<div class="video-frame"><video autoplay loop muted playsinline><source src="${p.video}"></video><div class="video-overlay">${p.name.split(' ')[0]}</div><div class="flag-overlay">${p.flag}</div><div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div></div>`;
+                    confHtml += `<div class="video-frame"><video autoplay loop muted playsinline><source src="${p.video}"></video><div class="video-overlay">${(p.name||'').split(' ')[0]}</div><div class="flag-overlay">${p.flag}</div><div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div></div>`;
                     displayedCount++;
                 });
                 confGrid.innerHTML = confHtml; 
@@ -448,13 +927,11 @@
                 const text = inputEl.value.trim();
                 if(!text) return;
                 inputEl.value = '';
-
                 const myMarquee = document.getElementById('speaker-marquee');
                 if(myMarquee) { 
                     myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; 
                     myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
                 }
-
                 const listenerMarquees = document.querySelectorAll('.conf-listener-marquee');
                 listenerMarquees.forEach(async (el) => {
                     const tLang = el.getAttribute('data-lang');
@@ -480,7 +957,7 @@
                 const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id);
                 if (!p) return;
                 document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo;
-                document.getElementById('modal-name').innerText = p.name.split(' ')[0];
+                document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0];
                 document.getElementById('modal-prof').innerText = p.profession || 'User';
                 const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
                 document.getElementById('modal-desc').innerHTML = `<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div></div>${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#00a884] font-bold block mb-1">OVERVIEW</span><p class="leading-relaxed text-[0.9rem]">${cDesc} ${p.desc ? '<br><br><b class="text-[#a29bfe]">Bio:</b> ' + p.desc : ''}</p></div>`;
@@ -534,7 +1011,7 @@
             
             window.handleFileUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; reader.readAsDataURL(file); }
             
-            // === ЗАПИСЬ ПРОФИЛЯ НА СЕРВЕР ===
+            // === РЕГИСТРАЦИЯ И ОТПРАВКА НА СЕРВЕР ===
             window.saveProfileData = function() {
                 let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
                 let newId = window.isGuest ? (nameVal.toLowerCase().replace(/\s+/g, '') + '_' + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
@@ -546,7 +1023,7 @@
                 
                 localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile)); 
                 localStorage.setItem('hf_active_user', newId); 
-                db.ref('users/' + newId).set(customProfile); // Запись в глобальную базу
+                db.ref('users/' + newId).set(customProfile); 
                 
                 window.closeProfileModal(); 
                 if(window.autoSetMicLang) window.autoSetMicLang(); 
@@ -559,7 +1036,7 @@
                 recipientSelect.innerHTML = '<option value="" disabled selected>Select Recipient</option>';
                 window.participants.forEach(p => {
                     if(p.id !== 'ai' && p.id !== window.myProfileInfo.id) {
-                        recipientSelect.innerHTML += `<option value="${p.id}">${p.name} ${p.flag}</option>`;
+                        recipientSelect.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`;
                     }
                 });
                 document.getElementById('transfer-amount').value = '';
@@ -620,7 +1097,7 @@
                 const query = document.getElementById('global-search-input').value.toLowerCase().trim(); const resultsArea = document.getElementById('search-results-area'); const suggestions = document.getElementById('search-suggestions'); document.getElementById('search-result-frame').classList.add('hidden');
                 if (query.length === 0) { resultsArea.innerHTML = ''; suggestions.style.display = 'block'; return; }
                 suggestions.style.display = 'none'; let html = ''; let found = false;
-                window.participants.forEach(p => { if (p.name.toLowerCase().includes(query) || p.profession?.toLowerCase().includes(query) || p.country?.toLowerCase().includes(query)) { found = true; html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${p.name.split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; } });
+                window.participants.forEach(p => { if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { found = true; html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; } });
                 resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`;
             };
             window.doGoogleSearch = function() { const q = document.getElementById('global-search-input').value; if(q.trim() === '') return alert('Enter search query'); document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('search-results-area').innerHTML = ''; const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); }
@@ -628,7 +1105,7 @@
             window.renderProfessionList = function() {
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return;
                 const allUsers = [...window.participants.filter(p => p.id !== 'ai')]; let cardsHTML = `<div class="grid grid-cols-2 gap-3">`;
-                allUsers.forEach((p) => { cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border border-[#2a3942] flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="window.openAvatarModal('${p.id}')" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${p.name.split(' ')[0]}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession}</p><button onclick="window.openAvatarModal('${p.id}')" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#2a3942]">View CV</button></div>`; });
+                allUsers.forEach((p) => { cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border border-[#2a3942] flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="window.openAvatarModal('${p.id}')" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${(p.name||'User').split(' ')[0]}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="window.openAvatarModal('${p.id}')" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#2a3942]">View CV</button></div>`; });
                 profContainer.innerHTML = cardsHTML + `</div>`;
             }
             if(document.getElementById('profession-list')) window.renderProfessionList();
@@ -658,7 +1135,7 @@
             window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); window.switchTab(5); }
             window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { if (document.getElementById('conference').classList.contains('active')) { document.getElementById('conf-messages').innerHTML = ''; } else { db.ref(window.currentRoomId).remove().then(() => { if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; }); } window.closeTrashModal(); } }
 
-            // === 5. МИКРОФОН В РОМБЕ (Автопилот + Ручной режим) ===
+            // === 3. МИКРОФОН В РОМБЕ ===
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false;
@@ -696,7 +1173,7 @@
                     currentMicTarget = target; currentMicBtn = document.getElementById(btnId);
                     
                     let langSelect = document.getElementById('plus-mic-lang');
-                    rec.lang = langSelect ? langSelect.value : 'en-US'; // Читает язык ИЗ РОМБА
+                    rec.lang = langSelect ? langSelect.value : 'en-US';
                     
                     try { rec.start(); } catch(e){}
                 }
@@ -711,3 +1188,5 @@
             window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
     </script>
+</body>
+</html>
