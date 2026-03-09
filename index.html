@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.15 (Stable Orbit)</title>
+    <title>Hello Friends - Golden Master V31.16 (Clean Core)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -158,7 +158,7 @@
 <body>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
-    <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="media-upload-input" accept="image/*" class="hidden" onchange="window.handleMediaUpload(event)">
     <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
@@ -572,6 +572,14 @@
             </div>
         </div>
 
+        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
+            <div class="app-modal-content h-[60vh]">
+                <div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-4 text-white mt-4">Location</h2>
+                <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -671,9 +679,7 @@
             }
         };
 
-        window.closeAdminModal = function() { 
-            document.getElementById('admin-modal').classList.remove('active'); 
-        };
+        window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
         
         window.openAdminModal = function() { 
             window.closeDropdown(); 
@@ -710,6 +716,7 @@
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
+        window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
         
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
@@ -834,7 +841,7 @@
             });
         };
 
-        // === ОТПРАВКА ЛОКАЦИИ (ИСПРАВЛЕННЫЙ GOOGLE MAPS API) ===
+        // === ИСПРАВЛЕННАЯ ЛОКАЦИЯ (GOOGLE MAPS) В ЧАТЕ ===
         window.sendLocationToChat = function() {
             window.closeAttachMenu();
             if (navigator.geolocation) {
@@ -842,7 +849,7 @@
                     (position) => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        // ОФИЦИАЛЬНАЯ ССЫЛКА НА GOOGLE MAPS EMBED
+                        // ОФИЦИАЛЬНАЯ ССЫЛКА НА GOOGLE MAPS EMBED (ПОЧИНЕНА)
                         const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
                         const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
                         
@@ -1026,8 +1033,6 @@
                 
                 window.currentTargetUser = null; 
                 let headerTitle = "Global Chat";
-                
-                // ВЕРНУЛИ ОТОБРАЖЕНИЕ ID КОМНАТЫ
                 let headerRoomId = "global";
 
                 if (targetId === 'global') { 
@@ -1054,7 +1059,10 @@
                         let id2 = String(targetUser.id); 
                         window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                         headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; 
-                        headerRoomId = window.currentRoomId; // ТЕПЕРЬ ПОКАЗЫВАЕТ: private_klaus_marinella
+                        
+                        // ID СОПРЯЖЕНИЯ 
+                        headerRoomId = window.currentRoomId; 
+                        
                         let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network"; 
                         window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc, targetUser.photo); 
                     }
@@ -1147,7 +1155,6 @@
                 let bubbleContent = data.text;
                 let bubbleClasses = `chat-bubble`;
                 
-                // РЕНДЕР МЕДИА ФАЙЛОВ
                 if (data.mediaUrl) {
                     if (data.mediaType === 'video') {
                         bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
@@ -1156,8 +1163,6 @@
                     }
                     bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
                 }
-                
-                // РЕНДЕР ЧЕКА ПЕРЕВОДА
                 else if (data.isTransfer) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
@@ -1169,8 +1174,6 @@
                             <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
                         </div>`;
                 }
-
-                // РЕНДЕР ЛОКАЦИИ (ИСПРАВЛЕНО НА GOOGLE MAPS)
                 else if (data.isLocation) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
@@ -1179,8 +1182,6 @@
                             <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
                         </div>`;
                 }
-
-                // РЕНДЕР ФАЙЛА-ДОКУМЕНТА
                 else if (data.isFile) {
                     bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
                     bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
@@ -1331,7 +1332,7 @@
                         window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true }); 
                         if(videoEl) { 
                             videoEl.srcObject = window.myVideoStream; 
-                            videoEl.muted = true; // Глушим только локально, чтобы не фонило
+                            videoEl.muted = true; 
                             videoEl.play(); 
                             videoEl.classList.add('mirror-video'); 
                         } 
@@ -1379,6 +1380,7 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
             };
 
+            // === ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ ПРОФИЛЕЙ (ID СОПРЯЖЕНИЯ) ===
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
                 if (!p) return;
@@ -1604,7 +1606,8 @@
                 } else if (type === 'web') { 
                     input.value = text; 
                     document.getElementById('search-results-area').innerHTML = ''; 
-                    // Не закрываем категории, чтобы можно было кликать другие!
+                    document.getElementById('search-suggestions').style.display = 'none';
+                    // КАТЕГОРИИ НОВОСТЕЙ БОЛЬШЕ НЕ СКРЫВАЮТСЯ! (Можно кликать разные подряд)
                     window.doGoogleSearch(); 
                 } 
             };
