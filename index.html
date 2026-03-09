@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.4 (Admin Center)</title>
+    <title>Hello Friends - Golden Master V31.5 (Classic CV)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -131,6 +131,14 @@
         .pulse-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--wa-green); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
 
+        /* КЛАССИЧЕСКОЕ CV СТИЛИ */
+        .classic-cv-container { font-family: 'Times New Roman', Times, serif; color: #1a202c; background: #ffffff; padding: 24px 16px; min-height: 100%; border-radius: 8px;}
+        .cv-header-name { font-size: 1.8rem; font-weight: bold; text-align: center; margin-bottom: 4px; border-bottom: 2px solid #1a202c; padding-bottom: 8px; text-transform: uppercase;}
+        .cv-contact-info { text-align: center; font-size: 0.85rem; color: #4a5568; margin-bottom: 24px; font-family: Arial, sans-serif;}
+        .cv-section-title { font-size: 1.1rem; font-weight: bold; text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; color: #1a202c; border-bottom: 1px solid #cbd5e0; padding-bottom: 4px;}
+        .cv-text-body { font-size: 0.95rem; line-height: 1.6; color: #2d3748; white-space: pre-wrap; margin-bottom: 12px;}
+        .cv-label { font-weight: bold; color: #1a202c;}
+
         /* СВЕТЛАЯ ТЕМА */
         .light-theme { background: #efeae2; color: #111b21; border-color: #d1d7db; }
         .light-theme .app-header { background: #ffffff; border-bottom: 1px solid #d1d7db; }
@@ -188,7 +196,7 @@
                 
                 <a id="admin-menu-btn" style="display: none; color: #a29bfe;" onclick="window.openAdminModal()"><i class="fa-solid fa-crown w-5"></i> <span>Admin Panel</span></a>
                 
-                <a onclick="window.openMyProfile(true)"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
+                <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
                     <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
@@ -323,8 +331,8 @@
                 <div class="page-container bg-[#0b141a]">
                     <div class="flex justify-between items-center px-2 mb-4">
                         <h2 class="text-xl font-bold text-white">Global Talents</h2>
-                        <button onclick="window.openMyProfile(true)" class="bg-[#202c33] text-[#00a884] px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942] shadow-md">
-                            <i class="fa-solid fa-pen mr-1"></i> Edit My CV
+                        <button onclick="window.openEditCV()" class="bg-[#202c33] text-[#00a884] px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942] shadow-md">
+                            <i class="fa-solid fa-file-signature mr-1"></i> Edit My CV
                         </button>
                     </div>
                     <div id="profession-list" class="pb-24"></div>
@@ -408,7 +416,8 @@
             <div class="app-modal-content" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding-top: 40px;" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #ef4444; color: white;" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark"></i></div>
                 <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-1 text-center mt-2" data-i18n="reg_title">Welcome to Hello Friends!</h2>
-                <p id="profile-modal-subtitle" class="text-[0.8rem] text-[#8696a0] text-center mb-6" data-i18n="reg_subtitle">Please complete registration</p>
+                <p id="profile-modal-subtitle" class="text-[0.8rem] text-[#8696a0] text-center mb-6" data-i18n="reg_subtitle">Basic Information</p>
+                
                 <div class="flex flex-col items-center mb-4 shrink-0">
                     <div class="relative w-20 h-20">
                         <img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-[#00a884]">
@@ -416,6 +425,7 @@
                     </div>
                     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
                 </div>
+                
                 <label class="form-label" data-i18n="reg_name">Full Name</label><input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
                 <label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label>
                 <div class="flex items-center gap-3 mb-4 shrink-0">
@@ -428,84 +438,83 @@
                     </div>
                 </div>
                 <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
-                <div id="cv-extended-fields" class="shrink-0">
-                    <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
-                    <label class="form-label" data-i18n="reg_prof">Role / Profession</label><input type="text" id="edit-prof" class="form-input-box" placeholder="Designer">
-                    <label class="form-label" data-i18n="reg_langs">Languages Spoken</label><input type="text" id="edit-langs" class="form-input-box" placeholder="EN, ES">
-                    <label class="form-label" data-i18n="reg_bio">Bio / CV</label><textarea id="edit-desc" class="form-input-box resize-none" rows="2" placeholder="..."></textarea>
+                <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                
+                <button onclick="window.saveProfileData()" class="btn-primary mt-auto mb-6" data-i18n="reg_save">Save Profile</button>
+            </div>
+        </div>
+
+        <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
+            <div class="app-modal-content" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding-top: 40px;" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-2xl font-bold text-white mb-1 mt-2"><i class="fa-solid fa-file-signature text-[#00a884] mr-2"></i> Edit CV</h2>
+                <p class="text-[0.8rem] text-[#8696a0] mb-6">Professional Curriculum Vitae Builder</p>
+                
+                <div class="overflow-y-auto pb-20 pr-1">
+                    <label class="form-label">Profession / Title</label>
+                    <input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
+                    
+                    <label class="form-label">Languages Spoken</label>
+                    <input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
+                    
+                    <label class="form-label">Core Skills</label>
+                    <textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management, Design..."></textarea>
+                    
+                    <label class="form-label">Work Experience</label>
+                    <textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp (Developer)&#10;2018 - 2020: Startup Inc (Junior)..."></textarea>
+                    
+                    <label class="form-label">Education</label>
+                    <textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science, MIT (2018)"></textarea>
+
+                    <label class="form-label">About Me (Summary)</label>
+                    <textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with 5+ years of experience in..."></textarea>
                 </div>
-                <button onclick="window.saveProfileData()" class="btn-primary mt-2" data-i18n="reg_save">Save Profile</button>
+
+                <button onclick="window.saveCVData()" class="btn-primary absolute bottom-6 w-[calc(100%-48px)]">Save CV</button>
+            </div>
+        </div>
+
+        <div id="classic-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeClassicCV();">
+            <div class="app-modal-content" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; background: #e5e7eb; padding: 10px;" onclick="event.stopPropagation();">
+                
+                <div class="flex justify-between items-center mb-2 px-2 shrink-0">
+                    <button onclick="window.closeClassicCV()" class="text-gray-800 bg-white shadow rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-200"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button onclick="window.printCV()" class="text-white bg-[#00a884] shadow rounded-full w-10 h-10 flex items-center justify-center hover:bg-[#005c4b]"><i class="fa-solid fa-print"></i></button>
+                </div>
+
+                <div class="classic-cv-container shadow-2xl overflow-y-auto" id="printable-cv-area">
+                    <div id="cv-view-header" class="mb-4"></div>
+                    <div id="cv-view-body"></div>
+                </div>
+
             </div>
         </div>
 
         <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeSearchModal()"></div>
-                <h2 class="text-xl font-bold text-white mb-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
-                <div class="relative w-full mb-4 shrink-0"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i><input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]"></div>
-                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p><div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button><button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button><button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">📈 Marketing</button></div>
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">Web & Actions</p><div class="flex flex-wrap gap-2 mb-4"><button onclick="window.closeSearchModal(); window.openBankTransferModal();" class="px-4 py-2 bg-[#005c4b] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💸 Send Money</button><button onclick="window.handleSmartSearch('Tech News', 'web')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition border border-[#2a3942]">📰 Web News</button></div>
-                </div>
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div><iframe id="search-result-frame" class="w-full h-[30vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-google text-blue-400 mr-2"></i> Search Web</button>
-            </div>
+            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeSearchModal()"></div><h2 class="text-xl font-bold text-white mb-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2><div class="relative w-full mb-4 shrink-0"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i><input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]"></div><div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;"><p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p><div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button><button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button><button onclick="window.handleSmartSearch('Marketing', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">📈 Marketing</button></div><p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">Web & Actions</p><div class="flex flex-wrap gap-2 mb-4"><button onclick="window.closeSearchModal(); window.openBankTransferModal();" class="px-4 py-2 bg-[#005c4b] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💸 Send Money</button><button onclick="window.handleSmartSearch('Tech News', 'web')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-blue-400 hover:bg-blue-500 hover:text-white transition border border-[#2a3942]">📰 Web News</button></div></div><div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div><iframe id="search-result-frame" class="w-full h-[30vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe><button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-google text-blue-400 mr-2"></i> Search Web</button></div>
         </div>
-
-        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
-            <div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeBankTransferModal()"></div><div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto"><i class="fa-solid fa-wallet"></i></div><h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2>
-                <form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)"><select id="transfer-recipient" class="form-input-box" required></select><input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required min="1"><button type="submit" class="btn-primary">Transfer</button></form></div>
-        </div>
-
+        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeBankTransferModal()"></div><div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto"><i class="fa-solid fa-wallet"></i></div><h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2><form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)"><select id="transfer-recipient" class="form-input-box" required></select><input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required min="1"><button type="submit" class="btn-primary">Transfer</button></form></div></div>
         <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closePhoneChoiceModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closePhoneChoiceModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Make a Call</h2><div class="flex flex-col gap-3"><button class="btn-primary flex justify-center items-center gap-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Free Voice Room</button><button class="btn-primary !bg-[#202c33] !text-white flex justify-center items-center gap-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button></div></div></div>
-        
         <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeTrashModal()"></div><h2 class="text-xl font-bold mb-6 text-white text-center">Manage Chat</h2><div class="flex flex-col gap-3"><button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button><button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button></div></div></div>
-        
         <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeEmailModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> Send Email</h2><form class="w-full flex flex-col" onsubmit="window.sendEmailForm(event)"><input type="email" id="email-to" class="form-input-box" placeholder="To" required><input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required><textarea id="email-text" class="form-input-box resize-none" placeholder="Message" rows="4" required></textarea><button type="submit" class="btn-primary mt-2">Send</button></form></div></div>
-        
         <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();"><div class="app-modal-content h-[60vh]"><div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeLocationModal()"></div><h2 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i> Location</h2><div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div></div></div>
     </div>
 
     <script>
-        // === ЛОГИКА АДМИНА (GOD MODE) ===
+        // === ЛОГИКА АДМИНА ===
         window.secretClicks = 0;
         window.activateGodMode = function() {
             window.secretClicks++;
             if(window.secretClicks === 5) {
                 window.secretClicks = 0;
                 let pass = prompt("Enter Admin Password (Режим Создателя):");
-                if(pass === "777") { 
-                    localStorage.setItem('hf_god_mode', 'true');
-                    alert("GOD MODE UNLOCKED! 👑 Админ-панель добавлена в меню (три точки).");
-                    location.reload();
-                } else {
-                    alert("Access Denied. Неверный пароль.");
-                }
+                if(pass === "777") { localStorage.setItem('hf_god_mode', 'true'); alert("GOD MODE UNLOCKED! 👑 Админ-панель добавлена в меню."); location.reload(); } else { alert("Access Denied."); }
             }
         };
 
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
-        window.openAdminModal = function() {
-            window.closeDropdown();
-            const sel = document.getElementById('admin-user-select');
-            sel.innerHTML = '';
-            // Добавляем всех пользователей в список
-            window.participants.forEach(p => {
-                if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; }
-            });
-            // Добавляем себя (чтобы можно было вернуться)
-            sel.innerHTML += `<option value="${window.myProfileInfo.id}">${(window.myProfileInfo.name||'Me').split(' (')[0]} ${window.myProfileInfo.flag} (Current)</option>`;
-            
-            document.getElementById('admin-modal').classList.add('active');
-        };
-
-        window.adminLogin = function() {
-            const id = document.getElementById('admin-user-select').value;
-            if(confirm("Are you sure you want to log in as this user?")) {
-                localStorage.setItem('hf_active_user', id);
-                location.reload();
-            }
-        };
+        window.openAdminModal = function() { window.closeDropdown(); const sel = document.getElementById('admin-user-select'); sel.innerHTML = ''; window.participants.forEach(p => { if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; } }); sel.innerHTML += `<option value="${window.myProfileInfo.id}">${(window.myProfileInfo.name||'Me').split(' (')[0]} ${window.myProfileInfo.flag} (Current)</option>`; document.getElementById('admin-modal').classList.add('active'); };
+        window.adminLogin = function() { const id = document.getElementById('admin-user-select').value; if(confirm("Are you sure you want to log in as this user?")) { localStorage.setItem('hf_active_user', id); location.reload(); } };
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
@@ -533,12 +542,9 @@
 
         document.addEventListener('DOMContentLoaded', () => {
 
-            // Показываем кнопку админа в меню, если пароль был введен ранее
-            if(localStorage.getItem('hf_god_mode') === 'true') {
-                document.getElementById('admin-menu-btn').style.display = 'flex';
-            }
+            if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
 
-            const i18n = { en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile & CV", edit_subtitle: "Update your information" }, ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль и CV", edit_subtitle: "Обновите свои данные" }, az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim və CV", edit_subtitle: "Məlumatları yenilə" }, it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", logout: "Esci", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo e CV", edit_subtitle: "Aggiorna i tuoi dati" } };
+            const i18n = { en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Information" }, ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль", edit_subtitle: "Основная информация" }, az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" }, it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", logout: "Esci", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" } };
             let sysLang = navigator.language.slice(0, 2); let defLang = ['en', 'ru', 'az', 'it'].includes(sysLang) ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             window.changeAppLanguage = function(langCode) { window.appLang = langCode; localStorage.setItem('hf_app_lang', window.appLang); window.applyTranslations(); window.closeDropdown(); };
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
@@ -557,16 +563,16 @@
             const countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
 
             window.allCharacters = [
-                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '10.1M', seas: 'Caspian Sea', desc: 'Creator of Hello Friends.', languages: 'AZ, RU, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
-                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '84M', seas: 'Baltic Sea', desc: 'Developing the core engine.', languages: 'DE, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
-                { id: 'marinella', name: 'Marinella', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing', email: 'mary@hf.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '59M', seas: 'Mediterranean', desc: 'Leading global marketing.', languages: 'IT, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' }
+                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '10.1M', seas: 'Caspian Sea', desc: 'Passionate about connecting people.', skills: 'Leadership, Architecture', experience: '10+ years in Tech', education: 'BSc Computer Science', languages: 'AZ, RU, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
+                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '84M', seas: 'Baltic Sea', desc: 'Developing the core engine.', skills: 'JavaScript, Firebase', experience: '5 years at HF', education: 'MSc Engineering', languages: 'DE, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
+                { id: 'marinella', name: 'Marinella', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing', email: 'mary@hf.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '59M', seas: 'Mediterranean', desc: 'Leading global marketing.', skills: 'PR, Social Media', experience: 'Agencies in Milan', education: 'BA Marketing', languages: 'IT, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' }
             ];
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
 
             let myChar = null;
             if (window.isGuest) {
                 window.myUsername = "Guest"; 
-                myChar = { id: 'guest' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: 'New User', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: 'New user in the app.', languages: 'Auto' };
+                myChar = { id: 'guest' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: '', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: '', skills: '', experience: '', education: '', languages: 'Auto' };
             } else {
                 try { let saved = localStorage.getItem('hf_custom_' + activeUserId); if(saved) myChar = JSON.parse(saved); } catch(e) {}
                 if(!myChar) myChar = window.allCharacters.find(c => c.id === activeUserId) || window.allCharacters[0]; 
@@ -613,35 +619,12 @@
                 let headerTitle = "Global Chat";
                 let headerRoomId = "global";
 
-                if (targetId === 'global') {
-                    window.currentRoomId = "global";
-                    window.showToast("Global Chat", "International Public Room", "");
-                }
-                else if (targetId === 'ai') {
-                    window.currentRoomId = "private_ai_bot";
-                    headerTitle = "AI Assistant"; headerRoomId = window.currentRoomId;
-                    window.showToast("AI Assistant", "Powered by Gemini", "https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff");
-                }
-                else if (targetId === 'me') {
-                    window.currentRoomId = "private_me_" + window.myProfileInfo.id;
-                    headerTitle = "My Notes"; headerRoomId = window.currentRoomId;
-                    window.showToast("My Notes", "Saved messages", window.myProfileInfo.photo);
-                }
+                if (targetId === 'global') { window.currentRoomId = "global"; window.showToast("Global Chat", "International Public Room", ""); }
+                else if (targetId === 'ai') { window.currentRoomId = "private_ai_bot"; headerTitle = "AI Assistant"; headerRoomId = window.currentRoomId; window.showToast("AI Assistant", "Powered by Gemini", "https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff"); }
+                else if (targetId === 'me') { window.currentRoomId = "private_me_" + window.myProfileInfo.id; headerTitle = "My Notes"; headerRoomId = window.currentRoomId; window.showToast("My Notes", "Saved messages", window.myProfileInfo.photo); }
                 else {
                     const targetUser = window.participants.find(p => p.id === targetId);
-                    if(targetUser) {
-                        window.currentTargetUser = targetUser; 
-                        let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id);
-                        window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
-                        
-                        headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag;
-                        headerRoomId = window.currentRoomId;
-
-                        let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network";
-                        let phoneStr = targetUser.phone ? targetUser.phone : "Hidden";
-                        let uLangs = targetUser.languages || "Auto-Translate";
-                        window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc + " | 📞 " + phoneStr + " | Speaks: " + uLangs, targetUser.photo);
-                    }
+                    if(targetUser) { window.currentTargetUser = targetUser; let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id); window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId; let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network"; window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc, targetUser.photo); }
                 }
                 
                 const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle;
@@ -651,33 +634,7 @@
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
-            window.sendFirebaseMsg = async function() {
-                const inputField = document.getElementById('chat-input');
-                const rawText = inputField.value.trim();
-                if (!rawText) return;
-                inputField.value = '';
-                const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en';
-                let textToShip = rawText;
-
-                try {
-                    const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(rawText)}`;
-                    const response = await fetch(translateUrl);
-                    const data = await response.json();
-                    if (data && data[0] && data[0][0][0]) { textToShip = data[0][0][0]; }
-                } catch (error) { console.error("Ошибка авто-перевода при отправке:", error); }
-
-                db.ref(window.currentRoomId).push({
-                    userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip,
-                    originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag,
-                    flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode
-                });
-
-                const chatMsgs = document.getElementById('chat-messages');
-                if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); }
-                
-                if (window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Assistant", text: "Translating global connections! 🚀", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); }, 1500); }
-            };
+            window.sendFirebaseMsg = async function() { const inputField = document.getElementById('chat-input'); const rawText = inputField.value.trim(); if (!rawText) return; inputField.value = ''; const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en'; let textToShip = rawText; try { const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(rawText)}`; const response = await fetch(translateUrl); const data = await response.json(); if (data && data[0] && data[0][0][0]) { textToShip = data[0][0][0]; } } catch (error) { console.error("Ошибка перевода:", error); } db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } if (window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Assistant", text: "Translating global connections! 🚀", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); }, 1500); } };
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendFirebaseMsg(); });
 
             async function handleNewMessage(snapshot) {
@@ -729,32 +686,7 @@
 
             window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
 
-            const voiceFriend = window.participants.find(c => c.id === 'marinella') || window.participants[1] || aiBot; 
-            if (voiceFriend) { document.getElementById('voice-friend-photo').src = voiceFriend.photo; document.getElementById('voice-friend-flag').innerText = voiceFriend.flag; document.getElementById('voice-friend-name').innerText = (voiceFriend.name||'User').split(' ')[0]; }
-            document.getElementById('voice-me-photo').src = window.myProfileInfo.photo; document.getElementById('voice-me-flag').innerText = window.myProfileInfo.flag;
-
-            window.sendVoiceMsg = async function() { const inputEl = document.getElementById('voice-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const targetLang = voiceFriend.langCode || 'en'; try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; const mText = document.getElementById('voice-info-marquee'); if(mText) { mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${voiceFriend.flag} ${translated}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } } catch(e) {} };
-            document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendVoiceMsg(); });
-            window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
-
-            let myVideoStream = null;
-            window.initConference = function() {
-                const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
-                let confHtml = `<div class="video-frame main" id="my-video-container"><video id="my-live-video" class="mirror-video" playsinline></video><div class="video-overlay">${window.myProfileInfo.name.split(' (')[0]} (You)</div><div class="flag-overlay">${window.myProfileInfo.flag}</div><div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div></div>`;
-                let displayedCount = 0;
-                window.participants.forEach(p => { if(p.id === 'ai' || displayedCount >= 3) return; confHtml += `<div class="video-frame"><video autoplay loop muted playsinline><source src="${p.video}"></video><div class="video-overlay">${(p.name||'').split(' ')[0]}</div><div class="flag-overlay">${p.flag}</div><div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div></div>`; displayedCount++; });
-                confGrid.innerHTML = confHtml; 
-                const videoEl = document.getElementById('my-live-video'); if(videoEl) { videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); }
-            }
-            if (document.getElementById('conference-grid')) initConference(); 
-            
-            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) videoEl.srcObject = null; btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied! Check browser permissions."); } } };
-
-            window.sendConfMsg = async function() { const inputEl = document.getElementById('conf-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const myMarquee = document.getElementById('speaker-marquee'); if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } const listenerMarquees = document.querySelectorAll('.conf-listener-marquee'); listenerMarquees.forEach(async (el) => { const tLang = el.getAttribute('data-lang'); const tFlag = el.getAttribute('data-flag'); try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; el.innerHTML = `<span class="text-white">User:</span> ${tFlag} ${translated}`; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null; } catch(e) {} }); };
-            document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendConfMsg(); });
-            window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; const bars = document.querySelectorAll('.translation-bar'); bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); }
-
-            // Кнопки в модальном окне аватара снова ЧИСТЫЕ (Chat, SMS, Email)
+            // МОДАЛ АВАТАРА (Только для связи)
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); if (!p) return;
                 document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
@@ -766,28 +698,15 @@
                 
                 const actionButtons = document.getElementById('modal-action-buttons');
                 
-                if (id === 'ai') { 
-                    actionButtons.style.display = 'none'; 
-                } else if (id === 'me') { 
-                    actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile(true);" class="btn-primary flex justify-center items-center gap-2"><i class="fa-solid fa-pen"></i> Edit Profile & CV</button>`; 
-                    actionButtons.style.display = 'flex'; 
-                } else {
-                    actionButtons.innerHTML = `
-                    <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                    <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                    <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>`;
-                    
-                    setTimeout(() => { 
-                        document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
-                        document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                        document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); };
-                    }, 50); 
-                    actionButtons.style.display = 'flex'; 
+                if (id === 'ai') { actionButtons.style.display = 'none'; } else if (id === 'me') { actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile(true);" class="btn-primary flex justify-center items-center gap-2"><i class="fa-solid fa-pen"></i> Settings</button>`; actionButtons.style.display = 'flex'; } else {
+                    actionButtons.innerHTML = `<button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>`;
+                    setTimeout(() => { document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; }, 50); actionButtons.style.display = 'flex'; 
                 } 
                 document.getElementById('avatar-modal').classList.add('active');
             };
 
-            window.openMyProfile = function(isCV = false) { window.closeDropdown(); const cvFields = document.getElementById('cv-extended-fields'); if (window.isGuest && !isCV) { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); cvFields.style.display = 'none'; document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } else { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); cvFields.style.display = 'block'; document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; document.getElementById('edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('edit-desc').value = window.myProfileInfo.desc || ''; } window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); };
+            // ПРОФИЛЬ (БАЗОВЫЙ)
+            window.openMyProfile = function() { window.closeDropdown(); if (window.isGuest) { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } else { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; } window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); };
             window.handleCountryChange = function(sel) { const flagCode = sel.value; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; const cData = countryData[flagCode] || countryData['un']; const phoneInput = document.getElementById('edit-phone'); if (phoneInput && cData.phone) { phoneInput.value = cData.phone + " "; phoneInput.focus(); } }
             window.handleFileUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; reader.readAsDataURL(file); }
             
@@ -797,11 +716,113 @@
                 let photo = window.currentPhotoData; if (!photo) { if (window.isGuest || (window.myProfileInfo.photo && window.myProfileInfo.photo.includes('Guest'))) { photo = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=00a884&color=fff'; } else { photo = window.myProfileInfo.photo; } }
                 let phoneVal = document.getElementById('edit-phone').value.trim(); if (window.isGuest && !phoneVal) return alert("Please enter your Phone Number!");
                 const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; const cData = countryData[sel.value] || countryData['un'];
-                let customProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji'), country: opt.getAttribute('data-name'), langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value, profession: document.getElementById('edit-prof').value, languages: document.getElementById('edit-langs').value, desc: document.getElementById('edit-desc').value };
+                
+                // Сохраняем базовые данные, не затирая CV
+                let customProfile = { ...window.myProfileInfo, id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji'), country: opt.getAttribute('data-name'), langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value };
+                
                 localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile)); localStorage.setItem('hf_active_user', newId); db.ref('users/' + newId).set(customProfile); 
                 window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); location.reload(); 
             }
 
+            // === ЛОГИКА CV (РЕДАКТОР) ===
+            window.openEditCV = function() {
+                if(window.isGuest) return alert("Please complete basic registration first (Menu -> My Profile).");
+                document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || '';
+                document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || '';
+                document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || '';
+                document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || '';
+                document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || '';
+                document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || '';
+                document.getElementById('edit-cv-modal').classList.add('active');
+            };
+            window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
+
+            window.saveCVData = function() {
+                window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim();
+                window.myProfileInfo.languages = document.getElementById('cv-edit-langs').value.trim();
+                window.myProfileInfo.skills = document.getElementById('cv-edit-skills').value.trim();
+                window.myProfileInfo.experience = document.getElementById('cv-edit-exp').value.trim();
+                window.myProfileInfo.education = document.getElementById('cv-edit-edu').value.trim();
+                window.myProfileInfo.desc = document.getElementById('cv-edit-bio').value.trim();
+
+                localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
+                db.ref('users/' + window.myProfileInfo.id).set(window.myProfileInfo); 
+                window.closeEditCV();
+                if(window.renderProfessionList) window.renderProfessionList();
+                alert("CV Successfully Updated! 📄");
+            };
+
+            // === КЛАССИЧЕСКОЕ ПРЕДСТАВЛЕНИЕ CV ===
+            window.closeClassicCV = function() { document.getElementById('classic-cv-modal').classList.remove('active'); };
+            window.openClassicCV = function(id) {
+                const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); if (!p) return;
+                
+                const headerHtml = `
+                    <div class="cv-header-name">${p.name.replace(' (You)', '')}</div>
+                    <div class="cv-contact-info">
+                        ${p.email ? `✉ ${p.email} | ` : ''} 📞 ${p.phone || 'Hidden'} <br>
+                        🌍 ${p.country} ${p.flag} | ${p.profession || 'Professional'}
+                    </div>
+                `;
+
+                let bodyHtml = ``;
+                
+                if(p.desc) { bodyHtml += `<div class="cv-section-title">Professional Summary</div><div class="cv-text-body">${p.desc}</div>`; }
+                if(p.skills) { bodyHtml += `<div class="cv-section-title">Core Skills</div><div class="cv-text-body">${p.skills}</div>`; }
+                if(p.experience) { bodyHtml += `<div class="cv-section-title">Experience</div><div class="cv-text-body">${p.experience}</div>`; }
+                if(p.education) { bodyHtml += `<div class="cv-section-title">Education</div><div class="cv-text-body">${p.education}</div>`; }
+                
+                bodyHtml += `<div class="cv-section-title">Additional Info</div><div class="cv-text-body"><span class="cv-label">Languages:</span> ${p.languages || 'Not specified'}</div>`;
+
+                document.getElementById('cv-view-header').innerHTML = headerHtml;
+                document.getElementById('cv-view-body').innerHTML = bodyHtml;
+                document.getElementById('classic-cv-modal').classList.add('active');
+            };
+
+            window.printCV = function() {
+                const cvContent = document.getElementById('printable-cv-area').innerHTML;
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`<html><head><title>Print CV</title><style>
+                    body { font-family: 'Times New Roman', Times, serif; color: #000; padding: 20px; }
+                    .cv-header-name { font-size: 24pt; font-weight: bold; text-align: center; border-bottom: 2px solid #000; margin-bottom: 5px; text-transform: uppercase;}
+                    .cv-contact-info { text-align: center; font-size: 11pt; color: #333; margin-bottom: 30px; font-family: Arial, sans-serif;}
+                    .cv-section-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-bottom: 10px;}
+                    .cv-text-body { font-size: 12pt; line-height: 1.5; white-space: pre-wrap; margin-bottom: 15px;}
+                    .cv-label { font-weight: bold;}
+                </style></head><body>${cvContent}</body></html>`);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+            };
+
+            // ДОСКА ТАЛАНТОВ
+            window.renderProfessionList = function() { 
+                const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
+                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; 
+                
+                // Фильтруем пустых Гостей из доски (кроме самого пользователя, если он еще гость)
+                const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest'));
+
+                let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
+                validUsers.forEach((p) => { 
+                    let isMe = p.id === window.myProfileInfo.id; 
+                    let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
+                    
+                    // КНОПКА ОТКРЫВАЕТ КЛАССИЧЕСКОЕ CV
+                    let btnClick = `window.openClassicCV('${p.id}')`; 
+                    let btnText = isMe ? `View My CV` : `View CV`; 
+                    
+                    let nameTxt = (p.name||'User').split(' ')[0]; 
+                    if(isMe) nameTxt = nameTxt.replace(' (You)', '') + ' (You)'; 
+                    let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
+                    
+                    cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="${btnClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition">${btnText}</button></div>`; 
+                }); 
+                profContainer.innerHTML = cardsHTML + `</div>`; 
+            }
+            if(document.getElementById('profession-list')) window.renderProfessionList();
+            
+            // Вспомогательные функции
             window.openBankTransferModal = function() { window.closeDropdown(); const recipientSelect = document.getElementById('transfer-recipient'); recipientSelect.innerHTML = '<option value="" disabled selected>Select Recipient</option>'; window.participants.forEach(p => { if(p.id !== 'ai' && p.id !== window.myProfileInfo.id) { recipientSelect.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; } }); document.getElementById('transfer-amount').value = ''; document.getElementById('transfer-modal').classList.add('active'); };
             window.sendMoney = function(e) { e.preventDefault(); const recipient = document.getElementById('transfer-recipient').value; const amount = document.getElementById('transfer-amount').value; if (!recipient || !amount) return alert('Please fill all fields!'); const recName = window.participants.find(p => p.id === recipient)?.name || 'User'; alert(`✅ Successfully sent $${amount} to ${recName}!`); window.closeBankTransferModal(); db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: `💸 I just sent $${amount} to ${recName}!`, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP }); };
             window.exportData = function() { window.closeDropdown(); let data = {}; for (let i = 0; i < localStorage.length; i++) { let key = localStorage.key(i); if (key.startsWith('hf_')) data[key] = localStorage.getItem(key); } const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'hello_friends_backup.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); };
@@ -810,11 +831,6 @@
             window.handleSmartSearch = function(text, type = 'text') { const input = document.getElementById('global-search-input'); if (type === 'text') { input.value = text; window.performLiveSearch(); } else if (type === 'web') { input.value = text; document.getElementById('search-results-area').innerHTML = ''; window.doGoogleSearch(); } };
             window.performLiveSearch = function() { const query = document.getElementById('global-search-input').value.toLowerCase().trim(); const resultsArea = document.getElementById('search-results-area'); const suggestions = document.getElementById('search-suggestions'); document.getElementById('search-result-frame').classList.add('hidden'); if (query.length === 0) { resultsArea.innerHTML = ''; suggestions.style.display = 'block'; return; } suggestions.style.display = 'none'; let html = ''; let found = false; window.participants.forEach(p => { if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { found = true; html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; } }); resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; };
             window.doGoogleSearch = function() { const q = document.getElementById('global-search-input').value; if(q.trim() === '') return alert('Enter search query'); document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('search-results-area').innerHTML = ''; const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); }
-            
-            // ВАША КАРТОЧКА НА ДОСКЕ ТАЛАНТОВ
-            window.renderProfessionList = function() { const profContainer = document.getElementById('profession-list'); if (!profContainer) return; const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; allUsers.forEach((p) => { let isMe = p.id === window.myProfileInfo.id; let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; let btnClick = isMe ? `window.openMyProfile(true)` : `window.openAvatarModal('${p.id}')`; let btnText = isMe ? `Edit My CV` : `View CV`; let nameTxt = (p.name||'User').split(' ')[0]; if(isMe) nameTxt = nameTxt.replace(' (You)', '') + ' (You)'; let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="${btnClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#2a3942] transition">${btnText}</button></div>`; }); profContainer.innerHTML = cardsHTML + `</div>`; }
-            if(document.getElementById('profession-list')) window.renderProfessionList();
-            
             window.openLocationModal = function() { window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; const loadMap = (lat, lon) => { mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; }; if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, { timeout: 5000 } ); } else { mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; } }
             window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); }
             window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); window.switchTab(5); }
