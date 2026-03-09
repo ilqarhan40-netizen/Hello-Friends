@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.8 (Smart Inputs & Receipts)</title>
+    <title>Hello Friends - Golden Master V31.9 (Media & Actions)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -158,6 +158,7 @@
 <body>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
+    
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
@@ -207,9 +208,6 @@
                 <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
                 <a onclick="document.getElementById('import-file-input').click(); window.closeDropdown()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
                 <a style="color: #ef4444;" onclick="window.logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="logout">Log Out</span></a>
-                <div class="mt-2 pt-3 border-t border-[#202c33] flex justify-center items-center">
-                    <span class="text-[#00a884] text-[0.65rem] font-bold tracking-widest uppercase">Author: Ilgar</span>
-                </div>
             </div>
         </header>
 
@@ -237,11 +235,11 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         
                         <div class="chat-input-area">
-                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
+                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                                 <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                                <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Clear Chat" onclick="window.smartClear()"></i>
+                                <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
                             </div>
                             <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -289,10 +287,11 @@
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.smartClear()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
 
             </div>
@@ -320,7 +319,7 @@
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.smartClear()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -478,8 +477,7 @@
         <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
             <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
-                <div class="sheet-handle" onclick="window.closeSearchModal()"></div>
-                <h2 class="text-xl font-bold text-white mb-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
+                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
                 <div class="relative w-full mb-4 shrink-0">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
                     <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
@@ -497,10 +495,15 @@
             </div>
         </div>
 
+        <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();">
+            <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeFullscreenImage()"><i class="fa-solid fa-xmark"></i></div>
+            <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
+        </div>
+
         <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
-                <div class="sheet-handle" onclick="window.closeBankTransferModal()"></div>
+                <div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto mt-4"><i class="fa-solid fa-wallet"></i></div>
                 <h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2>
                 <form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)">
                     <select id="transfer-recipient" class="form-input-box" required></select>
@@ -513,7 +516,7 @@
         <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closePhoneChoiceModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-6 text-white text-center">Make a Call</h2>
+                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Make a Call</h2>
                 <div class="flex flex-col gap-3">
                     <button class="btn-primary flex justify-center items-center gap-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Free Voice Room</button>
                     <button class="btn-primary !bg-[#202c33] !text-white flex justify-center items-center gap-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button>
@@ -524,7 +527,7 @@
         <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-6 text-white text-center">Manage Chat</h2>
+                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2>
                 <div class="flex flex-col gap-3">
                     <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button>
                     <button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button>
@@ -535,7 +538,7 @@
         <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white">Send Email</h2>
+                <h2 class="text-xl font-bold mb-4 text-white mt-4">Send Email</h2>
                 <form class="w-full flex flex-col" onsubmit="window.sendEmailForm(event)">
                     <input type="email" id="email-to" class="form-input-box" placeholder="To" required>
                     <input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required>
@@ -548,7 +551,7 @@
         <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
             <div class="app-modal-content h-[60vh]">
                 <div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white">Location</h2>
+                <h2 class="text-xl font-bold mb-4 text-white mt-4">Location</h2>
                 <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div>
             </div>
         </div>
@@ -599,7 +602,13 @@
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
-        window.closeSearchModal = function() { document.getElementById('search-modal').classList.remove('active'); if(window.resetGlobalSearch) window.resetGlobalSearch(); };
+        window.closeSearchModal = function() { 
+            document.getElementById('search-modal').classList.remove('active'); 
+            document.getElementById('global-search-input').value = '';
+            document.getElementById('search-results-area').innerHTML = '';
+            document.getElementById('search-suggestions').style.display = 'block';
+            document.getElementById('search-result-frame').classList.add('hidden');
+        };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
@@ -647,9 +656,39 @@
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         window.sendEmailForm = function(e) { e.preventDefault(); alert("Email sent successfully!"); window.closeEmailModal(); };
 
-        window.handleMediaUpload = function(e) {
-            const file = e.target.files[0];
-            if(file) alert("Media upload feature is ready for integration! File selected: " + file.name);
+        // === ЗАГРУЗКА МЕДИА ФАЙЛОВ ===
+        window.openFullscreenImage = function(src) {
+            if(src) document.getElementById('fullscreen-img-src').src = src;
+            document.getElementById('fullscreen-image-modal').classList.add('active');
+        };
+        window.closeFullscreenImage = function() {
+            document.getElementById('fullscreen-image-modal').classList.remove('active');
+        };
+
+        window.handleMediaUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result;
+                const isVideo = file.type.startsWith('video/');
+                
+                db.ref(window.currentRoomId).push({
+                    userId: window.myProfileInfo.id,
+                    name: window.myUsername,
+                    text: isVideo ? "📹 Video" : "🖼️ Photo",
+                    mediaUrl: base64Data,
+                    mediaType: isVideo ? 'video' : 'image',
+                    sessionId: window.mySessionId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    photo: window.myProfileInfo.photo,
+                    flag: window.myProfileInfo.flag,
+                    flagCode: window.myProfileInfo.flagCode,
+                    langCode: window.myProfileInfo.langCode
+                });
+            };
+            reader.readAsDataURL(file);
         };
 
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); location.reload(); };
@@ -923,10 +962,20 @@
                 
                 let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
                 
-                // Рендер ЧЕКА ПЕРЕВОДА ДЕНЕГ
                 let bubbleContent = data.text;
                 let bubbleClasses = `chat-bubble`;
                 
+                // РЕНДЕР МЕДИА ФАЙЛОВ
+                if (data.mediaUrl) {
+                    if (data.mediaType === 'video') {
+                        bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
+                    } else {
+                        bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
+                    }
+                    bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
+                }
+                
+                // РЕНДЕР ЧЕКА
                 if (data.isTransfer) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
@@ -949,8 +998,8 @@
                     chatMessages.scrollTop = chatMessages.scrollHeight; 
                 }
 
-                // АВТО-ПЕРЕВОД (пропускаем чеки перевода)
-                if (!data.isTransfer) {
+                // АВТО-ПЕРЕВОД ТЕКСТА
+                if (!data.isTransfer && !data.mediaUrl) {
                     let targetUsers = [];
                     if (window.currentRoomId === 'global' && !isAI) { 
                         let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
@@ -1376,6 +1425,53 @@
                 
                 const chatMsgs = document.getElementById('chat-messages'); 
                 if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); }
+            };
+
+            window.performLiveSearch = function() { 
+                const query = document.getElementById('global-search-input').value.toLowerCase().trim(); 
+                const resultsArea = document.getElementById('search-results-area'); 
+                const suggestions = document.getElementById('search-suggestions'); 
+                document.getElementById('search-result-frame').classList.add('hidden'); 
+                
+                if (query.length === 0) { 
+                    resultsArea.innerHTML = ''; 
+                    suggestions.style.display = 'block'; 
+                    return; 
+                } 
+                
+                suggestions.style.display = 'none'; 
+                let html = ''; 
+                let found = false; 
+                
+                window.participants.forEach(p => { 
+                    if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
+                        found = true; 
+                        html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; 
+                    } 
+                }); 
+                resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
+            };
+
+            window.handleSmartSearch = function(text, type = 'text') { 
+                const input = document.getElementById('global-search-input'); 
+                if (type === 'text') { 
+                    input.value = text; 
+                    window.performLiveSearch(); 
+                } else if (type === 'web') { 
+                    input.value = text; 
+                    document.getElementById('search-results-area').innerHTML = ''; 
+                    window.doGoogleSearch(); 
+                } 
+            };
+
+            window.doGoogleSearch = function() { 
+                const q = document.getElementById('global-search-input').value; 
+                if(q.trim() === '') return alert('Enter search query'); 
+                document.getElementById('search-suggestions').style.display = 'none'; 
+                document.getElementById('search-results-area').innerHTML = ''; 
+                const iframe = document.getElementById('search-result-frame'); 
+                iframe.src = 'https://www.google.com/search?igu=1&q=' + encodeURIComponent(q); 
+                iframe.classList.remove('hidden'); 
             };
 
             window.openLocationModal = function() { 
