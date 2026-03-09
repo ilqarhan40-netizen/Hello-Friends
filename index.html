@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.1 (Stable Connection)</title>
+    <title>Hello Friends - Golden Master V31.2 (Roleplay Translation)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -533,7 +533,6 @@
                 setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px)'; toast.style.top = '-100px'; }, 4000);
             };
 
-            // === ЖЕЛЕЗОБЕТОННОЕ ФОРМИРОВАНИЕ КОМНАТ ===
             window.renderSidebar = function() {
                 const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
                 chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
@@ -593,18 +592,67 @@
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
-            window.sendFirebaseMsg = function() {
-                const text = document.getElementById('chat-input').value.trim(); if(!text) return;
-                db.ref(window.currentRoomId).push({ 
-                    userId: window.myProfileInfo.id, name: window.myUsername, text: text, 
-                    sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag,
-                    flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode
+            // === V31.2: ИНТЕГРИРОВАННЫЙ НЕЙРО-ПЕРЕВОДЧИК ПЕРЕД ОТПРАВКОЙ ===
+            window.sendFirebaseMsg = async function() {
+                const inputField = document.getElementById('chat-input');
+                const rawText = inputField.value.trim();
+                
+                if (!rawText) return;
+                
+                // Очищаем поле ввода для удобства
+                inputField.value = '';
+
+                // Берем язык профиля отправителя
+                const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en';
+                let textToShip = rawText;
+
+                // Переводим текст в родной язык персонажа
+                try {
+                    const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(rawText)}`;
+                    const response = await fetch(translateUrl);
+                    const data = await response.json();
+                    
+                    if (data && data[0] && data[0][0][0]) {
+                        textToShip = data[0][0][0]; // Заменяем оригинальный текст на переведенный
+                    }
+                } catch (error) {
+                    console.error("Ошибка авто-перевода при отправке:", error);
+                }
+
+                // Отправляем в Firebase
+                db.ref(window.currentRoomId).push({
+                    userId: window.myProfileInfo.id,
+                    name: window.myUsername,
+                    text: textToShip,
+                    originalText: rawText,
+                    sessionId: window.mySessionId,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    photo: window.myProfileInfo.photo,
+                    flag: window.myProfileInfo.flag,
+                    flagCode: window.myProfileInfo.flagCode,
+                    langCode: window.myProfileInfo.langCode
                 });
-                document.getElementById('chat-input').value = '';
-                const cm = document.getElementById('chat-messages'); if(cm) setTimeout(() => cm.scrollTop = cm.scrollHeight, 50);
-                if(window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Assistant", text: "Translating global connections! 🚀", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); }, 1500); }
-            }
+
+                const chatMsgs = document.getElementById('chat-messages');
+                if (chatMsgs) {
+                    setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100);
+                }
+                
+                if (window.currentRoomId === 'private_ai_bot') {
+                    setTimeout(() => {
+                        db.ref(window.currentRoomId).push({
+                            name: "AI Assistant",
+                            text: "Translating global connections! 🚀",
+                            sessionId: "ai-bot-session",
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            userId: 'ai',
+                            langCode: 'en',
+                            flag: '🤖',
+                            photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff'
+                        });
+                    }, 1500);
+                }
+            };
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendFirebaseMsg(); });
 
             async function handleNewMessage(snapshot) {
