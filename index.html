@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.10 (Features Injected)</title>
+    <title>Hello Friends - Golden Master V31.25 (All Fixes Integrated)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -159,7 +159,7 @@
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
-    <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="window.handleDocUpload(event)">
+    <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
         
@@ -189,7 +189,6 @@
                 </div>
                 
                 <a id="admin-menu-btn" style="display: none; color: #a29bfe;" onclick="window.openAdminModal()"><i class="fa-solid fa-crown w-5"></i> <span>Admin Panel</span></a>
-                
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
@@ -220,11 +219,9 @@
                         <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global Chat</span></span>
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
-                    
                     <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News">
                         <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
                     </button>
-
                     <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
                 </div>
                 
@@ -242,7 +239,6 @@
                         
                         <div class="chat-input-area">
                             <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
-                            
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                                 <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
@@ -290,14 +286,15 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
             </div>
 
@@ -320,11 +317,11 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -397,11 +394,16 @@
                 <div class="close-sheet-btn" onclick="window.closeAttachModal()"><i class="fa-solid fa-xmark"></i></div>
                 <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Attach File</h2>
                 <div class="flex flex-col gap-3">
-                    <button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('media-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-image text-xl"></i> Photo / Image</button>
-                    <button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat();"><i class="fa-solid fa-location-dot text-xl"></i> Share Location</button>
+                    <button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('media-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-image text-xl"></i> Photo / Video</button>
+                    <button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat();"><i class="fa-solid fa-location-dot text-xl"></i> Location</button>
                     <button class="btn-primary !bg-purple-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('file-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-file text-xl"></i> Document</button>
                 </div>
             </div>
+        </div>
+
+        <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();">
+            <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeFullscreenImage()"><i class="fa-solid fa-xmark"></i></div>
+            <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
         </div>
 
         <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
@@ -419,44 +421,6 @@
                 <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
                 <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
-        </div>
-
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
-                <div class="relative w-full mb-4 shrink-0">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
-                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
-                </div>
-                
-                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
-                        <button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
-                        <button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
-                        <button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
-                    </div>
-                </div>
-
-                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
-                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
-                    </div>
-                </div>
-
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
-                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
-            </div>
-        </div>
-
-        <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();">
-            <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeFullscreenImage()"><i class="fa-solid fa-xmark"></i></div>
-            <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
         </div>
 
         <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
@@ -512,6 +476,39 @@
                     <label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
                 </div>
                 <button onclick="window.saveCVData()" class="btn-primary absolute bottom-6 w-[calc(100%-48px)]">Save CV</button>
+            </div>
+        </div>
+
+        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
+            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
+                <div class="relative w-full mb-4 shrink-0">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
+                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
+                </div>
+                
+                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="window.handleSmartSearch('Top Breaking World News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
+                        <button onclick="window.handleSmartSearch('IT and Technology News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
+                        <button onclick="window.handleSmartSearch('Cryptocurrency News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
+                        <button onclick="window.handleSmartSearch('Global Sports News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
+                    </div>
+                </div>
+
+                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
+                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
+                    </div>
+                </div>
+
+                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
+                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
+                <button onclick="window.handleSmartSearch(document.getElementById('global-search-input').value, 'web')" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
             </div>
         </div>
 
@@ -759,7 +756,7 @@
             } 
         };
 
-        // === БЛОК: ТЕМНОЕ CV ===
+        // БЛОК: ТЕМНАЯ КАРТОЧКА (CV) И ПРОФИЛЬ
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
         window.openAvatarModal = function(id) {
@@ -839,6 +836,121 @@
             document.getElementById('avatar-modal').classList.add('active');
         };
 
+        window.openMyProfile = function() { 
+            window.closeDropdown(); 
+            if (window.isGuest) { 
+                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); 
+                document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); 
+                document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
+            } else { 
+                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); 
+                document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); 
+                document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); 
+                document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; 
+                document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; 
+                document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
+                document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; 
+                document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
+            } 
+            window.applyTranslations(); 
+            document.getElementById('edit-profile-modal').classList.add('active'); 
+        };
+
+        window.handleCountryChange = function(sel) { 
+            const flagCode = sel.value; 
+            document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; 
+            const cData = countryData[flagCode] || countryData['un']; 
+            const phoneInput = document.getElementById('edit-phone'); 
+            if (phoneInput && cData.phone) { 
+                phoneInput.value = cData.phone + " "; 
+                phoneInput.focus(); 
+            } 
+        };
+
+        window.handleFileUpload = function(event) { 
+            const file = event.target.files[0]; 
+            if (!file) return; 
+            const reader = new FileReader(); 
+            reader.onload = function(e) { 
+                window.currentPhotoData = e.target.result; 
+                document.getElementById('edit-preview-photo').src = e.target.result; 
+            }; 
+            reader.readAsDataURL(file); 
+        };
+        
+        window.saveProfileData = function() {
+            let nameVal = document.getElementById('edit-name').value.trim(); 
+            if (!nameVal) return alert("Enter Name!"); 
+            let newId = window.isGuest ? (nameVal.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
+            let photo = window.currentPhotoData; 
+            if (!photo) { 
+                if (window.isGuest || (window.myProfileInfo.photo && window.myProfileInfo.photo.includes('Guest'))) { 
+                    photo = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=00a884&color=fff'; 
+                } else { 
+                    photo = window.myProfileInfo.photo; 
+                } 
+            }
+            let phoneVal = document.getElementById('edit-phone').value.trim(); 
+            if (window.isGuest && !phoneVal) return alert("Please enter your Phone Number!");
+            
+            const sel = document.getElementById('edit-country-select'); 
+            const opt = sel.options[sel.selectedIndex]; 
+            const cData = countryData[sel.value] || countryData['un'];
+            
+            let customProfile = { 
+                ...window.myProfileInfo, 
+                id: newId, 
+                name: nameVal, 
+                photo: photo, 
+                flagCode: sel.value, 
+                flag: opt.getAttribute('data-emoji'), 
+                country: opt.getAttribute('data-name'), 
+                langCode: opt.getAttribute('data-lang') || 'en', 
+                pop: cData.pop, 
+                seas: cData.seas, 
+                countryDesc: cData.desc, 
+                phone: phoneVal, 
+                email: document.getElementById('edit-email').value 
+            };
+            
+            localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile)); 
+            localStorage.setItem('hf_active_user', newId); 
+            db.ref('users/' + newId).set(customProfile); 
+            window.closeProfileModal(); 
+            if(window.autoSetMicLang) window.autoSetMicLang(); 
+            location.reload(); 
+        };
+
+        window.openEditCV = function() {
+            if(window.isGuest) return alert("Please complete basic registration first (Menu -> My Profile).");
+            document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || '';
+            document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || '';
+            document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || '';
+            document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || '';
+            document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || '';
+            document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || '';
+            document.getElementById('edit-cv-modal').classList.add('active');
+        };
+        
+        window.closeEditCV = function() { 
+            document.getElementById('edit-cv-modal').classList.remove('active'); 
+        };
+
+        window.saveCVData = function() {
+            window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim();
+            window.myProfileInfo.languages = document.getElementById('cv-edit-langs').value.trim();
+            window.myProfileInfo.skills = document.getElementById('cv-edit-skills').value.trim();
+            window.myProfileInfo.experience = document.getElementById('cv-edit-exp').value.trim();
+            window.myProfileInfo.education = document.getElementById('cv-edit-edu').value.trim();
+            window.myProfileInfo.desc = document.getElementById('cv-edit-bio').value.trim();
+
+            localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
+            db.ref('users/' + window.myProfileInfo.id).set(window.myProfileInfo); 
+            window.closeEditCV();
+            if(window.renderProfessionList) window.renderProfessionList();
+            alert("CV Successfully Updated! 📄");
+        };
+
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
@@ -895,6 +1007,7 @@
             document.getElementById('fullscreen-image-modal').classList.remove('active');
         };
 
+        // БЛОК: ОТПРАВКА МЕДИА
         window.handleMediaUpload = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -942,7 +1055,7 @@
             });
         };
 
-        // === БЛОК: ОТПРАВКА ЛОКАЦИИ (ОФИЦИАЛЬНЫЙ GOOGLE MAPS API) ===
+        // БЛОК: ОТПРАВКА ЛОКАЦИИ (ОФИЦИАЛЬНЫЙ GOOGLE MAPS API)
         window.sendLocationToChat = function() {
             window.closeAttachModal();
             if (navigator.geolocation) {
@@ -950,9 +1063,8 @@
                     (position) => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        
                         const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
-                        const mapLink = `https://maps.google.com/maps?q=${lat},${lon}`;
+                        const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
                         
                         db.ref(window.currentRoomId).push({
                             userId: window.myProfileInfo.id,
@@ -979,26 +1091,117 @@
             }
         };
 
-        // БЛОК 2: СМАРТ-ОЧИСТКА ЧАТА ДЛЯ КОРЗИНЫ
-        window.smartArchive = function() { 
-            alert("Chat sent to Archive!"); 
-            window.closeTrashModal(); 
-            window.switchTab(5); 
-        };
-        
-        window.smartClear = function() { 
-            if(confirm("Are you sure you want to clear chat history?")) { 
-                if (document.getElementById('conference').classList.contains('active')) { 
-                    const cGrid = document.getElementById('conference-grid');
-                    if(cGrid) cGrid.innerHTML = ''; 
-                } else { 
-                    db.ref(window.currentRoomId).remove().then(() => { 
-                        if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; 
-                    }); 
-                } 
-                window.closeTrashModal(); 
-            } 
-        };
+        // ОТОБРАЖЕНИЕ В ЧАТЕ ФАЙЛОВ И ЛОКАЦИЙ
+        async function handleNewMessage(snapshot) {
+            const data = snapshot.val(); 
+            if(!data) return; 
+            const chatMessages = document.getElementById('chat-messages');
+            
+            const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id; 
+            const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
+            
+            let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+(data.name||'U'), langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
+            
+            const messageGroup = document.createElement('div'); 
+            messageGroup.className = "flex flex-col w-full mt-3 mb-2";
+            
+            const msgWrapper = document.createElement('div'); 
+            msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
+            
+            let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
+            
+            let bubbleContent = data.text;
+            let bubbleClasses = `chat-bubble`;
+            
+            if (data.mediaUrl) {
+                if (data.mediaType === 'video') {
+                    bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
+                } else {
+                    bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
+                }
+                bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
+            }
+            else if (data.isTransfer) {
+                bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                bubbleContent = `
+                    <div class="flex flex-col items-center p-4 min-w-[180px]">
+                        <div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div>
+                        <span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1">Transfer Success</span>
+                        <span class="text-2xl font-bold text-white mb-2">$${data.amount}</span>
+                        <div class="w-full h-[1px] bg-[#2a3942] mb-2"></div>
+                        <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
+                    </div>`;
+            }
+            else if (data.isLocation) {
+                bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                bubbleContent = `
+                    <div class="flex flex-col w-[200px] sm:w-[250px]">
+                        <iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe>
+                        <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
+                    </div>`;
+            }
+            else if (data.isFile) {
+                bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
+                bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
+            }
+
+            const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
+            
+            msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
+            messageGroup.appendChild(msgWrapper);
+            
+            if(chatMessages) { 
+                chatMessages.appendChild(messageGroup); 
+                chatMessages.scrollTop = chatMessages.scrollHeight; 
+            }
+
+            if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
+                let targetUsers = [];
+                if (window.currentRoomId === 'global' && !isAI) { 
+                    let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
+                    allMembers.forEach(member => { 
+                        if (member.id !== data.userId && member.langCode !== 'un') { 
+                            targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
+                        } 
+                    });
+                } else if (window.currentRoomId.startsWith('private_') && !isAI) {
+                    if (isMe) {
+                        if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
+                            targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                        }
+                    } else {
+                        if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
+                            targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                        }
+                    }
+                }
+
+                if (targetUsers.length > 0) {
+                    try {
+                        const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
+                        const translationsRes = await Promise.all(fetchPromises); 
+                        const transContainer = document.createElement('div'); 
+                        transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
+                        let marqueeTextStr = ''; 
+                        
+                        translationsRes.forEach(t => { 
+                            transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
+                            marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                        }); 
+                        messageGroup.appendChild(transContainer); 
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        
+                        const mText = document.getElementById('chat-info-marquee');
+                        if (window.isMarqueeEnabled !== false && mText) { 
+                            mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
+                            mText.style.animation = 'none'; 
+                            void mText.offsetWidth; 
+                            mText.style.animation = null; 
+                        } 
+                    } catch (e) {}
+                }
+            }
+        }
 
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); location.reload(); };
 
@@ -1252,118 +1455,6 @@
             document.getElementById('chat-input')?.addEventListener('keypress', e => { 
                 if(e.key === 'Enter') window.sendFirebaseMsg(); 
             });
-
-            // ОТОБРАЖЕНИЕ ФАЙЛОВ И КАРТ
-            async function handleNewMessage(snapshot) {
-                const data = snapshot.val(); 
-                if(!data) return; 
-                const chatMessages = document.getElementById('chat-messages');
-                
-                const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id; 
-                const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
-                
-                let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+(data.name||'U'), langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
-                
-                const messageGroup = document.createElement('div'); 
-                messageGroup.className = "flex flex-col w-full mt-3 mb-2";
-                
-                const msgWrapper = document.createElement('div'); 
-                msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
-                
-                let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
-                
-                let bubbleContent = data.text;
-                let bubbleClasses = `chat-bubble`;
-                
-                if (data.mediaUrl) {
-                    if (data.mediaType === 'video') {
-                        bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
-                    } else {
-                        bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
-                    }
-                    bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
-                }
-                else if (data.isTransfer) {
-                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
-                    bubbleContent = `
-                        <div class="flex flex-col items-center p-4 min-w-[180px]">
-                            <div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div>
-                            <span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1">Transfer Success</span>
-                            <span class="text-2xl font-bold text-white mb-2">$${data.amount}</span>
-                            <div class="w-full h-[1px] bg-[#2a3942] mb-2"></div>
-                            <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
-                        </div>`;
-                }
-                else if (data.isLocation) {
-                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
-                    bubbleContent = `
-                        <div class="flex flex-col w-[200px] sm:w-[250px]">
-                            <iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe>
-                            <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
-                        </div>`;
-                }
-                else if (data.isFile) {
-                    bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
-                    bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
-                }
-
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
-                
-                msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
-                messageGroup.appendChild(msgWrapper);
-                
-                if(chatMessages) { 
-                    chatMessages.appendChild(messageGroup); 
-                    chatMessages.scrollTop = chatMessages.scrollHeight; 
-                }
-
-                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
-                    let targetUsers = [];
-                    if (window.currentRoomId === 'global' && !isAI) { 
-                        let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
-                        allMembers.forEach(member => { 
-                            if (member.id !== data.userId && member.langCode !== 'un') { 
-                                targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
-                            } 
-                        });
-                    } else if (window.currentRoomId.startsWith('private_') && !isAI) {
-                        if (isMe) {
-                            if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
-                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
-                            }
-                        } else {
-                            if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
-                                targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
-                            }
-                        }
-                    }
-
-                    if (targetUsers.length > 0) {
-                        try {
-                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
-                            const translationsRes = await Promise.all(fetchPromises); 
-                            const transContainer = document.createElement('div'); 
-                            transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
-                            let marqueeTextStr = ''; 
-                            
-                            translationsRes.forEach(t => { 
-                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
-                                marqueeTextStr += `${t.user.flag} ${t.text}       `; 
-                            }); 
-                            messageGroup.appendChild(transContainer); 
-                            chatMessages.scrollTop = chatMessages.scrollHeight;
-                            
-                            const mText = document.getElementById('chat-info-marquee');
-                            if (window.isMarqueeEnabled !== false && mText) { 
-                                mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
-                                mText.style.animation = 'none'; 
-                                void mText.offsetWidth; 
-                                mText.style.animation = null; 
-                            } 
-                        } catch (e) {}
-                    }
-                }
-            }
 
             window.isMarqueeEnabled = true; 
             window.toggleMarquee = function() { 
