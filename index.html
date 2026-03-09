@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.10.1 (CV Update)</title>
+    <title>Hello Friends - Golden Master V31.21 (Core 4 Pack)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -158,7 +158,8 @@
 <body>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
-    <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="media-upload-input" accept="image/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
         
@@ -218,6 +219,9 @@
                         <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global Chat</span></span>
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
+                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="Local News">
+                        <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
+                    </button>
                     <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
                 </div>
                 
@@ -234,7 +238,7 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         
                         <div class="chat-input-area">
-                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                                 <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
@@ -282,14 +286,14 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
             </div>
 
@@ -312,10 +316,11 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -379,6 +384,18 @@
                     <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
                     <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeDropdown();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
                     <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeDropdown();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="attach-modal" class="app-modal" onclick="if(event.target===this) window.closeAttachModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closeAttachModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Attach File</h2>
+                <div class="flex flex-col gap-3">
+                    <button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('media-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-image text-xl"></i> Photo / Image</button>
+                    <button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat();"><i class="fa-solid fa-location-dot text-xl"></i> Share Location</button>
+                    <button class="btn-primary !bg-purple-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('file-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-file text-xl"></i> Document</button>
                 </div>
             </div>
         </div>
@@ -469,16 +486,27 @@
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
                     <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
                 </div>
+                
+                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">News Categories</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="window.handleSmartSearch('Top World News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
+                        <button onclick="window.handleSmartSearch('IT & Technology News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
+                        <button onclick="window.handleSmartSearch('Cryptocurrency Bitcoin News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
+                        <button onclick="window.handleSmartSearch('Global Sports News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
+                    </div>
+                </div>
+
                 <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
                     <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
-                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
+                        <button onclick="window.handleSmartSearch('Engineer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
                     </div>
                 </div>
+
                 <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
-                <iframe id="search-result-frame" class="w-full h-[30vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-google text-blue-400 mr-2"></i> Search Web</button>
+                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
             </div>
         </div>
 
@@ -540,12 +568,126 @@
     </div>
 
     <script>
+        // === БЛОК: СКРЕПКА ===
+        window.openAttachModal = function() {
+            window.closeDropdown();
+            document.getElementById('attach-modal').classList.add('active');
+        };
+        window.closeAttachModal = function() {
+            document.getElementById('attach-modal').classList.remove('active');
+        };
+
+        // === БЛОК: НОВОСТИ ===
+        window.openNewsFast = function() {
+            window.closeDropdown(); 
+            document.getElementById('search-modal').classList.add('active'); 
+            
+            document.getElementById('search-suggestions').style.display = 'none';
+            document.getElementById('news-categories').style.display = 'flex';
+            
+            setTimeout(() => {
+                const c = window.myProfileInfo.country;
+                const lang = window.myProfileInfo.langCode;
+                let q = "World News"; 
+                
+                if (c && c !== 'Global') {
+                    if (lang === 'ru') q = "Главные новости " + c;
+                    else if (lang === 'az') q = "Son xəbərlər " + c;
+                    else if (lang === 'de') q = "Aktuelle Nachrichten " + c;
+                    else if (lang === 'it') q = "Ultime notizie " + c;
+                    else if (lang === 'fr') q = "Actualités " + c;
+                    else if (lang === 'es') q = "Últimas noticias " + c;
+                    else q = "Latest news " + c;
+                }
+                
+                window.handleSmartSearch(q, 'web');
+            }, 300);
+        };
+
         window.openSearchModal = function() { 
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
+            document.getElementById('global-search-input').value = '';
+            document.getElementById('search-results-area').innerHTML = '';
+            
+            document.getElementById('search-suggestions').style.display = 'block';
+            const cat = document.getElementById('news-categories');
+            if(cat) cat.style.display = 'none';
+            
+            const iframe = document.getElementById('search-result-frame');
+            iframe.src = 'about:blank';
+            iframe.classList.add('hidden');
+
             setTimeout(() => document.getElementById('global-search-input').focus(), 100);
         };
-        
+
+        window.closeSearchModal = function() { 
+            document.getElementById('search-modal').classList.remove('active'); 
+            document.getElementById('global-search-input').value = '';
+            document.getElementById('search-results-area').innerHTML = '';
+            
+            const iframe = document.getElementById('search-result-frame');
+            iframe.src = 'about:blank'; // УБИВАЕТ САЙТ ПРИ ЗАКРЫТИИ (АНТИ-ЛАГ)
+            iframe.classList.add('hidden');
+            
+            document.getElementById('search-suggestions').style.display = 'block';
+            const cat = document.getElementById('news-categories');
+            if(cat) cat.style.display = 'none';
+        };
+
+        window.performLiveSearch = function() { 
+            const query = document.getElementById('global-search-input').value.toLowerCase().trim(); 
+            const resultsArea = document.getElementById('search-results-area'); 
+            const suggestions = document.getElementById('search-suggestions'); 
+            const categories = document.getElementById('news-categories');
+            document.getElementById('search-result-frame').classList.add('hidden'); 
+            
+            if (query.length === 0) { 
+                resultsArea.innerHTML = ''; 
+                suggestions.style.display = 'block'; 
+                if(categories) categories.style.display = 'none';
+                return; 
+            } 
+            
+            suggestions.style.display = 'none'; 
+            if(categories) categories.style.display = 'none';
+            let html = ''; 
+            let found = false; 
+            
+            window.participants.forEach(p => { 
+                if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
+                    found = true; 
+                    html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; 
+                } 
+            }); 
+            resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
+        };
+
+        window.handleSmartSearch = function(text, type = 'text', e = null) { 
+            if(e) e.stopPropagation();
+            const input = document.getElementById('global-search-input'); 
+            if (type === 'text') { 
+                input.value = text; 
+                window.performLiveSearch(); 
+            } else if (type === 'web') { 
+                input.value = text; 
+                document.getElementById('search-results-area').innerHTML = ''; 
+                window.doGoogleSearch(); 
+            } 
+        };
+
+        window.doGoogleSearch = function() { 
+            const q = document.getElementById('global-search-input').value; 
+            if(q.trim() === '') return alert('Enter search query'); 
+            document.getElementById('search-suggestions').style.display = 'none'; 
+            document.getElementById('search-results-area').innerHTML = ''; 
+            const iframe = document.getElementById('search-result-frame'); 
+            iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
+            iframe.classList.remove('hidden'); 
+        };
+
+        // === ОСТАЛЬНЫЕ ФУНКЦИИ ИЗ СТАБИЛЬНОЙ БАЗЫ ===
+
         window.openBankTransferModal = function() { 
             window.closeDropdown(); 
             const recipientSelect = document.getElementById('transfer-recipient'); 
@@ -605,16 +747,88 @@
             } 
         };
 
-        window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
-        window.closeSearchModal = function() { 
-            document.getElementById('search-modal').classList.remove('active'); 
-            document.getElementById('global-search-input').value = '';
-            document.getElementById('search-results-area').innerHTML = '';
-            document.getElementById('search-suggestions').style.display = 'block';
-            document.getElementById('search-result-frame').classList.add('hidden');
+        // БЛОК: ФОРМА CV И ВИЗИТКА
+        window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
+        
+        window.openAvatarModal = function(id) {
+            const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
+            if (!p) return;
+            
+            document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
+            document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0]; 
+            
+            let idSpan = document.getElementById('modal-id');
+            if(!idSpan) {
+                idSpan = document.createElement('span');
+                idSpan.id = 'modal-id';
+                idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1';
+                document.getElementById('modal-name').parentNode.insertBefore(idSpan, document.getElementById('modal-prof'));
+            }
+            idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
+            
+            document.getElementById('modal-prof').innerText = p.profession || 'User';
+            
+            const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
+            
+            let extraFields = '';
+            if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`;
+            if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`;
+            if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
+
+            document.getElementById('modal-desc').innerHTML = `
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div>
+                    <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div>
+                </div>
+                ${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}
+                <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span>
+                    <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
+                    ${extraFields}
+                </div>`;
+            
+            const actionButtons = document.getElementById('modal-action-buttons');
+            
+            if (id === 'ai') { 
+                actionButtons.style.display = 'none'; 
+            } else if (id === 'me') { 
+                actionButtons.innerHTML = `
+                    <div class="flex w-full gap-2">
+                        <button id="btn-modal-chat-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
+                        <button id="btn-modal-sms-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
+                        <button id="btn-modal-email-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                    </div>
+                    <div class="flex w-full gap-2 mt-2">
+                        <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
+                        <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
+                    </div>
+                `; 
+                setTimeout(() => { 
+                    document.getElementById('btn-modal-chat-me').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('me'); }; 
+                    document.getElementById('btn-modal-sms-me').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
+                    document.getElementById('btn-modal-email-me').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
+                }, 50);
+                actionButtons.style.display = 'block'; 
+            } else {
+                actionButtons.innerHTML = `
+                    <div class="flex w-full gap-2">
+                        <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
+                        <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
+                        <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                    </div>
+                `;
+                setTimeout(() => { 
+                    document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
+                    document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
+                    document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
+                }, 50); 
+                actionButtons.style.display = 'block'; 
+            } 
+            document.getElementById('avatar-modal').classList.add('active');
         };
+
+        window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
-        window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
         window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
@@ -668,6 +882,7 @@
             document.getElementById('fullscreen-image-modal').classList.remove('active');
         };
 
+        // БЛОК: ОТПРАВКА МЕДИА
         window.handleMediaUpload = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -693,6 +908,173 @@
             };
             reader.readAsDataURL(file);
         };
+
+        window.handleDocUpload = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            db.ref(window.currentRoomId).push({
+                userId: window.myProfileInfo.id,
+                name: window.myUsername,
+                text: "📄 " + file.name,
+                isFile: true,
+                fileName: file.name,
+                sessionId: window.mySessionId,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                photo: window.myProfileInfo.photo,
+                flag: window.myProfileInfo.flag,
+                flagCode: window.myProfileInfo.flagCode,
+                langCode: window.myProfileInfo.langCode
+            });
+        };
+
+        // БЛОК: ОТПРАВКА ЛОКАЦИИ В ЧАТ
+        window.sendLocationToChat = function() {
+            window.closeAttachModal();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
+                        const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                        
+                        db.ref(window.currentRoomId).push({
+                            userId: window.myProfileInfo.id,
+                            name: window.myUsername,
+                            text: "📍 Shared Location",
+                            isLocation: true,
+                            lat: lat,
+                            lon: lon,
+                            embedLink: embedLink,
+                            mapLink: mapLink,
+                            sessionId: window.mySessionId,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            photo: window.myProfileInfo.photo,
+                            flag: window.myProfileInfo.flag,
+                            flagCode: window.myProfileInfo.flagCode,
+                            langCode: window.myProfileInfo.langCode
+                        });
+                    },
+                    (error) => { alert("Failed to get location. Please allow GPS access."); },
+                    { timeout: 5000 }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        };
+
+        // ОТОБРАЖЕНИЕ В ЧАТЕ ФАЙЛОВ И ЛОКАЦИЙ
+        async function handleNewMessage(snapshot) {
+            const data = snapshot.val(); 
+            if(!data) return; 
+            const chatMessages = document.getElementById('chat-messages');
+            
+            const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id; 
+            const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
+            
+            let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+(data.name||'U'), langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
+            
+            const messageGroup = document.createElement('div'); 
+            messageGroup.className = "flex flex-col w-full mt-3 mb-2";
+            
+            const msgWrapper = document.createElement('div'); 
+            msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
+            
+            let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
+            
+            let bubbleContent = data.text;
+            let bubbleClasses = `chat-bubble`;
+            
+            if (data.mediaUrl) {
+                if (data.mediaType === 'video') {
+                    bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
+                } else {
+                    bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
+                }
+                bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
+            }
+            else if (data.isTransfer) {
+                bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                bubbleContent = `
+                    <div class="flex flex-col items-center p-4 min-w-[180px]">
+                        <div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div>
+                        <span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1">Transfer Success</span>
+                        <span class="text-2xl font-bold text-white mb-2">$${data.amount}</span>
+                        <div class="w-full h-[1px] bg-[#2a3942] mb-2"></div>
+                        <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
+                    </div>`;
+            }
+            else if (data.isLocation) {
+                bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                bubbleContent = `
+                    <div class="flex flex-col w-[200px] sm:w-[250px]">
+                        <iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe>
+                        <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
+                    </div>`;
+            }
+            else if (data.isFile) {
+                bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
+                bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
+            }
+
+            const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
+            
+            msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
+            messageGroup.appendChild(msgWrapper);
+            
+            if(chatMessages) { 
+                chatMessages.appendChild(messageGroup); 
+                chatMessages.scrollTop = chatMessages.scrollHeight; 
+            }
+
+            if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
+                let targetUsers = [];
+                if (window.currentRoomId === 'global' && !isAI) { 
+                    let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
+                    allMembers.forEach(member => { 
+                        if (member.id !== data.userId && member.langCode !== 'un') { 
+                            targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
+                        } 
+                    });
+                } else if (window.currentRoomId.startsWith('private_') && !isAI) {
+                    if (isMe) {
+                        if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
+                            targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                        }
+                    } else {
+                        if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
+                            targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                        }
+                    }
+                }
+
+                if (targetUsers.length > 0) {
+                    try {
+                        const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
+                        const translationsRes = await Promise.all(fetchPromises); 
+                        const transContainer = document.createElement('div'); 
+                        transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
+                        let marqueeTextStr = ''; 
+                        
+                        translationsRes.forEach(t => { 
+                            transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
+                            marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                        }); 
+                        messageGroup.appendChild(transContainer); 
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        
+                        const mText = document.getElementById('chat-info-marquee');
+                        if (window.isMarqueeEnabled !== false && mText) { 
+                            mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
+                            mText.style.animation = 'none'; 
+                            void mText.offsetWidth; 
+                            mText.style.animation = null; 
+                        } 
+                    } catch (e) {}
+                }
+            }
+        }
 
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); location.reload(); };
 
@@ -946,162 +1328,6 @@
             document.getElementById('chat-input')?.addEventListener('keypress', e => { 
                 if(e.key === 'Enter') window.sendFirebaseMsg(); 
             });
-
-            async function handleNewMessage(snapshot) {
-                const data = snapshot.val(); 
-                if(!data) return; 
-                const chatMessages = document.getElementById('chat-messages');
-                
-                const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id; 
-                const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
-                
-                let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+(data.name||'U'), langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
-                
-                const messageGroup = document.createElement('div'); 
-                messageGroup.className = "flex flex-col w-full mt-3 mb-2";
-                
-                const msgWrapper = document.createElement('div'); 
-                msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
-                
-                let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
-                
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="chat-bubble">${data.text}</div></div>`;
-                
-                msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
-                messageGroup.appendChild(msgWrapper);
-                
-                if(chatMessages) { 
-                    chatMessages.appendChild(messageGroup); 
-                    chatMessages.scrollTop = chatMessages.scrollHeight; 
-                }
-
-                let targetUsers = [];
-                if (window.currentRoomId === 'global' && !isAI) { 
-                    let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
-                    allMembers.forEach(member => { 
-                        if (member.id !== data.userId && member.langCode !== 'un') { 
-                            targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
-                        } 
-                    });
-                } else if (window.currentRoomId.startsWith('private_') && !isAI) {
-                    if (isMe) {
-                        if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
-                            targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
-                        }
-                    } else {
-                        if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
-                            targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
-                        }
-                    }
-                }
-
-                if (targetUsers.length > 0) {
-                    try {
-                        const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
-                        const translationsRes = await Promise.all(fetchPromises); 
-                        const transContainer = document.createElement('div'); 
-                        transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
-                        let marqueeTextStr = ''; 
-                        
-                        translationsRes.forEach(t => { 
-                            transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
-                            marqueeTextStr += `${t.user.flag} ${t.text}       `; 
-                        }); 
-                        messageGroup.appendChild(transContainer); 
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                        
-                        const mText = document.getElementById('chat-info-marquee');
-                        if (window.isMarqueeEnabled !== false && mText) { 
-                            mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
-                            mText.style.animation = 'none'; 
-                            void mText.offsetWidth; 
-                            mText.style.animation = null; 
-                        } 
-                    } catch (e) {}
-                }
-            }
-
-            // === ВАША ТЕМНАЯ КАРТОЧКА (CV ВИЗИТКА) ===
-            window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
-            
-            window.openAvatarModal = function(id) {
-                const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
-                if (!p) return;
-                
-                document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
-                document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0]; 
-                
-                let idSpan = document.getElementById('modal-id');
-                if(!idSpan) {
-                    idSpan = document.createElement('span');
-                    idSpan.id = 'modal-id';
-                    idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1';
-                    const nameEl = document.getElementById('modal-name');
-                    nameEl.parentNode.insertBefore(idSpan, nameEl.nextSibling);
-                }
-                idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
-                
-                document.getElementById('modal-prof').innerText = p.profession || 'User';
-                
-                const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
-                
-                let extraFields = '';
-                if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`;
-                if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`;
-                if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
-
-                document.getElementById('modal-desc').innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div>
-                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div>
-                    </div>
-                    ${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}
-                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
-                        <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span>
-                        <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
-                        ${extraFields}
-                    </div>`;
-                
-                const actionButtons = document.getElementById('modal-action-buttons');
-                actionButtons.className = 'flex flex-col gap-2 w-full mt-auto';
-                
-                if (id === 'ai') { 
-                    actionButtons.style.display = 'none'; 
-                } else if (id === 'me') { 
-                    actionButtons.innerHTML = `
-                        <div class="flex w-full gap-2">
-                            <button id="btn-modal-chat-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                            <button id="btn-modal-sms-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                            <button id="btn-modal-email-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
-                        </div>
-                        <div class="flex w-full gap-2 mt-2">
-                            <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
-                            <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
-                        </div>
-                    `; 
-                    setTimeout(() => { 
-                        document.getElementById('btn-modal-chat-me').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('me'); }; 
-                        document.getElementById('btn-modal-sms-me').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                        document.getElementById('btn-modal-email-me').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
-                    }, 50);
-                    actionButtons.style.display = 'flex'; 
-                } else {
-                    actionButtons.innerHTML = `
-                        <div class="flex w-full gap-2">
-                            <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                            <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                            <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
-                        </div>
-                    `;
-                    setTimeout(() => { 
-                        document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
-                        document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                        document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
-                    }, 50); 
-                    actionButtons.style.display = 'flex'; 
-                } 
-                document.getElementById('avatar-modal').classList.add('active');
-            };
 
             window.isMarqueeEnabled = true; 
             window.toggleMarquee = function() { 
