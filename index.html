@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.13 (Fully Functional)</title>
+    <title>Hello Friends - Golden Master V31.14 (Calibration Complete)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -158,7 +158,7 @@
 <body>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
-    <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="media-upload-input" accept="image/*" class="hidden" onchange="window.handleMediaUpload(event)">
     <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
@@ -217,6 +217,7 @@
                 <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition" onclick="window.switchChatRoom('global')">
                         <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global</span></span>
+                        <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
                     <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="Local News">
                         <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
@@ -423,7 +424,11 @@
                 <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
                 <div class="flex items-center gap-4 mb-4 mt-2">
                     <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
-                    <div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div>
+                    <div class="flex flex-col">
+                        <h3 id="modal-name" class="text-2xl font-bold text-white"></h3>
+                        <span id="modal-id" class="text-xs text-[#8696a0] font-mono mb-1"></span>
+                        <span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span>
+                    </div>
                 </div>
                 <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
                 <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
@@ -498,18 +503,18 @@
                 <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
                     <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">News Categories</span>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.handleSmartSearch('Top World News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
-                        <button onclick="window.handleSmartSearch('IT & Technology News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
-                        <button onclick="window.handleSmartSearch('Cryptocurrency Bitcoin News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
-                        <button onclick="window.handleSmartSearch('Global Sports News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
+                        <button onclick="window.handleSmartSearch('Top World News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
+                        <button onclick="window.handleSmartSearch('IT & Technology News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
+                        <button onclick="window.handleSmartSearch('Cryptocurrency Bitcoin News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
+                        <button onclick="window.handleSmartSearch('Global Sports News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
                     </div>
                 </div>
 
                 <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
                     <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
-                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
+                        <button onclick="window.handleSmartSearch('Engineer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
                     </div>
                 </div>
 
@@ -598,7 +603,6 @@
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
             
-            // Прячем стандартные подсказки, показываем категории новостей
             document.getElementById('search-suggestions').style.display = 'none';
             document.getElementById('news-categories').style.display = 'flex';
             
@@ -607,7 +611,6 @@
                 const lang = window.myProfileInfo.langCode;
                 let q = "World News"; 
                 
-                // Авто-подбор новостей под страну
                 if (c && c !== 'Global') {
                     if (lang === 'ru') q = "Главные новости " + c;
                     else if (lang === 'az') q = "Son xəbərlər " + c;
@@ -626,7 +629,6 @@
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
             
-            // Восстанавливаем стандартный вид поиска
             document.getElementById('search-suggestions').style.display = 'block';
             document.getElementById('news-categories').style.display = 'none';
             
@@ -789,7 +791,6 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Сжимаем фото до 60% качества, чтобы Firebase не заблокировал размер
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
                         
                         db.ref(window.currentRoomId).push({
@@ -841,9 +842,9 @@
                     (position) => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        // Правильная ссылка на встраивание карты
+                        // Правильная ссылка на встраивание карты Google Maps
                         const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
-                        const mapLink = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+                        const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
                         
                         db.ref(window.currentRoomId).push({
                             userId: window.myProfileInfo.id,
@@ -1040,7 +1041,7 @@
                 else if (targetId === 'me') { 
                     window.currentRoomId = "private_me_" + window.myProfileInfo.id; 
                     headerTitle = "My Notes"; 
-                    headerRoomId = window.currentRoomId; 
+                    headerRoomId = window.myProfileInfo.id; 
                     window.showToast("My Notes", "Saved messages", window.myProfileInfo.photo); 
                 }
                 else {
@@ -1051,7 +1052,7 @@
                         let id2 = String(targetUser.id); 
                         window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                         headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; 
-                        headerRoomId = window.currentRoomId; 
+                        headerRoomId = targetUser.id; 
                         let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network"; 
                         window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc, targetUser.photo); 
                     }
@@ -1144,7 +1145,6 @@
                 let bubbleContent = data.text;
                 let bubbleClasses = `chat-bubble`;
                 
-                // РЕНДЕР МЕДИА ФАЙЛОВ
                 if (data.mediaUrl) {
                     if (data.mediaType === 'video') {
                         bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
@@ -1153,8 +1153,6 @@
                     }
                     bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
                 }
-                
-                // РЕНДЕР ЧЕКА ПЕРЕВОДА
                 else if (data.isTransfer) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
@@ -1166,8 +1164,6 @@
                             <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
                         </div>`;
                 }
-
-                // РЕНДЕР ЛОКАЦИИ
                 else if (data.isLocation) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
@@ -1176,8 +1172,6 @@
                             <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
                         </div>`;
                 }
-
-                // РЕНДЕР ФАЙЛА-ДОКУМЕНТА
                 else if (data.isFile) {
                     bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
                     bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
@@ -1313,6 +1307,7 @@
             }
             if (document.getElementById('conference-grid')) initConference(); 
             
+            // ТЕПЕРЬ ЗАХВАТЫВАЕТСЯ И ВИДЕО И АУДИО!
             window.toggleMyCamera = async function(btn) { 
                 const videoEl = document.getElementById('my-live-video'); 
                 if (window.myVideoStream) { 
@@ -1324,10 +1319,10 @@
                     btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
                 } else { 
                     try { 
-                        window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
+                        window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true }); 
                         if(videoEl) { 
                             videoEl.srcObject = window.myVideoStream; 
-                            videoEl.muted = true; 
+                            videoEl.muted = true; // Глушим только локально, чтобы не фонило
                             videoEl.play(); 
                             videoEl.classList.add('mirror-video'); 
                         } 
@@ -1335,7 +1330,7 @@
                         btn.classList.remove('bg-[#202c33]'); 
                         btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
                     } catch(e) { 
-                        alert("Camera access denied! Check browser permissions."); 
+                        alert("Camera/Mic access denied! Check browser permissions."); 
                     } 
                 } 
             };
@@ -1375,13 +1370,15 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
             };
 
-            // === ОБНОВЛЕННАЯ ТЕМНАЯ КАРТОЧКА ===
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
                 if (!p) return;
                 
                 document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
                 document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0]; 
+                
+                // ВЕРНУЛ ID В КАРТОЧКУ
+                document.getElementById('modal-id').innerText = "ID: " + p.id;
                 document.getElementById('modal-prof').innerText = p.profession || 'User';
                 
                 const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
@@ -1558,7 +1555,6 @@
                 alert("CV Successfully Updated! 📄");
             };
 
-            // ДОСКА ТАЛАНТОВ
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); 
                 if (!profContainer) return; 
@@ -1590,36 +1586,19 @@
             };
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
-            window.sendMoney = function(e) { 
-                e.preventDefault(); 
-                const recipientId = document.getElementById('transfer-recipient').value; 
-                const amount = document.getElementById('transfer-amount').value; 
-                if (!recipientId || !amount) return alert('Please fill all fields!'); 
-                
-                const recUser = window.participants.find(p => p.id === recipientId); 
-                const recName = recUser ? recUser.name.split(' ')[0] : 'User'; 
-                
-                db.ref(window.currentRoomId).push({ 
-                    userId: window.myProfileInfo.id, 
-                    name: window.myUsername, 
-                    text: `Sent $${amount} to ${recName}`, 
-                    originalText: `Sent $${amount} to ${recName}`, 
-                    sessionId: window.mySessionId, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                    photo: window.myProfileInfo.photo, 
-                    flag: window.myProfileInfo.flag, 
-                    flagCode: window.myProfileInfo.flagCode, 
-                    langCode: window.myProfileInfo.langCode,
-                    isTransfer: true,
-                    amount: amount,
-                    recName: recName
-                }); 
-                
-                alert(`✅ Successfully sent $${amount} to ${recName}!`); 
-                window.closeBankTransferModal(); 
-                
-                const chatMsgs = document.getElementById('chat-messages'); 
-                if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); }
+            window.handleSmartSearch = function(text, type = 'text', event = null) { 
+                if(event) event.stopPropagation();
+                const input = document.getElementById('global-search-input'); 
+                if (type === 'text') { 
+                    input.value = text; 
+                    window.performLiveSearch(); 
+                } else if (type === 'web') { 
+                    input.value = text; 
+                    document.getElementById('search-results-area').innerHTML = ''; 
+                    document.getElementById('search-suggestions').style.display = 'none';
+                    document.getElementById('news-categories').style.display = 'none';
+                    window.doGoogleSearch(); 
+                } 
             };
 
             window.performLiveSearch = function() { 
@@ -1650,20 +1629,6 @@
                 resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
             };
 
-            window.handleSmartSearch = function(text, type = 'text') { 
-                const input = document.getElementById('global-search-input'); 
-                if (type === 'text') { 
-                    input.value = text; 
-                    window.performLiveSearch(); 
-                } else if (type === 'web') { 
-                    input.value = text; 
-                    document.getElementById('search-results-area').innerHTML = ''; 
-                    document.getElementById('search-suggestions').style.display = 'none';
-                    document.getElementById('news-categories').style.display = 'none';
-                    window.doGoogleSearch(); 
-                } 
-            };
-
             window.doGoogleSearch = function() { 
                 const q = document.getElementById('global-search-input').value; 
                 if(q.trim() === '') return alert('Enter search query'); 
@@ -1671,44 +1636,8 @@
                 document.getElementById('news-categories').style.display = 'none';
                 document.getElementById('search-results-area').innerHTML = ''; 
                 const iframe = document.getElementById('search-result-frame'); 
-                
-                // ИСПОЛЬЗУЕМ BING, Т.К. ОН РАЗРЕШАЕТ IFRAME В ОТЛИЧИЕ ОТ GOOGLE
                 iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
                 iframe.classList.remove('hidden'); 
-            };
-
-            window.openLocationModal = function() { 
-                window.closeDropdown(); 
-                document.getElementById('location-modal').classList.add('active'); 
-                const mapContainer = document.getElementById('location-map'); 
-                mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; 
-                const loadMap = (lat, lon) => { 
-                    mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; 
-                }; 
-                if (navigator.geolocation) { 
-                    navigator.geolocation.getCurrentPosition( 
-                        (position) => { loadMap(position.coords.latitude, position.coords.longitude); }, 
-                        (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, 
-                        { timeout: 5000 } 
-                    ); 
-                } else { 
-                    mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; 
-                } 
-            };
-
-            window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
-            window.smartArchive = function() { alert("Chat sent to Archive!"); window.closeTrashModal(); window.switchTab(5); };
-            window.smartClear = function() { 
-                if(confirm("Are you sure you want to clear chat history?")) { 
-                    if (document.getElementById('conference').classList.contains('active')) { 
-                        document.getElementById('conf-messages').innerHTML = ''; 
-                    } else { 
-                        db.ref(window.currentRoomId).remove().then(() => { 
-                            if(document.getElementById('chat-messages')) document.getElementById('chat-messages').innerHTML = ''; 
-                        }); 
-                    } 
-                    window.closeTrashModal(); 
-                } 
             };
 
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
