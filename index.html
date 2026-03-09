@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.2 (Roleplay Translation)</title>
+    <title>Hello Friends - Golden Master V31.3 (God Mode Security)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -30,7 +30,7 @@
         /* HEADER */
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 50; flex-shrink: 0; }
         .logo-container { display: flex; align-items: center; gap: 12px; }
-        .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; box-shadow: 0 0 10px rgba(0,168,132,0.4); }
+        .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; box-shadow: 0 0 10px rgba(0,168,132,0.4); cursor: pointer; user-select: none; }
         .header-title { font-size: 1.1rem; font-weight: bold; color: var(--wa-text); }
         .header-icons { display: flex; gap: 18px; color: var(--wa-text-muted); font-size: 1.2rem; align-items: center;}
         .header-icons i { cursor: pointer; transition: 0.2s; }
@@ -172,7 +172,7 @@
 
         <header class="app-header">
              <div class="logo-container">
-                <div class="logo-circle">HF</div>
+                <div class="logo-circle" onclick="window.activateGodMode()">HF</div>
                 <span class="header-title">Hello Friends</span>
              </div>
              <div class="header-icons">
@@ -453,6 +453,23 @@
     </div>
 
     <script>
+        // === СЕКРЕТНАЯ ПАНЕЛЬ АДМИНА ===
+        window.secretClicks = 0;
+        window.activateGodMode = function() {
+            window.secretClicks++;
+            if(window.secretClicks === 5) {
+                window.secretClicks = 0;
+                let pass = prompt("Enter Admin Password (Режим Создателя):");
+                if(pass === "777") { 
+                    localStorage.setItem('hf_god_mode', 'true');
+                    alert("GOD MODE UNLOCKED! 🎭 Теперь вы можете входить под любым пользователем.");
+                    location.reload();
+                } else {
+                    alert("Access Denied. Неверный пароль.");
+                }
+            }
+        };
+
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeSearchModal = function() { document.getElementById('search-modal').classList.remove('active'); if(window.resetGlobalSearch) window.resetGlobalSearch(); };
@@ -592,66 +609,32 @@
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
-            // === V31.2: ИНТЕГРИРОВАННЫЙ НЕЙРО-ПЕРЕВОДЧИК ПЕРЕД ОТПРАВКОЙ ===
             window.sendFirebaseMsg = async function() {
                 const inputField = document.getElementById('chat-input');
                 const rawText = inputField.value.trim();
-                
                 if (!rawText) return;
-                
-                // Очищаем поле ввода для удобства
                 inputField.value = '';
-
-                // Берем язык профиля отправителя
                 const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en';
                 let textToShip = rawText;
 
-                // Переводим текст в родной язык персонажа
                 try {
                     const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(rawText)}`;
                     const response = await fetch(translateUrl);
                     const data = await response.json();
-                    
-                    if (data && data[0] && data[0][0][0]) {
-                        textToShip = data[0][0][0]; // Заменяем оригинальный текст на переведенный
-                    }
-                } catch (error) {
-                    console.error("Ошибка авто-перевода при отправке:", error);
-                }
+                    if (data && data[0] && data[0][0][0]) { textToShip = data[0][0][0]; }
+                } catch (error) { console.error("Ошибка авто-перевода при отправке:", error); }
 
-                // Отправляем в Firebase
                 db.ref(window.currentRoomId).push({
-                    userId: window.myProfileInfo.id,
-                    name: window.myUsername,
-                    text: textToShip,
-                    originalText: rawText,
-                    sessionId: window.mySessionId,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    photo: window.myProfileInfo.photo,
-                    flag: window.myProfileInfo.flag,
-                    flagCode: window.myProfileInfo.flagCode,
-                    langCode: window.myProfileInfo.langCode
+                    userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip,
+                    originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag,
+                    flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode
                 });
 
                 const chatMsgs = document.getElementById('chat-messages');
-                if (chatMsgs) {
-                    setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100);
-                }
+                if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); }
                 
-                if (window.currentRoomId === 'private_ai_bot') {
-                    setTimeout(() => {
-                        db.ref(window.currentRoomId).push({
-                            name: "AI Assistant",
-                            text: "Translating global connections! 🚀",
-                            sessionId: "ai-bot-session",
-                            timestamp: firebase.database.ServerValue.TIMESTAMP,
-                            userId: 'ai',
-                            langCode: 'en',
-                            flag: '🤖',
-                            photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff'
-                        });
-                    }, 1500);
-                }
+                if (window.currentRoomId === 'private_ai_bot') { setTimeout(() => { db.ref(window.currentRoomId).push({ name: "AI Assistant", text: "Translating global connections! 🚀", sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); }, 1500); }
             };
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendFirebaseMsg(); });
 
@@ -729,16 +712,45 @@
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendConfMsg(); });
             window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; const bars = document.querySelectorAll('.translation-bar'); bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); }
 
+            // === V31.3: ИНТЕЛЛЕКТУАЛЬНЫЙ АВАТАР С ПРОВЕРКОЙ GOD MODE ===
             window.openAvatarModal = function(id) {
                 const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); if (!p) return;
-                document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0]; document.getElementById('modal-prof').innerText = p.profession || 'User';
+                document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
+                document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0]; 
+                document.getElementById('modal-prof').innerText = p.profession || 'User';
+                
                 const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
                 document.getElementById('modal-desc').innerHTML = `<div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div></div>${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#00a884] font-bold block mb-1">OVERVIEW</span><p class="leading-relaxed text-[0.9rem]">${cDesc} ${p.desc ? '<br><br><b class="text-[#a29bfe]">Bio:</b> ' + p.desc : ''}</p></div>`;
+                
                 const actionButtons = document.getElementById('modal-action-buttons');
-                if (id === 'ai') { actionButtons.style.display = 'none'; } else if (id === 'me') { actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile(true);" class="btn-primary flex justify-center items-center gap-2"><i class="fa-solid fa-pen"></i> Edit Profile & CV</button>`; actionButtons.style.display = 'flex'; } else {
-                    actionButtons.innerHTML = `<button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>`;
-                    setTimeout(() => { document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; }, 50); actionButtons.style.display = 'flex'; 
-                } document.getElementById('avatar-modal').classList.add('active');
+                const isGod = localStorage.getItem('hf_god_mode') === 'true'; // ПРОВЕРКА ПРАВ
+                
+                if (id === 'ai') { 
+                    actionButtons.style.display = 'none'; 
+                } else if (id === 'me') { 
+                    actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile(true);" class="btn-primary flex justify-center items-center gap-2"><i class="fa-solid fa-pen"></i> Edit Profile & CV</button>`; 
+                    actionButtons.style.display = 'flex'; 
+                } else {
+                    let loginBtnHTML = isGod ? `<button id="btn-modal-login" class="flex-1 py-2.5 rounded-2xl bg-purple-900 border border-purple-700 text-white font-bold hover:bg-purple-800 text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-mask text-[#a29bfe] text-lg"></i> Login As</button>` : '';
+
+                    actionButtons.innerHTML = `<button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button> ${loginBtnHTML}`;
+                    
+                    setTimeout(() => { 
+                        document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
+                        document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
+                        
+                        if(isGod) {
+                            document.getElementById('btn-modal-login').onclick = () => { 
+                                if(confirm("Activate God Mode: Log in as " + (p.name||'User').split(' ')[0] + "?")) {
+                                    localStorage.setItem('hf_active_user', p.id);
+                                    location.reload();
+                                }
+                            };
+                        }
+                    }, 50); 
+                    actionButtons.style.display = 'flex'; 
+                } 
+                document.getElementById('avatar-modal').classList.add('active');
             };
 
             window.openMyProfile = function(isCV = false) { window.closeDropdown(); const cvFields = document.getElementById('cv-extended-fields'); if (window.isGuest && !isCV) { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); cvFields.style.display = 'none'; document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } else { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); cvFields.style.display = 'block'; document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; document.getElementById('edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('edit-desc').value = window.myProfileInfo.desc || ''; } window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); };
