@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.14 (Calibration Complete)</title>
+    <title>Hello Friends - Golden Master V31.15 (Stable Orbit)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -158,7 +158,7 @@
 <body>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
-    <input type="file" id="media-upload-input" accept="image/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
     <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
@@ -842,7 +842,7 @@
                     (position) => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        // Правильная ссылка на встраивание карты Google Maps
+                        // ОФИЦИАЛЬНАЯ ССЫЛКА НА GOOGLE MAPS EMBED
                         const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
                         const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
                         
@@ -1026,6 +1026,8 @@
                 
                 window.currentTargetUser = null; 
                 let headerTitle = "Global Chat";
+                
+                // ВЕРНУЛИ ОТОБРАЖЕНИЕ ID КОМНАТЫ
                 let headerRoomId = "global";
 
                 if (targetId === 'global') { 
@@ -1041,7 +1043,7 @@
                 else if (targetId === 'me') { 
                     window.currentRoomId = "private_me_" + window.myProfileInfo.id; 
                     headerTitle = "My Notes"; 
-                    headerRoomId = window.myProfileInfo.id; 
+                    headerRoomId = window.currentRoomId; 
                     window.showToast("My Notes", "Saved messages", window.myProfileInfo.photo); 
                 }
                 else {
@@ -1052,7 +1054,7 @@
                         let id2 = String(targetUser.id); 
                         window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                         headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; 
-                        headerRoomId = targetUser.id; 
+                        headerRoomId = window.currentRoomId; // ТЕПЕРЬ ПОКАЗЫВАЕТ: private_klaus_marinella
                         let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network"; 
                         window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc, targetUser.photo); 
                     }
@@ -1145,6 +1147,7 @@
                 let bubbleContent = data.text;
                 let bubbleClasses = `chat-bubble`;
                 
+                // РЕНДЕР МЕДИА ФАЙЛОВ
                 if (data.mediaUrl) {
                     if (data.mediaType === 'video') {
                         bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
@@ -1153,6 +1156,8 @@
                     }
                     bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
                 }
+                
+                // РЕНДЕР ЧЕКА ПЕРЕВОДА
                 else if (data.isTransfer) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
@@ -1164,6 +1169,8 @@
                             <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
                         </div>`;
                 }
+
+                // РЕНДЕР ЛОКАЦИИ (ИСПРАВЛЕНО НА GOOGLE MAPS)
                 else if (data.isLocation) {
                     bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
                     bubbleContent = `
@@ -1172,6 +1179,8 @@
                             <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
                         </div>`;
                 }
+
+                // РЕНДЕР ФАЙЛА-ДОКУМЕНТА
                 else if (data.isFile) {
                     bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
                     bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
@@ -1595,8 +1604,7 @@
                 } else if (type === 'web') { 
                     input.value = text; 
                     document.getElementById('search-results-area').innerHTML = ''; 
-                    document.getElementById('search-suggestions').style.display = 'none';
-                    document.getElementById('news-categories').style.display = 'none';
+                    // Не закрываем категории, чтобы можно было кликать другие!
                     window.doGoogleSearch(); 
                 } 
             };
@@ -1633,7 +1641,6 @@
                 const q = document.getElementById('global-search-input').value; 
                 if(q.trim() === '') return alert('Enter search query'); 
                 document.getElementById('search-suggestions').style.display = 'none'; 
-                document.getElementById('news-categories').style.display = 'none';
                 document.getElementById('search-results-area').innerHTML = ''; 
                 const iframe = document.getElementById('search-result-frame'); 
                 iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
