@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.16 (Clean Core)</title>
+    <title>Hello Friends - Golden Master V31.18 (Mic Fix)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -158,7 +158,7 @@
 <body>
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
-    <input type="file" id="media-upload-input" accept="image/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
     <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt,.xls,.xlsx,.zip" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
@@ -400,9 +400,6 @@
             <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu">
-                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2" onclick="event.stopPropagation()">
-                        <option value="en-US">🇬🇧 English</option><option value="az-AZ">🇦🇿 Azərbaycanca</option><option value="ru-RU">🇷🇺 Русский</option><option value="it-IT">🇮🇹 Italiano</option><option value="fr-FR">🇫🇷 Français</option><option value="ja-JP">🇯🇵 日本語</option><option value="es-ES">🇪🇸 Español</option><option value="zh-CN">🇨🇳 中文</option><option value="pt-PT">🇵🇹 Português</option>
-                    </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
                     <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
                     <div class="action-icon" onclick="window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
@@ -520,7 +517,6 @@
 
                 <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
                 <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
             </div>
         </div>
 
@@ -606,7 +602,7 @@
             window.closeAttachMenu(); 
         });
 
-        // === ИНТЕЛЛЕКТУАЛЬНЫЕ НОВОСТИ С КАТАЛОГОМ ===
+        // === ИНТЕЛЛЕКТУАЛЬНЫЕ НОВОСТИ ===
         window.openNewsFast = function() {
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
@@ -660,7 +656,6 @@
             window.closeDropdown(); 
             document.getElementById('trash-modal').classList.add('active'); 
         };
-
 
         // === ЛОГИКА АДМИНА ===
         window.secretClicks = 0;
@@ -757,7 +752,7 @@
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         window.sendEmailForm = function(e) { e.preventDefault(); alert("Email sent successfully!"); window.closeEmailModal(); };
 
-        // === ЗАГРУЗКА МЕДИА (С АВТО-СЖАТИЕМ ДЛЯ БАЗЫ ДАННЫХ) ===
+        // === ЗАГРУЗКА МЕДИА ===
         window.openFullscreenImage = function(src) {
             if(src) document.getElementById('fullscreen-img-src').src = src;
             document.getElementById('fullscreen-image-modal').classList.add('active');
@@ -820,7 +815,6 @@
             }
         };
 
-        // === ОТПРАВКА ДОКУМЕНТА ===
         window.handleDocUpload = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -841,7 +835,7 @@
             });
         };
 
-        // === ИСПРАВЛЕННАЯ ЛОКАЦИЯ (GOOGLE MAPS) В ЧАТЕ ===
+        // === ИСПРАВЛЕННАЯ ЛОКАЦИЯ (GOOGLE MAPS) ===
         window.sendLocationToChat = function() {
             window.closeAttachMenu();
             if (navigator.geolocation) {
@@ -849,9 +843,8 @@
                     (position) => {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        // ОФИЦИАЛЬНАЯ ССЫЛКА НА GOOGLE MAPS EMBED (ПОЧИНЕНА)
                         const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
-                        const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                        const mapLink = `https://maps.google.com/maps?q=${lat},${lon}`;
                         
                         db.ref(window.currentRoomId).push({
                             userId: window.myProfileInfo.id,
@@ -897,6 +890,7 @@
             let defLang = ['en', 'ru', 'az', 'it'].includes(sysLang) ? sysLang : 'en'; 
             window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             
+            // ПЕРЕКЛЮЧЕНИЕ ЯЗЫКА ПРИЛОЖЕНИЯ ТЕПЕРЬ СИНХРОНИЗИРУЕТ И МИКРОФОН!
             window.changeAppLanguage = function(langCode) { 
                 window.appLang = langCode; 
                 localStorage.setItem('hf_app_lang', window.appLang); 
@@ -1059,10 +1053,7 @@
                         let id2 = String(targetUser.id); 
                         window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                         headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; 
-                        
-                        // ID СОПРЯЖЕНИЯ 
                         headerRoomId = window.currentRoomId; 
-                        
                         let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network"; 
                         window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc, targetUser.photo); 
                     }
@@ -1082,24 +1073,12 @@
                 const rawText = inputField.value.trim(); 
                 if (!rawText) return; 
                 inputField.value = ''; 
-                const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en'; 
-                let textToShip = rawText; 
                 
-                try { 
-                    const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(rawText)}`; 
-                    const response = await fetch(translateUrl); 
-                    const data = await response.json(); 
-                    if (data && data[0] && data[0][0][0]) { 
-                        textToShip = data[0][0][0]; 
-                    } 
-                } catch (error) { 
-                    console.error("Translate error:", error); 
-                } 
-                
+                // В V31.18 ОТПРАВЛЯЕМ ТЕКСТ В ОРИГИНАЛЕ (БЕЗ ПРИНУДИТЕЛЬНОГО ПЕРЕВОДА ПРИ ОТПРАВКЕ)
                 db.ref(window.currentRoomId).push({ 
                     userId: window.myProfileInfo.id, 
                     name: window.myUsername, 
-                    text: textToShip, 
+                    text: rawText, 
                     originalText: rawText, 
                     sessionId: window.mySessionId, 
                     timestamp: firebase.database.ServerValue.TIMESTAMP, 
@@ -1197,6 +1176,7 @@
                     chatMessages.scrollTop = chatMessages.scrollHeight; 
                 }
 
+                // АВТО-ПЕРЕВОД
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
                     let targetUsers = [];
                     if (window.currentRoomId === 'global' && !isAI) { 
@@ -1317,7 +1297,6 @@
             }
             if (document.getElementById('conference-grid')) initConference(); 
             
-            // ТЕПЕРЬ ЗАХВАТЫВАЕТСЯ И ВИДЕО И АУДИО!
             window.toggleMyCamera = async function(btn) { 
                 const videoEl = document.getElementById('my-live-video'); 
                 if (window.myVideoStream) { 
@@ -1380,276 +1359,7 @@
                 bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
             };
 
-            // === ИСПРАВЛЕННАЯ ЛОГИКА ДЛЯ ПРОФИЛЕЙ (ID СОПРЯЖЕНИЯ) ===
-            window.openAvatarModal = function(id) {
-                const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
-                if (!p) return;
-                
-                document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
-                document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0]; 
-                
-                // ВЕРНУЛ ID В КАРТОЧКУ
-                document.getElementById('modal-id').innerText = "ID: " + p.id;
-                document.getElementById('modal-prof').innerText = p.profession || 'User';
-                
-                const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
-                
-                let extraFields = '';
-                if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`;
-                if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`;
-                if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
-
-                document.getElementById('modal-desc').innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div>
-                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div>
-                    </div>
-                    ${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}
-                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
-                        <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span>
-                        <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
-                        ${extraFields}
-                    </div>`;
-                
-                const actionButtons = document.getElementById('modal-action-buttons');
-                
-                if (id === 'ai') { 
-                    actionButtons.style.display = 'none'; 
-                } else if (id === 'me') { 
-                    actionButtons.innerHTML = `
-                        <div class="flex w-full gap-2">
-                            <button id="btn-modal-chat-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                            <button id="btn-modal-sms-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                            <button id="btn-modal-email-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
-                        </div>
-                        <div class="flex w-full gap-2 mt-2">
-                            <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
-                            <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
-                        </div>
-                    `; 
-                    setTimeout(() => { 
-                        document.getElementById('btn-modal-chat-me').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('me'); }; 
-                        document.getElementById('btn-modal-sms-me').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                        document.getElementById('btn-modal-email-me').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
-                    }, 50);
-                    actionButtons.style.display = 'flex'; 
-                } else {
-                    actionButtons.innerHTML = `
-                        <div class="flex w-full gap-2">
-                            <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                            <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                            <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
-                        </div>
-                    `;
-                    setTimeout(() => { 
-                        document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
-                        document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                        document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
-                    }, 50); 
-                    actionButtons.style.display = 'flex'; 
-                } 
-                document.getElementById('avatar-modal').classList.add('active');
-            };
-
-            window.openMyProfile = function() { 
-                window.closeDropdown(); 
-                if (window.isGuest) { 
-                    document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); 
-                    document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); 
-                    document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
-                } else { 
-                    document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); 
-                    document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); 
-                    document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); 
-                    document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; 
-                    document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; 
-                    document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
-                    document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; 
-                    document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
-                } 
-                window.applyTranslations(); 
-                document.getElementById('edit-profile-modal').classList.add('active'); 
-            };
-
-            window.handleCountryChange = function(sel) { 
-                const flagCode = sel.value; 
-                document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; 
-                const cData = countryData[flagCode] || countryData['un']; 
-                const phoneInput = document.getElementById('edit-phone'); 
-                if (phoneInput && cData.phone) { 
-                    phoneInput.value = cData.phone + " "; 
-                    phoneInput.focus(); 
-                } 
-            };
-
-            window.handleFileUpload = function(event) { 
-                const file = event.target.files[0]; 
-                if (!file) return; 
-                const reader = new FileReader(); 
-                reader.onload = function(e) { 
-                    window.currentPhotoData = e.target.result; 
-                    document.getElementById('edit-preview-photo').src = e.target.result; 
-                }; 
-                reader.readAsDataURL(file); 
-            };
-            
-            window.saveProfileData = function() {
-                let nameVal = document.getElementById('edit-name').value.trim(); 
-                if (!nameVal) return alert("Enter Name!"); 
-                let newId = window.isGuest ? (nameVal.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
-                let photo = window.currentPhotoData; 
-                if (!photo) { 
-                    if (window.isGuest || (window.myProfileInfo.photo && window.myProfileInfo.photo.includes('Guest'))) { 
-                        photo = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=00a884&color=fff'; 
-                    } else { 
-                        photo = window.myProfileInfo.photo; 
-                    } 
-                }
-                let phoneVal = document.getElementById('edit-phone').value.trim(); 
-                if (window.isGuest && !phoneVal) return alert("Please enter your Phone Number!");
-                
-                const sel = document.getElementById('edit-country-select'); 
-                const opt = sel.options[sel.selectedIndex]; 
-                const cData = countryData[sel.value] || countryData['un'];
-                
-                let customProfile = { 
-                    ...window.myProfileInfo, 
-                    id: newId, 
-                    name: nameVal, 
-                    photo: photo, 
-                    flagCode: sel.value, 
-                    flag: opt.getAttribute('data-emoji'), 
-                    country: opt.getAttribute('data-name'), 
-                    langCode: opt.getAttribute('data-lang') || 'en', 
-                    pop: cData.pop, 
-                    seas: cData.seas, 
-                    countryDesc: cData.desc, 
-                    phone: phoneVal, 
-                    email: document.getElementById('edit-email').value 
-                };
-                
-                localStorage.setItem('hf_custom_' + newId, JSON.stringify(customProfile)); 
-                localStorage.setItem('hf_active_user', newId); 
-                db.ref('users/' + newId).set(customProfile); 
-                window.closeProfileModal(); 
-                if(window.autoSetMicLang) window.autoSetMicLang(); 
-                location.reload(); 
-            };
-
-            window.openEditCV = function() {
-                if(window.isGuest) return alert("Please complete basic registration first (Menu -> My Profile).");
-                document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || '';
-                document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || '';
-                document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || '';
-                document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || '';
-                document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || '';
-                document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || '';
-                document.getElementById('edit-cv-modal').classList.add('active');
-            };
-            
-            window.closeEditCV = function() { 
-                document.getElementById('edit-cv-modal').classList.remove('active'); 
-            };
-
-            window.saveCVData = function() {
-                window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim();
-                window.myProfileInfo.languages = document.getElementById('cv-edit-langs').value.trim();
-                window.myProfileInfo.skills = document.getElementById('cv-edit-skills').value.trim();
-                window.myProfileInfo.experience = document.getElementById('cv-edit-exp').value.trim();
-                window.myProfileInfo.education = document.getElementById('cv-edit-edu').value.trim();
-                window.myProfileInfo.desc = document.getElementById('cv-edit-bio').value.trim();
-
-                localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
-                db.ref('users/' + window.myProfileInfo.id).set(window.myProfileInfo); 
-                window.closeEditCV();
-                if(window.renderProfessionList) window.renderProfessionList();
-                alert("CV Successfully Updated! 📄");
-            };
-
-            window.renderProfessionList = function() { 
-                const profContainer = document.getElementById('profession-list'); 
-                if (!profContainer) return; 
-                
-                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; 
-                const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest'));
-
-                let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
-                validUsers.forEach((p) => { 
-                    let isMe = p.id === window.myProfileInfo.id; 
-                    let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
-                    let btnText = isMe ? `View My CV` : `View CV`; 
-                    
-                    let nameTxt = (p.name||'User').split(' ')[0]; 
-                    if(isMe) nameTxt = nameTxt.replace(' (You)', '') + ' (You)'; 
-                    
-                    let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
-                    
-                    cardsHTML += `
-                    <div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div>
-                        <img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;">
-                        <h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3>
-                        <p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p>
-                        <button onclick="${avatarClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button>
-                    </div>`; 
-                }); 
-                profContainer.innerHTML = cardsHTML + `</div>`; 
-            };
-            if(document.getElementById('profession-list')) window.renderProfessionList();
-
-            window.handleSmartSearch = function(text, type = 'text', event = null) { 
-                if(event) event.stopPropagation();
-                const input = document.getElementById('global-search-input'); 
-                if (type === 'text') { 
-                    input.value = text; 
-                    window.performLiveSearch(); 
-                } else if (type === 'web') { 
-                    input.value = text; 
-                    document.getElementById('search-results-area').innerHTML = ''; 
-                    document.getElementById('search-suggestions').style.display = 'none';
-                    // КАТЕГОРИИ НОВОСТЕЙ БОЛЬШЕ НЕ СКРЫВАЮТСЯ! (Можно кликать разные подряд)
-                    window.doGoogleSearch(); 
-                } 
-            };
-
-            window.performLiveSearch = function() { 
-                const query = document.getElementById('global-search-input').value.toLowerCase().trim(); 
-                const resultsArea = document.getElementById('search-results-area'); 
-                const suggestions = document.getElementById('search-suggestions'); 
-                const categories = document.getElementById('news-categories');
-                document.getElementById('search-result-frame').classList.add('hidden'); 
-                
-                if (query.length === 0) { 
-                    resultsArea.innerHTML = ''; 
-                    suggestions.style.display = 'block'; 
-                    categories.style.display = 'none';
-                    return; 
-                } 
-                
-                suggestions.style.display = 'none'; 
-                categories.style.display = 'none';
-                let html = ''; 
-                let found = false; 
-                
-                window.participants.forEach(p => { 
-                    if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
-                        found = true; 
-                        html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; 
-                    } 
-                }); 
-                resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
-            };
-
-            window.doGoogleSearch = function() { 
-                const q = document.getElementById('global-search-input').value; 
-                if(q.trim() === '') return alert('Enter search query'); 
-                document.getElementById('search-suggestions').style.display = 'none'; 
-                document.getElementById('search-results-area').innerHTML = ''; 
-                const iframe = document.getElementById('search-result-frame'); 
-                iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
-                iframe.classList.remove('hidden'); 
-            };
-
+            // === МИКРОФОН (СВЯЗАН С ЯЗЫКОМ ПРИЛОЖЕНИЯ) ===
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false;
@@ -1673,46 +1383,30 @@
                     } 
                 };
                 
-                window.autoSetMicLang = function() { 
-                    let phone = window.myProfileInfo.phone || ""; 
-                    let flag = window.myProfileInfo.flagCode || "un"; 
-                    let finalLang = 'en-US'; 
-                    if (phone.startsWith('+7')) finalLang = 'ru-RU'; 
-                    else if (phone.startsWith('+994')) finalLang = 'az-AZ'; 
-                    else if (phone.startsWith('+39')) finalLang = 'it-IT'; 
-                    else if (phone.startsWith('+49')) finalLang = 'de-DE'; 
-                    else if (phone.startsWith('+33')) finalLang = 'fr-FR'; 
-                    else if (phone.startsWith('+81')) finalLang = 'ja-JP'; 
-                    else if (phone.startsWith('+34')) finalLang = 'es-ES'; 
-                    else if (phone.startsWith('+86')) finalLang = 'zh-CN'; 
-                    else if (phone.startsWith('+351')) finalLang = 'pt-PT'; 
-                    else if (flag === 'ru') finalLang = 'ru-RU'; 
-                    else if (flag === 'az') finalLang = 'az-AZ'; 
-                    else if (flag === 'it') finalLang = 'it-IT'; 
-                    else if (flag === 'de') finalLang = 'de-DE'; 
-                    else if (flag === 'fr') finalLang = 'fr-FR'; 
-                    else if (flag === 'jp') finalLang = 'ja-JP'; 
-                    else if (flag === 'es') finalLang = 'es-ES'; 
-                    else if (flag === 'cn') finalLang = 'zh-CN'; 
-                    else if (flag === 'pt') finalLang = 'pt-PT'; 
-                    let rMic = document.getElementById('plus-mic-lang'); 
-                    if(rMic) rMic.value = finalLang; 
-                };
-                
                 window.startMic = function(target, btnId) { 
                     currentMicTarget = target; 
                     currentMicBtn = document.getElementById(btnId); 
-                    let langSelect = document.getElementById('plus-mic-lang'); 
-                    rec.lang = langSelect ? langSelect.value : 'en-US'; 
-                    try { rec.start(); } catch(e){} 
+                    
+                    // ЯЗЫК МИКРОФОНА = ЯЗЫКУ ИНТЕРФЕЙСА
+                    let micLang = 'en-US';
+                    if (window.appLang === 'ru') micLang = 'ru-RU';
+                    else if (window.appLang === 'az') micLang = 'az-AZ';
+                    else if (window.appLang === 'it') micLang = 'it-IT';
+                    
+                    rec.lang = micLang; 
+                    
+                    try { 
+                        rec.start(); 
+                    } catch(e){
+                        rec.stop();
+                        setTimeout(() => rec.start(), 100);
+                    } 
                 };
             }
 
             window.switchChatRoom('global');
             if (window.isGuest) { 
                 setTimeout(() => { window.openMyProfile(); }, 800); 
-            } else { 
-                setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); 
             }
             
             window.toggleTheme = function() { 
