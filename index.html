@@ -648,7 +648,8 @@
             };
             window.renderSidebar();
 
-            window.switchChatRoom = function(targetId) {
+        
+    window.switchChatRoom = function(targetId) {
                 if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
                 const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
                 
@@ -663,7 +664,6 @@
                 window.renderSidebar(); 
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
-
             window.sendFirebaseMsg = function() {
                 const text = document.getElementById('chat-input').value.trim(); if(!text) return;
                 db.ref(window.currentRoomId).push({ 
@@ -1142,5 +1142,6 @@
     </script>
 </body>
 </html>
+
 
 
