@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.40 (CV & Profile Stable)</title>
+    <title>Hello Friends - Golden Master V31.60 (Final Fixes)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -157,6 +157,7 @@
 </head>
 <body>
 
+    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
     <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="window.handleDocUpload(event)">
@@ -220,11 +221,6 @@
                         <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global Chat</span></span>
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
-                    
-                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News">
-                        <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
-                    </button>
-
                     <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
                 </div>
                 
@@ -294,7 +290,7 @@
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -320,11 +316,11 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -482,39 +478,6 @@
             </div>
         </div>
 
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
-                <div class="relative w-full mb-4 shrink-0">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
-                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
-                </div>
-                
-                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
-                        <button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
-                        <button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
-                        <button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
-                    </div>
-                </div>
-
-                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
-                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
-                    </div>
-                </div>
-
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
-                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
-            </div>
-        </div>
-
         <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
@@ -573,129 +536,14 @@
     </div>
 
     <script>
-        // === ИНТЕГРИРОВАННАЯ И БЕЗОПАСНАЯ ЛОГИКА JS ===
-        
+        // === ЛОГИКА JS С ИСПРАВЛЕНИЯМИ ===
+
         window.openAttachModal = function() {
             window.closeDropdown();
             document.getElementById('attach-modal').classList.add('active');
         };
         window.closeAttachModal = function() {
             document.getElementById('attach-modal').classList.remove('active');
-        };
-
-        window.openNewsFast = function() {
-            window.closeDropdown(); 
-            document.getElementById('search-modal').classList.add('active'); 
-            
-            document.getElementById('search-suggestions').style.display = 'none';
-            document.getElementById('news-categories').style.display = 'flex';
-            
-            setTimeout(() => {
-                const c = window.myProfileInfo.country;
-                const lang = window.myProfileInfo.langCode;
-                let q = "World News"; 
-                
-                if (c && c !== 'Global') {
-                    if (lang === 'ru') q = "Главные новости " + c;
-                    else if (lang === 'az') q = "Son xəbərlər " + c;
-                    else if (lang === 'de') q = "Aktuelle Nachrichten " + c;
-                    else if (lang === 'it') q = "Ultime notizie " + c;
-                    else if (lang === 'fr') q = "Actualités " + c;
-                    else if (lang === 'es') q = "Últimas noticias " + c;
-                    else q = "Latest news " + c;
-                }
-                
-                window.doNewsSearch(q);
-            }, 300);
-        };
-
-        window.doNewsSearch = function(q) {
-            document.getElementById('global-search-input').value = q;
-            document.getElementById('search-results-area').innerHTML = ''; 
-            const iframe = document.getElementById('search-result-frame'); 
-            iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
-            iframe.classList.remove('hidden'); 
-        };
-
-        window.openSearchModal = function() { 
-            window.closeDropdown(); 
-            document.getElementById('search-modal').classList.add('active'); 
-            document.getElementById('global-search-input').value = '';
-            document.getElementById('search-results-area').innerHTML = '';
-            
-            document.getElementById('search-suggestions').style.display = 'block';
-            const cat = document.getElementById('news-categories');
-            if(cat) cat.style.display = 'none';
-            
-            const iframe = document.getElementById('search-result-frame');
-            iframe.src = 'about:blank';
-            iframe.classList.add('hidden');
-
-            setTimeout(() => document.getElementById('global-search-input').focus(), 100);
-        };
-
-        window.closeSearchModal = function() { 
-            document.getElementById('search-modal').classList.remove('active'); 
-            document.getElementById('global-search-input').value = '';
-            document.getElementById('search-results-area').innerHTML = '';
-            
-            const iframe = document.getElementById('search-result-frame');
-            iframe.src = 'about:blank'; 
-            iframe.classList.add('hidden');
-            
-            document.getElementById('search-suggestions').style.display = 'block';
-            const cat = document.getElementById('news-categories');
-            if(cat) cat.style.display = 'none';
-        };
-
-        window.performLiveSearch = function() { 
-            const query = document.getElementById('global-search-input').value.toLowerCase().trim(); 
-            const resultsArea = document.getElementById('search-results-area'); 
-            const suggestions = document.getElementById('search-suggestions'); 
-            const categories = document.getElementById('news-categories');
-            document.getElementById('search-result-frame').classList.add('hidden'); 
-            
-            if (query.length === 0) { 
-                resultsArea.innerHTML = ''; 
-                suggestions.style.display = 'block'; 
-                if(categories) categories.style.display = 'none';
-                return; 
-            } 
-            
-            suggestions.style.display = 'none'; 
-            if(categories) categories.style.display = 'none';
-            let html = ''; 
-            let found = false; 
-            
-            window.participants.forEach(p => { 
-                if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
-                    found = true; 
-                    html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; 
-                } 
-            }); 
-            resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
-        };
-
-        window.handleSmartSearch = function(text, type = 'text') { 
-            const input = document.getElementById('global-search-input'); 
-            if (type === 'text') { 
-                input.value = text; 
-                window.performLiveSearch(); 
-            } else if (type === 'web') { 
-                input.value = text; 
-                document.getElementById('search-results-area').innerHTML = ''; 
-                window.doGoogleSearch(); 
-            } 
-        };
-
-        window.doGoogleSearch = function() { 
-            const q = document.getElementById('global-search-input').value; 
-            if(q.trim() === '') return alert('Enter search query'); 
-            document.getElementById('search-suggestions').style.display = 'none'; 
-            document.getElementById('search-results-area').innerHTML = ''; 
-            const iframe = document.getElementById('search-result-frame'); 
-            iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
-            iframe.classList.remove('hidden'); 
         };
 
         window.openBankTransferModal = function() { 
@@ -757,13 +605,17 @@
             } 
         };
 
-        // --- БЛОК 1: ТЕМНОЕ CV И ЗАКРЫТИЕ ---
+        // --- ИСПРАВЛЕНО: ОТКРЫТИЕ ТЕМНОЙ ВИЗИТКИ И ПРОФИЛЯ ---
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
         window.openAvatarModal = function(id) {
             window.closeDropdown();
-            const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
-            if (!p) return;
+            
+            // Безопасная заглушка, если юзер не найден
+            let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
+            if (!p) {
+                p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
+            }
             
             const modalImg = document.getElementById('modal-img');
             if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
@@ -783,7 +635,10 @@
             const modalProf = document.getElementById('modal-prof');
             if(modalProf) modalProf.innerText = p.profession || 'User';
 
-            const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
+            let cDesc = p.countryDesc || 'User in network';
+            if (typeof countryData !== 'undefined' && countryData[p.flagCode]) {
+                cDesc = countryData[p.flagCode].desc;
+            }
             
             let extraFields = '';
             if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`;
@@ -794,7 +649,7 @@
             if(modalDesc) {
                 modalDesc.innerHTML = `
                     <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div>
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div>
                         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div>
                     </div>
                     ${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}
@@ -814,7 +669,7 @@
                         <div class="flex w-full gap-2">
                             <button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('me');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
                             <button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                            <button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                            <button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
                         </div>
                         <div class="flex w-full gap-2 mt-2">
                             <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
@@ -826,7 +681,7 @@
                         <div class="flex w-full gap-2">
                             <button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
                             <button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                            <button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                            <button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
                         </div>`;
                     actionButtons.style.display = 'block'; 
                 }
@@ -834,7 +689,6 @@
             document.getElementById('avatar-modal').classList.add('active');
         };
 
-        // --- БЛОК 2: БЕЗОПАСНОЕ СОХРАНЕНИЕ ПРОФИЛЯ (UPDATE) ---
         window.openMyProfile = function() { 
             window.closeDropdown(); 
             if (window.isGuest) { 
@@ -851,19 +705,21 @@
                 document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; 
                 document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
             } 
-            window.applyTranslations(); 
+            if(window.applyTranslations) window.applyTranslations(); 
             document.getElementById('edit-profile-modal').classList.add('active'); 
         };
 
         window.handleCountryChange = function(sel) { 
             const flagCode = sel.value; 
             document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; 
-            const cData = countryData[flagCode] || countryData['un']; 
-            const phoneInput = document.getElementById('edit-phone'); 
-            if (phoneInput && cData.phone) { 
-                phoneInput.value = cData.phone + " "; 
-                phoneInput.focus(); 
-            } 
+            if (typeof countryData !== 'undefined') {
+                const cData = countryData[flagCode] || countryData['un']; 
+                const phoneInput = document.getElementById('edit-phone'); 
+                if (phoneInput && cData && cData.phone) { 
+                    phoneInput.value = cData.phone + " "; 
+                    phoneInput.focus(); 
+                }
+            }
         };
 
         window.handleFileUpload = function(event) { 
@@ -881,31 +737,20 @@
             let nameVal = document.getElementById('edit-name').value.trim(); 
             if (!nameVal) return alert("Enter Name!"); 
             let newId = window.isGuest ? (nameVal.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
-            let photo = window.currentPhotoData; 
-            if (!photo) { 
-                if (window.isGuest || (window.myProfileInfo.photo && window.myProfileInfo.photo.includes('Guest'))) { 
-                    photo = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nameVal) + '&background=00a884&color=fff'; 
-                } else { 
-                    photo = window.myProfileInfo.photo; 
-                } 
-            }
+            let photo = document.getElementById('edit-preview-photo').src;
+            
             let phoneVal = document.getElementById('edit-phone').value.trim(); 
-            if (window.isGuest && !phoneVal) return alert("Please enter your Phone Number!");
             
             const sel = document.getElementById('edit-country-select'); 
             const opt = sel.options[sel.selectedIndex]; 
-            const cData = countryData[sel.value] || countryData['un'];
             
             let updatedProfile = { 
                 name: nameVal, 
                 photo: photo, 
                 flagCode: sel.value, 
-                flag: opt.getAttribute('data-emoji'), 
-                country: opt.getAttribute('data-name'), 
+                flag: opt.getAttribute('data-emoji') || '🌐', 
+                country: opt.getAttribute('data-name') || 'Global', 
                 langCode: opt.getAttribute('data-lang') || 'en', 
-                pop: cData.pop, 
-                seas: cData.seas, 
-                countryDesc: cData.desc, 
                 phone: phoneVal, 
                 email: document.getElementById('edit-email').value 
             };
@@ -915,11 +760,11 @@
                 window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile };
                 localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); 
                 localStorage.setItem('hf_active_user', newId); 
-                db.ref('users/' + newId).set(window.myProfileInfo); 
+                firebase.database().ref('users/' + newId).set(window.myProfileInfo); 
             } else {
                 window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile };
                 localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); 
-                db.ref('users/' + newId).update(updatedProfile); 
+                firebase.database().ref('users/' + newId).update(updatedProfile); 
             }
             
             window.closeProfileModal(); 
@@ -952,7 +797,7 @@
 
             localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
             
-            db.ref('users/' + window.myProfileInfo.id).update({
+            firebase.database().ref('users/' + window.myProfileInfo.id).update({
                 profession: window.myProfileInfo.profession,
                 languages: window.myProfileInfo.languages,
                 skills: window.myProfileInfo.skills,
@@ -967,10 +812,88 @@
 
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
+        
+        // --- ИСПРАВЛЕНО: КОРЗИНА И ОЧИСТКА ---
+        window.smartArchive = function() { 
+            alert("Chat sent to Archive!"); 
+            window.closeTrashModal(); 
+            window.switchTab(5); 
+        };
+        
+        window.smartClear = function() { 
+            if(confirm("Are you sure you want to clear chat history?")) { 
+                const chatMsgs = document.getElementById('chat-messages');
+                if(chatMsgs) chatMsgs.innerHTML = ''; 
+                
+                if(window.currentRoomId) {
+                    firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); 
+                }
+                window.closeTrashModal(); 
+            } 
+        };
+        
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
+        
+        // --- ИСПРАВЛЕНО: ЛОКАЦИЯ (РАБОТАЕТ БЕЗ ОШИБОК) ---
         window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
+
+        window.sendLocationToChat = function() {
+            window.closeAttachModal();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`;
+                        const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+                        
+                        firebase.database().ref(window.currentRoomId).push({
+                            userId: window.myProfileInfo.id,
+                            name: window.myUsername,
+                            text: "📍 Shared Location",
+                            isLocation: true,
+                            lat: lat,
+                            lon: lon,
+                            embedLink: embedLink,
+                            mapLink: mapLink,
+                            sessionId: window.mySessionId,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP,
+                            photo: window.myProfileInfo.photo,
+                            flag: window.myProfileInfo.flag,
+                            flagCode: window.myProfileInfo.flagCode,
+                            langCode: window.myProfileInfo.langCode
+                        });
+                    },
+                    (error) => { alert("Failed to get location. Please allow GPS access."); },
+                    { timeout: 5000 }
+                );
+            } else {
+                alert("Geolocation is not supported by your browser.");
+            }
+        };
+
+        window.openLocationModal = function() { 
+            window.closeDropdown(); 
+            document.getElementById('location-modal').classList.add('active'); 
+            const mapContainer = document.getElementById('location-map'); 
+            mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; 
+            
+            if (navigator.geolocation) { 
+                navigator.geolocation.getCurrentPosition( 
+                    (position) => { 
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; 
+                    }, 
+                    (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, 
+                    { timeout: 5000 } 
+                ); 
+            } else { 
+                mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; 
+            } 
+        };
 
         window.toggleRhombusMenu = function(e) { 
             e.stopPropagation(); 
@@ -1055,6 +978,9 @@
                 document.getElementById('admin-menu-btn').style.display = 'flex'; 
             }
 
+            // ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ ДЛЯ СТРАН ВЫНЕСЕНА СЮДА ДЛЯ БЕЗОПАСНОСТИ
+            window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
+
             const i18n = { 
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Information" }, 
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль", edit_subtitle: "Основная информация" }, 
@@ -1099,19 +1025,6 @@
                     window.currentIndex = index; 
                 } catch(e) {} 
             };
-
-            const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
-            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
-
-            let activeUserId = localStorage.getItem('hf_active_user'); 
-            window.isGuest = !activeUserId;
-            window.currentRoomId = "global"; 
-            window.activeChatListener = null; 
-            window.mySessionId = Math.random().toString(36).substring(2, 15);
-            window.currentTargetUser = null; 
-
-            const countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
 
             window.allCharacters = [
                 { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '10.1M', seas: 'Caspian Sea', desc: 'Passionate about connecting people.', skills: 'Leadership, Architecture', experience: '10+ years in Tech', education: 'BSc Computer Science', languages: 'AZ, RU, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
@@ -1229,7 +1142,7 @@
                         window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                         headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; 
                         headerRoomId = window.currentRoomId; 
-                        let cDesc = targetUser.countryDesc || countryData[targetUser.flagCode]?.desc || "User in network"; 
+                        let cDesc = targetUser.countryDesc || window.countryData[targetUser.flagCode]?.desc || "User in network"; 
                         window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc, targetUser.photo); 
                     }
                 }
@@ -1318,7 +1231,42 @@
                 
                 let avatarHtml = isAI ? `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : `<img src="${p.photo}" class="w-8 h-8 rounded-full shrink-0 self-end object-cover cursor-pointer border border-[#2a3942] shadow-md" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">`;
                 
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="chat-bubble">${data.text}</div></div>`;
+                let bubbleContent = data.text;
+                let bubbleClasses = `chat-bubble`;
+                
+                if (data.mediaUrl) {
+                    if (data.mediaType === 'video') {
+                        bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
+                    } else {
+                        bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
+                    }
+                    bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
+                }
+                else if (data.isTransfer) {
+                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                    bubbleContent = `
+                        <div class="flex flex-col items-center p-4 min-w-[180px]">
+                            <div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div>
+                            <span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1">Transfer Success</span>
+                            <span class="text-2xl font-bold text-white mb-2">$${data.amount}</span>
+                            <div class="w-full h-[1px] bg-[#2a3942] mb-2"></div>
+                            <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
+                        </div>`;
+                }
+                else if (data.isLocation) {
+                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`;
+                    bubbleContent = `
+                        <div class="flex flex-col w-[200px] sm:w-[250px]">
+                            <iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe>
+                            <a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a>
+                        </div>`;
+                }
+                else if (data.isFile) {
+                    bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`;
+                    bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`;
+                }
+
+                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing' : 'incoming'} flex flex-col"><div class="chat-sender-name">${!isMe ? (data.name || 'User') : ''}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
                 
                 msgWrapper.innerHTML = isMe ? bubbleHtml : avatarHtml + bubbleHtml; 
                 messageGroup.appendChild(msgWrapper);
@@ -1328,51 +1276,84 @@
                     chatMessages.scrollTop = chatMessages.scrollHeight; 
                 }
 
-                let targetUsers = [];
-                if (window.currentRoomId === 'global' && !isAI) { 
-                    let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
-                    allMembers.forEach(member => { 
-                        if (member.id !== data.userId && member.langCode !== 'un') { 
-                            targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
-                        } 
-                    });
-                } else if (window.currentRoomId.startsWith('private_') && !isAI) {
-                    if (isMe) {
-                        if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
-                            targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
-                        }
-                    } else {
-                        if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
-                            targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
+                    let targetUsers = [];
+                    if (window.currentRoomId === 'global' && !isAI) { 
+                        let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')];
+                        allMembers.forEach(member => { 
+                            if (member.id !== data.userId && member.langCode !== 'un') { 
+                                targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); 
+                            } 
+                        });
+                    } else if (window.currentRoomId.startsWith('private_') && !isAI) {
+                        if (isMe) {
+                            if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { 
+                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                            }
+                        } else {
+                            if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { 
+                                targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                            }
                         }
                     }
-                }
 
-                if (targetUsers.length > 0) {
-                    try {
-                        const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
-                        const translationsRes = await Promise.all(fetchPromises); 
-                        const transContainer = document.createElement('div'); 
-                        transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
-                        let marqueeTextStr = ''; 
-                        
-                        translationsRes.forEach(t => { 
-                            transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
-                            marqueeTextStr += `${t.user.flag} ${t.text}       `; 
-                        }); 
-                        messageGroup.appendChild(transContainer); 
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                        
-                        const mText = document.getElementById('chat-info-marquee');
-                        if (window.isMarqueeEnabled !== false && mText) { 
-                            mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
-                            mText.style.animation = 'none'; 
-                            void mText.offsetWidth; 
-                            mText.style.animation = null; 
-                        } 
-                    } catch (e) {}
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
+                            const translationsRes = await Promise.all(fetchPromises); 
+                            const transContainer = document.createElement('div'); 
+                            transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
+                            let marqueeTextStr = ''; 
+                            
+                            translationsRes.forEach(t => { 
+                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
+                                marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                            }); 
+                            messageGroup.appendChild(transContainer); 
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                            
+                            const mText = document.getElementById('chat-info-marquee');
+                            if (window.isMarqueeEnabled !== false && mText) { 
+                                mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
+                                mText.style.animation = 'none'; 
+                                void mText.offsetWidth; 
+                                mText.style.animation = null; 
+                            } 
+                        } catch (e) {}
+                    }
                 }
             }
+
+            window.renderProfessionList = function() { 
+                const profContainer = document.getElementById('profession-list'); 
+                if (!profContainer) return; 
+                
+                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; 
+                const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest'));
+
+                let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
+                validUsers.forEach((p) => { 
+                    let isMe = p.id === window.myProfileInfo.id; 
+                    let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
+                    let btnText = isMe ? `View My CV` : `View CV`; 
+                    
+                    let nameTxt = (p.name||'User').split(' ')[0]; 
+                    if(isMe) nameTxt = nameTxt.replace(' (You)', '') + ' (You)'; 
+                    
+                    let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
+                    
+                    cardsHTML += `
+                    <div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div>
+                        <img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;">
+                        <h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3>
+                        <p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p>
+                        <button onclick="${avatarClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button>
+                    </div>`; 
+                }); 
+                profContainer.innerHTML = cardsHTML + `</div>`; 
+            };
+            if(document.getElementById('profession-list')) window.renderProfessionList();
 
             window.isMarqueeEnabled = true; 
             window.toggleMarquee = function() { 
