@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.60 (Final Fixes)</title>
+    <title>Hello Friends - Golden Master V31.40 (CV & Profile Stable)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -157,7 +157,6 @@
 </head>
 <body>
 
-    <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
     <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="window.handleDocUpload(event)">
@@ -221,6 +220,11 @@
                         <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global Chat</span></span>
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
+                    
+                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News">
+                        <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
+                    </button>
+
                     <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
                 </div>
                 
@@ -478,6 +482,39 @@
             </div>
         </div>
 
+        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
+            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
+                <div class="relative w-full mb-4 shrink-0">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
+                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
+                </div>
+                
+                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
+                        <button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
+                        <button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
+                        <button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
+                    </div>
+                </div>
+
+                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
+                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
+                    </div>
+                </div>
+
+                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
+                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
+                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
+            </div>
+        </div>
+
         <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
@@ -536,7 +573,7 @@
     </div>
 
     <script>
-        // === ЛОГИКА JS С ИСПРАВЛЕНИЯМИ ===
+        // === ЛОГИКА JS ===
 
         window.openAttachModal = function() {
             window.closeDropdown();
@@ -544,6 +581,105 @@
         };
         window.closeAttachModal = function() {
             document.getElementById('attach-modal').classList.remove('active');
+        };
+
+        window.openNewsFast = function() {
+            window.closeDropdown(); 
+            document.getElementById('search-modal').classList.add('active'); 
+            document.getElementById('search-suggestions').style.display = 'none';
+            document.getElementById('news-categories').style.display = 'flex';
+            setTimeout(() => {
+                const c = window.myProfileInfo.country;
+                let q = "World News"; 
+                if (c && c !== 'Global') q = "Latest news " + c;
+                window.doNewsSearch(q);
+            }, 300);
+        };
+
+        window.doNewsSearch = function(q) {
+            document.getElementById('global-search-input').value = q;
+            document.getElementById('search-results-area').innerHTML = ''; 
+            const iframe = document.getElementById('search-result-frame'); 
+            iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
+            iframe.classList.remove('hidden'); 
+        };
+
+        window.openSearchModal = function() { 
+            window.closeDropdown(); 
+            document.getElementById('search-modal').classList.add('active'); 
+            document.getElementById('global-search-input').value = '';
+            document.getElementById('search-results-area').innerHTML = '';
+            document.getElementById('search-suggestions').style.display = 'block';
+            const cat = document.getElementById('news-categories');
+            if(cat) cat.style.display = 'none';
+            const iframe = document.getElementById('search-result-frame');
+            iframe.src = 'about:blank';
+            iframe.classList.add('hidden');
+            setTimeout(() => document.getElementById('global-search-input').focus(), 100);
+        };
+
+        window.closeSearchModal = function() { 
+            document.getElementById('search-modal').classList.remove('active'); 
+            document.getElementById('global-search-input').value = '';
+            document.getElementById('search-results-area').innerHTML = '';
+            const iframe = document.getElementById('search-result-frame');
+            if (iframe) {
+                iframe.src = 'about:blank';
+                iframe.classList.add('hidden');
+            }
+            document.getElementById('search-suggestions').style.display = 'block';
+            const cat = document.getElementById('news-categories');
+            if(cat) cat.style.display = 'none';
+        };
+
+        window.performLiveSearch = function() { 
+            const query = document.getElementById('global-search-input').value.toLowerCase().trim(); 
+            const resultsArea = document.getElementById('search-results-area'); 
+            const suggestions = document.getElementById('search-suggestions'); 
+            const categories = document.getElementById('news-categories');
+            document.getElementById('search-result-frame').classList.add('hidden'); 
+            
+            if (query.length === 0) { 
+                resultsArea.innerHTML = ''; 
+                suggestions.style.display = 'block'; 
+                if(categories) categories.style.display = 'none';
+                return; 
+            } 
+            
+            suggestions.style.display = 'none'; 
+            if(categories) categories.style.display = 'none';
+            let html = ''; 
+            let found = false; 
+            
+            window.participants.forEach(p => { 
+                if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
+                    found = true; 
+                    html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; 
+                } 
+            }); 
+            resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
+        };
+
+        window.handleSmartSearch = function(text, type = 'text') { 
+            const input = document.getElementById('global-search-input'); 
+            if (type === 'text') { 
+                input.value = text; 
+                window.performLiveSearch(); 
+            } else if (type === 'web') { 
+                input.value = text; 
+                document.getElementById('search-results-area').innerHTML = ''; 
+                window.doGoogleSearch(); 
+            } 
+        };
+
+        window.doGoogleSearch = function() { 
+            const q = document.getElementById('global-search-input').value; 
+            if(q.trim() === '') return alert('Enter search query'); 
+            document.getElementById('search-suggestions').style.display = 'none'; 
+            document.getElementById('search-results-area').innerHTML = ''; 
+            const iframe = document.getElementById('search-result-frame'); 
+            iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
+            iframe.classList.remove('hidden'); 
         };
 
         window.openBankTransferModal = function() { 
@@ -605,13 +741,12 @@
             } 
         };
 
-        // --- ИСПРАВЛЕНО: ОТКРЫТИЕ ТЕМНОЙ ВИЗИТКИ И ПРОФИЛЯ ---
+        // --- БЛОК 1: ТЕМНОЕ CV И ЗАКРЫТИЕ (ИСПРАВЛЕНО) ---
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
         window.openAvatarModal = function(id) {
             window.closeDropdown();
             
-            // Безопасная заглушка, если юзер не найден
             let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) {
                 p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
@@ -675,7 +810,7 @@
                             <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
                             <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
                         </div>`; 
-                    actionButtons.style.display = 'block'; 
+                    actionButtons.style.display = 'flex'; 
                 } else {
                     actionButtons.innerHTML = `
                         <div class="flex w-full gap-2">
@@ -683,12 +818,13 @@
                             <button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
                             <button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
                         </div>`;
-                    actionButtons.style.display = 'block'; 
+                    actionButtons.style.display = 'flex'; 
                 }
             }
             document.getElementById('avatar-modal').classList.add('active');
         };
 
+        // --- БЛОК 2: БЕЗОПАСНОЕ СОХРАНЕНИЕ ПРОФИЛЯ И CV ---
         window.openMyProfile = function() { 
             window.closeDropdown(); 
             if (window.isGuest) { 
@@ -712,8 +848,8 @@
         window.handleCountryChange = function(sel) { 
             const flagCode = sel.value; 
             document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; 
-            if (typeof countryData !== 'undefined') {
-                const cData = countryData[flagCode] || countryData['un']; 
+            if (typeof window.countryData !== 'undefined') {
+                const cData = window.countryData[flagCode] || window.countryData['un']; 
                 const phoneInput = document.getElementById('edit-phone'); 
                 if (phoneInput && cData && cData.phone) { 
                     phoneInput.value = cData.phone + " "; 
@@ -743,6 +879,7 @@
             
             const sel = document.getElementById('edit-country-select'); 
             const opt = sel.options[sel.selectedIndex]; 
+            const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User in network' };
             
             let updatedProfile = { 
                 name: nameVal, 
@@ -751,6 +888,9 @@
                 flag: opt.getAttribute('data-emoji') || '🌐', 
                 country: opt.getAttribute('data-name') || 'Global', 
                 langCode: opt.getAttribute('data-lang') || 'en', 
+                pop: cData.pop, 
+                seas: cData.seas, 
+                countryDesc: cData.desc, 
                 phone: phoneVal, 
                 email: document.getElementById('edit-email').value 
             };
@@ -813,7 +953,7 @@
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
-        // --- ИСПРАВЛЕНО: КОРЗИНА И ОЧИСТКА ---
+        // --- БЛОК 3: ИСПРАВЛЕННАЯ КОРЗИНА И ЛОКАЦИЯ ---
         window.smartArchive = function() { 
             alert("Chat sent to Archive!"); 
             window.closeTrashModal(); 
@@ -835,8 +975,6 @@
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
-        
-        // --- ИСПРАВЛЕНО: ЛОКАЦИЯ (РАБОТАЕТ БЕЗ ОШИБОК) ---
         window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
 
         window.sendLocationToChat = function() {
@@ -978,7 +1116,6 @@
                 document.getElementById('admin-menu-btn').style.display = 'flex'; 
             }
 
-            // ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ ДЛЯ СТРАН ВЫНЕСЕНА СЮДА ДЛЯ БЕЗОПАСНОСТИ
             window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
 
             const i18n = { 
@@ -1025,6 +1162,17 @@
                     window.currentIndex = index; 
                 } catch(e) {} 
             };
+
+            const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+
+            let activeUserId = localStorage.getItem('hf_active_user'); 
+            window.isGuest = !activeUserId;
+            window.currentRoomId = "global"; 
+            window.activeChatListener = null; 
+            window.mySessionId = Math.random().toString(36).substring(2, 15);
+            window.currentTargetUser = null; 
 
             window.allCharacters = [
                 { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '10.1M', seas: 'Caspian Sea', desc: 'Passionate about connecting people.', skills: 'Leadership, Architecture', experience: '10+ years in Tech', education: 'BSc Computer Science', languages: 'AZ, RU, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
