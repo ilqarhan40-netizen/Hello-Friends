@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.10.1 (Step 1: News Integration)</title>
+    <title>Hello Friends - Golden Master V31.10.2 (CV Update)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -397,7 +397,11 @@
                 <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
                 <div class="flex items-center gap-4 mb-4 mt-2">
                     <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
-                    <div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div>
+                    <div class="flex flex-col">
+                        <h3 id="modal-name" class="text-2xl font-bold text-white"></h3>
+                        <span id="modal-id" class="text-xs text-[#8696a0] font-mono mb-1 mt-1 block"></span>
+                        <span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span>
+                    </div>
                 </div>
                 <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
                 <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
@@ -453,26 +457,25 @@
                 </div>
                 
                 <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span>
+                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">News Categories</span>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.handleSmartSearch('Top Breaking World News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
-                        <button onclick="window.handleSmartSearch('IT and Technology News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
-                        <button onclick="window.handleSmartSearch('Cryptocurrency News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
-                        <button onclick="window.handleSmartSearch('Global Sports News', 'web')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
+                        <button onclick="window.handleSmartSearch('Top World News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
+                        <button onclick="window.handleSmartSearch('IT & Technology News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
+                        <button onclick="window.handleSmartSearch('Cryptocurrency Bitcoin News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
+                        <button onclick="window.handleSmartSearch('Global Sports News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
                     </div>
                 </div>
 
                 <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
                     <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
                     <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
-                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
+                        <button onclick="window.handleSmartSearch('Engineer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
                     </div>
                 </div>
-
                 <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
                 <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.handleSmartSearch(document.getElementById('global-search-input').value, 'web')" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
+                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
             </div>
         </div>
 
@@ -534,27 +537,32 @@
     </div>
 
     <script>
+        // === НОВЫЙ БЛОК: НОВОСТИ ===
         window.openNewsFast = function() {
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
             
+            // Прячем подсказки, показываем категории новостей
             document.getElementById('search-suggestions').style.display = 'none';
             document.getElementById('news-categories').style.display = 'flex';
             
             setTimeout(() => {
                 const c = window.myProfileInfo.country;
+                const lang = window.myProfileInfo.langCode;
                 let q = "World News"; 
-                if (c && c !== 'Global') q = "Latest news " + c;
-                window.doNewsSearch(q);
+                
+                if (c && c !== 'Global') {
+                    if (lang === 'ru') q = "Главные новости " + c;
+                    else if (lang === 'az') q = "Son xəbərlər " + c;
+                    else if (lang === 'de') q = "Aktuelle Nachrichten " + c;
+                    else if (lang === 'it') q = "Ultime notizie " + c;
+                    else if (lang === 'fr') q = "Actualités " + c;
+                    else if (lang === 'es') q = "Últimas noticias " + c;
+                    else q = "Latest news " + c;
+                }
+                
+                window.handleSmartSearch(q, 'web', null);
             }, 300);
-        };
-
-        window.doNewsSearch = function(q) {
-            document.getElementById('global-search-input').value = q;
-            document.getElementById('search-results-area').innerHTML = ''; 
-            const iframe = document.getElementById('search-result-frame'); 
-            iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
-            iframe.classList.remove('hidden'); 
         };
 
         window.openSearchModal = function() { 
@@ -562,14 +570,13 @@
             document.getElementById('search-modal').classList.add('active'); 
             document.getElementById('global-search-input').value = '';
             document.getElementById('search-results-area').innerHTML = '';
-            document.getElementById('search-suggestions').style.display = 'block';
             
+            // Восстанавливаем стандартный вид поиска
+            document.getElementById('search-suggestions').style.display = 'block';
             const cat = document.getElementById('news-categories');
             if(cat) cat.style.display = 'none';
             
-            const iframe = document.getElementById('search-result-frame');
-            iframe.src = 'about:blank';
-            iframe.classList.add('hidden');
+            document.getElementById('search-result-frame').classList.add('hidden');
             setTimeout(() => document.getElementById('global-search-input').focus(), 100);
         };
 
@@ -579,8 +586,10 @@
             document.getElementById('search-results-area').innerHTML = '';
             
             const iframe = document.getElementById('search-result-frame');
-            iframe.src = 'about:blank'; 
-            iframe.classList.add('hidden');
+            if (iframe) {
+                iframe.src = 'about:blank'; // Очищаем iframe при закрытии
+                iframe.classList.add('hidden');
+            }
             
             document.getElementById('search-suggestions').style.display = 'block';
             const cat = document.getElementById('news-categories');
@@ -615,7 +624,8 @@
             resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
         };
 
-        window.handleSmartSearch = function(text, type = 'text') { 
+        window.handleSmartSearch = function(text, type = 'text', e = null) { 
+            if(e) e.stopPropagation();
             const input = document.getElementById('global-search-input'); 
             if (type === 'text') { 
                 input.value = text; 
@@ -623,6 +633,7 @@
             } else if (type === 'web') { 
                 input.value = text; 
                 document.getElementById('search-results-area').innerHTML = ''; 
+                // Не закрываем категории, чтобы можно было кликать другие кнопки новостей
                 window.doGoogleSearch(); 
             } 
         };
@@ -633,9 +644,13 @@
             document.getElementById('search-suggestions').style.display = 'none'; 
             document.getElementById('search-results-area').innerHTML = ''; 
             const iframe = document.getElementById('search-result-frame'); 
+            
+            // ИСПОЛЬЗУЕМ BING (он не блокирует iframe в отличие от Google)
             iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
             iframe.classList.remove('hidden'); 
         };
+
+        // === ОСТАЛЬНЫЕ ФУНКЦИИ ИЗ ВАШЕЙ СТАБИЛЬНОЙ ВЕРСИИ V31.10 ===
 
         window.openBankTransferModal = function() { 
             window.closeDropdown(); 
@@ -696,6 +711,7 @@
             } 
         };
 
+        window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
