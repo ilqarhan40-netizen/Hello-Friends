@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V35.00 (AI & Mail Built-in)</title>
+    <title>Hello Friends - Golden Master V35.10 (Mail & AI Active)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -1178,13 +1178,12 @@
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         
-        // --- 🚀 РАБОТАЮЩАЯ ПОЧТА (EMAILJS ИНТЕГРАЦИЯ) ---
+        // --- 🚀 РАБОТАЮЩАЯ ПОЧТА (ВШИТЫ НОВЫЕ КЛЮЧИ) ---
         window.sendEmailForm = function(e) { 
             e.preventDefault(); 
             const btn = e.target.querySelector('button[type="submit"]');
             const originalText = btn.innerText;
             
-            // Визуальный эффект отправки
             btn.innerText = 'Sending...';
             btn.classList.add('animate-pulse');
             
@@ -1192,17 +1191,16 @@
             const subj = document.getElementById('email-subject').value;
             const text = document.getElementById('email-text').value;
             
-            // Собираем параметры для шаблона
+            // Параметры под ваш шаблон template_0o6h5cm
             const templateParams = {
                 to_email: to,
-                user_email: to,
                 subject: subj,
                 message: text,
                 from_name: window.myUsername || "User"
             };
 
-            // МАГИЯ EMAILJS: Service ID и Template ID уже вшиты!
-            emailjs.send("service_nqkjfyt", "template_vds75zs", templateParams)
+            // Сервис и Шаблон успешно вшиты
+            emailjs.send("service_8d6b5v3", "template_0o6h5cm", templateParams)
                 .then(function(response) {
                     btn.classList.remove('animate-pulse');
                     btn.innerText = 'Success! ✔️';
@@ -1227,7 +1225,7 @@
                         btn.innerText = originalText; 
                         btn.style.background = ''; 
                     }, 3000);
-                    alert("Ошибка отправки! Убедитесь, что ключи в EmailJS активны.");
+                    alert("Секретный код ошибки: " + JSON.stringify(error));
                 });
         };
 
@@ -1512,7 +1510,7 @@
                     isGeminiWaiting = true;
                     
                     // 👉 ВАЖНО: ВСТАВЬТЕ СЮДА ВАШ НОВЫЙ КЛЮЧ GEMINI
-                    const GEMINI_API_KEY = "AIzaSyDePjG5VrfEjcr9WZqMVj3BO-saZmiTExM"; 
+                    const GEMINI_API_KEY = "ВСТАВЬТЕ_СЮДА_НОВЫЙ_КЛЮЧ_GEMINI"; 
                     
                     const promptText = "System rule: You MUST reply in the EXACT SAME LANGUAGE as the user's message. User message: " + rawText;
                     
