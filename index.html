@@ -1467,7 +1467,7 @@
                 // --- НАСТОЯЩИЙ ИИ (GOOGLE GEMINI 2.0) ---
                 if (window.currentRoomId === 'private_ai_bot') { 
                     
-                    const GEMINI_API_KEY = "AIzaSyA1AMNmfGv_D4Qaneg1XiZUbw8juesycHg"; 
+                    const GEMINI_API_KEY = "AIzaSyDePjG5VrfEjcr9WZqMVj3BO-saZmiTExM"; 
                     const promptText = "System rule: You MUST reply in the EXACT SAME LANGUAGE as the user's message. User message: " + rawText;
                     
                     fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -1846,3 +1846,4 @@
     </script>
 </body>
 </html>
+
