@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V31.10.3 (Trash Update)</title>
+    <title>Hello Friends - Golden Master V31.25 (All Fixes Integrated)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -159,6 +159,7 @@
 
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="window.handleDocUpload(event)">
 
     <div class="mobile-screen" id="phone-body">
         
@@ -188,6 +189,7 @@
                 </div>
                 
                 <a id="admin-menu-btn" style="display: none; color: #a29bfe;" onclick="window.openAdminModal()"><i class="fa-solid fa-crown w-5"></i> <span>Admin Panel</span></a>
+                
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
@@ -218,9 +220,11 @@
                         <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global Chat</span></span>
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
-                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="Local News">
+                    
+                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News">
                         <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
                     </button>
+
                     <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
                 </div>
                 
@@ -237,7 +241,8 @@
                         <div class="chat-messages" id="chat-messages"></div>
                         
                         <div class="chat-input-area">
-                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                            <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                            
                             <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                                 <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
@@ -285,15 +290,14 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-red-500 text-white flex justify-center items-center text-[1.1rem] shrink-0 shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)" title="End Call"><i class="fa-solid fa-phone-slash"></i></button>
                 </div>
             </div>
 
@@ -316,11 +320,11 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="document.getElementById('media-upload-input').click()"><i class="fa-solid fa-paperclip"></i></button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2"></i>
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
@@ -388,9 +392,16 @@
             </div>
         </div>
 
-        <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();">
-            <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeFullscreenImage()"><i class="fa-solid fa-xmark"></i></div>
-            <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
+        <div id="attach-modal" class="app-modal" onclick="if(event.target===this) window.closeAttachModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closeAttachModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Attach File</h2>
+                <div class="flex flex-col gap-3">
+                    <button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('media-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-image text-xl"></i> Photo / Image</button>
+                    <button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat();"><i class="fa-solid fa-location-dot text-xl"></i> Share Location</button>
+                    <button class="btn-primary !bg-purple-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('file-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-file text-xl"></i> Document</button>
+                </div>
+            </div>
         </div>
 
         <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
@@ -408,6 +419,44 @@
                 <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
                 <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
+        </div>
+
+        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
+            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
+                <div class="relative w-full mb-4 shrink-0">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
+                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
+                </div>
+                
+                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
+                        <button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
+                        <button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
+                        <button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
+                    </div>
+                </div>
+
+                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
+                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
+                        <button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
+                    </div>
+                </div>
+
+                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
+                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
+                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
+            </div>
+        </div>
+
+        <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();">
+            <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeFullscreenImage()"><i class="fa-solid fa-xmark"></i></div>
+            <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
         </div>
 
         <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
@@ -463,38 +512,6 @@
                     <label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
                 </div>
                 <button onclick="window.saveCVData()" class="btn-primary absolute bottom-6 w-[calc(100%-48px)]">Save CV</button>
-            </div>
-        </div>
-
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
-                <div class="relative w-full mb-4 shrink-0">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
-                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
-                </div>
-                
-                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">News Categories</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.handleSmartSearch('Top World News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
-                        <button onclick="window.handleSmartSearch('IT & Technology News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
-                        <button onclick="window.handleSmartSearch('Cryptocurrency Bitcoin News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
-                        <button onclick="window.handleSmartSearch('Global Sports News', 'web', event)" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
-                    </div>
-                </div>
-
-                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="window.handleSmartSearch('Engineer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button>
-                        <button onclick="window.handleSmartSearch('Designer', 'text', event)" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button>
-                    </div>
-                </div>
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
-                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
             </div>
         </div>
 
@@ -556,6 +573,7 @@
     </div>
 
     <script>
+        // === БЛОК: НОВОСТИ ===
         window.openNewsFast = function() {
             window.closeDropdown(); 
             document.getElementById('search-modal').classList.add('active'); 
@@ -578,8 +596,16 @@
                     else q = "Latest news " + c;
                 }
                 
-                window.handleSmartSearch(q, 'web', null);
+                window.doNewsSearch(q);
             }, 300);
+        };
+
+        window.doNewsSearch = function(q) {
+            document.getElementById('global-search-input').value = q;
+            document.getElementById('search-results-area').innerHTML = ''; 
+            const iframe = document.getElementById('search-result-frame'); 
+            iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); 
+            iframe.classList.remove('hidden'); 
         };
 
         window.openSearchModal = function() { 
@@ -592,7 +618,10 @@
             const cat = document.getElementById('news-categories');
             if(cat) cat.style.display = 'none';
             
-            document.getElementById('search-result-frame').classList.add('hidden');
+            const iframe = document.getElementById('search-result-frame');
+            iframe.src = 'about:blank';
+            iframe.classList.add('hidden');
+
             setTimeout(() => document.getElementById('global-search-input').focus(), 100);
         };
 
@@ -602,10 +631,8 @@
             document.getElementById('search-results-area').innerHTML = '';
             
             const iframe = document.getElementById('search-result-frame');
-            if(iframe) {
-                iframe.src = 'about:blank';
-                iframe.classList.add('hidden');
-            }
+            iframe.src = 'about:blank'; 
+            iframe.classList.add('hidden');
             
             document.getElementById('search-suggestions').style.display = 'block';
             const cat = document.getElementById('news-categories');
@@ -640,8 +667,7 @@
             resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
         };
 
-        window.handleSmartSearch = function(text, type = 'text', e = null) { 
-            if(e) e.stopPropagation();
+        window.handleSmartSearch = function(text, type = 'text') { 
             const input = document.getElementById('global-search-input'); 
             if (type === 'text') { 
                 input.value = text; 
@@ -663,6 +689,7 @@
             iframe.classList.remove('hidden'); 
         };
 
+        // === ОСТАЛЬНЫЕ ФУНКЦИИ ===
         window.openBankTransferModal = function() { 
             window.closeDropdown(); 
             const recipientSelect = document.getElementById('transfer-recipient'); 
@@ -724,24 +751,29 @@
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
+        // ДОБАВЛЕН БЛОК ТЕМНОГО CV В AVATAR MODAL (ДЛЯ ОТОБРАЖЕНИЯ ПРИ ПОИСКЕ И КЛИКЕ)
         window.openAvatarModal = function(id) {
             const p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) return;
             
-            document.getElementById('modal-img').src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
-            document.getElementById('modal-name').innerText = (p.name||'User').split(' ')[0]; 
+            const modalImg = document.getElementById('modal-img');
+            if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
+            
+            const modalName = document.getElementById('modal-name');
+            if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; 
             
             let idSpan = document.getElementById('modal-id');
             if(!idSpan) {
                 idSpan = document.createElement('span');
                 idSpan.id = 'modal-id';
                 idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block';
-                document.getElementById('modal-name').parentNode.insertBefore(idSpan, document.getElementById('modal-name').nextSibling);
+                if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling);
             }
-            idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
+            if(idSpan) idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
             
-            document.getElementById('modal-prof').innerText = p.profession || 'User';
-            
+            const modalProf = document.getElementById('modal-prof');
+            if(modalProf) modalProf.innerText = p.profession || 'User';
+
             const cDesc = p.countryDesc || countryData[p.flagCode]?.desc || '';
             
             let extraFields = '';
@@ -749,78 +781,63 @@
             if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`;
             if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
 
-            document.getElementById('modal-desc').innerHTML = `
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div>
-                    <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div>
-                </div>
-                ${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}
-                <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span>
-                    <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
-                    ${extraFields}
-                </div>`;
+            const modalDesc = document.getElementById('modal-desc');
+            if(modalDesc) {
+                modalDesc.innerHTML = `
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag} ${p.country}</span></div>
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div>
+                    </div>
+                    ${(id !== 'ai' && id !== 'me') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> ${p.phone || 'Hidden'}</div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> ${p.email || 'Hidden'}</div></div>` : ''}
+                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
+                        <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span>
+                        <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
+                        ${extraFields}
+                    </div>`;
+            }
             
             const actionButtons = document.getElementById('modal-action-buttons');
+            if(actionButtons) {
+                if (id === 'ai') { 
+                    actionButtons.style.display = 'none'; 
+                } else if (id === 'me') { 
+                    actionButtons.innerHTML = `
+                        <div class="flex w-full gap-2">
+                            <button id="btn-modal-chat-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
+                            <button id="btn-modal-sms-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
+                            <button id="btn-modal-email-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                        </div>
+                        <div class="flex w-full gap-2 mt-2">
+                            <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
+                            <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
+                        </div>`; 
+                    setTimeout(() => { 
+                        document.getElementById('btn-modal-chat-me').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('me'); }; 
+                        document.getElementById('btn-modal-sms-me').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
+                        document.getElementById('btn-modal-email-me').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
+                    }, 50);
+                    actionButtons.style.display = 'block'; 
+                } else {
+                    actionButtons.innerHTML = `
+                        <div class="flex w-full gap-2">
+                            <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
+                            <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
+                            <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                        </div>`;
+                    setTimeout(() => { 
+                        document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
+                        document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
+                        document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
+                    }, 50); 
+                    actionButtons.style.display = 'block'; 
+                }
+            }
             
-            if (id === 'ai') { 
-                actionButtons.style.display = 'none'; 
-            } else if (id === 'me') { 
-                actionButtons.innerHTML = `
-                    <div class="flex w-full gap-2">
-                        <button id="btn-modal-chat-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                        <button id="btn-modal-sms-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                        <button id="btn-modal-email-me" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
-                    </div>
-                    <div class="flex w-full gap-2 mt-2">
-                        <button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Basic Info</button>
-                        <button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button>
-                    </div>
-                `; 
-                setTimeout(() => { 
-                    document.getElementById('btn-modal-chat-me').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('me'); }; 
-                    document.getElementById('btn-modal-sms-me').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                    document.getElementById('btn-modal-email-me').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
-                }, 50);
-                actionButtons.style.display = 'block'; 
-            } else {
-                actionButtons.innerHTML = `
-                    <div class="flex w-full gap-2">
-                        <button id="btn-modal-chat" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button>
-                        <button id="btn-modal-sms" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                        <button id="btn-modal-email" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
-                    </div>
-                `;
-                setTimeout(() => { 
-                    document.getElementById('btn-modal-chat').onclick = () => { window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom(p.id); }; 
-                    document.getElementById('btn-modal-sms').onclick = () => { window.closeAvatarModal(); window.location.href = `sms:${(p.phone || '').replace(/\s+/g, '')}`; }; 
-                    document.getElementById('btn-modal-email').onclick = () => { window.closeAvatarModal(); window.openDirectEmail(p.email); }; 
-                }, 50); 
-                actionButtons.style.display = 'block'; 
-            } 
             document.getElementById('avatar-modal').classList.add('active');
         };
 
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
-        
-        // === ИСПРАВЛЕНИЕ 1: ФУНКЦИИ КОРЗИНЫ ===
-        window.smartArchive = function() { 
-            alert("Chat sent to Archive!"); 
-            window.closeTrashModal(); 
-            window.switchTab(5); 
-        };
-        
-        window.smartClear = function() { 
-            if(confirm("Are you sure you want to clear chat history?")) { 
-                db.ref(window.currentRoomId).remove().then(() => { 
-                    const chatMsgs = document.getElementById('chat-messages');
-                    if(chatMsgs) chatMsgs.innerHTML = ''; 
-                }); 
-                window.closeTrashModal(); 
-            } 
-        };
-        
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
