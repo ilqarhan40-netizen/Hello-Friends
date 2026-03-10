@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V34.20 (AI & Voice UI)</title>
+    <title>Hello Friends - Golden Master V35.00 (AI & Mail Built-in)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -565,6 +565,27 @@
             </div>
         </div>
 
+        <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-envelope text-red-400 mr-2"></i> Send Email</h2>
+                <form class="w-full flex flex-col" onsubmit="window.sendEmailForm(event)">
+                    <input type="email" id="email-to" class="form-input-box" placeholder="Recipient (To)" required>
+                    <input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required>
+                    <textarea id="email-text" class="form-input-box resize-none" placeholder="Write your message here..." rows="4" required></textarea>
+                    <button type="submit" class="btn-primary mt-2">Send Securely</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
+            <div class="app-modal-content h-[60vh]">
+                <div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-4 text-white mt-4">Location</h2>
+                <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div>
+            </div>
+        </div>
+        
         <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
@@ -600,26 +621,6 @@
             </div>
         </div>
 
-        <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4">Send Email</h2>
-                <form class="w-full flex flex-col" onsubmit="window.sendEmailForm(event)">
-                    <input type="email" id="email-to" class="form-input-box" placeholder="To" required>
-                    <input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required>
-                    <textarea id="email-text" class="form-input-box resize-none" placeholder="Message" rows="4" required></textarea>
-                    <button type="submit" class="btn-primary mt-2">Send</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
-            <div class="app-modal-content h-[60vh]">
-                <div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4">Location</h2>
-                <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -1177,20 +1178,57 @@
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         
-        // --- РАБОТАЮЩАЯ ПОЧТА (MAILTO) ---
+        // --- 🚀 РАБОТАЮЩАЯ ПОЧТА (EMAILJS ИНТЕГРАЦИЯ) ---
         window.sendEmailForm = function(e) { 
             e.preventDefault(); 
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            
+            // Визуальный эффект отправки
+            btn.innerText = 'Sending...';
+            btn.classList.add('animate-pulse');
+            
             const to = document.getElementById('email-to').value;
             const subj = document.getElementById('email-subject').value;
             const text = document.getElementById('email-text').value;
             
-            // Открывает родное приложение почты (Gmail / Apple Mail / Mail.ru)
-            window.location.href = `mailto:${to}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(text)}`;
-            
-            document.getElementById('email-to').value = '';
-            document.getElementById('email-subject').value = '';
-            document.getElementById('email-text').value = '';
-            window.closeEmailModal(); 
+            // Собираем параметры для шаблона
+            const templateParams = {
+                to_email: to,
+                user_email: to,
+                subject: subj,
+                message: text,
+                from_name: window.myUsername || "User"
+            };
+
+            // МАГИЯ EMAILJS: Service ID и Template ID уже вшиты!
+            emailjs.send("service_nqkjfyt", "template_vds75zs", templateParams)
+                .then(function(response) {
+                    btn.classList.remove('animate-pulse');
+                    btn.innerText = 'Success! ✔️';
+                    btn.style.background = '#00a884';
+                    btn.style.color = '#111b21';
+                    
+                    setTimeout(() => {
+                        document.getElementById('email-to').value = '';
+                        document.getElementById('email-subject').value = '';
+                        document.getElementById('email-text').value = '';
+                        btn.innerText = originalText;
+                        btn.style.background = '';
+                        btn.style.color = '';
+                        window.closeEmailModal();
+                        window.showToast("Email Sent", "Securely delivered via EmailJS", "");
+                    }, 2000);
+                }, function(error) {
+                    btn.classList.remove('animate-pulse');
+                    btn.innerText = 'Failed ❌';
+                    btn.style.background = '#ef4444';
+                    setTimeout(() => { 
+                        btn.innerText = originalText; 
+                        btn.style.background = ''; 
+                    }, 3000);
+                    alert("Ошибка отправки! Убедитесь, что ключи в EmailJS активны.");
+                });
         };
 
         window.openFullscreenImage = function(src) {
@@ -1427,10 +1465,19 @@
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
+            // --- ЗАЩИТА GEMINI ---
+            let isGeminiWaiting = false;
+
             window.sendFirebaseMsg = async function() { 
                 const inputField = document.getElementById('chat-input'); 
                 const rawText = inputField.value.trim(); 
                 if (!rawText) return; 
+                
+                if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) {
+                    window.showToast("Google AI", "Please wait a moment to avoid limits...", "");
+                    return;
+                }
+
                 inputField.value = ''; 
                 const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en'; 
                 let textToShip = rawText; 
@@ -1442,9 +1489,7 @@
                     if (data && data[0] && data[0][0][0]) { 
                         textToShip = data[0][0][0]; 
                     } 
-                } catch (error) { 
-                    console.error("Translate error:", error); 
-                } 
+                } catch (error) { console.error("Translate error:", error); } 
                 
                 db.ref(window.currentRoomId).push({ 
                     userId: window.myProfileInfo.id, 
@@ -1460,14 +1505,15 @@
                 }); 
                 
                 const chatMsgs = document.getElementById('chat-messages'); 
-                if (chatMsgs) { 
-                    setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
-                } 
+                if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
                 
-                // --- НАСТОЯЩИЙ ИИ (GOOGLE GEMINI 2.0) ---
+                // --- НАСТОЯЩИЙ ИИ (GEMINI 2.0 FLASH) ---
                 if (window.currentRoomId === 'private_ai_bot') { 
+                    isGeminiWaiting = true;
                     
+                    // 👉 ВАЖНО: ВСТАВЬТЕ СЮДА ВАШ НОВЫЙ КЛЮЧ GEMINI
                     const GEMINI_API_KEY = "AIzaSyDePjG5VrfEjcr9WZqMVj3BO-saZmiTExM"; 
+                    
                     const promptText = "System rule: You MUST reply in the EXACT SAME LANGUAGE as the user's message. User message: " + rawText;
                     
                     fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -1488,8 +1534,11 @@
                     })
                     .catch(err => {
                         db.ref(window.currentRoomId).push({ 
-                            name: "AI Assistant", text: "⚠️ Ответ от Google: " + err.message, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' 
+                            name: "AI Assistant", text: "⚠️ Ошибка Google: " + err.message, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' 
                         });
+                    })
+                    .finally(() => {
+                        setTimeout(() => { isGeminiWaiting = false; }, 2000); // Таймер сброса квоты
                     });
                 } 
             };
@@ -1846,4 +1895,3 @@
     </script>
 </body>
 </html>
-
