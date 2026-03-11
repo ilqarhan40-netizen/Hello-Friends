@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V41.0</title>
+    <title>Hello Friends - Golden Master V41.9 (Final)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -94,10 +94,6 @@
         .rhombus-menu.active { display: grid; animation: scaleIn 0.2s;}
         .action-icon { width: 44px; height: 44px; background-color: var(--wa-border); color: var(--wa-text); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 1.1rem;}
         .action-icon:hover { background-color: var(--wa-green); color: #111b21; }
-
-        /* УМНЫЙ МИКРОФОН POPUP (ДЛЯ ГОЛОСОВОЙ КОМНАТЫ) */
-        #voice-selector-popup { position: absolute; bottom: 65px; right: 10px; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 10px; display: none; flex-direction: column; gap: 8px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        #voice-selector-popup.active { display: flex; animation: scaleIn 0.2s; }
 
         /* УМНЫЕ ШТОРКИ И КРЕСТИКИ */
         .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
@@ -219,7 +215,9 @@
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-xs pointer-events-none"></i>
                 </div>
+                
                 <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
+                
                 <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
                 <a onclick="window.toggleTheme()"><i class="fa-solid fa-sun text-yellow-400 w-5" id="theme-icon"></i> <span data-i18n="theme">Theme</span></a>
                 <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
@@ -267,7 +265,7 @@
 
             <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a]">
                 <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <h2 class="text-xl font-bold text-white" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
+                    <h2 class="text-xl font-bold text-white mx-auto" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
                 </div>
                 <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
@@ -298,19 +296,21 @@
                     </div>
                 </div>
 
-                <div id="voice-selector-popup">
-                    <button class="bg-[#00a884] text-[#111b21] px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-[#028266]" onclick="event.stopPropagation(); window.startMic('voice-msg', 'voice-mic-btn-input')">🗣️ Voice Message</button>
-                    <button class="bg-[#202c33] text-white px-4 py-2 rounded-xl text-xs font-bold border border-[#2a3942] shadow-md hover:bg-[#2a3942]" onclick="event.stopPropagation(); window.startMic('voice-text', 'voice-mic-btn-input')">🎤 Voice Text</button>
-                </div>
-
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative">
+                    
+                    <div id="voice-selector-popup" class="absolute bottom-[60px] right-[10px] bg-[#111b21] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 z-[100] shadow-2xl">
+                        <button class="bg-[#00a884] text-[#111b21] px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-[#028266]" onclick="event.stopPropagation(); window.startMic('voice-msg', 'voice-mic-btn-input')">🗣️ Voice Message</button>
+                        <button class="bg-[#202c33] text-white px-4 py-2 rounded-xl text-xs font-bold border border-[#2a3942] shadow-md hover:bg-[#2a3942]" onclick="event.stopPropagation(); window.startMic('voice-text', 'voice-mic-btn-input')">🎤 Voice Text</button>
+                    </div>
+
                     <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('voice-chat-input')"></i>
-                        <input type="text" id="voice-chat-input" placeholder="Speak or type..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+                        <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                         <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
-                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="document.getElementById('voice-selector-popup').classList.toggle('active'); event.stopPropagation();"><i class="fa-solid fa-microphone"></i></button>
+                    
+                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="document.getElementById('voice-selector-popup').classList.toggle('hidden'); document.getElementById('voice-selector-popup').classList.toggle('flex'); event.stopPropagation();"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg('voice-text')"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                 </div>
             </div>
@@ -404,11 +404,18 @@
                         <option value="ru-RU">🇷🇺 Русский</option>
                         <option value="az-AZ">🇦🇿 Azərbaycanca</option>
                         <option value="it-IT">🇮🇹 Italiano</option>
+                        <option value="es-ES">🇪🇸 Español</option>
+                        <option value="de-DE">🇩🇪 Deutsch</option>
+                        <option value="fr-FR">🇫🇷 Français</option>
+                        <option value="ja-JP">🇯🇵 日本語</option>
+                        <option value="zh-CN">🇨🇳 中文</option>
+                        <option value="pt-PT">🇵🇹 Português</option>
+                        <option value="ar-AE">🇦🇪 العربية</option>
                     </select>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
+                    <div class="action-icon" onclick="event.stopPropagation(); window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video text-[#00a884]"></i></div>
+                    <div class="action-icon" onclick="event.stopPropagation(); window.startInAppCall(); window.closeDropdown();" title="Free Voice Room"><i class="fa-solid fa-phone text-blue-400"></i></div>
+                    <div class="action-icon" onclick="event.stopPropagation(); window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope text-red-400"></i></div>
+                    <div class="action-icon" onclick="event.stopPropagation(); window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot text-yellow-400"></i></div>
                     <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="event.stopPropagation(); window.switchTab(5); window.closeDropdown();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
                     <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="event.stopPropagation(); window.openTrashModal(); window.closeDropdown();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
                 </div>
@@ -426,7 +433,7 @@
 
     <script>
         // =========================================================
-        // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ 
+        // ЕДИНЫЙ БЛОК СКРИПТОВ
         // =========================================================
 
         window.currentEmojiTargetId = null;
@@ -489,7 +496,7 @@
             } document.getElementById('contacts-modal').classList.add('active');
         };
         window.closeContactsModal = function() { document.getElementById('contacts-modal').classList.remove('active'); };
-        
+
         // 💡 1. & 7. РОМБ: ИСПРАВЛЕННАЯ ТРУБКА И ФОТО 
         window.startDirectAppCall = function(id) { 
             window.closeContactsModal(); let target = window.participants.find(p => p.id === id); 
@@ -504,7 +511,7 @@
         };
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
         window.startInAppCall = function() { 
-            window.closePhoneChoiceModal(); window.closeDropdown();
+            window.closePhoneChoiceModal(); 
             if (window.currentTargetUser) { 
                 document.getElementById('voice-friend-photo').src = window.currentTargetUser.photo; 
                 document.getElementById('voice-friend-flag').innerText = window.currentTargetUser.flag; 
@@ -671,7 +678,7 @@
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
-                // 💡 6. АВАТАРКИ С ФЛАГАМИ ДЛЯ ВСЕХ 
+                // 💡 6. ФОТО И ФЛАГИ В ЧАТЕ ДЛЯ ВСЕХ 
                 let avatarHtml = isAI ? 
                     `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : 
                     `<div class="relative shrink-0 self-end cursor-pointer" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">
@@ -686,7 +693,7 @@
                 else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
                 else if (data.isFile) { bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`; bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`; }
 
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing items-end' : 'incoming items-start'} flex flex-col"><div class="chat-sender-name ${isMe ? 'mr-1 text-[#00a884] self-end' : 'ml-1'}">${isMe ? 'You' : (data.name || 'User')}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
+                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing items-end' : 'incoming items-start'} flex flex-col"><div class="chat-sender-name ${isMe ? 'mr-1 text-[#00a884]' : 'ml-1'}">${isMe ? 'You' : (data.name || 'User')}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
                 msgWrapper.innerHTML = isMe ? bubbleHtml + avatarHtml : avatarHtml + bubbleHtml; 
                 
                 messageGroup.appendChild(msgWrapper);
@@ -712,7 +719,7 @@
                         } catch (e) {}
                     } else { if (data.langCode === window.myProfileInfo.langCode) { finalLangToSpeak = window.myProfileInfo.langCode; } }
 
-                    // ОЗВУЧКА СООБЩЕНИЯ ЕСЛИ VOICE MESSAGE
+                    // 💡 ОЗВУЧКА ЕСЛИ isVoiceMessage = TRUE
                     if (data.isVoiceRoom && !isMe) {
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name||'User'}:</span> <span class="text-[#00a884] font-bold">${finalTranslatedText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
