@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V41.0 (AI Voice Active)</title>
+    <title>Hello Friends - Golden Master V41.1 (Smart Voice Panel)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -262,11 +262,8 @@
             </div>
 
             <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a]">
-                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0 relative">
+                <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <h2 class="text-xl font-bold text-white mx-auto" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
-                    <button id="ai-voice-toggle" class="absolute right-4 bg-[#202c33] border border-[#2a3942] text-[#8696a0] px-3 py-1.5 rounded-full text-xs font-bold transition-all" onclick="window.toggleAIVoice()">
-                        <i class="fa-solid fa-volume-xmark mr-1"></i> AI Voice
-                    </button>
                 </div>
                 <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
@@ -296,15 +293,24 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                    
+                    <button id="ai-voice-toggle" class="w-[42px] h-[42px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleAIVoice()" title="Auto-Read Incoming Voice">
+                        <i class="fa-solid fa-volume-xmark"></i>
+                    </button>
+
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
-                        <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('voice-chat-input')"></i>
-                        <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
+                        <input type="text" id="voice-chat-input" placeholder="Speak or type..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                     </div>
-                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('voice', 'voice-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+
+                    <button id="voice-mic-btn-input" class="w-[42px] h-[42px] rounded-full bg-[#202c33] text-[#ef4444] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition shadow-[0_0_10px_rgba(239,68,68,0.2)]" onclick="window.startMic('voice', 'voice-mic-btn-input')" title="Speak Message">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+
+                    <button class="w-[42px] h-[42px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()">
+                        <i class="fa-solid fa-paper-plane ml-[-2px]"></i>
+                    </button>
                 </div>
             </div>
 
@@ -404,190 +410,19 @@
             </div>
         </div>
 
-        <div id="attach-modal" class="app-modal" onclick="if(event.target===this) window.closeAttachModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeAttachModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Attach File</h2>
-                <div class="flex flex-col gap-3">
-                    <button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('media-upload-input').click();"><i class="fa-solid fa-image text-xl"></i> Photo / Image</button>
-                    <button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat();"><i class="fa-solid fa-location-dot text-xl"></i> Share Location</button>
-                    <button class="btn-primary !bg-purple-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('file-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-file text-xl"></i> Document</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();">
-            <div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeFullscreenImage()"><i class="fa-solid fa-xmark"></i></div>
-            <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
-        </div>
-
-        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
-            <div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
-            <div class="app-modal-content" onclick="event.stopPropagation();">
-                <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
-                <div class="flex items-center gap-4 mb-4 mt-2"><img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg"><div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-id" class="text-xs text-[#8696a0] font-mono mb-1 mt-1 block"></span><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div></div>
-                <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div><div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
-            </div>
-        </div>
-
-        <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
-            <div class="app-modal-content" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeAdminModal()"></div>
-                <h2 class="text-xl font-bold mb-2 text-white"><i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel</h2>
-                <p class="text-xs text-[#8696a0] mb-4">Manage or Log In as any user in the database.</p>
-                <select id="admin-user-select" class="form-input-box mb-4"></select>
-                <div class="flex gap-2">
-                    <button onclick="window.adminLogin()" class="btn-primary flex-1 !bg-[#a29bfe] !text-[#111b21] hover:!bg-purple-400">Log In</button>
-                    <button onclick="window.adminDeleteUser()" class="btn-primary flex-1 !bg-red-500 !text-white hover:!bg-red-600"><i class="fa-solid fa-skull"></i> Delete</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();">
-            <div class="app-modal-content h-[75vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-address-book text-[#00a884] mr-2"></i> Quick Contacts</h2>
-                <div id="contacts-list-container" class="flex flex-col gap-3 overflow-y-auto pb-4"></div>
-            </div>
-        </div>
-
-        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
-            <div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();">
-                <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
-                    <div><h2 id="profile-modal-title" class="text-xl font-bold text-white mb-0.5" data-i18n="reg_title">Welcome!</h2><p id="profile-modal-subtitle" class="text-[0.7rem] text-[#8696a0] m-0" data-i18n="reg_subtitle">Basic Information</p></div>
-                    <button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-                <div class="overflow-y-auto flex-grow p-5 pb-10">
-                    <div class="flex flex-col items-center mb-6 mt-2 shrink-0">
-                        <div class="relative w-24 h-24"><img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] shadow-lg"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera"></i></button></div>
-                    </div>
-                    <label class="form-label" data-i18n="reg_name">Full Name</label><input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
-                    <label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label>
-                    <div class="flex items-center gap-3 mb-4 shrink-0">
-                        <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
-                        <div class="relative w-full">
-                            <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
-                                <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
-                            </select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
-                        </div>
-                    </div>
-                    <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
-                    <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
-                </div>
-                <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button></div>
-            </div>
-        </div>
-
-        <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
-            <div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();">
-                <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
-                    <div><h2 class="text-xl font-bold text-white mb-0.5"><i class="fa-solid fa-file-signature text-[#00a884] mr-2"></i> Edit CV</h2><p class="text-[0.7rem] text-[#8696a0] m-0">Professional Builder</p></div>
-                    <button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-                <div class="overflow-y-auto flex-grow p-5 pb-10">
-                    <label class="form-label">Profession / Title</label><input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
-                    <label class="form-label">Languages Spoken</label><input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
-                    <label class="form-label">Core Skills</label><textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea>
-                    <label class="form-label">Work Experience</label><textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea>
-                    <label class="form-label">Education</label><textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
-                    <label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
-                </div>
-                <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button></div>
-            </div>
-        </div>
-
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2>
-                <div class="relative w-full mb-4 shrink-0">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
-                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
-                </div>
-                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button>
-                        <button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button>
-                        <button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button>
-                        <button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button>
-                    </div>
-                </div>
-                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p>
-                    <div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button><button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button></div>
-                </div>
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
-                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button>
-            </div>
-        </div>
-
-        <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-envelope text-red-400 mr-2"></i> Send Email</h2>
-                <form class="w-full flex flex-col" id="email-form-element" onsubmit="window.sendEmailForm(event)">
-                    <input type="email" id="email-to" class="form-input-box" placeholder="Recipient (To)" required>
-                    <input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required>
-                    <div class="relative w-full mb-3">
-                        <textarea id="email-text" class="form-input-box !mb-0 w-full resize-none pr-8" placeholder="Write your message here..." rows="4" required></textarea>
-                        <div class="absolute right-3 top-3 flex flex-col gap-3">
-                           <i class="fa-solid fa-paperclip text-[#8696a0] hover:text-[#00a884] cursor-pointer text-lg transition" onclick="document.getElementById('email-attach-input').click()" title="Attach File"></i>
-                           <i class="fa-regular fa-face-smile text-[#8696a0] hover:text-white cursor-pointer text-lg transition" onclick="window.toggleEmojiPicker('email-text')" title="Emojis"></i>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 mt-2">
-                        <button type="button" class="btn-primary !bg-[#202c33] !text-white flex-1 border border-[#2a3942] hover:bg-[#2a3942]" onclick="document.getElementById('email-form-element').reset();"><i class="fa-solid fa-eraser"></i> Clear</button>
-                        <button type="submit" class="btn-primary flex-1"><i class="fa-solid fa-paper-plane"></i> Send</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
-            <div class="app-modal-content h-[60vh]">
-                <div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4">Location</h2>
-                <div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div>
-            </div>
-        </div>
-        
-        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
-                <div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto mt-4"><i class="fa-solid fa-wallet"></i></div>
-                <h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2>
-                <form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)">
-                    <select id="transfer-recipient" class="form-input-box" required></select>
-                    <input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required min="1">
-                    <button type="submit" class="btn-primary">Transfer</button>
-                </form>
-            </div>
-        </div>
-
-        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closePhoneChoiceModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Make a Call</h2>
-                <div class="flex flex-col gap-3">
-                    <button class="btn-primary flex justify-center items-center gap-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Free Voice Room</button>
-                    <button class="btn-primary !bg-[#202c33] !text-white flex justify-center items-center gap-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2>
-                <div class="flex flex-col gap-3">
-                    <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button>
-                    <button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button>
-                </div>
-            </div>
-        </div>
-
+        <div id="attach-modal" class="app-modal" onclick="if(event.target===this) window.closeAttachModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeAttachModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Attach File</h2><div class="flex flex-col gap-3"><button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('media-upload-input').click();"><i class="fa-solid fa-image text-xl"></i> Photo / Image</button><button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat();"><i class="fa-solid fa-location-dot text-xl"></i> Share Location</button><button class="btn-primary !bg-purple-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('file-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-file text-xl"></i> Document</button></div></div></div>
+        <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();"><div class="close-sheet-btn" style="top: 20px; right: 20px; background: #202c33; color: white;" onclick="window.closeFullscreenImage()"><i class="fa-solid fa-xmark"></i></div><img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl"></div>
+        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();"><div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div><div class="app-modal-content" onclick="event.stopPropagation();"><div class="sheet-handle" onclick="window.closeAvatarModal()"></div><div class="flex items-center gap-4 mb-4 mt-2"><img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg"><div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-id" class="text-xs text-[#8696a0] font-mono mb-1 mt-1 block"></span><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div></div><div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div><div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div></div></div>
+        <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();"><div class="app-modal-content" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeAdminModal()"></div><h2 class="text-xl font-bold mb-2 text-white"><i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel</h2><p class="text-xs text-[#8696a0] mb-4">Manage or Log In as any user in the database.</p><select id="admin-user-select" class="form-input-box mb-4"></select><div class="flex gap-2"><button onclick="window.adminLogin()" class="btn-primary flex-1 !bg-[#a29bfe] !text-[#111b21] hover:!bg-purple-400">Log In</button><button onclick="window.adminDeleteUser()" class="btn-primary flex-1 !bg-red-500 !text-white hover:!bg-red-600"><i class="fa-solid fa-skull"></i> Delete</button></div></div></div>
+        <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();"><div class="app-modal-content h-[75vh]" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-address-book text-[#00a884] mr-2"></i> Quick Contacts</h2><div id="contacts-list-container" class="flex flex-col gap-3 overflow-y-auto pb-4"></div></div></div>
+        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();"><div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();"><div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md"><div><h2 id="profile-modal-title" class="text-xl font-bold text-white mb-0.5" data-i18n="reg_title">Welcome!</h2><p id="profile-modal-subtitle" class="text-[0.7rem] text-[#8696a0] m-0" data-i18n="reg_subtitle">Basic Information</p></div><button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark text-xl"></i></button></div><div class="overflow-y-auto flex-grow p-5 pb-10"><div class="flex flex-col items-center mb-6 mt-2 shrink-0"><div class="relative w-24 h-24"><img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] shadow-lg"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera"></i></button></div></div><label class="form-label" data-i18n="reg_name">Full Name</label><input type="text" id="edit-name" class="form-input-box" placeholder="John Doe"><label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label><div class="flex items-center gap-3 mb-4 shrink-0"><img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm"><div class="relative w-full"><select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)"><option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option></select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i></div></div><label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1..."><label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@..."></div><div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button></div></div></div>
+        <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();"><div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();"><div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md"><div><h2 class="text-xl font-bold text-white mb-0.5"><i class="fa-solid fa-file-signature text-[#00a884] mr-2"></i> Edit CV</h2><p class="text-[0.7rem] text-[#8696a0] m-0">Professional Builder</p></div><button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark text-xl"></i></button></div><div class="overflow-y-auto flex-grow p-5 pb-10"><label class="form-label">Profession / Title</label><input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer"><label class="form-label">Languages Spoken</label><input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)"><label class="form-label">Core Skills</label><textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea><label class="form-label">Work Experience</label><textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea><label class="form-label">Education</label><textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea><label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea></div><div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button></div></div></div>
+        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();"><div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> Global Search</h2><div class="relative w-full mb-4 shrink-0"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i><input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]"></div><div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block">Global News</span><div class="grid grid-cols-2 gap-2"><button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Breaking</button><button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> IT & Tech</button><button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> Crypto</button><button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> Sports</button></div></div><div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;"><p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold">People & Skills</p><div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button><button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button></div></div><div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div><iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe><button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> Search Web</button></div></div>
+        <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-envelope text-red-400 mr-2"></i> Send Email</h2><form class="w-full flex flex-col" id="email-form-element" onsubmit="window.sendEmailForm(event)"><input type="email" id="email-to" class="form-input-box" placeholder="Recipient (To)" required><input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required><div class="relative w-full mb-3"><textarea id="email-text" class="form-input-box !mb-0 w-full resize-none pr-8" placeholder="Write your message here..." rows="4" required></textarea><div class="absolute right-3 top-3 flex flex-col gap-3"><i class="fa-solid fa-paperclip text-[#8696a0] hover:text-[#00a884] cursor-pointer text-lg transition" onclick="document.getElementById('email-attach-input').click()" title="Attach File"></i><i class="fa-regular fa-face-smile text-[#8696a0] hover:text-white cursor-pointer text-lg transition" onclick="window.toggleEmojiPicker('email-text')" title="Emojis"></i></div></div><div class="flex gap-3 mt-2"><button type="button" class="btn-primary !bg-[#202c33] !text-white flex-1 border border-[#2a3942] hover:bg-[#2a3942]" onclick="document.getElementById('email-form-element').reset();"><i class="fa-solid fa-eraser"></i> Clear</button><button type="submit" class="btn-primary flex-1"><i class="fa-solid fa-paper-plane"></i> Send</button></div></form></div></div>
+        <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();"><div class="app-modal-content h-[60vh]"><div class="close-sheet-btn" onclick="window.closeLocationModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold mb-4 text-white mt-4">Location</h2><div id="location-map" class="w-full grow bg-[#0b141a] rounded-2xl flex flex-col items-center justify-center text-[#8696a0] text-sm overflow-hidden"></div></div></div>
+        <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div><div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto mt-4"><i class="fa-solid fa-wallet"></i></div><h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2><form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)"><select id="transfer-recipient" class="form-input-box" required></select><input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required min="1"><button type="submit" class="btn-primary">Transfer</button></form></div></div>
+        <div id="phone-choice-modal" class="app-modal" onclick="if(event.target===this) window.closePhoneChoiceModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closePhoneChoiceModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Make a Call</h2><div class="flex flex-col gap-3"><button class="btn-primary flex justify-center items-center gap-3" onclick="window.startInAppCall()"><i class="fa-solid fa-headset text-xl"></i> Free Voice Room</button><button class="btn-primary !bg-[#202c33] !text-white flex justify-center items-center gap-3" onclick="window.startExternalCall()"><i class="fa-solid fa-mobile-screen text-xl"></i> Cellular Call</button></div></div></div>
+        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();"><div class="app-modal-content"><div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2><div class="flex flex-col gap-3"><button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button><button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button></div></div></div>
     </div>
 
     <script>
@@ -596,27 +431,9 @@
         // =========================================================
 
         window.currentEmojiTargetId = null;
-        window.toggleEmojiPicker = function(targetId) {
-            window.currentEmojiTargetId = targetId;
-            const picker = document.getElementById('emoji-picker');
-            if (picker.classList.contains('opacity-0')) {
-                picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
-                picker.classList.add('opacity-100', 'scale-100');
-            } else {
-                window.closeEmojiPicker();
-            }
-        };
-        window.closeEmojiPicker = function() {
-            const picker = document.getElementById('emoji-picker');
-            picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
-            picker.classList.remove('opacity-100', 'scale-100');
-        };
-        window.insertEmoji = function(emoji) {
-            if(window.currentEmojiTargetId) {
-                const input = document.getElementById(window.currentEmojiTargetId);
-                if(input) { input.value += emoji; input.focus(); }
-            }
-        };
+        window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
+        window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); };
+        window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
 
         window.showToast = function(name, info, photoUrl, phoneStr) {
             const toast = document.getElementById('toast-notification'); 
@@ -633,14 +450,10 @@
             else { img.style.display = 'none'; icon.style.display = 'flex'; }
             
             toast.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
-            toast.style.opacity = '1'; 
-            toast.style.transform = 'translate(-50%, 0)'; 
-            toast.style.top = '15px';
+            toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 0)'; toast.style.top = '15px';
             
             if(window.toastTimer) clearTimeout(window.toastTimer);
-            window.toastTimer = setTimeout(() => { 
-                toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px)'; toast.style.top = '-150px'; 
-            }, 6000); 
+            window.toastTimer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px)'; toast.style.top = '-150px'; }, 6000); 
         };
 
         // --- 👉 AI VOICE LOGIC (Голосовой ИИ) ---
@@ -649,14 +462,14 @@
             window.aiVoiceEnabled = !window.aiVoiceEnabled;
             const btn = document.getElementById('ai-voice-toggle');
             if (window.aiVoiceEnabled) {
-                btn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> AI Voice';
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
                 btn.classList.add('bg-[#00a884]', 'text-[#111b21]');
-                btn.classList.remove('bg-[#202c33]', 'text-[#8696a0]');
-                window.showToast("AI Voice ON", "Auto-reading voice messages.", "");
+                btn.classList.remove('bg-[#202c33]', 'text-[#8696a0]', 'border-[#2a3942]');
+                window.showToast("AI Speaker ON", "Voice messages will be read aloud.", "");
             } else {
-                btn.innerHTML = '<i class="fa-solid fa-volume-xmark mr-1"></i> AI Voice';
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
                 btn.classList.remove('bg-[#00a884]', 'text-[#111b21]');
-                btn.classList.add('bg-[#202c33]', 'text-[#8696a0]');
+                btn.classList.add('bg-[#202c33]', 'text-[#8696a0]', 'border-[#2a3942]');
                 if('speechSynthesis' in window) window.speechSynthesis.cancel();
             }
         };
@@ -678,341 +491,95 @@
             document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('news-categories').style.display = 'flex';
             setTimeout(() => { const c = window.myProfileInfo.country; let q = "World News"; if (c && c !== 'Global') q = "Latest news " + c; window.doNewsSearch(q); }, 300);
         };
-        
-        window.doNewsSearch = function(q) {
-            document.getElementById('global-search-input').value = q; document.getElementById('search-results-area').innerHTML = ''; 
-            const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); 
-        };
-        
-        window.openSearchModal = function() { 
-            window.closeDropdown(); document.getElementById('search-modal').classList.add('active'); document.getElementById('global-search-input').value = '';
-            document.getElementById('search-results-area').innerHTML = ''; document.getElementById('search-suggestions').style.display = 'block';
-            const cat = document.getElementById('news-categories'); if(cat) cat.style.display = 'none';
-            const iframe = document.getElementById('search-result-frame'); iframe.src = 'about:blank'; iframe.classList.add('hidden');
-            setTimeout(() => document.getElementById('global-search-input').focus(), 100);
-        };
-        
-        window.closeSearchModal = function() { 
-            document.getElementById('search-modal').classList.remove('active'); document.getElementById('global-search-input').value = '';
-            document.getElementById('search-results-area').innerHTML = '';
-            const iframe = document.getElementById('search-result-frame'); if (iframe) { iframe.src = 'about:blank'; iframe.classList.add('hidden'); }
-            document.getElementById('search-suggestions').style.display = 'block'; const cat = document.getElementById('news-categories'); if(cat) cat.style.display = 'none';
-        };
+        window.doNewsSearch = function(q) { document.getElementById('global-search-input').value = q; document.getElementById('search-results-area').innerHTML = ''; const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); };
+        window.openSearchModal = function() { window.closeDropdown(); document.getElementById('search-modal').classList.add('active'); document.getElementById('global-search-input').value = ''; document.getElementById('search-results-area').innerHTML = ''; document.getElementById('search-suggestions').style.display = 'block'; const cat = document.getElementById('news-categories'); if(cat) cat.style.display = 'none'; const iframe = document.getElementById('search-result-frame'); iframe.src = 'about:blank'; iframe.classList.add('hidden'); setTimeout(() => document.getElementById('global-search-input').focus(), 100); };
+        window.closeSearchModal = function() { document.getElementById('search-modal').classList.remove('active'); document.getElementById('global-search-input').value = ''; document.getElementById('search-results-area').innerHTML = ''; const iframe = document.getElementById('search-result-frame'); if (iframe) { iframe.src = 'about:blank'; iframe.classList.add('hidden'); } document.getElementById('search-suggestions').style.display = 'block'; const cat = document.getElementById('news-categories'); if(cat) cat.style.display = 'none'; };
 
         window.performLiveSearch = function() { 
-            const query = document.getElementById('global-search-input').value.toLowerCase().trim(); 
-            const resultsArea = document.getElementById('search-results-area'); 
-            const suggestions = document.getElementById('search-suggestions'); 
-            const categories = document.getElementById('news-categories');
-            document.getElementById('search-result-frame').classList.add('hidden'); 
+            const query = document.getElementById('global-search-input').value.toLowerCase().trim(); const resultsArea = document.getElementById('search-results-area'); const suggestions = document.getElementById('search-suggestions'); const categories = document.getElementById('news-categories'); document.getElementById('search-result-frame').classList.add('hidden'); 
             if (query.length === 0) { resultsArea.innerHTML = ''; suggestions.style.display = 'block'; if(categories) categories.style.display = 'none'; return; } 
             suggestions.style.display = 'none'; if(categories) categories.style.display = 'none'; let html = ''; let found = false; 
-            window.participants.forEach(p => { 
-                if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
-                    found = true; 
-                    html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.switchTab(0); window.switchChatRoom('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-message text-[#00a884]"></i></div>`; 
-                } 
-            }); 
+            window.participants.forEach(p => { if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { found = true; html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.switchTab(0); window.switchChatRoom('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-message text-[#00a884]"></i></div>`; } }); 
             resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
         };
 
-        window.handleSmartSearch = function(text, type = 'text') { 
-            const input = document.getElementById('global-search-input'); 
-            if (type === 'text') { input.value = text; window.performLiveSearch(); } else if (type === 'web') { input.value = text; document.getElementById('search-results-area').innerHTML = ''; window.doGoogleSearch(); } 
-        };
-        
-        window.doGoogleSearch = function() { 
-            const q = document.getElementById('global-search-input').value; 
-            if(q.trim() === '') return alert('Enter search query'); 
-            document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('search-results-area').innerHTML = ''; 
-            const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); 
-        };
-
-        window.openBankTransferModal = function() { 
-            window.closeDropdown(); const recipientSelect = document.getElementById('transfer-recipient'); 
-            recipientSelect.innerHTML = '<option value="" disabled selected>Select Recipient</option>'; 
-            window.participants.forEach(p => { if(p.id !== 'ai' && p.id !== window.myProfileInfo.id) { recipientSelect.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; } }); 
-            document.getElementById('transfer-amount').value = ''; document.getElementById('transfer-modal').classList.add('active'); 
-        };
-        
+        window.handleSmartSearch = function(text, type = 'text') { const input = document.getElementById('global-search-input'); if (type === 'text') { input.value = text; window.performLiveSearch(); } else if (type === 'web') { input.value = text; document.getElementById('search-results-area').innerHTML = ''; window.doGoogleSearch(); } };
+        window.doGoogleSearch = function() { const q = document.getElementById('global-search-input').value; if(q.trim() === '') return alert('Enter search query'); document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('search-results-area').innerHTML = ''; const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); };
+        window.openBankTransferModal = function() { window.closeDropdown(); const recipientSelect = document.getElementById('transfer-recipient'); recipientSelect.innerHTML = '<option value="" disabled selected>Select Recipient</option>'; window.participants.forEach(p => { if(p.id !== 'ai' && p.id !== window.myProfileInfo.id) { recipientSelect.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; } }); document.getElementById('transfer-amount').value = ''; document.getElementById('transfer-modal').classList.add('active'); };
         window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
 
-        window.secretClicks = 0;
-        window.activateGodMode = function() {
-            window.secretClicks++;
-            if(window.secretClicks === 5) {
-                window.secretClicks = 0; let pass = prompt("Enter Admin Password (Режим Создателя):");
-                if(pass === "777") { localStorage.setItem('hf_god_mode', 'true'); alert("GOD MODE UNLOCKED! 👑 Админ-панель добавлена в меню."); location.reload(); } else { alert("Access Denied."); }
-            }
-        };
-
+        window.secretClicks = 0; window.activateGodMode = function() { window.secretClicks++; if(window.secretClicks === 5) { window.secretClicks = 0; let pass = prompt("Enter Admin Password (Режим Создателя):"); if(pass === "777") { localStorage.setItem('hf_god_mode', 'true'); alert("GOD MODE UNLOCKED! 👑 Админ-панель добавлена в меню."); location.reload(); } else { alert("Access Denied."); } } };
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
-        window.openAdminModal = function() { 
-            window.closeDropdown(); const sel = document.getElementById('admin-user-select'); sel.innerHTML = ''; 
-            window.participants.forEach(p => { if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag} - ${p.phone||'No phone'}</option>`; } }); 
-            sel.innerHTML += `<option value="${window.myProfileInfo.id}">${(window.myProfileInfo.name||'Me').split(' (')[0]} ${window.myProfileInfo.flag} (Current)</option>`; 
-            document.getElementById('admin-modal').classList.add('active'); 
-        };
-
-        window.adminLogin = function() { 
-            const id = document.getElementById('admin-user-select').value; 
-            if(confirm("Are you sure you want to log in as this user?")) { localStorage.setItem('hf_active_user', id); location.reload(); } 
-        };
-
-        window.adminDeleteUser = function() {
-            const id = document.getElementById('admin-user-select').value;
-            if(id === window.myProfileInfo.id) return alert("You cannot delete yourself, Captain!");
-            if(id === 'ai') return alert("Cannot delete AI System Core!");
-            if (localStorage.getItem('hf_god_mode') === 'true') {
-                if (confirm("DANGER! Навсегда удалить этого пользователя из базы?")) {
-                    firebase.database().ref('users/' + id).remove(); alert("User has been eradicated from the system! 💀"); window.closeAdminModal();
-                }
-            } else { alert("Access Denied. God Mode is not active."); }
-        };
+        window.openAdminModal = function() { window.closeDropdown(); const sel = document.getElementById('admin-user-select'); sel.innerHTML = ''; window.participants.forEach(p => { if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag} - ${p.phone||'No phone'}</option>`; } }); sel.innerHTML += `<option value="${window.myProfileInfo.id}">${(window.myProfileInfo.name||'Me').split(' (')[0]} ${window.myProfileInfo.flag} (Current)</option>`; document.getElementById('admin-modal').classList.add('active'); };
+        window.adminLogin = function() { const id = document.getElementById('admin-user-select').value; if(confirm("Are you sure you want to log in as this user?")) { localStorage.setItem('hf_active_user', id); location.reload(); } };
+        window.adminDeleteUser = function() { const id = document.getElementById('admin-user-select').value; if(id === window.myProfileInfo.id) return alert("You cannot delete yourself, Captain!"); if(id === 'ai') return alert("Cannot delete AI System Core!"); if (localStorage.getItem('hf_god_mode') === 'true') { if (confirm("DANGER! Навсегда удалить этого пользователя из базы?")) { firebase.database().ref('users/' + id).remove(); alert("User has been eradicated from the system! 💀"); window.closeAdminModal(); } } else { alert("Access Denied. God Mode is not active."); } };
 
         window.openContactsModal = function() {
-            window.closeDropdown(); const container = document.getElementById('contacts-list-container'); container.innerHTML = '';
-            const usersList = window.participants.filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id);
+            window.closeDropdown(); const container = document.getElementById('contacts-list-container'); container.innerHTML = ''; const usersList = window.participants.filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id);
             if (usersList.length === 0) { container.innerHTML = '<p class="text-[#8696a0] text-center mt-4 text-sm">No contacts available in the network.</p>'; } else {
                 usersList.forEach(p => {
                     let phoneStr = p.phone || 'Hidden'; let phoneAction = p.phone ? `window.location.href='tel:${p.phone.replace(/\\s+/g, '')}'` : `alert('User has hidden their phone number.')`;
-                    container.innerHTML += `
-                    <div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-3 cursor-pointer w-full" onclick="window.closeContactsModal(); window.switchTab(0); window.switchChatRoom('${p.id}')">
-                            <div class="relative"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-1 shadow">${p.flag}</span></div>
-                            <div class="flex flex-col"><span class="text-white font-bold text-sm">${(p.name||'User').split(' ')[0]}</span><span class="text-[#8696a0] text-xs mt-0.5"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem] mr-1"></i> ${phoneStr}</span></div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="${phoneAction}" class="w-10 h-10 rounded-full bg-[#111b21] border border-[#2a3942] text-blue-400 flex items-center justify-center hover:bg-blue-900 transition shadow" title="Cellular Call"><i class="fa-solid fa-phone"></i></button>
-                            <button onclick="window.startDirectAppCall('${p.id}')" class="w-10 h-10 rounded-full bg-[#00a884] text-[#111b21] flex items-center justify-center hover:scale-95 transition shadow-md" title="Free App Call"><i class="fa-solid fa-headset"></i></button>
-                        </div>
-                    </div>`;
+                    container.innerHTML += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between shadow-sm"><div class="flex items-center gap-3 cursor-pointer w-full" onclick="window.closeContactsModal(); window.switchTab(0); window.switchChatRoom('${p.id}')"><div class="relative"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-1 shadow">${p.flag}</span></div><div class="flex flex-col"><span class="text-white font-bold text-sm">${(p.name||'User').split(' ')[0]}</span><span class="text-[#8696a0] text-xs mt-0.5"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem] mr-1"></i> ${phoneStr}</span></div></div><div class="flex gap-2"><button onclick="${phoneAction}" class="w-10 h-10 rounded-full bg-[#111b21] border border-[#2a3942] text-blue-400 flex items-center justify-center hover:bg-blue-900 transition shadow" title="Cellular Call"><i class="fa-solid fa-phone"></i></button><button onclick="window.startDirectAppCall('${p.id}')" class="w-10 h-10 rounded-full bg-[#00a884] text-[#111b21] flex items-center justify-center hover:scale-95 transition shadow-md" title="Free App Call"><i class="fa-solid fa-headset"></i></button></div></div>`;
                 });
-            }
-            document.getElementById('contacts-modal').classList.add('active');
+            } document.getElementById('contacts-modal').classList.add('active');
         };
         window.closeContactsModal = function() { document.getElementById('contacts-modal').classList.remove('active'); };
-
-        window.startDirectAppCall = function(id) {
-            window.closeContactsModal(); let target = window.participants.find(p => p.id === id);
-            if(target) {
-                window.currentTargetUser = target; document.getElementById('voice-friend-photo').src = target.photo; document.getElementById('voice-friend-flag').innerText = target.flag;
-                document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1);
-            }
-        };
+        window.startDirectAppCall = function(id) { window.closeContactsModal(); let target = window.participants.find(p => p.id === id); if(target) { window.currentTargetUser = target; document.getElementById('voice-friend-photo').src = target.photo; document.getElementById('voice-friend-flag').innerText = target.flag; document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); } };
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.openAvatarModal = function(id) {
-            window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
-            if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
-            const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
-            const modalName = document.getElementById('modal-name'); if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; 
-            let idSpan = document.getElementById('modal-id'); if(!idSpan) { idSpan = document.createElement('span'); idSpan.id = 'modal-id'; idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block'; if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling); }
-            if(idSpan) idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
-            const modalProf = document.getElementById('modal-prof'); if(modalProf) modalProf.innerText = p.profession || 'User';
-
-            let cDesc = p.countryDesc || 'User in network'; let cPop = p.pop || 'Unknown'; let cSeas = p.seas || 'Unknown';
-            if (typeof window.countryData !== 'undefined' && window.countryData[p.flagCode]) {
-                if(!p.countryDesc) cDesc = window.countryData[p.flagCode].desc; if(!p.pop) cPop = window.countryData[p.flagCode].pop; if(!p.seas) cSeas = window.countryData[p.flagCode].seas;
-            }
-            
-            let extraFields = '';
-            if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`;
-            if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`;
-            if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
-
-            const modalDesc = document.getElementById('modal-desc');
-            if(modalDesc) {
-                modalDesc.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div></div>
-                    <div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div></div>
-                    ${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white font-bold">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}
-                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>${extraFields}</div>`;
-            }
-            
-            const actionButtons = document.getElementById('modal-action-buttons');
-            if(actionButtons) {
-                if (id === 'ai') { actionButtons.style.display = 'none'; } 
-                else if (id === 'me') { 
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2 mt-2"><button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Edit Info</button><button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button></div>`; 
-                    actionButtons.style.display = 'block'; 
-                } else {
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`;
-                    actionButtons.style.display = 'block'; 
-                }
-            }
+            window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
+            const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; const modalName = document.getElementById('modal-name'); if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; let idSpan = document.getElementById('modal-id'); if(!idSpan) { idSpan = document.createElement('span'); idSpan.id = 'modal-id'; idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block'; if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling); } if(idSpan) idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id); const modalProf = document.getElementById('modal-prof'); if(modalProf) modalProf.innerText = p.profession || 'User';
+            let cDesc = p.countryDesc || 'User in network'; let cPop = p.pop || 'Unknown'; let cSeas = p.seas || 'Unknown'; if (typeof window.countryData !== 'undefined' && window.countryData[p.flagCode]) { if(!p.countryDesc) cDesc = window.countryData[p.flagCode].desc; if(!p.pop) cPop = window.countryData[p.flagCode].pop; if(!p.seas) cSeas = window.countryData[p.flagCode].seas; }
+            let extraFields = ''; if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`; if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`; if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
+            const modalDesc = document.getElementById('modal-desc'); if(modalDesc) { modalDesc.innerHTML = `<div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div></div><div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div></div>${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white font-bold">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>${extraFields}</div>`; }
+            const actionButtons = document.getElementById('modal-action-buttons'); if(actionButtons) { if (id === 'ai') { actionButtons.style.display = 'none'; } else if (id === 'me') { actionButtons.innerHTML = `<div class="flex w-full gap-2 mt-2"><button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Edit Info</button><button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button></div>`; actionButtons.style.display = 'block'; } else { actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`; actionButtons.style.display = 'block'; } }
             document.getElementById('avatar-modal').classList.add('active');
         };
 
-        window.openMyProfile = function() { 
-            window.closeDropdown(); 
-            if (window.isGuest) { 
-                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
-            } else { 
-                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
-            } 
-            if(window.applyTranslations) window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); 
-        };
-
-        window.handleCountryChange = function(sel) { 
-            const flagCode = sel.value; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; 
-            if (typeof window.countryData !== 'undefined') {
-                const cData = window.countryData[flagCode] || window.countryData['un']; const phoneInput = document.getElementById('edit-phone'); 
-                if (phoneInput && cData && cData.phone) { phoneInput.value = cData.phone + " "; phoneInput.focus(); }
-            }
-        };
-
-        window.handleFileUpload = function(event) { 
-            const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); 
-            reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; reader.readAsDataURL(file); 
-        };
+        window.openMyProfile = function() { window.closeDropdown(); if (window.isGuest) { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; } else { document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; } if(window.applyTranslations) window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); };
+        window.handleCountryChange = function(sel) { const flagCode = sel.value; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; if (typeof window.countryData !== 'undefined') { const cData = window.countryData[flagCode] || window.countryData['un']; const phoneInput = document.getElementById('edit-phone'); if (phoneInput && cData && cData.phone) { phoneInput.value = cData.phone + " "; phoneInput.focus(); } } };
+        window.handleFileUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; reader.readAsDataURL(file); };
         
         window.saveProfileData = function() {
             let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
             let newId = window.isGuest ? (nameVal.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
             let photo = document.getElementById('edit-preview-photo').src; let phoneVal = document.getElementById('edit-phone').value.trim(); 
-            
             const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; 
             const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User in network' };
-            
             let updatedProfile = { name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value };
-
-            if (window.isGuest) {
-                updatedProfile.id = newId; window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); localStorage.setItem('hf_active_user', newId); firebase.database().ref('users/' + newId).set(window.myProfileInfo); window.isGuest = false; 
-            } else {
-                window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); firebase.database().ref('users/' + newId).update(updatedProfile); 
-            }
+            if (window.isGuest) { updatedProfile.id = newId; window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); localStorage.setItem('hf_active_user', newId); firebase.database().ref('users/' + newId).set(window.myProfileInfo); window.isGuest = false; } else { window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); firebase.database().ref('users/' + newId).update(updatedProfile); }
             window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Showing your CV...", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
 
-        window.openEditCV = function() {
-            if(window.isGuest) return alert("Please complete basic registration first (Menu -> My Profile).");
-            document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; document.getElementById('edit-cv-modal').classList.add('active');
-        };
+        window.openEditCV = function() { if(window.isGuest) return alert("Please complete basic registration first (Menu -> My Profile)."); document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; document.getElementById('edit-cv-modal').classList.add('active'); };
         window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
-
-        window.saveCVData = function() {
-            window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim(); window.myProfileInfo.languages = document.getElementById('cv-edit-langs').value.trim(); window.myProfileInfo.skills = document.getElementById('cv-edit-skills').value.trim(); window.myProfileInfo.experience = document.getElementById('cv-edit-exp').value.trim(); window.myProfileInfo.education = document.getElementById('cv-edit-edu').value.trim(); window.myProfileInfo.desc = document.getElementById('cv-edit-bio').value.trim();
-            localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
-            firebase.database().ref('users/' + window.myProfileInfo.id).update({ profession: window.myProfileInfo.profession, languages: window.myProfileInfo.languages, skills: window.myProfileInfo.skills, experience: window.myProfileInfo.experience, education: window.myProfileInfo.education, desc: window.myProfileInfo.desc }); 
-            window.closeEditCV(); if(window.renderProfessionList) window.renderProfessionList(); setTimeout(() => { window.openAvatarModal('me'); }, 100);
-        };
-
+        window.saveCVData = function() { window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim(); window.myProfileInfo.languages = document.getElementById('cv-edit-langs').value.trim(); window.myProfileInfo.skills = document.getElementById('cv-edit-skills').value.trim(); window.myProfileInfo.experience = document.getElementById('cv-edit-exp').value.trim(); window.myProfileInfo.education = document.getElementById('cv-edit-edu').value.trim(); window.myProfileInfo.desc = document.getElementById('cv-edit-bio').value.trim(); localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); firebase.database().ref('users/' + window.myProfileInfo.id).update({ profession: window.myProfileInfo.profession, languages: window.myProfileInfo.languages, skills: window.myProfileInfo.skills, experience: window.myProfileInfo.experience, education: window.myProfileInfo.education, desc: window.myProfileInfo.desc }); window.closeEditCV(); if(window.renderProfessionList) window.renderProfessionList(); setTimeout(() => { window.openAvatarModal('me'); }, 100); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
-        window.smartArchive = function() { 
-            const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none';
-            let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
-            let date = new Date().toLocaleDateString();
-            let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
-            archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`;
-            archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); 
-        };
-        
-        window.smartClear = function() { 
-            if(confirm("Are you sure you want to clear chat history?")) { 
-                const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; 
-                if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
-                window.closeTrashModal(); 
-            } 
-        };
-        
+        window.smartArchive = function() { const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none'; let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`; archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); };
+        window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
         window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
         window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
-
-        window.sendLocationToChat = function() {
-            window.closeAttachModal();
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const lat = position.coords.latitude; const lon = position.coords.longitude; const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`; const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
-                        firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: "📍 Shared Location", isLocation: true, lat: lat, lon: lon, embedLink: embedLink, mapLink: mapLink, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
-                    },
-                    (error) => { alert("Failed to get location. Please allow GPS access."); }, { timeout: 5000 }
-                );
-            } else { alert("Geolocation is not supported by your browser."); }
-        };
-
-        window.openLocationModal = function() { 
-            window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); 
-            const mapContainer = document.getElementById('location-map'); mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; 
-            if (navigator.geolocation) { 
-                navigator.geolocation.getCurrentPosition( 
-                    (position) => { const lat = position.coords.latitude; const lon = position.coords.longitude; mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; }, 
-                    (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, { timeout: 5000 } 
-                ); 
-            } else { mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; } 
-        };
-
-        window.toggleRhombusMenu = function(e) { 
-            e.stopPropagation(); const actions = document.getElementById('rhombus-actions'); const btn = document.getElementById('rhombus-btn'); 
-            if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } 
-        };
+        window.sendLocationToChat = function() { window.closeAttachModal(); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const lat = position.coords.latitude; const lon = position.coords.longitude; const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`; const mapLink = `https://www.google.com/maps?q=${lat},${lon}`; firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: "📍 Shared Location", isLocation: true, lat: lat, lon: lon, embedLink: embedLink, mapLink: mapLink, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); }, (error) => { alert("Failed to get location. Please allow GPS access."); }, { timeout: 5000 } ); } else { alert("Geolocation is not supported by your browser."); } };
+        window.openLocationModal = function() { window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const lat = position.coords.latitude; const lon = position.coords.longitude; mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; }, (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, { timeout: 5000 } ); } else { mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; } };
+        window.toggleRhombusMenu = function(e) { e.stopPropagation(); const actions = document.getElementById('rhombus-actions'); const btn = document.getElementById('rhombus-btn'); if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } };
         window.closeDropdown = function() { document.getElementById('header-dropdown')?.classList.remove('active'); document.getElementById('rhombus-actions')?.classList.remove('active'); document.getElementById('rhombus-btn')?.classList.remove('active'); };
         window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); };
         document.body.addEventListener('click', () => { window.closeDropdown(); });
-
-        window.inviteViaWhatsApp = function() {
-            const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app";
-            window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        };
-        
+        window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
-
-        window.startExternalCall = function() { 
-            window.closePhoneChoiceModal(); 
-            if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } 
-            alert('Open a user profile or private chat to make a cellular call.'); 
-        };
-
+        window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
-        
-        window.handleEmailAttachment = function(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const textEl = document.getElementById('email-text'); textEl.value += `\n[Uploading ${file.name}...]`;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result; const newRef = firebase.database().ref('email_attachments').push();
-                newRef.set({ name: file.name, data: base64Data, timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => {
-                    textEl.value = textEl.value.replace(`\n[Uploading ${file.name}...]`, `\n📎 Attachment Link: https://secure-cloud.hf/file/${newRef.key}`);
-                    window.showToast("Attached!", "File securely uploaded to cloud.", "", "");
-                });
-            };
-            reader.readAsDataURL(file);
-        };
-
-        window.sendEmailForm = function(e) { 
-            e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); const originalText = btn.innerText;
-            btn.innerText = 'Sending...'; btn.classList.add('animate-pulse');
-            const to = document.getElementById('email-to').value; const subj = document.getElementById('email-subject').value; const text = document.getElementById('email-text').value;
-            const templateParams = { to_email: to, subject: subj, message: text, from_name: window.myUsername || "User" };
-            emailjs.send("service_8d6b5v3", "template_0o6h5cm", templateParams).then(function(response) {
-                    btn.classList.remove('animate-pulse'); btn.innerText = 'Success! ✔️'; btn.style.background = '#00a884'; btn.style.color = '#111b21';
-                    setTimeout(() => { document.getElementById('email-form-element').reset(); btn.innerText = originalText; btn.style.background = ''; btn.style.color = ''; window.closeEmailModal(); window.showToast("Email Sent", "Securely delivered via EmailJS", "", ""); }, 2000);
-                }, function(error) {
-                    btn.classList.remove('animate-pulse'); btn.innerText = 'Failed ❌'; btn.style.background = '#ef4444';
-                    setTimeout(() => { btn.innerText = originalText; btn.style.background = ''; }, 3000); alert("Секретный код ошибки: " + JSON.stringify(error));
-                });
-        };
-
+        window.handleEmailAttachment = function(event) { const file = event.target.files[0]; if (!file) return; const textEl = document.getElementById('email-text'); textEl.value += `\n[Uploading ${file.name}...]`; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const newRef = firebase.database().ref('email_attachments').push(); newRef.set({ name: file.name, data: base64Data, timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => { textEl.value = textEl.value.replace(`\n[Uploading ${file.name}...]`, `\n📎 Attachment Link: https://secure-cloud.hf/file/${newRef.key}`); window.showToast("Attached!", "File securely uploaded to cloud.", "", ""); }); }; reader.readAsDataURL(file); };
+        window.sendEmailForm = function(e) { e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); const originalText = btn.innerText; btn.innerText = 'Sending...'; btn.classList.add('animate-pulse'); const to = document.getElementById('email-to').value; const subj = document.getElementById('email-subject').value; const text = document.getElementById('email-text').value; const templateParams = { to_email: to, subject: subj, message: text, from_name: window.myUsername || "User" }; emailjs.send("service_8d6b5v3", "template_0o6h5cm", templateParams).then(function(response) { btn.classList.remove('animate-pulse'); btn.innerText = 'Success! ✔️'; btn.style.background = '#00a884'; btn.style.color = '#111b21'; setTimeout(() => { document.getElementById('email-form-element').reset(); btn.innerText = originalText; btn.style.background = ''; btn.style.color = ''; window.closeEmailModal(); window.showToast("Email Sent", "Securely delivered via EmailJS", "", ""); }, 2000); }, function(error) { btn.classList.remove('animate-pulse'); btn.innerText = 'Failed ❌'; btn.style.background = '#ef4444'; setTimeout(() => { btn.innerText = originalText; btn.style.background = ''; }, 3000); alert("Секретный код ошибки: " + JSON.stringify(error)); }); };
         window.openFullscreenImage = function(src) { if(src) document.getElementById('fullscreen-img-src').src = src; document.getElementById('fullscreen-image-modal').classList.add('active'); };
         window.closeFullscreenImage = function() { document.getElementById('fullscreen-image-modal').classList.remove('active'); };
-
-        window.handleMediaUpload = function(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result; const isVideo = file.type.startsWith('video/');
-                firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
-                window.closeAttachModal();
-            };
-            reader.readAsDataURL(file);
-        };
-
+        window.handleMediaUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const isVideo = file.type.startsWith('video/'); firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); window.closeAttachModal(); }; reader.readAsDataURL(file); };
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); localStorage.removeItem('hf_god_mode'); location.reload(); };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1024,9 +591,7 @@
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
             window.applyTranslations();
 
-            window.switchTab = function(index) { 
-                try { const navLinks = Array.from(document.querySelectorAll('.nav-item')); const pages = document.querySelectorAll('.page-content'); pages.forEach(p => p.classList.remove('active')); navLinks.forEach(l => l.classList.remove('active')); const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; const targetId = screens[index]; document.getElementById(targetId)?.classList.add('active'); if (index < navLinks.length && navLinks[index]) { navLinks[index].classList.add('active'); } window.currentIndex = index; } catch(e) {} 
-            };
+            window.switchTab = function(index) { try { const navLinks = Array.from(document.querySelectorAll('.nav-item')); const pages = document.querySelectorAll('.page-content'); pages.forEach(p => p.classList.remove('active')); navLinks.forEach(l => l.classList.remove('active')); const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; const targetId = screens[index]; document.getElementById(targetId)?.classList.add('active'); if (index < navLinks.length && navLinks[index]) { navLinks[index].classList.add('active'); } window.currentIndex = index; } catch(e) {} };
 
             const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); const db = firebase.database();
@@ -1039,9 +604,7 @@
             ];
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
 
-            let myChar = null;
-            if (window.isGuest) { window.myUsername = "Guest"; myChar = { id: 'guest' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: '', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: '', skills: '', experience: '', education: '', languages: 'Auto' }; } else { try { let saved = localStorage.getItem('hf_custom_' + activeUserId); if(saved) myChar = JSON.parse(saved); } catch(e) {} if(!myChar) myChar = window.allCharacters.find(c => c.id === activeUserId) || window.allCharacters[0]; window.myUsername = (myChar && myChar.name) ? myChar.name.split(' ')[0] : "User"; }
-            
+            let myChar = null; if (window.isGuest) { window.myUsername = "Guest"; myChar = { id: 'guest' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: '', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: '', skills: '', experience: '', education: '', languages: 'Auto' }; } else { try { let saved = localStorage.getItem('hf_custom_' + activeUserId); if(saved) myChar = JSON.parse(saved); } catch(e) {} if(!myChar) myChar = window.allCharacters.find(c => c.id === activeUserId) || window.allCharacters[0]; window.myUsername = (myChar && myChar.name) ? myChar.name.split(' ')[0] : "User"; }
             window.myProfileInfo = { ...myChar, id: myChar.id, name: window.myUsername + ' (You)' }; window.participants = [aiBot, ...window.allCharacters];
 
             setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = "You"; }, 1000);
@@ -1111,9 +674,7 @@
                     if (window.currentRoomId === 'global' && !isAI) { let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')]; allMembers.forEach(member => { if (member.id !== data.userId && member.langCode !== 'un') { targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); } }); } 
                     else if (window.currentRoomId.startsWith('private_') && !isAI) { if (isMe) { if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); } } else { if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.langCode, photo: window.myProfileInfo.photo }); } } }
 
-                    // 👉 AI VOICE & TRANSLATION ENGINE
-                    let finalTranslatedText = data.text;
-                    let finalLangToSpeak = data.langCode || 'en';
+                    let finalTranslatedText = data.text; let finalLangToSpeak = data.langCode || 'en';
 
                     if (targetUsers.length > 0) {
                         try {
@@ -1123,24 +684,16 @@
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
                             const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
 
-                            // Находим перевод конкретно для себя (для озвучки)
                             let myTrans = translationsRes.find(t => t.user.code === window.myProfileInfo.langCode);
                             if (myTrans) { finalTranslatedText = myTrans.text; finalLangToSpeak = window.myProfileInfo.langCode; }
-
                         } catch (e) {}
-                    } else {
-                        // Если перевод не нужен (языки совпадают)
-                        if (data.langCode === window.myProfileInfo.langCode) { finalLangToSpeak = window.myProfileInfo.langCode; }
-                    }
+                    } else { if (data.langCode === window.myProfileInfo.langCode) { finalLangToSpeak = window.myProfileInfo.langCode; } }
 
-                    // Если это пришло из Voice Room — выводим в бегущую строку и читаем вслух!
+                    // Озвучка и бегущая строка для Voice Room
                     if (data.isVoiceRoom) {
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${isMe ? 'You' : (data.name||'User')}:</span> <span class="text-[#00a884] font-bold">${finalTranslatedText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
-                        
-                        if (!isMe && window.aiVoiceEnabled) {
-                            window.speakText(finalTranslatedText, finalLangToSpeak);
-                        }
+                        if (!isMe && window.aiVoiceEnabled) { window.speakText(finalTranslatedText, finalLangToSpeak); }
                     }
                 }
             }
@@ -1159,32 +712,16 @@
             };
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
-            window.isMarqueeEnabled = true; 
-            window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
-
+            window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
             window.voiceFriend = window.participants.find(c => c.id === 'marinella') || window.participants[1] || aiBot; 
             
-            // 👉 ИЗМЕНЕННАЯ ЛОГИКА ОТПРАВКИ ИЗ VOICE ROOM (Теперь пишет в Firebase)
             window.sendVoiceMsg = async function() { 
                 const inputEl = document.getElementById('voice-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; 
-                
-                db.ref(window.currentRoomId).push({ 
-                    userId: window.myProfileInfo.id, 
-                    name: window.myUsername, 
-                    text: text, 
-                    isVoiceRoom: true, // Флаг для ИИ
-                    sessionId: window.mySessionId, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                    photo: window.myProfileInfo.photo, 
-                    flag: window.myProfileInfo.flag, 
-                    flagCode: window.myProfileInfo.flagCode, 
-                    langCode: window.myProfileInfo.langCode 
-                }); 
+                db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: text, isVoiceRoom: true, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); 
             };
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendVoiceMsg(); });
             
-            window.isVoiceMarqueeEnabled = true; 
-            window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
+            window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
 
             window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
@@ -1199,21 +736,12 @@
             }
             if (document.getElementById('conference-grid')) initConference(); 
             
-            window.toggleMyCamera = async function(btn) { 
-                const videoEl = document.getElementById('my-live-video'); 
-                if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) videoEl.srcObject = null; btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied! Check browser permissions."); } } 
-            };
+            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) videoEl.srcObject = null; btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied! Check browser permissions."); } } };
 
-            window.sendConfMsg = async function() { 
-                const inputEl = document.getElementById('conf-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const myMarquee = document.getElementById('speaker-marquee'); 
-                if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } 
-                const listenerMarquees = document.querySelectorAll('.conf-listener-marquee'); 
-                listenerMarquees.forEach(async (el) => { const tLang = el.getAttribute('data-lang'); const tFlag = el.getAttribute('data-flag'); try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; el.innerHTML = `<span class="text-white">User:</span> ${tFlag} ${translated}`; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null; } catch(e) {} }); 
-            };
+            window.sendConfMsg = async function() { const inputEl = document.getElementById('conf-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const myMarquee = document.getElementById('speaker-marquee'); if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } const listenerMarquees = document.querySelectorAll('.conf-listener-marquee'); listenerMarquees.forEach(async (el) => { const tLang = el.getAttribute('data-lang'); const tFlag = el.getAttribute('data-flag'); try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; el.innerHTML = `<span class="text-white">User:</span> ${tFlag} ${translated}`; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null; } catch(e) {} }); };
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendConfMsg(); });
             
-            window.isMeetMarqueeEnabled = true; 
-            window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; const bars = document.querySelectorAll('.translation-bar'); bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
+            window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; const bars = document.querySelectorAll('.translation-bar'); bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
 
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRec) {
@@ -1229,15 +757,8 @@
                     else if (currentMicTarget === 'conf') { let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendConfMsg(); } 
                 };
                 
-                window.autoSetMicLang = function() { 
-                    let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; 
-                    if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; 
-                    let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; 
-                };
-                
-                window.startMic = function(target, btnId) { 
-                    currentMicTarget = target; currentMicBtn = document.getElementById(btnId); let langSelect = document.getElementById('plus-mic-lang'); rec.lang = langSelect ? langSelect.value : 'en-US'; try { rec.start(); } catch(e){} 
-                };
+                window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
+                window.startMic = function(target, btnId) { currentMicTarget = target; currentMicBtn = document.getElementById(btnId); let langSelect = document.getElementById('plus-mic-lang'); rec.lang = langSelect ? langSelect.value : 'en-US'; try { rec.start(); } catch(e){} };
             }
 
             window.switchChatRoom('global');
