@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V41.1 (Smart Voice Panel)</title>
+    <title>Hello Friends - Golden Master V41.2 (Fixed Call Button)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -295,19 +295,15 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    
                     <button id="ai-voice-toggle" class="w-[42px] h-[42px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleAIVoice()" title="Auto-Read Incoming Voice">
                         <i class="fa-solid fa-volume-xmark"></i>
                     </button>
-
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <input type="text" id="voice-chat-input" placeholder="Speak or type..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                     </div>
-
                     <button id="voice-mic-btn-input" class="w-[42px] h-[42px] rounded-full bg-[#202c33] text-[#ef4444] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition shadow-[0_0_10px_rgba(239,68,68,0.2)]" onclick="window.startMic('voice', 'voice-mic-btn-input')" title="Speak Message">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
-
                     <button class="w-[42px] h-[42px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg()">
                         <i class="fa-solid fa-paper-plane ml-[-2px]"></i>
                     </button>
@@ -450,13 +446,14 @@
             else { img.style.display = 'none'; icon.style.display = 'flex'; }
             
             toast.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
-            toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 0)'; toast.style.top = '15px';
+            toast.style.opacity = '1'; 
+            toast.style.transform = 'translate(-50%, 0)'; 
+            toast.style.top = '15px';
             
             if(window.toastTimer) clearTimeout(window.toastTimer);
             window.toastTimer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px)'; toast.style.top = '-150px'; }, 6000); 
         };
 
-        // --- 👉 AI VOICE LOGIC (Голосовой ИИ) ---
         window.aiVoiceEnabled = false;
         window.toggleAIVoice = function() {
             window.aiVoiceEnabled = !window.aiVoiceEnabled;
@@ -481,7 +478,6 @@
             utterance.lang = langCode || 'en-US';
             window.speechSynthesis.speak(utterance);
         };
-        // ----------------------------------------
 
         window.openAttachModal = function() { window.closeDropdown(); document.getElementById('attach-modal').classList.add('active'); };
         window.closeAttachModal = function() { document.getElementById('attach-modal').classList.remove('active'); };
@@ -571,8 +567,27 @@
         window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); };
         document.body.addEventListener('click', () => { window.closeDropdown(); });
         window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
+        
+        // 👉 ФИКСИРОВАННАЯ КНОПКА ЗВОНКА
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
+        
+        window.startInAppCall = function() { 
+            window.closePhoneChoiceModal(); 
+            if (window.currentTargetUser) { 
+                document.getElementById('voice-friend-photo').src = window.currentTargetUser.photo; 
+                document.getElementById('voice-friend-flag').innerText = window.currentTargetUser.flag; 
+                document.getElementById('voice-friend-name').innerText = (window.currentTargetUser.name||'User').split(' ')[0]; 
+                window.voiceFriend = window.currentTargetUser; 
+                window.switchTab(1); 
+                window.showToast("Voice Room", "Connected to " + window.currentTargetUser.name.split(' ')[0], window.currentTargetUser.photo, "");
+            } else { 
+                window.switchTab(1); 
+                window.showToast("Voice Room", "Global Voice Room", "", "");
+            } 
+        };
+
         window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
+        
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         window.handleEmailAttachment = function(event) { const file = event.target.files[0]; if (!file) return; const textEl = document.getElementById('email-text'); textEl.value += `\n[Uploading ${file.name}...]`; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const newRef = firebase.database().ref('email_attachments').push(); newRef.set({ name: file.name, data: base64Data, timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => { textEl.value = textEl.value.replace(`\n[Uploading ${file.name}...]`, `\n📎 Attachment Link: https://secure-cloud.hf/file/${newRef.key}`); window.showToast("Attached!", "File securely uploaded to cloud.", "", ""); }); }; reader.readAsDataURL(file); };
@@ -689,7 +704,6 @@
                         } catch (e) {}
                     } else { if (data.langCode === window.myProfileInfo.langCode) { finalLangToSpeak = window.myProfileInfo.langCode; } }
 
-                    // Озвучка и бегущая строка для Voice Room
                     if (data.isVoiceRoom) {
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${isMe ? 'You' : (data.name||'User')}:</span> <span class="text-[#00a884] font-bold">${finalTranslatedText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
