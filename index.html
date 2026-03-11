@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V41.0 (Clean Monolith)</title>
+    <title>Hello Friends - Golden Master V41.0 (AI Voice Active)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -262,8 +262,11 @@
             </div>
 
             <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a]">
-                <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <h2 class="text-xl font-bold text-white" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
+                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0 relative">
+                    <h2 class="text-xl font-bold text-white mx-auto" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
+                    <button id="ai-voice-toggle" class="absolute right-4 bg-[#202c33] border border-[#2a3942] text-[#8696a0] px-3 py-1.5 rounded-full text-xs font-bold transition-all" onclick="window.toggleAIVoice()">
+                        <i class="fa-solid fa-volume-xmark mr-1"></i> AI Voice
+                    </button>
                 </div>
                 <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
@@ -589,7 +592,7 @@
 
     <script>
         // =========================================================
-        // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ (БЕЗ ДУБЛЕЙ)
+        // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ 
         // =========================================================
 
         window.currentEmojiTargetId = null;
@@ -639,6 +642,33 @@
                 toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px)'; toast.style.top = '-150px'; 
             }, 6000); 
         };
+
+        // --- 👉 AI VOICE LOGIC (Голосовой ИИ) ---
+        window.aiVoiceEnabled = false;
+        window.toggleAIVoice = function() {
+            window.aiVoiceEnabled = !window.aiVoiceEnabled;
+            const btn = document.getElementById('ai-voice-toggle');
+            if (window.aiVoiceEnabled) {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> AI Voice';
+                btn.classList.add('bg-[#00a884]', 'text-[#111b21]');
+                btn.classList.remove('bg-[#202c33]', 'text-[#8696a0]');
+                window.showToast("AI Voice ON", "Auto-reading voice messages.", "");
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark mr-1"></i> AI Voice';
+                btn.classList.remove('bg-[#00a884]', 'text-[#111b21]');
+                btn.classList.add('bg-[#202c33]', 'text-[#8696a0]');
+                if('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+        };
+
+        window.speakText = function(text, langCode) {
+            if (!window.aiVoiceEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langCode || 'en-US';
+            window.speechSynthesis.speak(utterance);
+        };
+        // ----------------------------------------
 
         window.openAttachModal = function() { window.closeDropdown(); document.getElementById('attach-modal').classList.add('active'); };
         window.closeAttachModal = function() { document.getElementById('attach-modal').classList.remove('active'); };
@@ -1081,6 +1111,10 @@
                     if (window.currentRoomId === 'global' && !isAI) { let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')]; allMembers.forEach(member => { if (member.id !== data.userId && member.langCode !== 'un') { targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); } }); } 
                     else if (window.currentRoomId.startsWith('private_') && !isAI) { if (isMe) { if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); } } else { if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.langCode, photo: window.myProfileInfo.photo }); } } }
 
+                    // 👉 AI VOICE & TRANSLATION ENGINE
+                    let finalTranslatedText = data.text;
+                    let finalLangToSpeak = data.langCode || 'en';
+
                     if (targetUsers.length > 0) {
                         try {
                             const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
@@ -1088,7 +1122,25 @@
                             translationsRes.forEach(t => { transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}       `; }); 
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
                             const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
+
+                            // Находим перевод конкретно для себя (для озвучки)
+                            let myTrans = translationsRes.find(t => t.user.code === window.myProfileInfo.langCode);
+                            if (myTrans) { finalTranslatedText = myTrans.text; finalLangToSpeak = window.myProfileInfo.langCode; }
+
                         } catch (e) {}
+                    } else {
+                        // Если перевод не нужен (языки совпадают)
+                        if (data.langCode === window.myProfileInfo.langCode) { finalLangToSpeak = window.myProfileInfo.langCode; }
+                    }
+
+                    // Если это пришло из Voice Room — выводим в бегущую строку и читаем вслух!
+                    if (data.isVoiceRoom) {
+                        const vMarquee = document.getElementById('voice-info-marquee');
+                        if (vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${isMe ? 'You' : (data.name||'User')}:</span> <span class="text-[#00a884] font-bold">${finalTranslatedText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
+                        
+                        if (!isMe && window.aiVoiceEnabled) {
+                            window.speakText(finalTranslatedText, finalLangToSpeak);
+                        }
                     }
                 }
             }
@@ -1111,9 +1163,23 @@
             window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
 
             window.voiceFriend = window.participants.find(c => c.id === 'marinella') || window.participants[1] || aiBot; 
+            
+            // 👉 ИЗМЕНЕННАЯ ЛОГИКА ОТПРАВКИ ИЗ VOICE ROOM (Теперь пишет в Firebase)
             window.sendVoiceMsg = async function() { 
-                const inputEl = document.getElementById('voice-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const targetLang = window.voiceFriend.langCode || 'en'; 
-                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; const mText = document.getElementById('voice-info-marquee'); if(mText) { mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${window.voiceFriend.flag} ${translated}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } } catch(e) {} 
+                const inputEl = document.getElementById('voice-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; 
+                
+                db.ref(window.currentRoomId).push({ 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: text, 
+                    isVoiceRoom: true, // Флаг для ИИ
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flag: window.myProfileInfo.flag, 
+                    flagCode: window.myProfileInfo.flagCode, 
+                    langCode: window.myProfileInfo.langCode 
+                }); 
             };
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendVoiceMsg(); });
             
@@ -1158,7 +1224,9 @@
                 
                 rec.onresult = (e) => { 
                     const text = e.results[0][0].transcript; 
-                    if (currentMicTarget === 'chat') { let chatInputEl = document.getElementById('chat-input'); if (chatInputEl) chatInputEl.value = text; window.sendFirebaseMsg(); } else if (currentMicTarget === 'voice') { let voiceInputEl = document.getElementById('voice-chat-input'); if (voiceInputEl) voiceInputEl.value = text; window.sendVoiceMsg(); } else if (currentMicTarget === 'conf') { let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendConfMsg(); } 
+                    if (currentMicTarget === 'chat') { let chatInputEl = document.getElementById('chat-input'); if (chatInputEl) chatInputEl.value = text; window.sendFirebaseMsg(); } 
+                    else if (currentMicTarget === 'voice') { let voiceInputEl = document.getElementById('voice-chat-input'); if (voiceInputEl) voiceInputEl.value = text; window.sendVoiceMsg(); } 
+                    else if (currentMicTarget === 'conf') { let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendConfMsg(); } 
                 };
                 
                 window.autoSetMicLang = function() { 
