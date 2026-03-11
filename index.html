@@ -179,7 +179,7 @@
             </div>
         </div>
 
-        <div id="emoji-picker" class="absolute bottom-20 left-4 right-4 bg-[#202c33] border border-[#2a3942] rounded-xl p-3 z-[6000] shadow-2xl transition-all duration-300 transform scale-95 opacity-0 pointer-events-none flex flex-col gap-2">
+        <div id="emoji-picker" class="absolute bottom-20 left-4 right-4 bg-[#202c33] border border-[#2a3942] rounded-xl p-3 z-[6000] shadow-2xl transition-all duration-300 transform scale-95 opacity-0 pointer-events-none flex flex-col gap-2" onclick="event.stopPropagation();">
             <div class="flex flex-wrap gap-3 text-2xl h-[150px] overflow-y-auto w-full justify-center scroll-smooth pb-2">
                 <span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('😀')">😀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('😂')">😂</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('😎')">😎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('😍')">😍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('🤔')">🤔</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('🙄')">🙄</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('😭')">😭</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('😡')">😡</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('👍')">👍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('👎')">👎</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('👏')">👏</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('🙌')">🙌</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('❤️')">❤️</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('🔥')">🔥</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('🎉')">🎉</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('💯')">💯</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('🚀')">🚀</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('✨')">✨</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('🌍')">🌍</span><span class="cursor-pointer hover:scale-125 transition" onclick="window.insertEmoji('📱')">📱</span>
             </div>
@@ -198,10 +198,10 @@
                 <i class="fa-solid fa-ellipsis-vertical" onclick="window.toggleHeaderMenu(event)"></i>
             </div>
             
-            <div id="header-dropdown" class="header-dropdown">
+            <div id="header-dropdown" class="header-dropdown" onclick="event.stopPropagation();">
                 <div class="flex justify-between items-center px-1 pb-2 mb-2 border-b border-[#202c33]">
                     <span class="text-white font-bold text-[0.95rem] tracking-wide" data-i18n="menu">Settings</span>
-                    <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeDropdown()"></i>
+                    <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeAllMenus()"></i>
                 </div>
                 <a id="admin-menu-btn" style="display: none; color: #a29bfe;" onclick="window.openAdminModal()"><i class="fa-solid fa-crown w-5"></i> <span>Admin Panel</span></a>
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
@@ -224,7 +224,7 @@
                 <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
                 <a onclick="window.toggleTheme()"><i class="fa-solid fa-sun text-yellow-400 w-5" id="theme-icon"></i> <span data-i18n="theme">Theme</span></a>
                 <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
-                <a onclick="document.getElementById('import-file-input').click(); window.closeDropdown()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
+                <a onclick="document.getElementById('import-file-input').click(); window.closeAllMenus()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
                 <a style="color: #ef4444;" onclick="window.logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="logout">Log Out</span></a>
             </div>
         </header>
@@ -298,9 +298,9 @@
                         </div>
                     </div>
                 </div>
-                <div id="voice-selector-popup" class="absolute bottom-[60px] right-[10px] bg-[#111b21] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 z-[100] shadow-2xl">
-                    <button class="bg-[#00a884] text-[#111b21] px-4 py-2 rounded-xl text-xs font-bold" onclick="event.stopPropagation(); document.getElementById('voice-selector-popup').classList.add('hidden'); document.getElementById('voice-selector-popup').classList.remove('flex'); window.startMic('voice-msg', 'voice-mic-btn-input')">🗣️ Voice Message</button>
-                    <button class="bg-[#202c33] text-white px-4 py-2 rounded-xl text-xs font-bold border border-[#2a3942]" onclick="event.stopPropagation(); document.getElementById('voice-selector-popup').classList.add('hidden'); document.getElementById('voice-selector-popup').classList.remove('flex'); window.startMic('voice-text', 'voice-mic-btn-input')">🎤 Voice Text</button>
+                <div id="voice-selector-popup" class="absolute bottom-[60px] right-[10px] bg-[#111b21] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 z-[100] shadow-2xl" onclick="event.stopPropagation();">
+                    <button class="bg-[#00a884] text-[#111b21] px-4 py-2 rounded-xl text-xs font-bold" onclick="window.closeAllMenus(); window.startMic('voice-msg', 'voice-mic-btn-input')">🗣️ Voice Message</button>
+                    <button class="bg-[#202c33] text-white px-4 py-2 rounded-xl text-xs font-bold border border-[#2a3942]" onclick="window.closeAllMenus(); window.startMic('voice-text', 'voice-mic-btn-input')">🎤 Voice Text</button>
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative">
@@ -397,9 +397,9 @@
             
             <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
-                <div id="rhombus-actions" class="rhombus-menu">
+                <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
-                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2" onclick="event.stopPropagation()">
+                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ru-RU">🇷🇺 Русский</option>
                         <option value="az-AZ">🇦🇿 Azərbaycanca</option>
@@ -410,12 +410,12 @@
                         <option value="ja-JP">🇯🇵 日本語</option>
                         <option value="zh-CN">🇨🇳 中文</option>
                     </select>
-                    <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
-                    <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
-                    <div class="action-icon" onclick="window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
-                    <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
-                    <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeDropdown();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
-                    <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeDropdown();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
+                    <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call"><i class="fa-solid fa-video"></i></div>
+                    <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeAllMenus();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
+                    <div class="action-icon" onclick="window.openEmailModal(); window.closeAllMenus();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
+                    <div class="action-icon" onclick="window.openLocationModal(); window.closeAllMenus();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
+                    <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeAllMenus();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
+                    <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeAllMenus();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
                 </div>
             </div>
         </div>
@@ -610,6 +610,36 @@
         // =========================================================
         // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ (БЕЗ ДУБЛЕЙ)
         // =========================================================
+
+        // --- ГЛОБАЛЬНЫЙ АУТ-КЛИК И ЗАКРЫТИЕ МЕНЮ ---
+        window.closeAllMenus = function() { 
+            document.getElementById('header-dropdown')?.classList.remove('active'); 
+            document.getElementById('rhombus-actions')?.classList.remove('active'); 
+            document.getElementById('rhombus-btn')?.classList.remove('active'); 
+            
+            const voicePopup = document.getElementById('voice-selector-popup');
+            if (voicePopup) {
+                voicePopup.classList.add('hidden');
+                voicePopup.classList.remove('flex');
+            }
+            if(window.closeEmojiPicker) window.closeEmojiPicker();
+        };
+
+        window.closeDropdown = window.closeAllMenus;
+        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); };
+        
+        document.body.addEventListener('click', () => { window.closeAllMenus(); });
+
+        // --- ДВИЖОК ОЗВУЧКИ (TEXT-TO-SPEECH) ---
+        window.speakTranslatedText = function(text, langCode) {
+            if (!window.speechSynthesis) return; 
+            window.speechSynthesis.cancel(); 
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voiceMap = { 'en': 'en-US', 'ru': 'ru-RU', 'az': 'tr-TR', 'it': 'it-IT', 'es': 'es-ES', 'fr': 'fr-FR', 'pt': 'pt-PT', 'ja': 'ja-JP', 'zh': 'zh-CN' };
+            utterance.lang = voiceMap[langCode] || langCode; 
+            utterance.rate = 1.0; 
+            window.speechSynthesis.speak(utterance); 
+        };
 
         window.currentEmojiTargetId = null;
         window.toggleEmojiPicker = function(targetId) {
@@ -941,19 +971,6 @@
             if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } 
         };
         
-        window.closeDropdown = function() { 
-            document.getElementById('header-dropdown')?.classList.remove('active'); 
-            document.getElementById('rhombus-actions')?.classList.remove('active'); 
-            document.getElementById('rhombus-btn')?.classList.remove('active'); 
-            if(window.closeEmojiPicker) window.closeEmojiPicker();
-            document.getElementById('voice-selector-popup')?.classList.add('hidden');
-            document.getElementById('voice-selector-popup')?.classList.remove('flex');
-        };
-        
-        window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); };
-        
-        document.body.addEventListener('click', () => { window.closeDropdown(); });
-
         window.inviteViaWhatsApp = function() {
             const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app";
             window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -1129,9 +1146,11 @@
                 const data = snapshot.val(); if(!data) return; const chatMessages = document.getElementById('chat-messages');
                 const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id; const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
                 let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+(data.name||'U'), langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
+                
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
+                // Умный аватар с флагом
                 let userFlag = isAI ? '🤖' : (p.flag || '🌐');
                 let avatarPhoto = isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo;
                 let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer" onclick="window.openAvatarModal('${isAI ? 'ai' : (isMe ? 'me' : p.id)}')">
@@ -1160,7 +1179,22 @@
                         try {
                             const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
                             const translationsRes = await Promise.all(fetchPromises); const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; let marqueeTextStr = ''; 
-                            translationsRes.forEach(t => { transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}       `; }); 
+                            translationsRes.forEach(t => { 
+                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
+                                marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                                
+                                // --- ЛОГИКА ОЗВУЧКИ (Если сообщение из Voice Room) ---
+                                if (data.isVoiceRoomMsg && !isMe && t.user.code === window.myProfileInfo.langCode) {
+                                    const vMarquee = document.getElementById('voice-info-marquee');
+                                    if(vMarquee) {
+                                        vMarquee.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${t.text}</span>`;
+                                        vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
+                                    }
+                                    if (data.speakAloud) {
+                                        window.speakTranslatedText(t.text, t.user.code);
+                                    }
+                                }
+                            }); 
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
                             const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
                         } catch (e) {}
@@ -1186,11 +1220,43 @@
             window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
 
             window.voiceFriend = window.participants.find(c => c.id === 'marinella') || window.participants[1] || aiBot; 
-            window.sendVoiceMsg = async function() { 
-                const inputEl = document.getElementById('voice-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const targetLang = window.voiceFriend.langCode || 'en'; 
-                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; const mText = document.getElementById('voice-info-marquee'); if(mText) { mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${window.voiceFriend.flag} ${translated}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } } catch(e) {} 
+            
+            window.sendVoiceMsg = async function(mode = 'voice-text') { 
+                const inputEl = document.getElementById('voice-chat-input'); 
+                const text = inputEl.value.trim(); 
+                if(!text) return; 
+                inputEl.value = ''; 
+                const targetLang = window.voiceFriend.langCode || 'en'; 
+                
+                try { 
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`); 
+                    const translated = (await res.json())[0][0][0]; 
+                    const mText = document.getElementById('voice-info-marquee'); 
+                    if(mText) { 
+                        mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${window.voiceFriend.flag} ${translated}</span>`; 
+                        mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; 
+                    } 
+                    
+                    let id1 = String(window.myProfileInfo.id); 
+                    let id2 = String(window.voiceFriend.id); 
+                    let voiceRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
+                    
+                    firebase.database().ref(voiceRoomId).push({ 
+                        userId: window.myProfileInfo.id, 
+                        name: window.myUsername, 
+                        text: text, 
+                        isVoiceRoomMsg: true, 
+                        speakAloud: (mode === 'voice-msg'), 
+                        sessionId: window.mySessionId, 
+                        timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                        photo: window.myProfileInfo.photo, 
+                        flag: window.myProfileInfo.flag, 
+                        langCode: window.myProfileInfo.langCode 
+                    });
+                } catch(e) { console.error(e); } 
             };
-            document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendVoiceMsg(); });
+
+            document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendVoiceMsg('voice-text'); });
             
             window.isVoiceMarqueeEnabled = true; 
             window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
@@ -1233,7 +1299,13 @@
                 
                 rec.onresult = (e) => { 
                     const text = e.results[0][0].transcript; 
-                    if (currentMicTarget === 'chat') { let chatInputEl = document.getElementById('chat-input'); if (chatInputEl) chatInputEl.value = text; window.sendFirebaseMsg(); } else if (currentMicTarget === 'voice') { let voiceInputEl = document.getElementById('voice-chat-input'); if (voiceInputEl) voiceInputEl.value = text; window.sendVoiceMsg(); } else if (currentMicTarget === 'conf') { let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendConfMsg(); } 
+                    if (currentMicTarget === 'chat') { 
+                        let chatInputEl = document.getElementById('chat-input'); if (chatInputEl) chatInputEl.value = text; window.sendFirebaseMsg(); 
+                    } else if (currentMicTarget === 'voice-text' || currentMicTarget === 'voice-msg') { 
+                        let voiceInputEl = document.getElementById('voice-chat-input'); if (voiceInputEl) voiceInputEl.value = text; window.sendVoiceMsg(currentMicTarget); 
+                    } else if (currentMicTarget === 'conf') { 
+                        let confInputEl = document.getElementById('conf-chat-input'); if (confInputEl) confInputEl.value = text; window.sendConfMsg(); 
+                    } 
                 };
                 
                 window.autoSetMicLang = function() { 
