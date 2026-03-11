@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V35.10 (Mail & AI Active)</title>
+    <title>Hello Friends - Golden Master V38.0 (Smart Dossier & AI)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -164,12 +164,17 @@
 
     <div class="mobile-screen" id="phone-body">
         
-        <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white px-4 py-3 rounded-2xl shadow-2xl z-[3000] flex items-center gap-3 w-[90%] opacity-0 pointer-events-none" style="top: -100px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-            <div id="toast-icon-wrap" class="w-10 h-10 rounded-full bg-[#005c4b] flex items-center justify-center text-lg shrink-0">🌍</div>
-            <img id="toast-img" src="" class="w-10 h-10 rounded-full object-cover hidden shrink-0 border border-[#00a884]">
-            <div class="flex flex-col">
-                <span id="toast-name" class="font-bold text-[0.9rem]">Group Chat</span>
-                <span id="toast-info" class="text-[0.7rem] text-gray-400">Global Room</span>
+        <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white p-3 rounded-2xl shadow-2xl z-[5000] flex flex-col gap-2 w-[92%] opacity-0 pointer-events-none" style="top: -150px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <div class="flex items-center gap-3">
+                <div id="toast-icon-wrap" class="w-12 h-12 rounded-full bg-[#005c4b] flex items-center justify-center text-xl shrink-0 hidden">🌍</div>
+                <img id="toast-img" src="" class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[#00a884] shadow-md">
+                <div class="flex flex-col flex-grow">
+                    <span id="toast-name" class="font-bold text-[1rem] leading-tight">Name</span>
+                    <span id="toast-phone" class="text-[0.75rem] text-[#00a884] font-mono mt-0.5 font-bold tracking-wide"></span>
+                </div>
+            </div>
+            <div id="toast-desc-box" class="bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] mt-1 shadow-inner">
+                <span id="toast-info" class="text-[0.75rem] text-[#e9edef] leading-relaxed"></span>
             </div>
         </div>
 
@@ -226,7 +231,7 @@
                         <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span>
                     </button>
 
-                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
+                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
                 </div>
                 
                 <div class="chat-info-marquee-container">
@@ -457,15 +462,25 @@
                 <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="sheet-handle" onclick="window.closeAdminModal()"></div>
                 <h2 class="text-xl font-bold mb-2 text-white"><i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel</h2>
-                <p class="text-xs text-[#8696a0] mb-4">Select any registered user below to instantly log in as them.</p>
+                <p class="text-xs text-[#8696a0] mb-4">Manage or Log In as any user in the database.</p>
                 <select id="admin-user-select" class="form-input-box mb-4"></select>
-                <button onclick="window.adminLogin()" class="btn-primary !bg-[#a29bfe] !text-[#111b21] hover:!bg-purple-400">Log In As User</button>
+                <div class="flex gap-2">
+                    <button onclick="window.adminLogin()" class="btn-primary flex-1 !bg-[#a29bfe] !text-[#111b21] hover:!bg-purple-400">Log In</button>
+                    <button onclick="window.adminDeleteUser()" class="btn-primary flex-1 !bg-red-500 !text-white hover:!bg-red-600"><i class="fa-solid fa-skull"></i> Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();">
+            <div class="app-modal-content h-[75vh]" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-address-book text-[#00a884] mr-2"></i> Quick Contacts</h2>
+                <div id="contacts-list-container" class="flex flex-col gap-3 overflow-y-auto pb-4"></div>
             </div>
         </div>
 
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
             <div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();">
-                
                 <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
                     <div>
                         <h2 id="profile-modal-title" class="text-xl font-bold text-white mb-0.5" data-i18n="reg_title">Welcome!</h2>
@@ -475,7 +490,6 @@
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
-
                 <div class="overflow-y-auto flex-grow p-5 pb-10">
                     <div class="flex flex-col items-center mb-6 mt-2 shrink-0">
                         <div class="relative w-24 h-24">
@@ -497,7 +511,6 @@
                     <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
                     <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
                 </div>
-
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50">
                     <button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button>
                 </div>
@@ -506,7 +519,6 @@
 
         <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
             <div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();">
-                
                 <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
                     <div>
                         <h2 class="text-xl font-bold text-white mb-0.5"><i class="fa-solid fa-file-signature text-[#00a884] mr-2"></i> Edit CV</h2>
@@ -516,7 +528,6 @@
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
-                
                 <div class="overflow-y-auto flex-grow p-5 pb-10">
                     <label class="form-label">Profession / Title</label><input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
                     <label class="form-label">Languages Spoken</label><input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
@@ -525,7 +536,6 @@
                     <label class="form-label">Education</label><textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
                     <label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
                 </div>
-                
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50">
                     <button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button>
                 </div>
@@ -624,7 +634,54 @@
     </div>
 
     <script>
-        // === ЛОГИКА JS ===
+        // =========================================================
+        // ВАШИ КЛЮЧИ В ПОЛНОЙ БЕЗОПАСНОСТИ!
+        // =========================================================
+
+        // 👉 УМНЫЙ SMART TOAST (АВТО-ДОСЬЕ ПРИ ВХОДЕ В ЧАТ)
+        window.showToast = function(name, info, photoUrl, phoneStr) {
+            const toast = document.getElementById('toast-notification'); 
+            if(!toast) return;
+            
+            document.getElementById('toast-name').innerText = name || 'User'; 
+            document.getElementById('toast-info').innerHTML = info || '';
+            
+            const phoneEl = document.getElementById('toast-phone');
+            const descBox = document.getElementById('toast-desc-box');
+            
+            if (phoneStr) { 
+                phoneEl.innerText = phoneStr; 
+                phoneEl.style.display = 'block'; 
+            } else { 
+                phoneEl.style.display = 'none'; 
+            }
+
+            if (info) { 
+                descBox.style.display = 'block'; 
+            } else { 
+                descBox.style.display = 'none'; 
+            }
+
+            const img = document.getElementById('toast-img'); 
+            const icon = document.getElementById('toast-icon-wrap');
+            if(photoUrl && photoUrl !== '') { 
+                img.src = photoUrl; img.style.display = 'block'; icon.style.display = 'none'; 
+            } else { 
+                img.style.display = 'none'; icon.style.display = 'flex'; 
+            }
+            
+            toast.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
+            toast.style.opacity = '1'; 
+            toast.style.transform = 'translate(-50%, 0)'; 
+            toast.style.top = '15px';
+            
+            if(window.toastTimer) clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => { 
+                toast.style.opacity = '0'; 
+                toast.style.transform = 'translate(-50%, -20px)'; 
+                toast.style.top = '-150px'; 
+            }, 6000); // 👈 Висит 6 секунд, чтобы успели прочитать
+        };
 
         window.openAttachModal = function() {
             window.closeDropdown();
@@ -705,7 +762,8 @@
             window.participants.forEach(p => { 
                 if ((p.name||'').toLowerCase().includes(query) || (p.profession||'').toLowerCase().includes(query) || (p.country||'').toLowerCase().includes(query)) { 
                     found = true; 
-                    html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.openAvatarModal('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-chevron-right text-[#8696a0]"></i></div>`; 
+                    // Клик по поиску тоже перекидывает сразу в чат
+                    html += `<div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between cursor-pointer mb-2 shadow-sm" onclick="window.closeSearchModal(); window.switchTab(0); window.switchChatRoom('${p.id}');"><div class="flex items-center gap-3"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><div class="flex flex-col"><span class="text-white font-bold">${(p.name||'User').split(' ')[0]} ${p.flag}</span><span class="text-[#8696a0] text-xs">${p.profession || 'User'}</span></div></div><i class="fa-solid fa-message text-[#00a884]"></i></div>`; 
                 } 
             }); 
             resultsArea.innerHTML = found ? html : `<p class="text-sm text-[#8696a0] text-center mt-4">No internal results. Click Search Web.</p>`; 
@@ -777,7 +835,7 @@
             sel.innerHTML = ''; 
             window.participants.forEach(p => { 
                 if(p.id !== 'ai') { 
-                    sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; 
+                    sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag} - ${p.phone||'No phone'}</option>`; 
                 } 
             }); 
             sel.innerHTML += `<option value="${window.myProfileInfo.id}">${(window.myProfileInfo.name||'Me').split(' (')[0]} ${window.myProfileInfo.flag} (Current)</option>`; 
@@ -792,32 +850,89 @@
             } 
         };
 
-        // --- ТЕМНАЯ ВИЗИТКА ---
+        // 👉 КАРАТЕЛЬ (УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЯ ИЗ БАЗЫ)
+        window.adminDeleteUser = function() {
+            const id = document.getElementById('admin-user-select').value;
+            if(id === window.myProfileInfo.id) return alert("You cannot delete yourself, Captain!");
+            if(id === 'ai') return alert("Cannot delete AI System Core!");
+            
+            let pass = prompt("DANGER! Enter God Password to permanently DELETE user from database:");
+            if (pass === "777") {
+                firebase.database().ref('users/' + id).remove();
+                alert("User has been eradicated from the system! 💀");
+                window.closeAdminModal();
+            } else {
+                alert("Access Denied. Incorrect password.");
+            }
+        };
+
+        // 👉 УМНЫЕ КОНТАКТЫ (МОДАЛЬНОЕ ОКНО)
+        window.openContactsModal = function() {
+            window.closeDropdown();
+            const container = document.getElementById('contacts-list-container');
+            container.innerHTML = '';
+            
+            const usersList = window.participants.filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id);
+
+            if (usersList.length === 0) {
+                container.innerHTML = '<p class="text-[#8696a0] text-center mt-4 text-sm">No contacts available in the network.</p>';
+            } else {
+                usersList.forEach(p => {
+                    let phoneStr = p.phone || 'Hidden';
+                    let phoneAction = p.phone ? `window.location.href='tel:${p.phone.replace(/\\s+/g, '')}'` : `alert('User has hidden their phone number.')`;
+                    
+                    container.innerHTML += `
+                    <div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-3 cursor-pointer w-full" onclick="window.closeContactsModal(); window.switchTab(0); window.switchChatRoom('${p.id}')">
+                            <div class="relative">
+                                <img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]">
+                                <span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-1 shadow">${p.flag}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-white font-bold text-sm">${(p.name||'User').split(' ')[0]}</span>
+                                <span class="text-[#8696a0] text-xs mt-0.5"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem] mr-1"></i> ${phoneStr}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="${phoneAction}" class="w-10 h-10 rounded-full bg-[#111b21] border border-[#2a3942] text-blue-400 flex items-center justify-center hover:bg-blue-900 transition shadow" title="Cellular Call"><i class="fa-solid fa-phone"></i></button>
+                            <button onclick="window.startDirectAppCall('${p.id}')" class="w-10 h-10 rounded-full bg-[#00a884] text-[#111b21] flex items-center justify-center hover:scale-95 transition shadow-md" title="Free App Call"><i class="fa-solid fa-headset"></i></button>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('contacts-modal').classList.add('active');
+        };
+
+        window.closeContactsModal = function() {
+            document.getElementById('contacts-modal').classList.remove('active');
+        };
+
+        window.startDirectAppCall = function(id) {
+            window.closeContactsModal();
+            let target = window.participants.find(p => p.id === id);
+            if(target) {
+                window.currentTargetUser = target;
+                document.getElementById('voice-friend-photo').src = target.photo;
+                document.getElementById('voice-friend-flag').innerText = target.flag;
+                document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0];
+                window.voiceFriend = target;
+                window.switchTab(1);
+            }
+        };
+
+        // --- ДОСЬЕ (Оставил на всякий случай для группового чата и резюме) ---
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
-        
         window.openAvatarModal = function(id) {
             window.closeDropdown();
-            
             let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
-            if (!p) {
-                p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
-            }
-            
+            if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
             const modalImg = document.getElementById('modal-img');
             if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
-            
             const modalName = document.getElementById('modal-name');
             if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; 
-            
             let idSpan = document.getElementById('modal-id');
-            if(!idSpan) {
-                idSpan = document.createElement('span');
-                idSpan.id = 'modal-id';
-                idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block';
-                if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling);
-            }
+            if(!idSpan) { idSpan = document.createElement('span'); idSpan.id = 'modal-id'; idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block'; if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling); }
             if(idSpan) idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
-            
             const modalProf = document.getElementById('modal-prof');
             if(modalProf) modalProf.innerText = p.profession || 'User';
 
@@ -843,14 +958,11 @@
                         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div>
                         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div>
                     </div>
-                    
                     <div class="grid grid-cols-2 gap-2 mb-3">
                         <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div>
                         <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div>
                     </div>
-
-                    ${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}
-                    
+                    ${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white font-bold">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}
                     <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
                         <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span>
                         <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
@@ -887,7 +999,6 @@
             document.getElementById('avatar-modal').classList.add('active');
         };
 
-        // --- СОХРАНЕНИЕ ПРОФИЛЯ ---
         window.openMyProfile = function() { 
             window.closeDropdown(); 
             if (window.isGuest) { 
@@ -973,7 +1084,7 @@
             window.closeProfileModal(); 
             if(window.autoSetMicLang) window.autoSetMicLang(); 
             
-            window.showToast("Profile Saved", "Showing your CV...", photo);
+            window.showToast("Profile Saved", "Showing your CV...", photo, "");
             setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
 
@@ -988,9 +1099,7 @@
             document.getElementById('edit-cv-modal').classList.add('active');
         };
         
-        window.closeEditCV = function() { 
-            document.getElementById('edit-cv-modal').classList.remove('active'); 
-        };
+        window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
 
         window.saveCVData = function() {
             window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim();
@@ -1013,7 +1122,6 @@
             
             window.closeEditCV();
             if(window.renderProfessionList) window.renderProfessionList();
-            
             setTimeout(() => { window.openAvatarModal('me'); }, 100);
         };
 
@@ -1047,7 +1155,7 @@
             
             archiveList.prepend(archiveItem);
             
-            window.showToast("Archived", "Saved to Cloud Repository", "");
+            window.showToast("Archived", "Saved to Cloud Repository", "", "");
             window.closeTrashModal(); 
             window.switchTab(5); 
         };
@@ -1069,7 +1177,6 @@
         window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
         window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
 
-        // --- ЛОКАЦИЯ ---
         window.sendLocationToChat = function() {
             window.closeAttachModal();
             if (navigator.geolocation) {
@@ -1152,20 +1259,6 @@
 
         document.body.addEventListener('click', () => { window.closeDropdown(); });
 
-        window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
-        
-        window.startInAppCall = function() { 
-            window.closePhoneChoiceModal(); 
-            let target = window.currentTargetUser || window.participants.find(p => p.id !== 'ai');
-            if(target) {
-                document.getElementById('voice-friend-photo').src = target.photo;
-                document.getElementById('voice-friend-flag').innerText = target.flag;
-                document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0];
-                window.voiceFriend = target; 
-            }
-            window.switchTab(1); 
-        };
-        
         window.startExternalCall = function() { 
             window.closePhoneChoiceModal(); 
             if (window.currentTargetUser && window.currentTargetUser.phone) { 
@@ -1178,7 +1271,6 @@
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
         window.openDirectEmail = function(email) { window.openEmailModal(); if(email) document.getElementById('email-to').value = email; };
         
-        // --- 🚀 РАБОТАЮЩАЯ ПОЧТА (ВШИТЫ НОВЫЕ КЛЮЧИ) ---
         window.sendEmailForm = function(e) { 
             e.preventDefault(); 
             const btn = e.target.querySelector('button[type="submit"]');
@@ -1191,7 +1283,6 @@
             const subj = document.getElementById('email-subject').value;
             const text = document.getElementById('email-text').value;
             
-            // Параметры под ваш шаблон template_0o6h5cm
             const templateParams = {
                 to_email: to,
                 subject: subj,
@@ -1199,7 +1290,6 @@
                 from_name: window.myUsername || "User"
             };
 
-            // Сервис и Шаблон успешно вшиты
             emailjs.send("service_8d6b5v3", "template_0o6h5cm", templateParams)
                 .then(function(response) {
                     btn.classList.remove('animate-pulse');
@@ -1215,7 +1305,7 @@
                         btn.style.background = '';
                         btn.style.color = '';
                         window.closeEmailModal();
-                        window.showToast("Email Sent", "Securely delivered via EmailJS", "");
+                        window.showToast("Email Sent", "Securely delivered via EmailJS", "", "");
                     }, 2000);
                 }, function(error) {
                     btn.classList.remove('animate-pulse');
@@ -1373,46 +1463,33 @@
                 }
             });
 
-            window.showToast = function(name, info, photoUrl) {
-                const toast = document.getElementById('toast-notification'); 
-                if(!toast) return;
-                document.getElementById('toast-name').innerText = name || 'User'; 
-                document.getElementById('toast-info').innerText = info || '';
-                const img = document.getElementById('toast-img'); 
-                const icon = document.getElementById('toast-icon-wrap');
-                if(photoUrl && photoUrl !== '') { 
-                    img.src = photoUrl; img.style.display = 'block'; icon.style.display = 'none'; 
-                } else { 
-                    img.style.display = 'none'; icon.style.display = 'flex'; 
-                }
-                toast.style.transition = 'all 0.4s ease'; 
-                toast.style.opacity = '1'; 
-                toast.style.transform = 'translate(-50%, 0)'; 
-                toast.style.top = '20px';
-                
-                if(window.toastTimer) clearTimeout(window.toastTimer);
-                window.toastTimer = setTimeout(() => { 
-                    toast.style.opacity = '0'; 
-                    toast.style.transform = 'translate(-50%, -20px)'; 
-                    toast.style.top = '-100px'; 
-                }, 7000); 
-            };
-
+            // 👉 ОДИН КЛИК НА КОНТАКТ В МЕНЮ = СРАЗУ В ЧАТ С УМНЫМ ДОСЬЕ
             window.renderSidebar = function() {
                 const chatSidebar = document.getElementById('chat-sidebar'); 
                 if (!chatSidebar) return;
+                
                 chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
+                
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
+                
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">You</span></div>`;
                 
                 window.participants.filter(p => p.id !== 'ai').forEach(p => {
                     let id1 = String(window.myProfileInfo.id); 
                     let id2 = String(p.id);
                     let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
-                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`;
+                    
+                    chatSidebar.innerHTML += `
+                    <div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')">
+                        <div class="chat-contact-icon" style="background-image: url('${p.photo}');">
+                            <img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]">
+                        </div>
+                        <span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span>
+                    </div>`;
                 });
             };
 
+            // 👉 ЗДЕСЬ СИСТЕМА ФОРМИРУЕТ УМНОЕ ДОСЬЕ ПРИ ПЕРЕХОДЕ В ЧАТ
             window.switchChatRoom = function(targetId) {
                 if (window.activeChatListener) { 
                     db.ref(window.currentRoomId).off("child_added", window.activeChatListener); 
@@ -1426,19 +1503,19 @@
 
                 if (targetId === 'global') { 
                     window.currentRoomId = "global"; 
-                    window.showToast("Global Chat", "International Public Room", ""); 
+                    window.showToast("Global Chat", "🌍 International Public Room", "", ""); 
                 }
                 else if (targetId === 'ai') { 
                     window.currentRoomId = "private_ai_bot"; 
                     headerTitle = "AI Assistant"; 
                     headerRoomId = window.currentRoomId; 
-                    window.showToast("AI Assistant", "Powered by Gemini", "https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff"); 
+                    window.showToast("AI Assistant", "Powered by Gemini", "https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff", ""); 
                 }
                 else if (targetId === 'me') { 
                     window.currentRoomId = "private_me_" + window.myProfileInfo.id; 
                     headerTitle = "My Notes"; 
                     headerRoomId = window.currentRoomId; 
-                    window.showToast("My Notes", "Saved messages", window.myProfileInfo.photo); 
+                    window.showToast("My Notes", "Saved messages", window.myProfileInfo.photo, ""); 
                 }
                 else {
                     const targetUser = window.participants.find(p => p.id === targetId);
@@ -1449,8 +1526,15 @@
                         window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                         headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; 
                         headerRoomId = window.currentRoomId; 
-                        let cDesc = targetUser.countryDesc || window.countryData[targetUser.flagCode]?.desc || "User in network"; 
-                        window.showToast(targetUser.flag + " " + (targetUser.name || 'User').split(' ')[0], cDesc, targetUser.photo); 
+                        
+                        // ИИ собирает информацию, даже если юзер ее не ввел
+                        let cDesc = targetUser.countryDesc || window.countryData[targetUser.flagCode]?.desc || "User in network."; 
+                        let phone = targetUser.phone || window.countryData[targetUser.flagCode]?.phone || "Hidden";
+                        let langs = targetUser.languages || "Auto";
+                        
+                        let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b> • Lang: ${langs}<br><span class="text-[#8696a0] mt-1 block">${cDesc}</span>`;
+                        
+                        window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, "📞 " + phone); 
                     }
                 }
                 
@@ -1463,7 +1547,6 @@
                 window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
 
-            // --- ЗАЩИТА GEMINI ---
             let isGeminiWaiting = false;
 
             window.sendFirebaseMsg = async function() { 
@@ -1472,7 +1555,7 @@
                 if (!rawText) return; 
                 
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) {
-                    window.showToast("Google AI", "Please wait a moment to avoid limits...", "");
+                    window.showToast("Google AI", "Please wait a moment to avoid limits...", "", "");
                     return;
                 }
 
@@ -1505,11 +1588,9 @@
                 const chatMsgs = document.getElementById('chat-messages'); 
                 if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
                 
-                // --- НАСТОЯЩИЙ ИИ (GEMINI 2.0 FLASH) ---
                 if (window.currentRoomId === 'private_ai_bot') { 
                     isGeminiWaiting = true;
                     
-                    // 👉 ВАЖНО: ВСТАВЬТЕ СЮДА ВАШ НОВЫЙ КЛЮЧ GEMINI
                     const GEMINI_API_KEY = "ВСТАВЬТЕ_СЮДА_НОВЫЙ_КЛЮЧ_GEMINI"; 
                     
                     const promptText = "System rule: You MUST reply in the EXACT SAME LANGUAGE as the user's message. User message: " + rawText;
@@ -1536,7 +1617,7 @@
                         });
                     })
                     .finally(() => {
-                        setTimeout(() => { isGeminiWaiting = false; }, 2000); // Таймер сброса квоты
+                        setTimeout(() => { isGeminiWaiting = false; }, 2000);
                     });
                 } 
             };
