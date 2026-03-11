@@ -65,7 +65,7 @@
         .incoming .chat-bubble { background: var(--wa-msg-in); color: var(--wa-text); border-bottom-left-radius: 4px; }
         .outgoing { align-self: flex-end; }
         .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
-        .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; font-weight: 600; }
+        .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
 
         .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border);}
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
@@ -295,22 +295,20 @@
                         </div>
                     </div>
                 </div>
-
+                
+                <div id="voice-selector-popup" style="position: absolute; bottom: 70px; right: 15px; background: #111b21; border: 1px solid #202c33; border-radius: 16px; padding: 8px; display: none; flex-direction: column; gap: 8px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+                    <button style="background: #00a884; color: #111b21; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; border: none; cursor: pointer;" onclick="event.stopPropagation(); window.startMic('voice-msg', 'voice-mic-btn-input')">🗣️ Voice Message</button>
+                    <button style="background: #202c33; color: white; padding: 8px 16px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; border: 1px solid #2a3942; cursor: pointer;" onclick="event.stopPropagation(); window.startMic('voice-text', 'voice-mic-btn-input')">🎤 Voice Text</button>
+                </div>
+                
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative">
-                    
-                    <div id="voice-selector-popup" class="absolute bottom-[60px] right-[10px] bg-[#111b21] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 z-[100] shadow-2xl">
-                        <button class="bg-[#00a884] text-[#111b21] px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-[#028266]" onclick="event.stopPropagation(); window.startMic('voice-msg', 'voice-mic-btn-input')">🗣️ Voice Message</button>
-                        <button class="bg-[#202c33] text-white px-4 py-2 rounded-xl text-xs font-bold border border-[#2a3942] shadow-md hover:bg-[#2a3942]" onclick="event.stopPropagation(); window.startMic('voice-text', 'voice-mic-btn-input')">🎤 Voice Text</button>
-                    </div>
-
                     <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('voice-chat-input')"></i>
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
+                        <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
                     </div>
-                    
-                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="document.getElementById('voice-selector-popup').classList.toggle('hidden'); document.getElementById('voice-selector-popup').classList.toggle('flex'); event.stopPropagation();"><i class="fa-solid fa-microphone"></i></button>
+                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="const p = document.getElementById('voice-selector-popup'); p.style.display = p.style.display === 'flex' ? 'none' : 'flex'; event.stopPropagation();"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg('voice-text')"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                 </div>
             </div>
@@ -412,10 +410,11 @@
                         <option value="pt-PT">🇵🇹 Português</option>
                         <option value="ar-AE">🇦🇪 العربية</option>
                     </select>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video text-[#00a884]"></i></div>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.startInAppCall(); window.closeDropdown();" title="Free Voice Room"><i class="fa-solid fa-phone text-blue-400"></i></div>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope text-red-400"></i></div>
-                    <div class="action-icon" onclick="event.stopPropagation(); window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot text-yellow-400"></i></div>
+                    
+                    <div class="action-icon" onclick="event.stopPropagation(); window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
+                    <div class="action-icon" onclick="event.stopPropagation(); window.startInAppCall(); window.closeDropdown();" title="Free Voice Room"><i class="fa-solid fa-phone"></i></div>
+                    <div class="action-icon" onclick="event.stopPropagation(); window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
+                    <div class="action-icon" onclick="event.stopPropagation(); window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
                     <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="event.stopPropagation(); window.switchTab(5); window.closeDropdown();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
                     <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="event.stopPropagation(); window.openTrashModal(); window.closeDropdown();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
                 </div>
@@ -433,7 +432,7 @@
 
     <script>
         // =========================================================
-        // ЕДИНЫЙ БЛОК СКРИПТОВ
+        // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ 
         // =========================================================
 
         window.currentEmojiTargetId = null;
@@ -454,7 +453,12 @@
             const icon = document.getElementById('toast-icon-wrap');
             if(photoUrl && photoUrl !== '') { img.src = photoUrl; img.style.display = 'block'; icon.style.display = 'none'; } 
             else { img.style.display = 'none'; icon.style.display = 'flex'; }
-            toast.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 0)'; toast.style.top = '15px';
+            
+            toast.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; 
+            toast.style.opacity = '1'; 
+            toast.style.transform = 'translate(-50%, 0)'; 
+            toast.style.top = '15px';
+            
             if(window.toastTimer) clearTimeout(window.toastTimer);
             window.toastTimer = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px)'; toast.style.top = '-150px'; }, 6000); 
         };
@@ -462,7 +466,11 @@
         window.openAttachModal = function() { window.closeDropdown(); document.getElementById('attach-modal').classList.add('active'); };
         window.closeAttachModal = function() { document.getElementById('attach-modal').classList.remove('active'); };
         
-        window.openNewsFast = function() { window.closeDropdown(); document.getElementById('search-modal').classList.add('active'); document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('news-categories').style.display = 'flex'; setTimeout(() => { const c = window.myProfileInfo.country; let q = "World News"; if (c && c !== 'Global') q = "Latest news " + c; window.doNewsSearch(q); }, 300); };
+        window.openNewsFast = function() {
+            window.closeDropdown(); document.getElementById('search-modal').classList.add('active'); 
+            document.getElementById('search-suggestions').style.display = 'none'; document.getElementById('news-categories').style.display = 'flex';
+            setTimeout(() => { const c = window.myProfileInfo.country; let q = "World News"; if (c && c !== 'Global') q = "Latest news " + c; window.doNewsSearch(q); }, 300);
+        };
         window.doNewsSearch = function(q) { document.getElementById('global-search-input').value = q; document.getElementById('search-results-area').innerHTML = ''; const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); };
         window.openSearchModal = function() { window.closeDropdown(); document.getElementById('search-modal').classList.add('active'); document.getElementById('global-search-input').value = ''; document.getElementById('search-results-area').innerHTML = ''; document.getElementById('search-suggestions').style.display = 'block'; const cat = document.getElementById('news-categories'); if(cat) cat.style.display = 'none'; const iframe = document.getElementById('search-result-frame'); iframe.src = 'about:blank'; iframe.classList.add('hidden'); setTimeout(() => document.getElementById('global-search-input').focus(), 100); };
         window.closeSearchModal = function() { document.getElementById('search-modal').classList.remove('active'); document.getElementById('global-search-input').value = ''; document.getElementById('search-results-area').innerHTML = ''; const iframe = document.getElementById('search-result-frame'); if (iframe) { iframe.src = 'about:blank'; iframe.classList.add('hidden'); } document.getElementById('search-suggestions').style.display = 'block'; const cat = document.getElementById('news-categories'); if(cat) cat.style.display = 'none'; };
@@ -497,7 +505,6 @@
         };
         window.closeContactsModal = function() { document.getElementById('contacts-modal').classList.remove('active'); };
 
-        // 💡 1. & 7. РОМБ: ИСПРАВЛЕННАЯ ТРУБКА И ФОТО 
         window.startDirectAppCall = function(id) { 
             window.closeContactsModal(); let target = window.participants.find(p => p.id === id); 
             if(target) { 
@@ -509,18 +516,6 @@
                 window.switchTab(1); 
             } 
         };
-        window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
-        window.startInAppCall = function() { 
-            window.closePhoneChoiceModal(); 
-            if (window.currentTargetUser) { 
-                document.getElementById('voice-friend-photo').src = window.currentTargetUser.photo; 
-                document.getElementById('voice-friend-flag').innerText = window.currentTargetUser.flag; 
-                document.getElementById('voice-friend-name').innerText = (window.currentTargetUser.name||'User').split(' ')[0]; 
-                window.voiceFriend = window.currentTargetUser; 
-            } 
-            window.switchTab(1); 
-        };
-        window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         window.openAvatarModal = function(id) {
@@ -566,13 +561,6 @@
         window.closeDropdown = function() { document.getElementById('header-dropdown')?.classList.remove('active'); document.getElementById('rhombus-actions')?.classList.remove('active'); document.getElementById('rhombus-btn')?.classList.remove('active'); };
         window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); };
         
-        // 💡 ГЛОБАЛЬНЫЙ КЛИК: Закрывает Ромб, Меню и ПОПАП МИКРОФОНА
-        document.body.addEventListener('click', () => { 
-            window.closeDropdown(); 
-            const micPopup = document.getElementById('voice-selector-popup');
-            if(micPopup) { micPopup.classList.remove('active'); micPopup.style.display = 'none'; }
-        });
-        
         window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
         
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
@@ -583,25 +571,6 @@
         window.closeFullscreenImage = function() { document.getElementById('fullscreen-image-modal').classList.remove('active'); };
         window.handleMediaUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const isVideo = file.type.startsWith('video/'); firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); window.closeAttachModal(); }; reader.readAsDataURL(file); };
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); localStorage.removeItem('hf_god_mode'); location.reload(); };
-
-        // 💡 4. ИНТЕЛЛЕКТУАЛЬНАЯ НАВИГАЦИЯ (Закрытие вкладок кликом по иконке)
-        window.currentIndex = 0;
-        window.switchTab = function(index) { 
-            try { 
-                if (window.currentIndex === index && index !== 0) { 
-                    index = 0; 
-                }
-                const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
-                const pages = document.querySelectorAll('.page-content'); 
-                pages.forEach(p => p.classList.remove('active')); 
-                navLinks.forEach(l => l.classList.remove('active')); 
-                const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
-                const targetId = screens[index]; 
-                document.getElementById(targetId)?.classList.add('active'); 
-                if (index < navLinks.length && navLinks[index]) { navLinks[index].classList.add('active'); } 
-                window.currentIndex = index; 
-            } catch(e) {} 
-        };
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
@@ -678,7 +647,7 @@
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
-                // 💡 6. ФОТО И ФЛАГИ В ЧАТЕ ДЛЯ ВСЕХ 
+                // 💡 ПУНКТ 6: АВАТАРКИ С ФЛАГАМИ ДЛЯ ВСЕХ 
                 let avatarHtml = isAI ? 
                     `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : 
                     `<div class="relative shrink-0 self-end cursor-pointer" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">
@@ -693,7 +662,7 @@
                 else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
                 else if (data.isFile) { bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`; bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`; }
 
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing items-end' : 'incoming items-start'} flex flex-col"><div class="chat-sender-name ${isMe ? 'mr-1 text-[#00a884]' : 'ml-1'}">${isMe ? 'You' : (data.name || 'User')}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
+                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing items-end' : 'incoming items-start'} flex flex-col"><div class="chat-sender-name ${isMe ? 'mr-1 text-[#00a884] self-end' : 'ml-1'}">${isMe ? 'You' : (data.name || 'User')}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
                 msgWrapper.innerHTML = isMe ? bubbleHtml + avatarHtml : avatarHtml + bubbleHtml; 
                 
                 messageGroup.appendChild(msgWrapper);
@@ -719,7 +688,7 @@
                         } catch (e) {}
                     } else { if (data.langCode === window.myProfileInfo.langCode) { finalLangToSpeak = window.myProfileInfo.langCode; } }
 
-                    // 💡 ОЗВУЧКА ЕСЛИ isVoiceMessage = TRUE
+                    // 💡 ОЗВУЧКА СООБЩЕНИЯ ЕСЛИ VOICE MESSAGE
                     if (data.isVoiceRoom && !isMe) {
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name||'User'}:</span> <span class="text-[#00a884] font-bold">${finalTranslatedText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
@@ -805,6 +774,7 @@
             if (SpeechRec) {
                 let rec = new SpeechRec(); rec.continuous = false; rec.interimResults = false; let currentMicTarget = null; let currentMicBtn = null;
                 
+                // 💡 АНИМАЦИЯ МИКРОФОНА
                 rec.onstart = () => { 
                     if(currentMicBtn) { 
                         currentMicBtn.classList.remove('bg-[#202c33]', 'text-[#8696a0]', 'text-[#ef4444]', 'border-[#2a3942]');
@@ -815,7 +785,7 @@
                     if(currentMicBtn) { 
                         currentMicBtn.classList.remove('bg-red-500', 'text-white', 'animate-pulse', 'scale-110'); 
                         currentMicBtn.classList.add('bg-[#202c33]', 'border-[#2a3942]');
-                        if(currentMicBtn.id === 'voice-mic-btn-input' || currentMicBtn.id === 'main-chat-mic-btn' || currentMicBtn.id === 'conf-mic-btn-input') currentMicBtn.classList.add('text-[#8696a0]');
+                        if(currentMicBtn.id === 'voice-mic-btn-input' || currentMicBtn.id === 'main-chat-mic-btn' || currentMicBtn.id === 'conf-mic-btn-input') currentMicBtn.classList.add('text-[#ef4444]');
                     } 
                 };
                 rec.onerror = rec.onend;
