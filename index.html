@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V41.4 (Language Engine Fix)</title>
+    <title>Hello Friends - Golden Master V41.5 (Perfect UX)</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
@@ -262,15 +262,21 @@
             </div>
 
             <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a]">
-                <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0 relative">
                     <h2 class="text-xl font-bold text-white mx-auto" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
+                    
+                    <button id="ai-voice-toggle" class="absolute right-4 bg-[#202c33] border border-[#2a3942] text-[#8696a0] px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-md" onclick="window.toggleAIVoice()" title="Auto-Read Incoming Voice">
+                        <i class="fa-solid fa-robot mr-1"></i> AI Read: OFF
+                    </button>
                 </div>
+                
                 <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
                     <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
                         <span class="chat-info-marquee-text" id="voice-info-marquee">Waiting for voice input...</span>
                     </div>
                 </div>
+                
                 <div class="flex-grow flex flex-col justify-center items-center relative w-full px-2">
                     <div class="flex justify-center items-center gap-4 sm:gap-8 w-full">
                         <div class="flex flex-col items-center flex-1">
@@ -295,12 +301,13 @@
                 </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
-                    <button id="ai-voice-toggle" class="w-[42px] h-[42px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleAIVoice()" title="Auto-Read Incoming Voice">
-                        <i class="fa-solid fa-volume-xmark"></i>
-                    </button>
+                    <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+                    
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
+                        <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('voice-chat-input')"></i>
                         <input type="text" id="voice-chat-input" placeholder="Speak or type..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                     </div>
+                    
                     <button id="voice-mic-btn-input" class="w-[42px] h-[42px] rounded-full bg-[#202c33] text-[#ef4444] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition shadow-[0_0_10px_rgba(239,68,68,0.2)]" onclick="window.startMic('voice', 'voice-mic-btn-input')" title="Speak Message">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
@@ -393,15 +400,12 @@
             <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu">
-                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2" onclick="event.stopPropagation()">
-                        <option value="en-US">🇬🇧 English</option><option value="az-AZ">🇦🇿 Azərbaycanca</option><option value="ru-RU">🇷🇺 Русский</option><option value="it-IT">🇮🇹 Italiano</option>
-                    </select>
-                    <div class="action-icon" onclick="window.switchTab(2); window.closeDropdown();" title="Video Call"><i class="fa-solid fa-video"></i></div>
-                    <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
-                    <div class="action-icon" onclick="window.openEmailModal(); window.closeDropdown();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
-                    <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
-                    <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeDropdown();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
-                    <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeDropdown();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
+                    <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeDropdown();" title="Make a Call"><i class="fa-solid fa-phone text-[#00a884]"></i></div>
+                    <div class="action-icon" onclick="window.openBankTransferModal(); window.closeDropdown();" title="Bank Transfer"><i class="fa-solid fa-money-bill-transfer text-green-400"></i></div>
+                    <div class="action-icon" onclick="window.openLocationModal(); window.closeDropdown();" title="Location"><i class="fa-solid fa-location-dot text-yellow-400"></i></div>
+                    <div class="action-icon" onclick="window.openSearchModal(); window.closeDropdown();" title="Global Search"><i class="fa-solid fa-magnifying-glass text-blue-400"></i></div>
+                    <div class="action-icon" onclick="window.switchTab(5); window.closeDropdown();" title="Archive"><i class="fa-solid fa-box-archive text-purple-400"></i></div>
+                    <div class="action-icon" onclick="window.openTrashModal(); window.closeDropdown();" title="Clear Chat"><i class="fa-solid fa-trash text-red-500"></i></div>
                 </div>
             </div>
         </div>
@@ -413,7 +417,6 @@
         <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();"><div class="app-modal-content h-[75vh]" onclick="event.stopPropagation();"><div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div><h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-address-book text-[#00a884] mr-2"></i> Quick Contacts</h2><div id="contacts-list-container" class="flex flex-col gap-3 overflow-y-auto pb-4"></div></div></div>
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();"><div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();"><div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md"><div><h2 id="profile-modal-title" class="text-xl font-bold text-white mb-0.5" data-i18n="reg_title">Welcome!</h2><p id="profile-modal-subtitle" class="text-[0.7rem] text-[#8696a0] m-0" data-i18n="reg_subtitle">Basic Information</p></div><button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark text-xl"></i></button></div><div class="overflow-y-auto flex-grow p-5 pb-10"><div class="flex flex-col items-center mb-6 mt-2 shrink-0"><div class="relative w-24 h-24"><img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] shadow-lg"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera"></i></button></div></div><label class="form-label" data-i18n="reg_name">Full Name</label><input type="text" id="edit-name" class="form-input-box" placeholder="John Doe"><label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label><div class="flex items-center gap-3 mb-4 shrink-0"><img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm"><div class="relative w-full"><select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)"><option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option></select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i></div></div><label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1..."><label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@..."></div><div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button></div></div></div>
         <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();"><div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();"><div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md"><div><h2 class="text-xl font-bold text-white mb-0.5"><i class="fa-solid fa-file-signature text-[#00a884] mr-2"></i> Edit CV</h2><p class="text-[0.7rem] text-[#8696a0] m-0">Professional Builder</p></div><button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark text-xl"></i></button></div><div class="overflow-y-auto flex-grow p-5 pb-10"><label class="form-label">Profession / Title</label><input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer"><label class="form-label">Languages Spoken</label><input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)"><label class="form-label">Core Skills</label><textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea><label class="form-label">Work Experience</label><textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea><label class="form-label">Education</label><textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea><label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea></div><div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button></div></div></div>
-        
     </div>
 
     <script>
@@ -454,12 +457,12 @@
             window.aiVoiceEnabled = !window.aiVoiceEnabled;
             const btn = document.getElementById('ai-voice-toggle');
             if (window.aiVoiceEnabled) {
-                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                btn.innerHTML = '<i class="fa-solid fa-robot mr-1"></i> AI Read: ON';
                 btn.classList.add('bg-[#00a884]', 'text-[#111b21]');
                 btn.classList.remove('bg-[#202c33]', 'text-[#8696a0]', 'border-[#2a3942]');
                 window.showToast("AI Speaker ON", "Voice messages will be read aloud.", "");
             } else {
-                btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                btn.innerHTML = '<i class="fa-solid fa-robot mr-1"></i> AI Read: OFF';
                 btn.classList.remove('bg-[#00a884]', 'text-[#111b21]');
                 btn.classList.add('bg-[#202c33]', 'text-[#8696a0]', 'border-[#2a3942]');
                 if('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -565,22 +568,7 @@
         
         // 👉 ФИКСИРОВАННАЯ КНОПКА ЗВОНКА
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
-        
-        window.startInAppCall = function() { 
-            window.closePhoneChoiceModal(); 
-            if (window.currentTargetUser) { 
-                document.getElementById('voice-friend-photo').src = window.currentTargetUser.photo; 
-                document.getElementById('voice-friend-flag').innerText = window.currentTargetUser.flag; 
-                document.getElementById('voice-friend-name').innerText = (window.currentTargetUser.name||'User').split(' ')[0]; 
-                window.voiceFriend = window.currentTargetUser; 
-                window.switchTab(1); 
-                window.showToast("Voice Room", "Connected to " + window.currentTargetUser.name.split(' ')[0], window.currentTargetUser.photo, "");
-            } else { 
-                window.switchTab(1); 
-                window.showToast("Voice Room", "Global Voice Room", "", "");
-            } 
-        };
-
+        window.startInAppCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser) { document.getElementById('voice-friend-photo').src = window.currentTargetUser.photo; document.getElementById('voice-friend-flag').innerText = window.currentTargetUser.flag; document.getElementById('voice-friend-name').innerText = (window.currentTargetUser.name||'User').split(' ')[0]; window.voiceFriend = window.currentTargetUser; window.switchTab(1); window.showToast("Voice Room", "Connected to " + window.currentTargetUser.name.split(' ')[0], window.currentTargetUser.photo, ""); } else { window.switchTab(1); window.showToast("Voice Room", "Global Voice Room", "", ""); } };
         window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
         
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
@@ -592,6 +580,25 @@
         window.handleMediaUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const isVideo = file.type.startsWith('video/'); firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); window.closeAttachModal(); }; reader.readAsDataURL(file); };
         window.logoutUser = function() { localStorage.removeItem('hf_active_user'); localStorage.removeItem('hf_god_mode'); location.reload(); };
 
+        // 👉 ИНТЕЛЛЕКТУАЛЬНАЯ НАВИГАЦИЯ (Закрытие вкладок повторным кликом)
+        window.currentIndex = 0;
+        window.switchTab = function(index) { 
+            try { 
+                if (window.currentIndex === index && index !== 0) {
+                    index = 0; // Если кликнули на ту же кнопку, возвращаемся в Главный Чат
+                }
+                const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
+                const pages = document.querySelectorAll('.page-content'); 
+                pages.forEach(p => p.classList.remove('active')); 
+                navLinks.forEach(l => l.classList.remove('active')); 
+                const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
+                const targetId = screens[index]; 
+                document.getElementById(targetId)?.classList.add('active'); 
+                if (index < navLinks.length && navLinks[index]) { navLinks[index].classList.add('active'); } 
+                window.currentIndex = index; 
+            } catch(e) {} 
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
             window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
@@ -600,8 +607,6 @@
             window.changeAppLanguage = function(langCode) { window.appLang = langCode; localStorage.setItem('hf_app_lang', window.appLang); window.applyTranslations(); window.closeDropdown(); };
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
             window.applyTranslations();
-
-            window.switchTab = function(index) { try { const navLinks = Array.from(document.querySelectorAll('.nav-item')); const pages = document.querySelectorAll('.page-content'); pages.forEach(p => p.classList.remove('active')); navLinks.forEach(l => l.classList.remove('active')); const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; const targetId = screens[index]; document.getElementById(targetId)?.classList.add('active'); if (index < navLinks.length && navLinks[index]) { navLinks[index].classList.add('active'); } window.currentIndex = index; } catch(e) {} };
 
             const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); const db = firebase.database();
@@ -669,7 +674,6 @@
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
-                // 👉 АВАТАРКИ С ФЛАГАМИ ДЛЯ ВСЕХ (И СЛЕВА, И СПРАВА)
                 let avatarHtml = isAI ? 
                     `<div class="w-8 h-8 rounded-full shrink-0 self-end flex items-center justify-center bg-purple-900 text-white text-xs cursor-pointer shadow-md" onclick="window.openAvatarModal('ai')">🤖</div>` : 
                     `<div class="relative shrink-0 self-end cursor-pointer" onclick="window.openAvatarModal('${isMe ? 'me' : p.id}')">
@@ -710,7 +714,6 @@
                         } catch (e) {}
                     } else { if (data.langCode === window.myProfileInfo.langCode) { finalLangToSpeak = window.myProfileInfo.langCode; } }
 
-                    // 👉 Озвучка ТОЛЬКО входящих сообщений (если я не отправитель)
                     if (data.isVoiceRoom && !isMe) {
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name||'User'}:</span> <span class="text-[#00a884] font-bold">${finalTranslatedText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
@@ -736,20 +739,17 @@
             window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
             window.voiceFriend = window.participants.find(c => c.id === 'marinella') || window.participants[1] || aiBot; 
             
-            // 👉 ИСПРАВЛЕННАЯ ЛОГИКА ОТПРАВКИ ИЗ VOICE ROOM (Умный перевод до отправки)
             window.sendVoiceMsg = async function() { 
                 const inputEl = document.getElementById('voice-chat-input'); const rawText = inputEl.value.trim(); if(!rawText) return; inputEl.value = ''; 
                 
                 let textToShip = rawText;
                 const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en';
                 
-                // Перевод на родной язык (Если клавиатура русская, а флаг Итальянский -> переведет на итальянский)
                 try { 
                     const resMe = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(rawText)}`).then(r => r.json());
                     textToShip = resMe[0][0][0];
                 } catch(e) {}
 
-                // Мгновенный показ того, что услышит собеседник (Бегущая строка)
                 if (window.voiceFriend && window.voiceFriend.langCode) {
                     try {
                         const resFriend = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${window.voiceFriend.langCode}&dt=t&q=${encodeURIComponent(textToShip)}`).then(r => r.json()); 
