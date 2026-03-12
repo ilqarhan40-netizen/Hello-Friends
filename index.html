@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V41.0 (Clean Monolith)</title>
+    <title>Hello Friends - Golden Master V43 (Double Smart System)</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -180,17 +180,13 @@
     </div>
 
     <script>
-        // Логика проверки ПИН-кода
         const SECRET_PIN = "0375"; 
-        
         if (localStorage.getItem('hf_app_unlocked') === 'true') {
             document.getElementById('security-lock').style.display = 'none';
         }
-
         function checkPin() {
             const input = document.getElementById('pin-input').value;
             const errorMsg = document.getElementById('pin-error');
-            
             if (input === SECRET_PIN) {
                 localStorage.setItem('hf_app_unlocked', 'true');
                 errorMsg.style.display = 'none';
@@ -199,7 +195,6 @@
             } else {
                 errorMsg.style.display = 'block';
                 document.getElementById('pin-input').value = '';
-                // Эффект тряски при ошибке
                 const lockScreen = document.getElementById('security-lock');
                 lockScreen.style.transform = 'translateX(-10px)';
                 setTimeout(() => lockScreen.style.transform = 'translateX(10px)', 50);
@@ -207,8 +202,6 @@
                 setTimeout(() => lockScreen.style.transform = 'translateX(0)', 150);
             }
         }
-        
-        // Вход по нажатию Enter
         document.getElementById('pin-input')?.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') checkPin();
         });
@@ -503,6 +496,16 @@
             </div>
         </div>
 
+        <div id="personal-lang-modal" class="app-modal" onclick="if(event.target===this) window.closePersonalLangModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closePersonalLangModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closePersonalLangModal()"></div>
+                <h2 class="text-xl font-bold mb-2 text-white text-center"><i class="fa-solid fa-language text-[#00a884] mr-2"></i> Chat Language</h2>
+                <p class="text-center text-[#8696a0] text-xs mb-4 px-4">Changes your text and incoming messages. Does not break auto-translate for others.</p>
+                <div class="flex flex-col gap-2 overflow-y-auto pb-6" id="personal-lang-list" style="max-height: 50vh;"></div>
+            </div>
+        </div>
+
         <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
             <div class="app-modal-content" onclick="event.stopPropagation();">
                 <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeAdminModal()"></div>
@@ -665,10 +668,9 @@
 
     <script>
         // =========================================================
-        // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ (БЕЗ ДУБЛЕЙ)
+        // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ
         // =========================================================
 
-        // --- ГЛОБАЛЬНЫЙ АУТ-КЛИК И ЗАКРЫТИЕ МЕНЮ ---
         window.closeAllMenus = function() { 
             document.getElementById('header-dropdown')?.classList.remove('active'); 
             document.getElementById('rhombus-actions')?.classList.remove('active'); 
@@ -687,7 +689,6 @@
         
         document.body.addEventListener('click', () => { window.closeAllMenus(); });
 
-        // --- ДВИЖОК ОЗВУЧКИ (TEXT-TO-SPEECH) ---
         window.speakTranslatedText = function(text, langCode) {
             if (!window.speechSynthesis) return; 
             window.speechSynthesis.cancel(); 
@@ -826,13 +827,13 @@
         window.openAdminModal = function() { 
             window.closeDropdown(); const sel = document.getElementById('admin-user-select'); sel.innerHTML = ''; 
             window.participants.forEach(p => { if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag} - ${p.phone||'No phone'}</option>`; } }); 
-            sel.innerHTML += `<option value="${window.myProfileInfo.id}">${(window.myProfileInfo.name||'Me').split(' (')[0]} ${window.myProfileInfo.flag} (Current)</option>`; 
+            sel.innerHTML += `<option value="${window.myProfileInfo.id}">${window.myUsername} ${window.myProfileInfo.flag} (Current)</option>`; 
             document.getElementById('admin-modal').classList.add('active'); 
         };
 
         window.adminLogin = function() { 
             const id = document.getElementById('admin-user-select').value; 
-            if(confirm("Are you sure you want to log in as this user?")) { localStorage.setItem('hf_active_user', id); location.reload(); } 
+            if(confirm("Are you sure you want to log in as this user?")) { localStorage.setItem('hf_active_user', id); document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; location.reload(); } 
         };
 
         window.adminDeleteUser = function() {
@@ -878,8 +879,45 @@
         };
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
+        
+        // НОВЫЕ ФУНКЦИИ ДЛЯ ШТОРКИ ЯЗЫКОВ
+        window.personalLangs = [
+            { val: 'auto', label: '🤖 Auto (Profile Match)' },
+            { val: 'en', label: '🇬🇧 English' },
+            { val: 'ru', label: '🇷🇺 Русский' },
+            { val: 'az', label: '🇦🇿 Azərbaycanca' },
+            { val: 'it', label: '🇮🇹 Italiano' },
+            { val: 'es', label: '🇪🇸 Español' },
+            { val: 'fr', label: '🇫🇷 Français' }
+        ];
+
+        window.openPersonalLangModal = function() {
+            window.closeDropdown();
+            let current = localStorage.getItem('hf_personal_lang') || 'auto';
+            let html = '';
+            window.personalLangs.forEach(l => {
+                let isActive = current === l.val;
+                let btnClass = isActive ? 'bg-[#00a884] text-[#111b21] shadow-[0_0_15px_rgba(0,168,132,0.4)]' : 'bg-[#202c33] text-white border border-[#2a3942] hover:bg-[#2a3942]';
+                html += `<button onclick="window.setPersonalLang('${l.val}')" class="w-full py-3 px-4 rounded-xl font-bold text-left transition ${btnClass}">${l.label}${isActive ? '<i class="fa-solid fa-check float-right mt-1 text-lg"></i>' : ''}</button>`;
+            });
+            document.getElementById('personal-lang-list').innerHTML = html;
+            document.getElementById('personal-lang-modal').classList.add('active');
+        };
+
+        window.closePersonalLangModal = function() {
+            document.getElementById('personal-lang-modal').classList.remove('active');
+        };
+
+        window.setPersonalLang = function(val) {
+            localStorage.setItem('hf_personal_lang', val);
+            window.closePersonalLangModal();
+            let labelObj = window.personalLangs.find(l => l.val === val);
+            window.showToast('Language Changed', 'Chat language set to: ' + (labelObj ? labelObj.label : val), '', '');
+        };
+
         window.openAvatarModal = function(id) {
-            window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
+            window.closeDropdown(); 
+            let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
             const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
             const modalName = document.getElementById('modal-name'); if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; 
@@ -913,7 +951,7 @@
                     actionButtons.innerHTML = `<div class="flex w-full gap-2 mt-2"><button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Edit Info</button><button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button></div>`; 
                     actionButtons.style.display = 'block'; 
                 } else {
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`;
+                    actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`;
                     actionButtons.style.display = 'block'; 
                 }
             }
@@ -925,7 +963,7 @@
             if (window.isGuest) { 
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); document.getElementById('edit-preview-photo').src = 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
             } else { 
-                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myProfileInfo.name.replace(' (You)', ''); document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
+                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myUsername; document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
             } 
             if(window.applyTranslations) window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); 
         };
@@ -954,9 +992,16 @@
             let updatedProfile = { name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value };
 
             if (window.isGuest) {
-                updatedProfile.id = newId; window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); localStorage.setItem('hf_active_user', newId); firebase.database().ref('users/' + newId).set(window.myProfileInfo); window.isGuest = false; 
+                updatedProfile.id = newId; window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; 
+                localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); 
+                localStorage.setItem('hf_active_user', newId); 
+                document.cookie = "hf_active_user=" + newId + "; max-age=31536000; path=/";
+                firebase.database().ref('users/' + newId).set(window.myProfileInfo); 
+                window.isGuest = false; 
+                window.myUsername = nameVal;
             } else {
                 window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); firebase.database().ref('users/' + newId).update(updatedProfile); 
+                window.myUsername = nameVal;
             }
             window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Showing your CV...", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
@@ -1114,7 +1159,7 @@
             reader.readAsDataURL(file);
         };
 
-        window.logoutUser = function() { localStorage.removeItem('hf_active_user'); localStorage.removeItem('hf_god_mode'); location.reload(); };
+        window.logoutUser = function() { localStorage.removeItem('hf_active_user'); localStorage.removeItem('hf_god_mode'); document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; location.reload(); };
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
@@ -1128,7 +1173,7 @@
                 fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Réunion", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", logout: "Déconnexion", lang: "Langue: FR", reg_title: "Bienvenue sur Hello Friends!", reg_subtitle: "Veuillez vous inscrire", reg_name: "Nom Complet", reg_country: "Pays", reg_phone: "Téléphone", reg_email: "Email", reg_prof: "Profession", reg_langs: "Langues", reg_bio: "Bio / CV", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
                 pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Reunião", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar", import: "Importar", logout: "Sair", lang: "Idioma: PT", reg_title: "Bem-vindo ao Hello Friends!", reg_subtitle: "Conclua o registro", reg_name: "Nome Completo", reg_country: "País", reg_phone: "Telefone", reg_email: "Email", reg_prof: "Profissão", reg_langs: "Idiomas", reg_bio: "Bio / CV", reg_save: "Salvar", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
                 ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "通話", cv: "履歴書", social: "SNS", profile: "マイプロフィール", wallet: "ウォレット", theme: "テーマ", export: "エクスポート", import: "インポート", logout: "ログアウト", lang: "言語: JA", reg_title: "Hello Friendsへようこそ！", reg_subtitle: "登録を完了してください", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_prof: "職業", reg_langs: "言語", reg_bio: "自己紹介 / CV", reg_save: "保存", edit_title: "マイプロフィール", edit_subtitle: "基本情報" },
-                zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "会议", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", logout: "退出", lang: "语言: ZH", reg_title: "欢迎来到 Hello Friends！", reg_subtitle: "请完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话", reg_email: "邮箱", reg_prof: "职业", reg_langs: "语言", reg_bio: "简介 / 简历", reg_save: "保存", edit_title: "我的资料", edit_subtitle: "基本信息" }
+                zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "会议", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", logout: "退出", lang: "语言: ZH", reg_title: "欢迎来到 Hello Friends！",简_subtitle: "请完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话", reg_email: "邮箱", reg_prof: "职业", reg_langs: "语言", reg_bio: "简介 / 简历", reg_save: "保存", edit_title: "我的资料", edit_subtitle: "基本信息" }
             };
             let sysLang = navigator.language.slice(0, 2); let defLang = ['en', 'ru', 'az', 'it', 'es', 'fr', 'pt', 'ja', 'zh'].includes(sysLang) ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             window.changeAppLanguage = function(langCode) { window.appLang = langCode; localStorage.setItem('hf_app_lang', window.appLang); window.applyTranslations(); window.closeDropdown(); };
@@ -1141,7 +1186,19 @@
 
             const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); const db = firebase.database();
-            let activeUserId = localStorage.getItem('hf_active_user'); window.isGuest = !activeUserId; window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
+            
+            function getActiveUserId() {
+                let uid = localStorage.getItem('hf_active_user');
+                if (!uid) {
+                    let match = document.cookie.match(new RegExp('(^| )hf_active_user=([^;]+)'));
+                    if (match) uid = match[2];
+                }
+                return uid;
+            }
+            let activeUserId = getActiveUserId(); 
+            window.isGuest = !activeUserId; 
+            
+            window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
 
             window.allCharacters = [
                 { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '10.1M', seas: 'Caspian Sea', desc: 'Passionate about connecting people.', skills: 'Leadership, Architecture', experience: '10+ years in Tech', education: 'BSc Computer Science', languages: 'AZ, RU, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
@@ -1153,7 +1210,7 @@
             let myChar = null;
             if (window.isGuest) { window.myUsername = "Guest"; myChar = { id: 'guest' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: '', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: '', skills: '', experience: '', education: '', languages: 'Auto' }; } else { try { let saved = localStorage.getItem('hf_custom_' + activeUserId); if(saved) myChar = JSON.parse(saved); } catch(e) {} if(!myChar) myChar = window.allCharacters.find(c => c.id === activeUserId) || window.allCharacters[0]; window.myUsername = (myChar && myChar.name) ? myChar.name.split(' ')[0] : "User"; }
             
-            window.myProfileInfo = { ...myChar, id: myChar.id, name: window.myUsername + ' (You)' }; window.participants = [aiBot, ...window.allCharacters];
+            window.myProfileInfo = { ...myChar, id: myChar.id, name: window.myUsername }; window.participants = [aiBot, ...window.allCharacters];
 
             setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = "You"; }, 1000);
 
@@ -1183,13 +1240,31 @@
             window.sendFirebaseMsg = async function() { 
                 const inputField = document.getElementById('chat-input'); const rawText = inputField.value.trim(); if (!rawText) return; 
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment to avoid limits...", "", ""); return; }
-                inputField.value = ''; const myLang = window.myProfileInfo ? window.myProfileInfo.langCode : 'en'; let textToShip = rawText; 
-                try { const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myLang}&dt=t&q=${encodeURIComponent(rawText)}`; const response = await fetch(translateUrl); const data = await response.json(); if (data && data[0] && data[0][0][0]) { textToShip = data[0][0][0]; } } catch (error) { console.error("Translate error:", error); } 
+                
+                inputField.value = ''; 
+                
+                let personalLang = localStorage.getItem('hf_personal_lang');
+                let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
+                
+                let textToShip = rawText; 
+                try { 
+                    const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`; 
+                    const response = await fetch(translateUrl); 
+                    const data = await response.json(); 
+                    if (data && data[0] && data[0][0][0]) { textToShip = data[0][0][0]; } 
+                } catch (error) { console.error("Translate error:", error); } 
+                
                 db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); 
                 const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
                 
                 if (window.currentRoomId === 'private_ai_bot') { 
-                    isGeminiWaiting = true; const GEMINI_API_KEY = "ВСТАВЬТЕ_СЮДА_НОВЫЙ_КЛЮЧ_GEMINI"; const promptText = "System rule: You MUST reply in the EXACT SAME LANGUAGE as the user's message. User message: " + rawText;
+                    isGeminiWaiting = true; 
+                    
+                    // ========================================================
+                    const GEMINI_API_KEY = "ТВОЙ_КЛЮЧ_GEMINI_СЮДА"; 
+                    // ========================================================
+                    
+                    const promptText = "System rule: You MUST reply in the EXACT SAME LANGUAGE as the user's message. User message: " + rawText;
                     fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }) })
                     .then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.error?.message || "Unknown API Error"); return data; })
                     .then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
@@ -1207,10 +1282,11 @@
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
-                // Умный аватар с флагом
                 let userFlag = isAI ? '🤖' : (p.flag || '🌐');
                 let avatarPhoto = isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo;
-                let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer" onclick="window.openAvatarModal('${isAI ? 'ai' : (isMe ? 'me' : p.id)}')">
+                
+                // ВАЖНО: Клик по своей аватарке открывает шторку языков. Клик по чужой - профиль друга.
+                let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${isMe ? 'window.openPersonalLangModal()' : `window.openAvatarModal('${isAI ? 'ai' : p.id}')`}">
                     <img src="${avatarPhoto}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md">
                     <span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${userFlag}</span>
                 </div>`;
@@ -1222,15 +1298,36 @@
                 else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
                 else if (data.isFile) { bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`; bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`; }
 
-                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing items-end' : 'incoming items-start'} flex flex-col"><div class="chat-sender-name">${isMe ? 'You' : (data.name || 'User')}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
+                const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing items-end' : 'incoming items-start'} flex flex-col"><div class="chat-sender-name">${isMe ? window.myUsername : (data.name || 'User')}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
                 msgWrapper.innerHTML = isMe ? bubbleHtml + avatarHtml : avatarHtml + bubbleHtml; 
                 messageGroup.appendChild(msgWrapper);
                 if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
                     let targetUsers = [];
-                    if (window.currentRoomId === 'global' && !isAI) { let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')]; allMembers.forEach(member => { if (member.id !== data.userId && member.langCode !== 'un') { targetUsers.push({ code: member.langCode, flag: member.flag, photo: member.photo }); } }); } 
-                    else if (window.currentRoomId.startsWith('private_') && !isAI) { if (isMe) { if (window.currentTargetUser && window.currentTargetUser.langCode !== window.myProfileInfo.langCode) { targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); } } else { if (data.langCode && data.langCode !== window.myProfileInfo.langCode) { targetUsers.push({ code: window.myProfileInfo.langCode, flag: window.myProfileInfo.langCode, photo: window.myProfileInfo.photo }); } } }
+                    let myReadLang = localStorage.getItem('hf_personal_lang');
+                    if (!myReadLang || myReadLang === 'auto') myReadLang = window.myProfileInfo.langCode;
+
+                    if (window.currentRoomId === 'global' && !isAI) { 
+                        let allMembers = [window.myProfileInfo, ...window.participants.filter(part => part.id !== 'ai')]; 
+                        allMembers.forEach(member => { 
+                            let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode;
+                            if (member.id !== data.userId && memberReadLang !== 'un') { 
+                                targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); 
+                            } 
+                        }); 
+                    } 
+                    else if (window.currentRoomId.startsWith('private_') && !isAI) { 
+                        if (isMe) { 
+                            if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) { 
+                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                            } 
+                        } else { 
+                            if (data.langCode && data.langCode !== myReadLang) { 
+                                targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                            } 
+                        } 
+                    }
 
                     if (targetUsers.length > 0) {
                         try {
@@ -1240,16 +1337,13 @@
                                 transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
                                 marqueeTextStr += `${t.user.flag} ${t.text}       `; 
                                 
-                                // --- ЛОГИКА ОЗВУЧКИ (Если сообщение из Voice Room) ---
                                 if (data.isVoiceRoomMsg && !isMe && t.user.code === window.myProfileInfo.langCode) {
                                     const vMarquee = document.getElementById('voice-info-marquee');
                                     if(vMarquee) {
                                         vMarquee.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${t.text}</span>`;
                                         vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
                                     }
-                                    if (data.speakAloud) {
-                                        window.speakTranslatedText(t.text, t.user.code);
-                                    }
+                                    if (data.speakAloud) { window.speakTranslatedText(t.text, t.user.code); }
                                 }
                             }); 
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1265,7 +1359,7 @@
                 let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
                 validUsers.forEach((p) => { 
                     let isMe = p.id === window.myProfileInfo.id; let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; let btnText = isMe ? `View My CV` : `View CV`; 
-                    let nameTxt = (p.name||'User').split(' ')[0]; if(isMe) nameTxt = nameTxt.replace(' (You)', '') + ' (You)'; 
+                    let nameTxt = (p.name||'User').split(' ')[0];
                     let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
                     cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="${avatarClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button></div>`; 
                 }); 
@@ -1321,7 +1415,7 @@
             window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
                 let myFlagImg = `<img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] object-cover border border-[#2a3942] shadow-md">`;
-                let confHtml = `<div class="video-frame main" id="my-video-container"><video id="my-live-video" class="mirror-video" playsinline></video><div class="video-overlay">${window.myProfileInfo.name.split(' (')[0]} (You)</div><div class="flag-overlay" style="top:10px; right:10px;">${myFlagImg}</div><div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div></div>`;
+                let confHtml = `<div class="video-frame main" id="my-video-container"><video id="my-live-video" class="mirror-video" playsinline></video><div class="video-overlay">${window.myUsername}</div><div class="flag-overlay" style="top:10px; right:10px;">${myFlagImg}</div><div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div></div>`;
                 let displayedCount = 0;
                 window.participants.forEach(p => { 
                     if(p.id === 'ai' || displayedCount >= 3) return; let pFlagImg = `<img src="https://flagcdn.com/w40/${p.flagCode}.png" class="w-6 h-4.5 rounded-[3px] object-cover border border-[#2a3942] shadow-md">`;
@@ -1338,7 +1432,7 @@
 
             window.sendConfMsg = async function() { 
                 const inputEl = document.getElementById('conf-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const myMarquee = document.getElementById('speaker-marquee'); 
-                if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } 
+                if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> ${text}`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } 
                 const listenerMarquees = document.querySelectorAll('.conf-listener-marquee'); 
                 listenerMarquees.forEach(async (el) => { const tLang = el.getAttribute('data-lang'); const tFlag = el.getAttribute('data-flag'); try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; el.innerHTML = `<span class="text-white">User:</span> ${tFlag} ${translated}`; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null; } catch(e) {} }); 
             };
@@ -1383,20 +1477,13 @@
     </script>
 
     <script>
-        // Регистрация Service Worker для PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('PWA ServiceWorker успешно зарегистрирован!');
-                    })
-                    .catch(err => {
-                        console.error('Ошибка регистрации PWA: ', err);
-                    });
+                    .then(registration => console.log('PWA ServiceWorker успешно зарегистрирован!'))
+                    .catch(err => console.error('Ошибка регистрации PWA: ', err));
             });
         }
     </script>
 </body>
 </html>
-
-
