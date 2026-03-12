@@ -165,6 +165,55 @@
 </head>
 <body>
 
+    <div id="security-lock" style="position: fixed; inset: 0; background: #0b141a; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.4s ease;">
+        <div style="width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #00a884, #028266); color: #111b21; display: flex; justify-content: center; align-items: center; font-size: 2rem; margin-bottom: 20px; box-shadow: 0 0 20px rgba(0,168,132,0.4);">
+            <i class="fa-solid fa-lock"></i>
+        </div>
+        <h2 style="color: white; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin-bottom: 8px; letter-spacing: 2px;">HELLO FRIENDS</h2>
+        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 35px; text-transform: uppercase; letter-spacing: 1px;">Secure Network Access</p>
+        
+        <input type="password" id="pin-input" placeholder="••••" style="background: #111b21; border: 2px solid #202c33; color: white; text-align: center; font-size: 2rem; padding: 15px; border-radius: 20px; outline: none; width: 220px; margin-bottom: 25px; letter-spacing: 10px; transition: border 0.3s;" onfocus="this.style.borderColor='#00a884'" onblur="this.style.borderColor='#202c33'">
+        
+        <button onclick="checkPin()" style="background: #00a884; color: #111b21; border: none; padding: 16px 50px; border-radius: 20px; font-weight: 800; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.5);" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">Unlock App</button>
+        
+        <p id="pin-error" style="color: #ef4444; margin-top: 20px; display: none; font-size: 0.85rem; font-weight: bold; background: rgba(239, 68, 68, 0.1); padding: 8px 16px; border-radius: 10px;"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Access Denied. Wrong PIN.</p>
+    </div>
+
+    <script>
+        // Логика проверки ПИН-кода
+        const SECRET_PIN = "0375"; 
+        
+        if (localStorage.getItem('hf_app_unlocked') === 'true') {
+            document.getElementById('security-lock').style.display = 'none';
+        }
+
+        function checkPin() {
+            const input = document.getElementById('pin-input').value;
+            const errorMsg = document.getElementById('pin-error');
+            
+            if (input === SECRET_PIN) {
+                localStorage.setItem('hf_app_unlocked', 'true');
+                errorMsg.style.display = 'none';
+                document.getElementById('security-lock').style.opacity = '0';
+                setTimeout(() => { document.getElementById('security-lock').style.display = 'none'; }, 400);
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('pin-input').value = '';
+                // Эффект тряски при ошибке
+                const lockScreen = document.getElementById('security-lock');
+                lockScreen.style.transform = 'translateX(-10px)';
+                setTimeout(() => lockScreen.style.transform = 'translateX(10px)', 50);
+                setTimeout(() => lockScreen.style.transform = 'translateX(-10px)', 100);
+                setTimeout(() => lockScreen.style.transform = 'translateX(0)', 150);
+            }
+        }
+        
+        // Вход по нажатию Enter
+        document.getElementById('pin-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPin();
+        });
+    </script>
+
     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
@@ -1349,4 +1398,5 @@
     </script>
 </body>
 </html>
+
 
