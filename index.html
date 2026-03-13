@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V43 (Double Smart System)</title>
+    <title>Hello Friends - Golden Master V46 (Dual Wallet & 1 Cent Fee)</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -150,7 +150,6 @@
         .light-theme .mic-btn-chat { background: #f0f2f5; color: #54656f; }
         .light-theme .incoming .chat-bubble { background: #ffffff; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
         .light-theme .outgoing .chat-bubble { background: #d9fdd3; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
-        .light-theme .text-yellow-400, .light-theme .chat-info-marquee-text { color: #ea580c !important; }
         .light-theme .app-modal-content { background: #ffffff; }
         .light-theme .form-input-box { background: #f0f2f5; color: #111b21; border-color: #d1d7db; }
         .light-theme .rhombus-menu { background: #ffffff; border-color: #d1d7db; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
@@ -251,7 +250,7 @@
             <div id="header-dropdown" class="header-dropdown" onclick="event.stopPropagation();">
                 <div class="flex justify-between items-center px-1 pb-2 mb-2 border-b border-[#202c33]">
                     <span class="text-white font-bold text-[0.95rem] tracking-wide" data-i18n="menu">Settings</span>
-                    <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeAllMenus()"></i>
+                    <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeAllMenus();"></i>
                 </div>
                 <a id="admin-menu-btn" style="display: none; color: #a29bfe;" onclick="window.openAdminModal()"><i class="fa-solid fa-crown w-5"></i> <span>Admin Panel</span></a>
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
@@ -275,13 +274,24 @@
                 <a onclick="window.toggleTheme()"><i class="fa-solid fa-sun text-yellow-400 w-5" id="theme-icon"></i> <span data-i18n="theme">Theme</span></a>
                 <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
                 <a onclick="document.getElementById('import-file-input').click(); window.closeAllMenus()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
-                <a style="color: #ef4444;" onclick="window.logoutUser()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span data-i18n="logout">Log Out</span></a>
+                <a style="color: #ef4444;" onclick="window.deleteMyAccount()"><i class="fa-solid fa-user-xmark w-5"></i> <span data-i18n="delete_acc">Delete Account</span></a>
             </div>
         </header>
 
         <main class="flex-grow overflow-hidden flex flex-col relative">
+
+            <div id="empty-state-screen" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-0 bg-[#0b141a]" style="display: none;">
+                <div class="w-24 h-24 bg-gradient-to-tr from-[#00a884] to-[#028266] rounded-full flex items-center justify-center text-white font-bold text-4xl mb-6 shadow-[0_0_30px_rgba(0,168,132,0.4)]">HF</div>
+                <h2 class="text-2xl font-bold text-white mb-2" data-i18n="welcome_empty">Welcome to Hello Friends!</h2>
+                <p class="text-[#8696a0] text-sm mb-8">Global Smart Network</p>
+                
+                <div class="flex items-center justify-center gap-3">
+                    <img src="llgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
+                    <span class="text-sm text-[#00a884] font-bold tracking-wide" data-i18n="app_creator_greet">Creator of Hello Friends</span>
+                </div>
+            </div>
             
-            <div id="message" class="page-content active h-full flex flex-col">
+            <div id="message" class="page-content active h-full flex flex-col relative z-10">
                 <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition" onclick="window.switchChatRoom('global')">
                         <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title">Global Chat</span></span>
@@ -316,7 +326,7 @@
                 </div>
             </div>
 
-            <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a]">
+            <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a] relative z-10">
                 <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <h2 class="text-xl font-bold text-white" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
                 </div>
@@ -365,7 +375,7 @@
                 </div>
             </div>
 
-            <div id="conference" class="page-content h-full flex flex-col bg-[#000]">
+            <div id="conference" class="page-content h-full flex flex-col bg-[#000] relative z-10">
                 <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <span class="font-bold text-[#00a884] tracking-widest text-[1rem] flex items-center gap-2"><i class="fa-solid fa-video"></i> CONFERENCE</span>
                     <div class="flex items-center gap-4"><span class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full animate-pulse text-xs">● REC</span></div>
@@ -388,7 +398,7 @@
                 </div>
             </div>
 
-            <div id="profession" class="page-content h-full">
+            <div id="profession" class="page-content h-full relative z-10">
                 <div class="page-container bg-[#0b141a]">
                     <div class="flex justify-between items-center px-2 mb-4">
                         <h2 class="text-xl font-bold text-white">Global Talents</h2>
@@ -398,7 +408,7 @@
                 </div>
             </div>
 
-            <div id="social" class="page-content h-full">
+            <div id="social" class="page-content h-full relative z-10">
                 <div class="page-container bg-[#0b141a] flex flex-col items-center justify-start h-full pt-8">
                     <h2 class="text-2xl font-bold text-white mb-6">Social Hub</h2>
                     <div class="flex flex-wrap justify-center gap-5 w-full max-w-[320px] mb-8">
@@ -420,7 +430,7 @@
                 </div>
             </div>
 
-            <div id="archive" class="page-content h-full bg-[#0b141a]">
+            <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
                 <div class="page-container">
                     <div class="flex justify-between items-center px-2 mb-6 mt-2">
                         <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-2"></i> Cloud Repository</h2>
@@ -549,6 +559,11 @@
                     </div>
                     <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
                     <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    
+                    <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
+                        <img src="llgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
+                        <span class="text-sm text-[#00a884] font-bold tracking-wide" data-i18n="app_creator_greet">Creator of Hello Friends</span>
+                    </div>
                 </div>
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button></div>
             </div>
@@ -632,12 +647,47 @@
         <div id="transfer-modal" class="app-modal" onclick="if(event.target===this) window.closeBankTransferModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeBankTransferModal()"><i class="fa-solid fa-xmark"></i></div>
-                <div class="w-14 h-14 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] text-2xl mb-4 mx-auto mt-4"><i class="fa-solid fa-wallet"></i></div>
-                <h2 class="text-xl font-bold text-center text-white mb-2">Send Money</h2>
-                <form class="w-full flex flex-col gap-3 mt-4" onsubmit="window.sendMoney(event)">
-                    <select id="transfer-recipient" class="form-input-box" required></select>
-                    <input type="number" id="transfer-amount" class="form-input-box" placeholder="Amount ($)" required min="1">
-                    <button type="submit" class="btn-primary">Transfer</button>
+                <h2 class="text-xl font-bold text-center text-white mb-4 mt-2"><i class="fa-solid fa-wallet text-[#00a884] mr-2"></i> Wallet</h2>
+                
+                <div class="flex gap-1 bg-[#202c33] p-1 rounded-xl mb-4 border border-[#2a3942]">
+                    <button id="tab-btn-card" type="button" class="flex-1 py-2 rounded-lg bg-[#111b21] text-white text-xs font-bold shadow-sm transition" onclick="window.switchWalletTab('card')">💳 Card-to-Card</button>
+                    <button id="tab-btn-intl" type="button" class="flex-1 py-2 rounded-lg bg-transparent text-[#8696a0] text-xs font-bold hover:text-white transition" onclick="window.switchWalletTab('intl')">🌍 International</button>
+                </div>
+                
+                <form id="frame-card" class="w-full flex flex-col gap-3" onsubmit="window.processMoneyTransfer(event, 'card')">
+                    <select id="transfer-source-card" class="form-input-box !mb-0 appearance-none">
+                        <option value="visa">💳 My Visa •••• 4242</option>
+                        <option value="mc">💳 My Mastercard •••• 8810</option>
+                    </select>
+                    <select id="transfer-recipient-card" class="form-input-box !mb-0 appearance-none" required></select>
+                    <input type="number" id="transfer-amount-card" class="form-input-box !mb-0" placeholder="Amount ($)" required min="1" step="0.01" oninput="window.updateTransferFeeUI('card')">
+                    
+                    <div class="bg-[#111b21] border border-[#2a3942] rounded-xl p-3 flex flex-col gap-1 my-1 shadow-inner">
+                        <div class="flex justify-between text-sm"><span class="text-[#8696a0]">Amount:</span><span class="text-white font-bold" id="tf-amt-card">$0.00</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-[#8696a0]">HF Network Fee:</span><span class="text-red-400 font-bold">$0.01</span></div>
+                        <div class="w-full h-[1px] bg-[#2a3942] my-1"></div>
+                        <div class="flex justify-between text-base"><span class="text-white font-bold">Total:</span><span class="text-[#00a884] font-bold" id="tf-total-card">$0.00</span></div>
+                    </div>
+                    <button type="submit" id="tf-submit-card" class="btn-primary shadow-[0_0_15px_rgba(0,168,132,0.3)]">Send Money</button>
+                </form>
+
+                <form id="frame-intl" class="w-full hidden flex-col gap-3" onsubmit="window.processMoneyTransfer(event, 'intl')">
+                    <select id="intl-provider" class="form-input-box !mb-0 appearance-none">
+                        <option value="Western Union">🟡 Western Union</option>
+                        <option value="Zolotaya Korona">👑 Zolotaya Korona (Корона)</option>
+                        <option value="MoneyGram">🔴 MoneyGram</option>
+                        <option value="SWIFT">🏦 SWIFT Bank Transfer</option>
+                    </select>
+                    <select id="transfer-recipient-intl" class="form-input-box !mb-0 appearance-none" required></select>
+                    <input type="number" id="transfer-amount-intl" class="form-input-box !mb-0" placeholder="Amount ($)" required min="1" step="0.01" oninput="window.updateTransferFeeUI('intl')">
+                    
+                    <div class="bg-[#111b21] border border-[#2a3942] rounded-xl p-3 flex flex-col gap-1 my-1 shadow-inner">
+                        <div class="flex justify-between text-sm"><span class="text-[#8696a0]">Amount:</span><span class="text-white font-bold" id="tf-amt-intl">$0.00</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-[#8696a0]">HF Network Fee:</span><span class="text-red-400 font-bold">$0.01</span></div>
+                        <div class="w-full h-[1px] bg-[#2a3942] my-1"></div>
+                        <div class="flex justify-between text-base"><span class="text-white font-bold">Total:</span><span class="text-[#00a884] font-bold" id="tf-total-intl">$0.00</span></div>
+                    </div>
+                    <button type="submit" id="tf-submit-intl" class="btn-primary !bg-[#202c33] !text-white border border-[#2a3942] hover:bg-[#2a3942]">Send International</button>
                 </form>
             </div>
         </div>
@@ -667,10 +717,6 @@
     </div>
 
     <script>
-        // =========================================================
-        // ЕДИНЫЙ, ЧИСТЫЙ БЛОК СКРИПТОВ
-        // =========================================================
-
         window.closeAllMenus = function() { 
             document.getElementById('header-dropdown')?.classList.remove('active'); 
             document.getElementById('rhombus-actions')?.classList.remove('active'); 
@@ -805,13 +851,99 @@
             const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); 
         };
 
-        window.openBankTransferModal = function() { 
-            window.closeDropdown(); const recipientSelect = document.getElementById('transfer-recipient'); 
-            recipientSelect.innerHTML = '<option value="" disabled selected>Select Recipient</option>'; 
-            window.participants.forEach(p => { if(p.id !== 'ai' && p.id !== window.myProfileInfo.id) { recipientSelect.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; } }); 
-            document.getElementById('transfer-amount').value = ''; document.getElementById('transfer-modal').classList.add('active'); 
+        // --- ЛОГИКА НОВОГО КОШЕЛЬКА ---
+        window.switchWalletTab = function(tab) {
+            const btnCard = document.getElementById('tab-btn-card');
+            const btnIntl = document.getElementById('tab-btn-intl');
+            const frameCard = document.getElementById('frame-card');
+            const frameIntl = document.getElementById('frame-intl');
+
+            if(tab === 'card') {
+                btnCard.className = "flex-1 py-2 rounded-lg bg-[#111b21] text-white text-xs font-bold shadow-sm transition";
+                btnIntl.className = "flex-1 py-2 rounded-lg bg-transparent text-[#8696a0] text-xs font-bold hover:text-white transition";
+                frameCard.style.display = 'flex'; frameIntl.style.display = 'none';
+            } else {
+                btnIntl.className = "flex-1 py-2 rounded-lg bg-[#111b21] text-white text-xs font-bold shadow-sm transition";
+                btnCard.className = "flex-1 py-2 rounded-lg bg-transparent text-[#8696a0] text-xs font-bold hover:text-white transition";
+                frameIntl.style.display = 'flex'; frameCard.style.display = 'none';
+            }
         };
-        
+
+        window.updateTransferFeeUI = function(type) {
+            let inputId = type === 'card' ? 'transfer-amount-card' : 'transfer-amount-intl';
+            let amtId = type === 'card' ? 'tf-amt-card' : 'tf-amt-intl';
+            let totalId = type === 'card' ? 'tf-total-card' : 'tf-total-intl';
+            let btnId = type === 'card' ? 'tf-submit-card' : 'tf-submit-intl';
+            let defaultBtnText = type === 'card' ? 'Send Money' : 'Send International';
+
+            let amt = parseFloat(document.getElementById(inputId).value) || 0;
+            let total = amt > 0 ? amt + 0.01 : 0;
+            
+            document.getElementById(amtId).innerText = '$' + amt.toFixed(2);
+            document.getElementById(totalId).innerText = '$' + total.toFixed(2);
+            document.getElementById(btnId).innerText = amt > 0 ? `Send $${total.toFixed(2)}` : defaultBtnText;
+        };
+
+        window.openBankTransferModal = function() { 
+            window.closeDropdown(); 
+            const recCard = document.getElementById('transfer-recipient-card'); 
+            const recIntl = document.getElementById('transfer-recipient-intl'); 
+            let opts = '<option value="" disabled selected>Select Recipient</option>';
+            
+            window.participants.forEach(p => { 
+                if(p.id !== 'ai' && p.id !== window.myProfileInfo.id) { opts += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; } 
+            }); 
+            
+            recCard.innerHTML = opts;
+            recIntl.innerHTML = opts;
+
+            document.getElementById('transfer-amount-card').value = ''; 
+            document.getElementById('transfer-amount-intl').value = ''; 
+            window.updateTransferFeeUI('card');
+            window.updateTransferFeeUI('intl');
+            
+            document.getElementById('transfer-modal').classList.add('active'); 
+        };
+
+        window.processMoneyTransfer = function(e, type) {
+            e.preventDefault();
+            let amtInputId = type === 'card' ? 'transfer-amount-card' : 'transfer-amount-intl';
+            let recInputId = type === 'card' ? 'transfer-recipient-card' : 'transfer-recipient-intl';
+            
+            let amt = parseFloat(document.getElementById(amtInputId).value);
+            let recId = document.getElementById(recInputId).value;
+            if(!amt || amt <= 0 || !recId) return;
+
+            let typeLabel = 'Card-to-Card';
+            if (type === 'intl') {
+                typeLabel = document.getElementById('intl-provider').value;
+            }
+            
+            let recUser = window.participants.find(p => p.id === recId);
+            let recName = recUser ? (recUser.name || 'User').split(' ')[0] : 'Unknown';
+            let total = amt + 0.01;
+
+            let id1 = String(window.myProfileInfo.id); let id2 = String(recId); 
+            let chatRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
+
+            firebase.database().ref(chatRoomId).push({
+                userId: window.myProfileInfo.id, name: window.myUsername, isTransfer: true, transferTypeLabel: typeLabel,
+                amount: amt.toFixed(2), total: total.toFixed(2), recName: recName,
+                text: `💸 ${typeLabel}`, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP,
+                photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode
+            });
+
+            window.closeBankTransferModal();
+            window.showToast("Transfer Sent", `Sent $${amt.toFixed(2)} to ${recName}. Network fee: $0.01`, "", "");
+            
+            document.getElementById(amtInputId).value = '';
+            window.updateTransferFeeUI(type);
+            
+            window.switchTab(0);
+            window.switchChatRoom(recId);
+        };
+        // -----------------------------
+
         window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
 
         window.secretClicks = 0;
@@ -857,7 +989,7 @@
                     <div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between shadow-sm">
                         <div class="flex items-center gap-3 cursor-pointer w-full" onclick="window.closeContactsModal(); window.switchTab(0); window.switchChatRoom('${p.id}')">
                             <div class="relative"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-1 shadow">${p.flag}</span></div>
-                            <div class="flex flex-col"><span class="text-white font-bold text-sm">${(p.name||'User').split(' ')[0]}</span><span class="text-[#8696a0] text-xs mt-0.5"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem] mr-1"></i> ${phoneStr}</span></div>
+                            <div class="flex col"><span class="text-white font-bold text-sm">${(p.name||'User').split(' ')[0]}</span><span class="text-[#8696a0] text-xs mt-0.5"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem] mr-1"></i> ${phoneStr}</span></div>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="${phoneAction}" class="w-10 h-10 rounded-full bg-[#111b21] border border-[#2a3942] text-blue-400 flex items-center justify-center hover:bg-blue-900 transition shadow" title="Cellular Call"><i class="fa-solid fa-phone"></i></button>
@@ -880,7 +1012,6 @@
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
-        // НОВЫЕ ФУНКЦИИ ДЛЯ ШТОРКИ ЯЗЫКОВ
         window.personalLangs = [
             { val: 'auto', label: '🤖 Auto (Profile Match)' },
             { val: 'en', label: '🇬🇧 English' },
@@ -888,7 +1019,10 @@
             { val: 'az', label: '🇦🇿 Azərbaycanca' },
             { val: 'it', label: '🇮🇹 Italiano' },
             { val: 'es', label: '🇪🇸 Español' },
-            { val: 'fr', label: '🇫🇷 Français' }
+            { val: 'fr', label: '🇫🇷 Français' },
+            { val: 'pt', label: '🇵🇹 Português' },
+            { val: 'ja', label: '🇯🇵 日本語' },
+            { val: 'zh', label: '🇨🇳 中文' }
         ];
 
         window.openPersonalLangModal = function() {
@@ -983,27 +1117,46 @@
         
         window.saveProfileData = function() {
             let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
-            let newId = window.isGuest ? (nameVal.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
-            let photo = document.getElementById('edit-preview-photo').src; let phoneVal = document.getElementById('edit-phone').value.trim(); 
+            let phoneVal = document.getElementById('edit-phone').value.trim(); 
+            let emailVal = document.getElementById('edit-email').value.trim();
             
+            let newId = window.isGuest ? (nameVal.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substr(2,4)) : window.myProfileInfo.id;
+            
+            if (window.isGuest && (phoneVal || emailVal)) {
+                let existingUser = window.participants.find(p => p.id !== 'ai' && ((phoneVal && p.phone === phoneVal) || (emailVal && p.email === emailVal)));
+                if (existingUser) {
+                    if(confirm("Аккаунт с таким номером уже существует. Восстановить ваши старые данные и чаты?")) {
+                        newId = existingUser.id; 
+                        window.myProfileInfo = existingUser; 
+                    }
+                }
+            }
+
+            let photo = document.getElementById('edit-preview-photo').src; 
             const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; 
             const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User in network' };
             
-            let updatedProfile = { name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: document.getElementById('edit-email').value };
+            let updatedProfile = { name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal };
 
-            if (window.isGuest) {
+            if (window.isGuest || window.myProfileInfo.id === newId) { 
                 updatedProfile.id = newId; window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; 
-                localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); 
-                localStorage.setItem('hf_active_user', newId); 
+                try {
+                    localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); 
+                    localStorage.setItem('hf_active_user', newId); 
+                } catch(e) { console.warn("Локальное сохранение ограничено"); }
+                
                 document.cookie = "hf_active_user=" + newId + "; max-age=31536000; path=/";
-                firebase.database().ref('users/' + newId).set(window.myProfileInfo); 
+                firebase.database().ref('users/' + newId).update(window.myProfileInfo); 
                 window.isGuest = false; 
+                activeUserId = newId; 
                 window.myUsername = nameVal;
-            } else {
-                window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); firebase.database().ref('users/' + newId).update(updatedProfile); 
+            } else { 
+                window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; 
+                try { localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
+                firebase.database().ref('users/' + newId).update(updatedProfile); 
                 window.myUsername = nameVal;
             }
-            window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Showing your CV...", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
+            window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Access granted.", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
 
         window.openEditCV = function() {
@@ -1014,7 +1167,7 @@
 
         window.saveCVData = function() {
             window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim(); window.myProfileInfo.languages = document.getElementById('cv-edit-langs').value.trim(); window.myProfileInfo.skills = document.getElementById('cv-edit-skills').value.trim(); window.myProfileInfo.experience = document.getElementById('cv-edit-exp').value.trim(); window.myProfileInfo.education = document.getElementById('cv-edit-edu').value.trim(); window.myProfileInfo.desc = document.getElementById('cv-edit-bio').value.trim();
-            localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
+            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){} 
             firebase.database().ref('users/' + window.myProfileInfo.id).update({ profession: window.myProfileInfo.profession, languages: window.myProfileInfo.languages, skills: window.myProfileInfo.skills, experience: window.myProfileInfo.experience, education: window.myProfileInfo.education, desc: window.myProfileInfo.desc }); 
             window.closeEditCV(); if(window.renderProfessionList) window.renderProfessionList(); setTimeout(() => { window.openAvatarModal('me'); }, 100);
         };
@@ -1159,21 +1312,33 @@
             reader.readAsDataURL(file);
         };
 
-        window.logoutUser = function() { localStorage.removeItem('hf_active_user'); localStorage.removeItem('hf_god_mode'); document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; location.reload(); };
+        window.deleteMyAccount = function() {
+            if (confirm("Are you sure you want to permanently delete your account and all data? This cannot be undone.")) {
+                let myId = window.myProfileInfo.id;
+                if (myId && !window.isGuest) {
+                    firebase.database().ref('users/' + myId).remove();
+                }
+                localStorage.removeItem('hf_active_user');
+                localStorage.removeItem('hf_custom_' + myId);
+                document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                location.reload();
+            }
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
             window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
+            
             const i18n = { 
-                en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Information" }, 
-                ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выход", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль", edit_subtitle: "Основная информация" }, 
-                az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" }, 
-                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", logout: "Esci", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
-                es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Reunión", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Cartera", theme: "Tema", export: "Exportar", import: "Importar", logout: "Salir", lang: "Idioma: ES", reg_title: "¡Bienvenido a Hello Friends!", reg_subtitle: "Completa el registro", reg_name: "Nombre Completo", reg_country: "País", reg_phone: "Teléfono", reg_email: "Correo", reg_prof: "Profesión", reg_langs: "Idiomas", reg_bio: "Biografía / CV", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
-                fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Réunion", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", logout: "Déconnexion", lang: "Langue: FR", reg_title: "Bienvenue sur Hello Friends!", reg_subtitle: "Veuillez vous inscrire", reg_name: "Nom Complet", reg_country: "Pays", reg_phone: "Téléphone", reg_email: "Email", reg_prof: "Profession", reg_langs: "Langues", reg_bio: "Bio / CV", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
-                pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Reunião", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar", import: "Importar", logout: "Sair", lang: "Idioma: PT", reg_title: "Bem-vindo ao Hello Friends!", reg_subtitle: "Conclua o registro", reg_name: "Nome Completo", reg_country: "País", reg_phone: "Telefone", reg_email: "Email", reg_prof: "Profissão", reg_langs: "Idiomas", reg_bio: "Bio / CV", reg_save: "Salvar", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
-                ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "通話", cv: "履歴書", social: "SNS", profile: "マイプロフィール", wallet: "ウォレット", theme: "テーマ", export: "エクスポート", import: "インポート", logout: "ログアウト", lang: "言語: JA", reg_title: "Hello Friendsへようこそ！", reg_subtitle: "登録を完了してください", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_prof: "職業", reg_langs: "言語", reg_bio: "自己紹介 / CV", reg_save: "保存", edit_title: "マイプロフィール", edit_subtitle: "基本情報" },
-                zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "会议", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", logout: "退出", lang: "语言: ZH", reg_title: "欢迎来到 Hello Friends！",简_subtitle: "请完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话", reg_email: "邮箱", reg_prof: "职业", reg_langs: "语言", reg_bio: "简介 / 简历", reg_save: "保存", edit_title: "我的资料", edit_subtitle: "基本信息" }
+                en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Information" }, 
+                ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", delete_acc: "Удалить аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", app_creator_greet: "Создатель Hello Friends", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль", edit_subtitle: "Основная информация" }, 
+                az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", app_creator_greet: "Hello Friends Yaradıcısı", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoш Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" }, 
+                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", delete_acc: "Elimina account", welcome_empty: "Benvenuto in Hello Friends!", app_creator_greet: "Creatore di Hello Friends", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
+                es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Reunión", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Cartera", theme: "Tema", export: "Exportar", import: "Importar", delete_acc: "Eliminar cuenta", welcome_empty: "¡Bienvenido a Hello Friends!", app_creator_greet: "Creador de Hello Friends", lang: "Idioma: ES", reg_title: "¡Bienvenido a Hello Friends!", reg_subtitle: "Completa el registro", reg_name: "Nombre Completo", reg_country: "País", reg_phone: "Teléfono", reg_email: "Correo", reg_prof: "Profesión", reg_langs: "Idiomas", reg_bio: "Biografía / CV", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
+                fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Réunion", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", delete_acc: "Supprimer le compte", welcome_empty: "Bienvenue sur Hello Friends!", app_creator_greet: "Créateur de Hello Friends", lang: "Langue: FR", reg_title: "Bienvenue sur Hello Friends!", reg_subtitle: "Veuillez vous inscrire", reg_name: "Nom Complet", reg_country: "Pays", reg_phone: "Téléphone", reg_email: "Email", reg_prof: "Profession", reg_langs: "Langues", reg_bio: "Bio / CV", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
+                pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Reunião", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar", import: "Importar", delete_acc: "Excluir conta", welcome_empty: "Bem-vindo ao Hello Friends!", app_creator_greet: "Criador do Hello Friends", lang: "Idioma: PT", reg_title: "Bem-vindo ao Hello Friends!", reg_subtitle: "Conclua o registro", reg_name: "Nome Completo", reg_country: "País", reg_phone: "Telefone", reg_email: "Email", reg_prof: "Profissão", reg_langs: "Idiomas", reg_bio: "Bio / CV", reg_save: "Salvar", edit_title: "Meu Perfil", edit_subtitle: "Informazioni básicas" },
+                ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "通話", cv: "履歴書", social: "SNS", profile: "マイプロフィール", wallet: "ウォレット", theme: "テーマ", export: "エクスポート", import: "インポート", delete_acc: "アカウントを削除", welcome_empty: "Hello Friendsへようこそ！", app_creator_greet: "Hello Friendsの創設者", lang: "言語: JA", reg_title: "Hello Friendsへようこそ！", reg_subtitle: "登録を完了してください", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_prof: "職業", reg_langs: "言語", reg_bio: "自己紹介 / CV", reg_save: "保存", edit_title: "マイプロフィール", edit_subtitle: "基本情報" },
+                zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "会议", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", delete_acc: "删除账号", welcome_empty: "欢迎来到 Hello Friends！", app_creator_greet: "Hello Friends 创始人", lang: "语言: ZH", reg_title: "欢迎来到 Hello Friends！",简_subtitle: "请完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话", reg_email: "邮箱", reg_prof: "职业", reg_langs: "语言", reg_bio: "简介 / 简历", reg_save: "保存", edit_title: "我的资料", edit_subtitle: "基本信息" }
             };
             let sysLang = navigator.language.slice(0, 2); let defLang = ['en', 'ru', 'az', 'it', 'es', 'fr', 'pt', 'ja', 'zh'].includes(sysLang) ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             window.changeAppLanguage = function(langCode) { window.appLang = langCode; localStorage.setItem('hf_app_lang', window.appLang); window.applyTranslations(); window.closeDropdown(); };
@@ -1181,7 +1346,41 @@
             window.applyTranslations();
 
             window.switchTab = function(index) { 
-                try { const navLinks = Array.from(document.querySelectorAll('.nav-item')); const pages = document.querySelectorAll('.page-content'); pages.forEach(p => p.classList.remove('active')); navLinks.forEach(l => l.classList.remove('active')); const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; const targetId = screens[index]; document.getElementById(targetId)?.classList.add('active'); if (index < navLinks.length && navLinks[index]) { navLinks[index].classList.add('active'); } window.currentIndex = index; } catch(e) {} 
+                try { 
+                    const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
+                    const pages = document.querySelectorAll('.page-content'); 
+                    const emptyState = document.getElementById('empty-state-screen');
+
+                    if (window.currentIndex === index) {
+                        pages.forEach(p => p.classList.remove('active')); 
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        window.currentIndex = null; 
+                        
+                        if (window.closeAllMenus) window.closeAllMenus();
+                        document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
+                        
+                        if(emptyState) emptyState.style.display = 'flex';
+                        return; 
+                    }
+
+                    if (window.closeAllMenus) window.closeAllMenus();
+                    document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
+
+                    pages.forEach(p => p.classList.remove('active')); 
+                    navLinks.forEach(l => l.classList.remove('active')); 
+                    
+                    const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
+                    const targetId = screens[index]; 
+                    
+                    document.getElementById(targetId)?.classList.add('active'); 
+                    if (index < navLinks.length && navLinks[index]) { 
+                        navLinks[index].classList.add('active'); 
+                    } 
+                    window.currentIndex = index; 
+                    if(emptyState) emptyState.style.display = 'none';
+                } catch(e) {
+                    console.error('Switch tab error:', e);
+                } 
             };
 
             const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
@@ -1214,7 +1413,55 @@
 
             setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = "You"; }, 1000);
 
-            db.ref('users').on('value', (snapshot) => { const data = snapshot.val(); let mergedUsers = [...window.allCharacters]; if (data) { Object.values(data).forEach(u => { if(!u.id) return; let existingIdx = mergedUsers.findIndex(vip => vip.id === u.id); if (existingIdx === -1) mergedUsers.push(u); else mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; }); } window.participants = [aiBot, ...mergedUsers.filter(c => c.id !== window.myProfileInfo.id && !c.id.startsWith('guest'))]; if(window.renderSidebar) window.renderSidebar(); if(document.getElementById('profession') && document.getElementById('profession').classList.contains('active')) { if(window.renderProfessionList) window.renderProfessionList(); } });
+            db.ref('users').on('value', (snapshot) => { 
+                const data = snapshot.val(); 
+                let mergedUsers = [...window.allCharacters]; 
+                
+                if (data) { 
+                    if (!window.isGuest && activeUserId && data[activeUserId]) {
+                        window.myProfileInfo = { ...window.myProfileInfo, ...data[activeUserId] };
+                        window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
+                        try { localStorage.setItem('hf_custom_' + activeUserId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
+                        
+                        const myVoicePhoto = document.getElementById('voice-me-photo'); 
+                        const myVoiceFlag = document.getElementById('voice-me-flag'); 
+                        const myVoiceName = document.getElementById('voice-me-name'); 
+                        if(myVoicePhoto) myVoicePhoto.src = window.myProfileInfo.photo; 
+                        if(myVoiceFlag) myVoiceFlag.innerText = window.myProfileInfo.flag; 
+                        if(myVoiceName) myVoiceName.innerText = "You";
+                    }
+
+                    Object.values(data).forEach(u => { 
+                        if(!u.id) return; 
+                        let existingIdx = mergedUsers.findIndex(vip => vip.id === u.id); 
+                        if (existingIdx === -1) mergedUsers.push(u); 
+                        else mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; 
+                    }); 
+                } 
+                
+                window.participants = [aiBot, ...mergedUsers.filter(c => {
+                    if (c.id === window.myProfileInfo.id) return false; 
+                    if (c.id.startsWith('guest')) return false; 
+                    
+                    if (c.phone && window.myProfileInfo.phone) {
+                        let phone1 = c.phone.replace(/\s+/g, '');
+                        let phone2 = window.myProfileInfo.phone.replace(/\s+/g, '');
+                        if (phone1 === phone2) return false;
+                    }
+
+                    let myName = (window.myProfileInfo.name || '').toLowerCase();
+                    if (c.id === 'ilgar' && (myName.includes('ilgar') || myName.includes('ilqar'))) {
+                        return false;
+                    }
+                    
+                    return true;
+                })];
+
+                if(window.renderSidebar) window.renderSidebar(); 
+                if(document.getElementById('profession') && document.getElementById('profession').classList.contains('active')) { 
+                    if(window.renderProfessionList) window.renderProfessionList(); 
+                } 
+            });
 
             window.renderSidebar = function() {
                 const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
@@ -1285,7 +1532,6 @@
                 let userFlag = isAI ? '🤖' : (p.flag || '🌐');
                 let avatarPhoto = isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo;
                 
-                // ВАЖНО: Клик по своей аватарке открывает шторку языков. Клик по чужой - профиль друга.
                 let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${isMe ? 'window.openPersonalLangModal()' : `window.openAvatarModal('${isAI ? 'ai' : p.id}')`}">
                     <img src="${avatarPhoto}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md">
                     <span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${userFlag}</span>
@@ -1293,10 +1539,31 @@
                 
                 let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
                 
-                if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
-                else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[180px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1">Transfer Success</span><span class="text-2xl font-bold text-white mb-2">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
-                else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
-                else if (data.isFile) { bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`; bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`; }
+                if (data.mediaUrl) { 
+                    if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } 
+                    else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } 
+                    bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
+                }
+                else if (data.isTransfer) { 
+                    let label = data.transferTypeLabel || 'Transfer';
+                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
+                    bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]">
+                        <div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div>
+                        <span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${label}</span>
+                        <span class="text-2xl font-bold text-white mb-1">$${data.amount}</span>
+                        <span class="text-[0.65rem] text-red-400 bg-red-400/10 px-2 py-0.5 rounded-md mb-2 border border-red-400/20">HF Fee: $0.01</span>
+                        <div class="w-full h-[1px] bg-[#2a3942] mb-2"></div>
+                        <span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span>
+                    </div>`; 
+                }
+                else if (data.isLocation) { 
+                    bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
+                    bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
+                }
+                else if (data.isFile) { 
+                    bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`; 
+                    bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`; 
+                }
 
                 const bubbleHtml = `<div class="chat-bubble-wrapper ${isMe ? 'outgoing items-end' : 'incoming items-start'} flex flex-col"><div class="chat-sender-name">${isMe ? window.myUsername : (data.name || 'User')}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
                 msgWrapper.innerHTML = isMe ? bubbleHtml + avatarHtml : avatarHtml + bubbleHtml; 
@@ -1487,4 +1754,3 @@
     </script>
 </body>
 </html>
-
