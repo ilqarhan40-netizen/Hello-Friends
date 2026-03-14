@@ -1265,9 +1265,6 @@
                 const rawText = inputField.value.trim(); if (!rawText) return; 
                 inputField.value = ''; 
                 
-                const mText = document.getElementById('voice-info-marquee');
-                if(mText) { mText.innerHTML = `<span class="text-white mr-2">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${rawText}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; }
-
                 let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
                 let textToShip = rawText; 
                 try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {} 
@@ -1280,13 +1277,7 @@
                 const rawText = inputField.value.trim(); if (!rawText) return; 
                 inputField.value = ''; 
                 
-                const myMarquee = document.getElementById('speaker-marquee'); 
-                if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${rawText}</span>`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } 
-                
-                let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
                 let textToShip = rawText; 
-                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {}
-
                 db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isConfMsg: true, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
             };
             
@@ -1307,26 +1298,63 @@
                     if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + (data.name||'User').split(' ')[0], textPreview, p.photo, "");
                 }
 
-                // Логика бегущей строки Voice Room
+                // Логика бегущей строки Voice Room (Скопировано из чата)
                 let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
                 
-                if (data.isVoiceRoomMsg && !isMe) {
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.text)}`)
-                    .then(res=>res.json()).then(resData=>{
-                        let tText = resData[0][0][0];
+                if (data.isVoiceRoomMsg) {
+                    let targetUsers = [];
+                    if (isMe) {
+                        if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang)
+                            targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag });
+                    } else {
+                        if (data.langCode && data.langCode !== myReadLang)
+                            targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag });
+                    }
+
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: data.text })) );
+                            Promise.all(fetchPromises).then(translationsRes => {
+                                let marqueeTextStr = '';
+                                translationsRes.forEach(t => { marqueeTextStr += `${t.user.flag} ${t.text}        `; });
+                                const vMarquee = document.getElementById('voice-info-marquee');
+                                if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
+                            });
+                        } catch (e) {}
+                    } else {
                         const vMarquee = document.getElementById('voice-info-marquee');
-                        if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${tText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
-                    }).catch(e=>{});
+                        if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${data.text}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
+                    }
                 }
 
-                // Логика бегущей строки Конференции
-                if (data.isConfMsg && !isMe) {
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.text)}`)
-                    .then(res=>res.json()).then(resData=>{
-                        let tText = resData[0][0][0];
-                        let targetMarquee = document.getElementById(`conf-marquee-${data.userId}`);
-                        if(targetMarquee) { targetMarquee.innerHTML = `<span class="text-white">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${tText}</span>`; targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null; }
-                    }).catch(e=>{});
+                // Логика бегущей строки Конференции (Скопировано из чата)
+                if (data.isConfMsg) {
+                    let targetUsers = [];
+                    window.participants.filter(part => part.id !== 'ai').forEach(member => {
+                        let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode;
+                        if (member.id !== data.userId && memberReadLang !== 'un') {
+                            targetUsers.push({ code: memberReadLang, flag: member.flag, id: member.id });
+                        }
+                    });
+
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: data.text })) );
+                            Promise.all(fetchPromises).then(translationsRes => {
+                                if (isMe) {
+                                    let marqueeTextStr = '';
+                                    translationsRes.forEach(t => { marqueeTextStr += `${t.user.flag} ${t.text}        `; });
+                                    const myMarquee = document.getElementById('speaker-marquee');
+                                    if(myMarquee) { myMarquee.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; }
+                                } else {
+                                    let myTrans = translationsRes.find(t => t.user.id === window.myProfileInfo.id);
+                                    let tText = myTrans ? myTrans.text : data.text;
+                                    let targetMarquee = document.getElementById(`conf-marquee-${data.userId}`);
+                                    if(targetMarquee) { targetMarquee.innerHTML = `<span class="text-white">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${tText}</span>`; targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null; }
+                                }
+                            });
+                        } catch (e) {}
+                    }
                 }
 
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
@@ -1363,7 +1391,7 @@
                             const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
                             const translationsRes = await Promise.all(fetchPromises); const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; let marqueeTextStr = ''; 
                             translationsRes.forEach(t => { 
-                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}        `; 
                             }); 
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
                             const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0] || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
