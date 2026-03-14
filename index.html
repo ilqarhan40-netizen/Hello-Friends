@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V53</title>
+    <title>Hello Friends - Golden Master V55</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -27,6 +27,8 @@
         const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7", messagingSenderId: "367351601053", appId: "1:367351601053:web:7852c0326db9cc233d44ba" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); 
         const db = firebase.database();
+        // Включаем железобетонное сохранение сессии
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     </script>
 
     <style>
@@ -66,7 +68,7 @@
         .outgoing { align-self: flex-end; }
         .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
         .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
-        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border);}
+        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border); position: relative; }
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
         .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; padding: 4px 0; }
         .chat-input-pill i { color: var(--wa-text-muted); cursor: pointer; transition: 0.2s; font-size: 1.2rem; }
@@ -135,21 +137,45 @@
         .light-theme .chat-info-marquee-container { background: #f0f2f5; border-bottom: 1px solid #d1d7db; }
         .light-theme .header-dropdown { background: #ffffff; border-color: #d1d7db; }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* Стили для аудиоплеера ИИ */
+        .ai-audio-player { display: flex; items-center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 12px; margin-top: 5px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        .ai-audio-player:hover { background: rgba(0,168,132,0.2); border-color: var(--wa-green); }
+        .ai-audio-player i { font-size: 1.2rem; color: var(--wa-green); }
+        .ai-audio-player span { font-size: 0.8rem; font-weight: bold; color: white; }
+        
+        /* Стили для Глобального меню микрофона */
+        #universal-mic-popup { position: absolute; bottom: 65px; right: 10px; background: #111b21; border: 1px solid #2a3942; border-radius: 20px; padding: 6px; display: none; flex-direction: column; gap: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); z-index: 9999; animation: scaleIn 0.2s; }
+        #universal-mic-popup.active { display: flex; }
+        .mic-option-btn { background: #202c33; color: white; border: none; padding: 12px 16px; border-radius: 14px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; text-align: left; width: 220px; }
+        .mic-option-btn:hover { background: #2a3942; }
+        .mic-option-btn i { font-size: 1.2rem; width: 24px; text-align: center; }
+        .mic-opt-call { color: #3b82f6; }
+        .mic-opt-ai { color: #a29bfe; }
+        .mic-opt-text { color: #00a884; }
     </style>
 </head>
 <body>
 
     <div id="security-lock" style="position: fixed; inset: 0; background: #0b141a; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.4s ease;">
-        <div style="width: 70px; height: 70px; border-radius: 50%; background: #ffffff; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; margin-bottom: 20px; box-shadow: 0 0 20px rgba(255,255,255,0.2);">
-            <i class="fa-brands fa-google" style="color: #DB4437;"></i>
+        <div id="auth-spinner" style="display: flex; flex-direction: column; align-items: center;">
+            <i class="fa-solid fa-circle-notch fa-spin text-[#00a884] text-5xl mb-6"></i>
+            <h2 style="color: white; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; letter-spacing: 2px;">HELLO FRIENDS</h2>
+            <p style="color: #8696a0; font-size: 0.85rem; margin-top: 8px;">Connecting to Secure Cloud...</p>
         </div>
-        <h2 style="color: white; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin-bottom: 8px; letter-spacing: 2px;">HELLO FRIENDS</h2>
-        <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 35px; text-transform: uppercase; letter-spacing: 1px;">Secure Cloud Network</p>
-        
-        <button onclick="window.signInWithGoogle()" style="background: #ffffff; color: #757575; border: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px;" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 22px;">
-            Sign in with Google
-        </button>
+
+        <div id="auth-login-box" style="display: none; flex-direction: column; align-items: center;">
+            <div style="width: 70px; height: 70px; border-radius: 50%; background: #ffffff; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; margin-bottom: 20px; box-shadow: 0 0 20px rgba(255,255,255,0.2);">
+                <i class="fa-brands fa-google" style="color: #DB4437;"></i>
+            </div>
+            <h2 style="color: white; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin-bottom: 8px; letter-spacing: 2px;">HELLO FRIENDS</h2>
+            <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 35px; text-transform: uppercase; letter-spacing: 1px;">Secure Cloud Network</p>
+            
+            <button onclick="window.signInWithGoogle()" style="background: #ffffff; color: #757575; border: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px;" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 22px;">
+                Sign in with Google
+            </button>
+        </div>
     </div>
 
     <script>
@@ -182,6 +208,9 @@
         window.addEventListener('load', () => {
             firebase.auth().onAuthStateChanged((user) => {
                 const lockScreen = document.getElementById('security-lock');
+                const spinner = document.getElementById('auth-spinner');
+                const loginBox = document.getElementById('auth-login-box');
+
                 if (user) {
                     lockScreen.style.opacity = '0';
                     setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
@@ -196,18 +225,18 @@
                                 name: user.displayName || 'Google User',
                                 email: user.email || '',
                                 photo: user.photoURL || 'https://ui-avatars.com/api/?name=User&background=00a884&color=fff',
-                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global'
+                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global',
+                                gender: 'male' // По умолчанию мужской
                             }).then(() => { location.reload(); });
                         }
                     });
 
                     window.requestPushPermissions();
                     if(window.initFCM) window.initFCM();
-                    window.sndMsg.volume = 0; window.sndMsg.play().then(()=> { window.sndMsg.pause(); window.sndMsg.volume = 1; }).catch(()=>{});
-                    window.sndRing.volume = 0; window.sndRing.play().then(()=> { window.sndRing.pause(); window.sndRing.volume = 1; }).catch(()=>{});
                 } else {
-                    lockScreen.style.display = 'flex';
-                    lockScreen.style.opacity = '1';
+                    // Если не авторизован - показываем кнопку
+                    spinner.style.display = 'none';
+                    loginBox.style.display = 'flex';
                     localStorage.removeItem('hf_active_user');
                 }
             });
@@ -313,10 +342,17 @@
                     <p class="text-[#8696a0] text-sm">Global Smart Network</p>
                 </div>
                 <div class="mt-auto mb-20 flex items-center justify-center gap-3 p-3.5 bg-[#111b21] border border-[#202c33] rounded-full shadow-lg">
+                    <img src="llgar.jpg" class="w-12 h-12 rounded-full object-cover border-2 border-[#00a884] shadow-md">
                     <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
                 </div>
             </div>
             
+            <div id="universal-mic-popup" onclick="event.stopPropagation();">
+                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.handleSmartCall()"><i class="fa-solid fa-phone mic-opt-call"></i> Call User</button>
+                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('ai-audio')"><i class="fa-solid fa-robot mic-opt-ai"></i> Voice Message (AI)</button>
+                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('text')"><i class="fa-solid fa-microphone mic-opt-text"></i> Voice Text</button>
+            </div>
+
             <div id="message" class="page-content active h-full flex flex-col relative z-10">
                 <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
                     <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition" onclick="window.switchChatRoom('global')">
@@ -345,7 +381,7 @@
                                 <input type="text" id="chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                                 <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" title="Manage Chat" onclick="window.openTrashModal()"></i>
                             </div>
-                            <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.startMic('chat', 'main-chat-mic-btn')"><i class="fa-solid fa-microphone"></i></button>
+                            <button id="main-chat-mic-btn" class="mic-btn-chat" onclick="window.toggleUniversalMic(event, 'chat-input')"><i class="fa-solid fa-microphone"></i></button>
                             <button class="send-btn" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                         </div>
                     </div>
@@ -384,10 +420,6 @@
                         </div>
                     </div>
                 </div>
-                <div id="voice-selector-popup" class="absolute bottom-[60px] right-[10px] bg-[#111b21] border border-[#2a3942] rounded-2xl p-2 hidden flex-col gap-2 z-[100] shadow-2xl" onclick="event.stopPropagation();">
-                    <button class="bg-[#00a884] text-[#111b21] px-4 py-2 rounded-xl text-xs font-bold" onclick="window.closeAllMenus(); window.startMic('voice-msg', 'voice-mic-btn-input')">🗣️ Voice Message</button>
-                    <button class="bg-[#202c33] text-white px-4 py-2 rounded-xl text-xs font-bold border border-[#2a3942]" onclick="window.closeAllMenus(); window.startMic('voice-text', 'voice-mic-btn-input')">🎤 Voice Text</button>
-                </div>
 
                 <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative">
                     <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
@@ -396,7 +428,7 @@
                         <input type="text" id="voice-chat-input" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                         <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
-                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="document.getElementById('voice-selector-popup').classList.toggle('hidden'); document.getElementById('voice-selector-popup').classList.toggle('flex'); event.stopPropagation();"><i class="fa-solid fa-microphone"></i></button>
+                    <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleUniversalMic(event, 'voice-chat-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg('voice-text')"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                 </div>
             </div>
@@ -419,7 +451,7 @@
                         <input type="text" id="conf-chat-input" placeholder="Message Conference..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
                         <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
-                    <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.startMic('conf', 'conf-mic-btn-input')"><i class="fa-solid fa-microphone"></i></button>
+                    <button id="conf-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleUniversalMic(event, 'conf-chat-input')"><i class="fa-solid fa-microphone"></i></button>
                     <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendConfMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                 </div>
             </div>
@@ -583,8 +615,22 @@
                             </select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
                         </div>
                     </div>
+                    
+                    <label class="form-label">AI Voice Gender</label>
+                    <div class="relative w-full mb-4">
+                        <select id="edit-gender" class="form-input-box mb-0 appearance-none pr-8">
+                            <option value="male">👨 Male Voice</option>
+                            <option value="female">👩 Female Voice</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
+                    </div>
+
                     <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
                     <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
+                        <img src="llgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+                        <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
+                    </div>
                 </div>
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button></div>
             </div>
@@ -749,8 +795,8 @@
             document.getElementById('header-dropdown')?.classList.remove('active'); 
             document.getElementById('rhombus-actions')?.classList.remove('active'); 
             document.getElementById('rhombus-btn')?.classList.remove('active'); 
-            const voicePopup = document.getElementById('voice-selector-popup');
-            if (voicePopup) { voicePopup.classList.add('hidden'); voicePopup.classList.remove('flex'); }
+            const micPopup = document.getElementById('universal-mic-popup');
+            if (micPopup) micPopup.classList.remove('active');
             if(window.closeEmojiPicker) window.closeEmojiPicker();
         };
 
@@ -758,13 +804,70 @@
         window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); };
         document.body.addEventListener('click', () => { window.closeAllMenus(); });
 
-        window.speakTranslatedText = function(text, langCode) {
-            if (!window.speechSynthesis) return; 
+        // НОВАЯ УМНАЯ СИСТЕМА МИКРОФОНА
+        window.currentMicInputTarget = 'chat-input';
+        window.toggleUniversalMic = function(e, inputId) {
+            e.stopPropagation();
+            window.currentMicInputTarget = inputId;
+            const popup = document.getElementById('universal-mic-popup');
+            popup.classList.toggle('active');
+        };
+
+        window.handleSmartCall = function() {
+            if (window.currentRoomId === 'global' || window.currentRoomId.startsWith('private_me') || window.currentRoomId === 'private_ai_bot') {
+                alert("Please select a user from the Contacts list to make a call.");
+            } else {
+                window.startInAppCall();
+            }
+        };
+
+        window.startUniversalMic = async function(mode) {
+            window.speechRecognizedText = "";
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let rec = SpeechRec ? new SpeechRec() : null;
+            if (!rec) return alert("Browser does not support Speech Recognition.");
+            
+            rec.continuous = false; rec.interimResults = false;
+            let langSelect = document.getElementById('plus-mic-lang');
+            rec.lang = langSelect ? langSelect.value : 'en-US';
+            
+            window.showToast("Listening...", "Speak into the microphone", "", "");
+            
+            rec.onresult = async (e) => { 
+                window.speechRecognizedText = e.results[0][0].transcript; 
+                let targetLang = window.currentTargetUser ? window.currentTargetUser.langCode : window.myProfileInfo.langCode;
+                if (!targetLang) targetLang = 'en';
+
+                window.showToast("Translating...", "Processing your voice...", "", "");
+                let textToShip = window.speechRecognizedText;
+                
+                try { 
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
+                    const data = await res.json(); 
+                    if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
+                } catch (err) {}
+
+                if (mode === 'text') {
+                    // Просто текст с переводом
+                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
+                } else if (mode === 'ai-audio') {
+                    // Отправляем как ИИ Аудио
+                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, senderGender: window.myProfileInfo.gender || 'male', originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
+                }
+            };
+            try { rec.start(); } catch(e){}
+        };
+
+        // Плеер ИИ Голоса
+        window.playAIVoice = function(text, langCode, gender) {
+            if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
             window.speechSynthesis.cancel(); 
             const utterance = new SpeechSynthesisUtterance(text);
             const voiceMap = { 'en': 'en-US', 'ru': 'ru-RU', 'az': 'tr-TR', 'it': 'it-IT', 'es': 'es-ES', 'fr': 'fr-FR', 'pt': 'pt-PT', 'ja': 'ja-JP', 'zh': 'zh-CN' };
             utterance.lang = voiceMap[langCode] || langCode; 
-            utterance.rate = 1.0; window.speechSynthesis.speak(utterance); 
+            utterance.rate = 1.0;
+            utterance.pitch = gender === 'female' ? 1.4 : 0.8; // Имитация пола, если браузер не поддерживает выбор
+            window.speechSynthesis.speak(utterance);
         };
 
         window.currentEmojiTargetId = null;
@@ -979,6 +1082,7 @@
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); document.getElementById('edit-preview-photo').src = window.myProfileInfo?.photo || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
             } else { 
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myUsername; document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
+                document.getElementById('edit-gender').value = window.myProfileInfo.gender || 'male';
             } 
             if(window.applyTranslations) window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); 
         };
@@ -992,10 +1096,11 @@
             let phoneVal = document.getElementById('edit-phone').value.trim(); let emailVal = document.getElementById('edit-email').value.trim();
             let newId = window.myProfileInfo.id; 
             let photo = document.getElementById('edit-preview-photo').src; 
+            let genderVal = document.getElementById('edit-gender').value;
             const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; 
             const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User in network' };
             
-            let updatedProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal };
+            let updatedProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal, gender: genderVal };
 
             window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; 
             try { localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
@@ -1099,16 +1204,14 @@
             window.isGuest = !activeUserId; 
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
 
-            // ОСТАЛСЯ ТОЛЬКО ИИ АССИСТЕНТ
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
 
-            window.myProfileInfo = { id: activeUserId || 'guest', name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', flag: '🌐', flagCode: 'un', langCode: 'en' };
+            window.myProfileInfo = { id: activeUserId || 'guest', name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', flag: '🌐', flagCode: 'un', langCode: 'en', gender: 'male' };
             window.myUsername = "User";
             window.participants = [aiBot]; 
 
             setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = window.myUsername; }, 1000);
 
-            // СЧИТЫВАЕМ БАЗУ РЕАЛЬНЫХ ЛЮДЕЙ
             db.ref('users').on('value', (snapshot) => { 
                 const data = snapshot.val(); 
                 let realUsers = []; 
@@ -1133,7 +1236,7 @@
                 const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
                 chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername} (Me)</span></div>`;
                 window.participants.filter(p => p.id !== 'ai').forEach(p => { let id1 = String(window.myProfileInfo.id); let id2 = String(p.id); let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; });
             };
 
@@ -1151,7 +1254,8 @@
 
             let isGeminiWaiting = false;
             window.sendFirebaseMsg = async function() { 
-                const inputField = document.getElementById('chat-input'); const rawText = inputField.value.trim(); if (!rawText) return; 
+                const inputField = document.getElementById(window.currentMicInputTarget); 
+                const rawText = inputField.value.trim(); if (!rawText) return; 
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
                 inputField.value = ''; 
                 let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
@@ -1170,7 +1274,10 @@
                     .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
                 } 
             };
-            document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendFirebaseMsg(); });
+            
+            document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); } });
+            document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); } });
+            document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); } });
 
             async function handleNewMessage(snapshot) {
                 const data = snapshot.val(); if(!data) return; const chatMessages = document.getElementById('chat-messages');
@@ -1181,7 +1288,7 @@
 
                 if (!isMe && !isHistory && !isAI) {
                     if (data.isTransfer) { window.sndCash.play().catch(e=>{}); } else { window.sndMsg.play().catch(e=>{}); }
-                    let textPreview = data.text; if(data.isAudio) textPreview = "🎵 Voice Message"; if(data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo"; if(data.isLocation) textPreview = "📍 Shared Location"; if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
+                    let textPreview = data.text; if(data.isAIAudio) textPreview = "🤖 AI Voice Message"; if(data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo"; if(data.isLocation) textPreview = "📍 Shared Location"; if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
                     if (!isAppActiveAndInChat) window.showToast("Message | " + (data.name||'User'), textPreview, p.photo, "");
                 }
 
@@ -1191,16 +1298,27 @@
                 let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${isMe ? 'window.openPersonalLangModal()' : `window.openAvatarModal('${isAI ? 'ai' : p.id}')`}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
                 
                 let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
-                if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
-                else if (data.isAudio) { bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; bubbleContent = `<audio src="${data.audioUrl}" controls class="max-w-[200px] h-[40px] rounded-lg mt-1 border border-[#2a3942] outline-none"></audio>`; }
-                else if (data.isTransfer) { let label = data.transferTypeLabel || 'Transfer'; bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${label}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
+                
+                // РЕНДЕР ИИ ПЛЕЕРА
+                if (data.isAIAudio) {
+                    let escText = escape(data.text);
+                    let sGender = data.senderGender || 'male';
+                    bubbleContent = `
+                        <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${data.langCode}', '${sGender}')">
+                            <i class="fa-solid fa-circle-play"></i>
+                            <span>Play Voice</span>
+                        </div>
+                        <div style="font-size:0.8rem; margin-top:6px; opacity:0.9;">${data.text}</div>
+                    `;
+                }
+                else if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
+                else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
                 else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
-                else if (data.isFile) { bubbleClasses = `chat-bubble !bg-[#202c33] border border-[#2a3942]`; bubbleContent = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center text-white shrink-0"><i class="fa-solid fa-file-lines text-lg"></i></div><span class="font-bold text-sm text-[#e9edef] break-all cursor-pointer hover:text-purple-400 transition">${data.fileName}</span></div>`; }
 
                 msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${window.myUsername}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${data.name || 'User'}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
                 messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAudio) {
+                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio) {
                     let targetUsers = []; let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
                     if (window.currentRoomId === 'global' && !isAI) { window.participants.filter(part => part.id !== 'ai').forEach(member => { let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; if (member.id !== data.userId && memberReadLang !== 'un') { targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); } }); } 
                     else if (window.currentRoomId.startsWith('private_') && !isAI) { if (isMe) { if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); } else { if (data.langCode && data.langCode !== myReadLang) targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); } }
@@ -1210,8 +1328,7 @@
                             const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
                             const translationsRes = await Promise.all(fetchPromises); const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; let marqueeTextStr = ''; 
                             translationsRes.forEach(t => { 
-                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}        `; 
-                                if (data.isVoiceRoomMsg && !isMe && t.user.code === window.myProfileInfo.langCode) { const vMarquee = document.getElementById('voice-info-marquee'); if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${t.text}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; } if (data.speakAloud) { window.speakTranslatedText(t.text, t.user.code); } }
+                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}       `; 
                             }); 
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
                             const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
@@ -1228,9 +1345,7 @@
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
             window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
-            window.voiceFriend = window.participants[1] || aiBot; 
-            window.sendVoiceMsg = async function(mode = 'voice-text') { const inputEl = document.getElementById('voice-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const targetLang = window.voiceFriend.langCode || 'en'; try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`); const translated = (await res.json())[0][0][0]; const mText = document.getElementById('voice-info-marquee'); if(mText) { mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${window.voiceFriend.flag} ${translated}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } let id1 = String(window.myProfileInfo.id); let id2 = String(window.voiceFriend.id); let voiceRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); db.ref(voiceRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: text, isVoiceRoomMsg: true, speakAloud: (mode === 'voice-msg'), sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, langCode: window.myProfileInfo.langCode }); } catch(e) {} };
-            document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendVoiceMsg('voice-text'); });
+            
             window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
 
             window.initConference = function() {
@@ -1244,31 +1359,8 @@
             
             window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) videoEl.srcObject = null; btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
             window.sendConfMsg = async function() { const inputEl = document.getElementById('conf-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const myMarquee = document.getElementById('speaker-marquee'); if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> ${text}`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } const listenerMarquees = document.querySelectorAll('.conf-listener-marquee'); listenerMarquees.forEach(async (el) => { const tLang = el.getAttribute('data-lang'); const tFlag = el.getAttribute('data-flag'); try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json()); const translated = res[0][0][0]; el.innerHTML = `<span class="text-white">User:</span> ${tFlag} ${translated}`; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null; } catch(e) {} }); };
-            document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendConfMsg(); });
             window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
 
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = SpeechRec ? new SpeechRec() : null; if (rec) { rec.continuous = false; rec.interimResults = false; }
-            let currentMicTarget = null; let currentMicBtn = null; let fallbackTimer = null;
-            
-            window.startMic = async function(target, btnId) { 
-                currentMicTarget = target; currentMicBtn = document.getElementById(btnId); window.speechRecognizedText = ""; window.audioChunks = [];
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); window.mediaRecorder = new MediaRecorder(stream);
-                    window.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) window.audioChunks.push(e.data); };
-                    window.mediaRecorder.onstop = () => { stream.getTracks().forEach(track => track.stop()); if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse', 'shadow-[0_0_15px_rgba(162,155,254,0.6)]'); } if (!window.speechRecognizedText || window.speechRecognizedText.trim() === '') { const audioBlob = new Blob(window.audioChunks, { type: 'audio/webm' }); const reader = new FileReader(); reader.readAsDataURL(audioBlob); reader.onloadend = function() { window.sendAudioFallback(reader.result, currentMicTarget); }; } };
-                    window.mediaRecorder.start(); let langSelect = document.getElementById('plus-mic-lang'); if (rec) { rec.lang = langSelect ? langSelect.value : 'en-US'; try { rec.start(); } catch(e){} }
-                    if(fallbackTimer) clearTimeout(fallbackTimer); fallbackTimer = setTimeout(() => { if(window.mediaRecorder && window.mediaRecorder.state === 'recording') window.mediaRecorder.stop(); if(rec) { try{ rec.stop(); }catch(e){} } }, 8000);
-                    if(currentMicBtn) { currentMicBtn.style.color = '#a29bfe'; currentMicBtn.classList.add('animate-pulse', 'shadow-[0_0_15px_rgba(162,155,254,0.6)]'); } window.showToast("AI Voice Sync", "Analyzing & translating...", "", "");
-                } catch(err) { window.showToast("Mic Blocked ⚠️", "Allow microphone access.", "", ""); }
-            };
-
-            if(rec) {
-                rec.onresult = (e) => { window.speechRecognizedText = e.results[0][0].transcript; if (currentMicTarget === 'chat') { let el = document.getElementById('chat-input'); if(el) el.value = window.speechRecognizedText; window.sendFirebaseMsg(); } else if (currentMicTarget.startsWith('voice')) { let el = document.getElementById('voice-chat-input'); if(el) el.value = window.speechRecognizedText; window.sendVoiceMsg(currentMicTarget); } else if (currentMicTarget === 'conf') { let el = document.getElementById('conf-chat-input'); if(el) el.value = window.speechRecognizedText; window.sendConfMsg(); } };
-                rec.onend = () => { if(window.mediaRecorder && window.mediaRecorder.state === 'recording') window.mediaRecorder.stop(); };
-                rec.onerror = () => { if(window.mediaRecorder && window.mediaRecorder.state === 'recording') window.mediaRecorder.stop(); };
-            }
-
-            window.sendAudioFallback = function(base64Audio, target) { let roomId = window.currentRoomId; if (target.startsWith('voice') && window.voiceFriend) { let id1 = String(window.myProfileInfo.id); let id2 = String(window.voiceFriend.id); roomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); } db.ref(roomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: "🎵 Voice Message", isAudio: true, audioUrl: base64Audio, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); };
             window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
 
             window.switchChatRoom('global');
