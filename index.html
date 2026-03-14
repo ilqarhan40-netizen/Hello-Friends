@@ -27,8 +27,6 @@
         const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7", messagingSenderId: "367351601053", appId: "1:367351601053:web:7852c0326db9cc233d44ba" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); 
         const db = firebase.database();
-        // Включаем железобетонное сохранение сессии
-        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     </script>
 
     <style>
@@ -68,13 +66,13 @@
         .outgoing { align-self: flex-end; }
         .outgoing .chat-bubble { background: var(--wa-msg-out); color: white; border-bottom-right-radius: 4px; }
         .chat-sender-name { font-size: 0.7rem; color: var(--wa-green); margin-bottom: 4px; margin-left: 4px; font-weight: 600; }
-        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border); position: relative; }
+        .chat-input-area { display: flex; align-items: center; padding: 10px 12px; background: var(--wa-panel); gap: 8px; flex-shrink: 0; width: 100%; border-top: 1px solid var(--wa-border); position: relative; overflow: visible; }
         .chat-input-pill { flex-grow: 1; background: var(--wa-border); border-radius: 24px; display: flex; align-items: center; padding: 6px 14px; }
         .chat-input-pill input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; padding: 4px 0; }
         .chat-input-pill i { color: var(--wa-text-muted); cursor: pointer; transition: 0.2s; font-size: 1.2rem; }
         .chat-input-pill i:hover { color: var(--wa-green); }
         .mic-btn-chat { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-border); color: var(--wa-text-muted); border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
-        .mic-btn-chat:hover { color: #ef4444; }
+        .mic-btn-chat:hover { color: var(--wa-green); }
         .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); color: #111b21; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.1rem; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
         .send-btn:active { transform: scale(0.9); }
         .bottom-nav-container { display: flex; justify-content: space-between; align-items: center; background: var(--wa-panel); border-top: 1px solid var(--wa-border); padding: 8px 10px 16px 10px; flex-shrink: 0; position: relative; z-index: 50; width: 100%; }
@@ -103,14 +101,17 @@
         .form-label { font-size: 0.7rem; color: var(--wa-green); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; display: block; }
         .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary:active { transform: scale(0.98); }
+        
+        /* НОВАЯ СЕТКА КОНФЕРЕНЦИИ НА 12 ЧЕЛОВЕК */
         .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
-        .video-frame.main { grid-column: 1 / 3; padding-top: 65%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
-        .video-frame video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-        .video-overlay { position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 8px; font-weight: bold; z-index: 10;}
+        .video-frame.main { grid-column: 1 / 3; padding-top: 60%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
+        .video-frame video, .video-frame .placeholder-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .video-overlay { position: absolute; bottom: 25px; left: 8px; background: rgba(0,0,0,0.7); color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 8px; font-weight: bold; z-index: 10;}
         .flag-overlay { position: absolute; top: 8px; right: 8px; z-index: 10;}
-        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); padding: 4px 0; overflow: hidden; display: flex; align-items: center; z-index: 20; transition: opacity 0.3s; }
+        .translation-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.8); padding: 4px 0; overflow: hidden; display: flex; align-items: center; z-index: 20; transition: opacity 0.3s; border-top: 1px solid rgba(255,255,255,0.1); }
         .conf-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
+        
         @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
@@ -138,13 +139,12 @@
         .light-theme .header-dropdown { background: #ffffff; border-color: #d1d7db; }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        /* Стили для аудиоплеера ИИ */
-        .ai-audio-player { display: flex; items-center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 12px; margin-top: 5px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
+        /* ИИ ПЛЕЕР И УМНЫЙ МИКРОФОН */
+        .ai-audio-player { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 12px; margin-top: 5px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
         .ai-audio-player:hover { background: rgba(0,168,132,0.2); border-color: var(--wa-green); }
         .ai-audio-player i { font-size: 1.2rem; color: var(--wa-green); }
         .ai-audio-player span { font-size: 0.8rem; font-weight: bold; color: white; }
         
-        /* Стили для Глобального меню микрофона */
         #universal-mic-popup { position: absolute; bottom: 65px; right: 10px; background: #111b21; border: 1px solid #2a3942; border-radius: 20px; padding: 6px; display: none; flex-direction: column; gap: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); z-index: 9999; animation: scaleIn 0.2s; }
         #universal-mic-popup.active { display: flex; }
         .mic-option-btn { background: #202c33; color: white; border: none; padding: 12px 16px; border-radius: 14px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; text-align: left; width: 220px; }
@@ -200,7 +200,10 @@
 
         window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().signInWithPopup(provider).catch((error) => {
+            // Настроим железную сессию при логине
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+                return firebase.auth().signInWithPopup(provider);
+            }).catch((error) => {
                 alert("Auth Error: " + error.message);
             });
         };
@@ -222,11 +225,11 @@
                         if (!snap.exists()) {
                             db.ref('users/' + user.uid).set({
                                 id: user.uid,
-                                name: user.displayName || 'Google User',
+                                name: user.displayName || 'User',
                                 email: user.email || '',
                                 photo: user.photoURL || 'https://ui-avatars.com/api/?name=User&background=00a884&color=fff',
                                 flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global',
-                                gender: 'male' // По умолчанию мужской
+                                gender: 'male' 
                             }).then(() => { location.reload(); });
                         }
                     });
@@ -234,7 +237,6 @@
                     window.requestPushPermissions();
                     if(window.initFCM) window.initFCM();
                 } else {
-                    // Если не авторизован - показываем кнопку
                     spinner.style.display = 'none';
                     loginBox.style.display = 'flex';
                     localStorage.removeItem('hf_active_user');
@@ -429,7 +431,7 @@
                         <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()"></i>
                     </div>
                     <button id="voice-mic-btn-input" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleUniversalMic(event, 'voice-chat-input')"><i class="fa-solid fa-microphone"></i></button>
-                    <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendVoiceMsg('voice-text')"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+                    <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
                 </div>
             </div>
 
@@ -525,7 +527,7 @@
                         <option value="es-ES">🇪🇸 Español</option>
                         <option value="fr-FR">🇫🇷 Français</option>
                         <option value="pt-PT">🇵🇹 Português</option>
-                        <option value="ja-JP">🇯🇵 日本語</option>
+                        <option value="ja-JP">🇯播 日本語</option>
                         <option value="zh-CN">🇨🇳 中文</option>
                     </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call"><i class="fa-solid fa-video"></i></div>
@@ -848,17 +850,14 @@
                 } catch (err) {}
 
                 if (mode === 'text') {
-                    // Просто текст с переводом
                     db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
                 } else if (mode === 'ai-audio') {
-                    // Отправляем как ИИ Аудио
                     db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, senderGender: window.myProfileInfo.gender || 'male', originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
                 }
             };
             try { rec.start(); } catch(e){}
         };
 
-        // Плеер ИИ Голоса
         window.playAIVoice = function(text, langCode, gender) {
             if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
             window.speechSynthesis.cancel(); 
@@ -866,7 +865,7 @@
             const voiceMap = { 'en': 'en-US', 'ru': 'ru-RU', 'az': 'tr-TR', 'it': 'it-IT', 'es': 'es-ES', 'fr': 'fr-FR', 'pt': 'pt-PT', 'ja': 'ja-JP', 'zh': 'zh-CN' };
             utterance.lang = voiceMap[langCode] || langCode; 
             utterance.rate = 1.0;
-            utterance.pitch = gender === 'female' ? 1.4 : 0.8; // Имитация пола, если браузер не поддерживает выбор
+            utterance.pitch = gender === 'female' ? 1.4 : 0.8; 
             window.speechSynthesis.speak(utterance);
         };
 
@@ -1299,7 +1298,6 @@
                 
                 let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
                 
-                // РЕНДЕР ИИ ПЛЕЕРА
                 if (data.isAIAudio) {
                     let escText = escape(data.text);
                     let sGender = data.senderGender || 'male';
@@ -1348,12 +1346,55 @@
             
             window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
 
+            // ФИНАЛЬНАЯ ЛОГИКА 12 СЛОТОВ ДЛЯ КОНФЕРЕНЦИИ
             window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
-                let confHtml = `<div class="video-frame main" id="my-video-container"><video id="my-live-video" class="mirror-video" playsinline></video><div class="video-overlay">${window.myUsername}</div><div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942]"></div><div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div></div>`;
-                let displayedCount = 0;
-                window.participants.forEach(p => { if(p.id === 'ai' || displayedCount >= 3) return; confHtml += `<div class="video-frame"><video autoplay loop muted playsinline><source src="${p.video}"></video><div class="video-overlay">${(p.name||'').split(' ')[0]}</div><div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942]"></div><div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Ready...</div></div></div>`; displayedCount++; });
-                confGrid.innerHTML = confHtml; const videoEl = document.getElementById('my-live-video'); if(videoEl) { videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); }
+                
+                // 1. Отрисовываем себя (Главный экран)
+                let confHtml = `
+                <div class="video-frame main" id="my-video-container">
+                    <video id="my-live-video" class="mirror-video" playsinline></video>
+                    <div class="video-overlay">${window.myUsername}</div>
+                    <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942]"></div>
+                    <div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
+                </div>`;
+                
+                let realParticipants = window.participants.filter(p => p.id !== 'ai'); // Без ИИ в видео-сетке
+                let totalSlots = 12;
+                let renderedCount = 1; // Мы уже отрисовали себя
+                
+                // 2. Отрисовываем реальных людей, которые в сети
+                realParticipants.forEach(p => {
+                    if (renderedCount >= totalSlots) return; // Лимит 12
+                    confHtml += `
+                    <div class="video-frame">
+                        <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
+                        <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
+                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942]"></div>
+                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Listening...</div></div>
+                    </div>`;
+                    renderedCount++;
+                });
+
+                // 3. Заполняем остальные слоты красивыми заглушками (Empty Slots)
+                for (let i = renderedCount; i < totalSlots; i++) {
+                    confHtml += `
+                    <div class="video-frame border-dashed border-2 border-[#2a3942]">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#0b141a] opacity-50">
+                            <i class="fa-solid fa-user-plus text-2xl text-[#2a3942] mb-2"></i>
+                            <span class="text-[0.6rem] text-[#8696a0] font-bold uppercase tracking-widest">Empty Slot</span>
+                        </div>
+                        <div class="translation-bar"><div class="conf-marquee-text text-[#8696a0]">Waiting for user...</div></div>
+                    </div>`;
+                }
+
+                confGrid.innerHTML = confHtml; 
+                
+                const videoEl = document.getElementById('my-live-video'); 
+                if(videoEl) { 
+                    videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
+                    videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
+                }
             }
             if (document.getElementById('conference-grid')) initConference(); 
             
