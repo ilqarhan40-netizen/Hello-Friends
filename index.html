@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V48 (Ghost Fix)</title>
+    <title>Hello Friends - Golden Master V50 (Autonomous Push & Calls)</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -18,13 +18,11 @@
     <script type="text/javascript"> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Allura&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
 
     <style>
         :root { --wa-bg: #0b141a; --wa-panel: #111b21; --wa-border: #202c33; --wa-green: #00a884; --wa-msg-out: #005c4b; --wa-msg-in: #202c33; --wa-text: #e9edef; --wa-text-muted: #8696a0; --hf-purple: #a29bfe; }
@@ -195,6 +193,7 @@
 
         window.firePush = function(title, body, icon) {
             if ("Notification" in window && Notification.permission === "granted") {
+                // Пуш вылетает только если приложение свернуто (находится в фоне)
                 if (document.visibilityState === 'hidden' || document.hidden) {
                     new Notification(title, { body: body, icon: icon || 'https://ui-avatars.com/api/?name=HF&background=00a884&color=fff' });
                 }
@@ -213,8 +212,9 @@
                 errorMsg.style.display = 'none';
                 document.getElementById('security-lock').style.opacity = '0';
                 
-                // Прогрев аудио и запрос PUSH после клика (обходим защиту браузера)
+                // Запрашиваем PUSH и прогреваем звук (обходим защиту браузера)
                 window.requestPushPermissions();
+                if(window.initFCM) window.initFCM();
                 window.sndMsg.volume = 0; window.sndMsg.play().then(()=> { window.sndMsg.pause(); window.sndMsg.volume = 1; }).catch(()=>{});
                 window.sndRing.volume = 0; window.sndRing.play().then(()=> { window.sndRing.pause(); window.sndRing.volume = 1; }).catch(()=>{});
 
@@ -1017,7 +1017,6 @@
             if(id === 'ai') return alert("Cannot delete AI System Core!");
             if (localStorage.getItem('hf_god_mode') === 'true') {
                 if (confirm("DANGER! Навсегда удалить этого пользователя из базы?")) {
-                    // Ставим метку "isDeleted", чтобы перебить встроенных персонажей
                     firebase.database().ref('users/' + id).set({ id: id, isDeleted: true }); 
                     alert("User has been eradicated from the system! 💀"); 
                     window.closeAdminModal();
@@ -1202,7 +1201,10 @@
                 firebase.database().ref('users/' + newId).update(updatedProfile); 
                 window.myUsername = nameVal;
             }
-            window.requestPushPermissions();
+            
+            // Прогреваем PUSH уведомления
+            if(window.initFCM) window.initFCM();
+
             window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Access granted.", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
 
@@ -1299,6 +1301,9 @@
                 callerPhoto: window.myProfileInfo.photo,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
             });
+
+            // Пытаемся отправить PUSH через функцию-прокладку
+            window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`);
 
             const photoEl = document.getElementById('voice-friend-photo');
             const flagEl = document.getElementById('voice-friend-flag');
@@ -1416,7 +1421,6 @@
             if (confirm("Are you sure you want to permanently delete your account and all data? This cannot be undone.")) {
                 let myId = window.myProfileInfo.id;
                 if (myId && !window.isGuest) {
-                    // Ставим метку "isDeleted", чтобы навсегда скрыть пользователя из базы
                     firebase.database().ref('users/' + myId).set({ id: myId, isDeleted: true });
                 }
                 localStorage.removeItem('hf_active_user');
@@ -1434,7 +1438,7 @@
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Information" }, 
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", delete_acc: "Удалить аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", app_creator_greet: "Создатель Привет Друзья", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль", edit_subtitle: "Основная информация" }, 
                 az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", app_creator_greet: "Hello Friends Yaradıcısı", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" }, 
-                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", delete_acc: "Elimina account", welcome_empty: "Benvenuto in Hello Friends!", app_creator_greet: "Creatore di Hello Friends", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
+                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", delete_acc: "Elimina account", welcome_empty: "Benvenuto in Hello Friends!", app_creator_greet: "Creatore di Hello Friends", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
                 es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Reunión", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Cartera", theme: "Tema", export: "Exportar", import: "Importar", delete_acc: "Eliminar cuenta", welcome_empty: "¡Bienvenido a Hello Friends!", app_creator_greet: "Creador de Hello Friends", lang: "Idioma: ES", reg_title: "¡Bienvenido a Hello Friends!", reg_subtitle: "Completa el registro", reg_name: "Nombre Completo", reg_country: "País", reg_phone: "Teléfono", reg_email: "Correo", reg_prof: "Profesión", reg_langs: "Idiomas", reg_bio: "Biografía / CV", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
                 fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Réunion", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", delete_acc: "Supprimer le compte", welcome_empty: "Bienvenue sur Hello Friends!", app_creator_greet: "Créateur de Hello Friends", lang: "Langue: FR", reg_title: "Bienvenue sur Hello Friends!", reg_subtitle: "Veuillez vous inscrire", reg_name: "Nom Complet", reg_country: "Pays", reg_phone: "Téléphone", reg_email: "Email", reg_prof: "Profession", reg_langs: "Langues", reg_bio: "Bio / CV", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
                 pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Reunião", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar", import: "Importar", delete_acc: "Excluir conta", welcome_empty: "Bem-vindo ao Hello Friends!", app_creator_greet: "Criador do Hello Friends", lang: "Idioma: PT", reg_title: "Bem-vindo ao Hello Friends!", reg_subtitle: "Conclua o registro", reg_name: "Nome Completo", reg_country: "País", reg_phone: "Telefone", reg_email: "Email", reg_prof: "Profissão", reg_langs: "Idiomas", reg_bio: "Bio / CV", reg_save: "Salvar", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
@@ -1484,9 +1488,47 @@
                 } 
             };
 
-            const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7" };
+            const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7", messagingSenderId: "367351601053", appId: "1:367351601053:web:7852c0326db9cc233d44ba" };
             if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); const db = firebase.database();
             
+            // ИНИЦИАЛИЗАЦИЯ FCM (PUSH)
+            window.initFCM = function() {
+                try {
+                    const messaging = firebase.messaging();
+                    messaging.getToken({ vapidKey: "BMMHmREmqUdec5j8SnGKw6Lh3PFNiidZAalJRpSdtet-iWyhYTjGdUJT7KzHHeVmRoIzi9Sllbg97ZoQa0yP0Vs" }).then((currentToken) => {
+                        if (currentToken) {
+                            firebase.database().ref('users/' + window.myProfileInfo.id).update({ fcmToken: currentToken });
+                        }
+                    }).catch((err) => { console.log('FCM Error: ', err); });
+
+                    messaging.onMessage((payload) => {
+                        window.sndMsg.play().catch(e=>{});
+                        window.showToast(payload.data.title || "New Message", payload.data.body, "", "");
+                    });
+                } catch(e) {}
+            };
+
+            // ФУНКЦИЯ ОТПРАВКИ PUSH В ФОН
+            window.sendPushToUser = function(targetUserId, title, body) {
+                firebase.database().ref('users/' + targetUserId).once('value').then(snap => {
+                    let u = snap.val();
+                    if(u && u.fcmToken) {
+                        // Для теста отправляем через публичный шлюз (в проде нужен сервер/Cloud Function)
+                        fetch('https://fcm.googleapis.com/fcm/send', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'key=AAAAUaPqWp0:APA91bE...' // Вставьте ваш Server Key из консоли Firebase
+                            },
+                            body: JSON.stringify({
+                                "to": u.fcmToken,
+                                "data": { "title": title, "body": body, "icon": window.myProfileInfo.photo }
+                            })
+                        }).catch(e=>{});
+                    }
+                });
+            };
+
             function getActiveUserId() {
                 let uid = localStorage.getItem('hf_active_user');
                 if (!uid) {
@@ -1621,6 +1663,11 @@
                 db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); 
                 const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
                 
+                // Пытаемся послать PUSH собеседнику
+                if (window.currentTargetUser) {
+                    window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip);
+                }
+
                 if (window.currentRoomId === 'private_ai_bot') { 
                     isGeminiWaiting = true; 
                     
@@ -1646,7 +1693,9 @@
                 let isHistory = false;
                 if (data.timestamp && (Date.now() - data.timestamp) > 5000) { isHistory = true; } 
 
-                // === ЗВУКИ И PUSH-УВЕДОМЛЕНИЯ ===
+                // === ЛОГИКА ЗВУКОВ И УВЕДОМЛЕНИЙ (ИСПРАВЛЕННАЯ) ===
+                let isAppActiveAndInChat = (document.visibilityState === 'visible' && window.currentIndex === 0);
+
                 if (!isMe && !isHistory && !isAI) {
                     if (data.isTransfer) { window.sndCash.play().catch(e=>{}); } 
                     else { window.sndMsg.play().catch(e=>{}); }
@@ -1657,7 +1706,10 @@
                     if(data.isLocation) textPreview = "📍 Shared Location";
                     if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
                     
-                    window.showToast("Message | " + (data.name||'User'), textPreview, p.photo, "");
+                    // ПОКАЗЫВАЕМ ТОСТ ТОЛЬКО ЕСЛИ МЫ НЕ СМОТРИМ В ЭТОТ ЖЕ ЧАТ СЕЙЧАС
+                    if (!isAppActiveAndInChat) {
+                        window.showToast("Message | " + (data.name||'User'), textPreview, p.photo, "");
+                    }
                     window.firePush("Message | " + (data.name||'User'), textPreview, p.photo);
                 }
 
@@ -1940,9 +1992,9 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => console.log('PWA ServiceWorker успешно зарегистрирован!'))
-                    .catch(err => console.error('Ошибка регистрации PWA: ', err));
+                navigator.serviceWorker.register('firebase-messaging-sw.js')
+                    .then(registration => console.log('FCM PWA ServiceWorker успешно зарегистрирован!'))
+                    .catch(err => console.error('Ошибка регистрации FCM PWA: ', err));
             });
         }
     </script>
