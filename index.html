@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V55.3</title>
+    <title>Hello Friends - Golden Master V55.4</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -104,7 +104,6 @@
         .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary:active { transform: scale(0.98); }
         
-        /* СЕТКА КОНФЕРЕНЦИИ НА 12 ЧЕЛОВЕК И МОРЕ ФОТО */
         .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
         .video-frame.main { grid-column: 1 / 3; padding-top: 60%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
@@ -141,7 +140,6 @@
         .light-theme .header-dropdown { background: #ffffff; border-color: #d1d7db; }
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
-        /* ИИ ПЛЕЕР И УМНЫЙ МИКРОФОН */
         .ai-audio-player { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 12px; margin-top: 5px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
         .ai-audio-player:hover { background: rgba(0,168,132,0.2); border-color: var(--wa-green); }
         .ai-audio-player i { font-size: 1.2rem; color: var(--wa-green); }
@@ -202,7 +200,9 @@
 
         window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().signInWithPopup(provider).catch((error) => {
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+                return firebase.auth().signInWithPopup(provider);
+            }).catch((error) => {
                 alert("Auth Error: " + error.message);
             });
         };
@@ -416,7 +416,7 @@
                                 <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] relative z-10 shadow-[0_0_15px_rgba(0,168,132,0.3)]">
                                 <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#111b21] rounded-full p-1 shadow"></span>
                             </div>
-                            <h3 class="text-white font-bold text-sm text-center truncate w-full max-w-[100px]" id="voice-me-name">You</h3>
+                            <h3 class="text-white font-bold text-sm text-center truncate w-full max-w-[100px]" id="voice-me-name"></h3>
                         </div>
                     </div>
                 </div>
@@ -795,7 +795,6 @@
         window.toggleHeaderMenu = function(e) { e.stopPropagation(); document.getElementById('header-dropdown')?.classList.toggle('active'); };
         document.body.addEventListener('click', () => { window.closeAllMenus(); });
 
-        // НОВАЯ УМНАЯ СИСТЕМА МИКРОФОНА
         window.currentMicInputTarget = 'chat-input';
         window.toggleUniversalMic = function(e, inputId) {
             e.stopPropagation();
@@ -1221,7 +1220,7 @@
                 const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
                 chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername} (Me)</span></div>`;
+                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
                 window.participants.filter(p => p.id !== 'ai').forEach(p => { let id1 = String(window.myProfileInfo.id); let id2 = String(p.id); let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; });
             };
 
@@ -1239,7 +1238,6 @@
 
             let isGeminiWaiting = false;
 
-            // ОТПРАВКА ДЛЯ ГЛАВНОГО ЧАТА
             window.sendFirebaseMsg = async function() { 
                 const inputField = document.getElementById('chat-input'); 
                 const rawText = inputField.value.trim(); if (!rawText) return; 
@@ -1262,14 +1260,13 @@
                 } 
             };
 
-            // ОТПРАВКА ДЛЯ ГОЛОСОВОЙ КОМНАТЫ (С мгновенным показом текста)
             window.sendVoiceMsg = async function() { 
                 const inputField = document.getElementById('voice-chat-input'); 
                 const rawText = inputField.value.trim(); if (!rawText) return; 
                 inputField.value = ''; 
                 
                 const mText = document.getElementById('voice-info-marquee');
-                if(mText) { mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${rawText}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; }
+                if(mText) { mText.innerHTML = `<span class="text-white mr-2">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${rawText}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; }
 
                 let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
                 let textToShip = rawText; 
@@ -1278,14 +1275,13 @@
                 db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isVoiceRoomMsg: true, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); 
             };
 
-            // ОТПРАВКА ДЛЯ КОНФЕРЕНЦИИ
             window.sendConfMsg = async function() { 
                 const inputField = document.getElementById('conf-chat-input'); 
                 const rawText = inputField.value.trim(); if (!rawText) return; 
                 inputField.value = ''; 
                 
                 const myMarquee = document.getElementById('speaker-marquee'); 
-                if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${rawText}</span>`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } 
+                if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${rawText}</span>`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } 
                 
                 const listenerMarquees = document.querySelectorAll('.conf-listener-marquee'); 
                 listenerMarquees.forEach(async (el) => { 
@@ -1351,7 +1347,9 @@
                             const translationsRes = await Promise.all(fetchPromises); const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; let marqueeTextStr = ''; 
                             translationsRes.forEach(t => { 
                                 transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}       `; 
-                                if (data.isVoiceRoomMsg && !isMe && t.user.code === window.myProfileInfo.langCode) { const vMarquee = document.getElementById('voice-info-marquee'); if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${t.text}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; } }
+                                
+                                // Обновление бегущей строки Voice Room с ФЛАГОМ
+                                if (data.isVoiceRoomMsg && !isMe && t.user.code === window.myProfileInfo.langCode) { const vMarquee = document.getElementById('voice-info-marquee'); if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; } }
                             }); 
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
                             const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
@@ -1371,7 +1369,7 @@
             
             window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
 
-            // КРАСИВАЯ СЕТКА КОНФЕРЕНЦИИ НА 12 СЛОТОВ
+            // КРАСИВАЯ СЕТКА КОНФЕРЕНЦИИ НА 12 СЛОТОВ (С вашим фото в заглушках)
             window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
                 
@@ -1399,29 +1397,15 @@
                     renderedCount++;
                 });
 
-                // Красивые фото и флаги для пустых слотов
-                const dummyPhotos = [
-                    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1498092651296-641e88c3b663?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1518623489648-a173ef7824f3?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1495954484750-af469f2f9be5?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1518889735218-3e3a03fd3128?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1500511362196-0ba8c919dfae?w=300&fit=crop',
-                    'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=300&fit=crop'
-                ];
                 const dummyFlags = ['us', 'gb', 'fr', 'de', 'jp', 'it', 'es', 'cn', 'ae', 'pt', 'tr'];
                 
+                // Используем llgar.jpg как заглушку для всех пустых слотов
                 for (let i = renderedCount; i < totalSlots; i++) {
-                    let randomPhoto = dummyPhotos[i % dummyPhotos.length];
                     let randomFlag = dummyFlags[i % dummyFlags.length];
                     confHtml += `
                     <div class="video-frame border-2 border-[#2a3942]">
-                        <img src="${randomPhoto}" class="placeholder-bg opacity-70">
-                        <div class="absolute inset-0 bg-black/30"></div>
+                        <img src="llgar.jpg" class="placeholder-bg opacity-50 object-cover">
+                        <div class="absolute inset-0 bg-black/40"></div>
                         <div class="video-overlay" style="background: rgba(0,0,0,0.5);">Connecting...</div>
                         <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${randomFlag}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
                         <div class="translation-bar"><div class="conf-marquee-text text-[#8696a0]">Waiting for user...</div></div>
