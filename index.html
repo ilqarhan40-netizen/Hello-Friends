@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V55.4</title>
+    <title>Hello Friends - Golden Master V55.5</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -104,6 +104,7 @@
         .btn-primary { width: 100%; padding: 16px; border-radius: 16px; border: none; background: var(--wa-green); color: #111b21; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-primary:active { transform: scale(0.98); }
         
+        /* СЕТКА КОНФЕРЕНЦИИ НА 12 ЧЕЛОВЕК И ВАШЕ ФОТО */
         .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .video-frame { position: relative; border-radius: 16px; padding-top: 100%; overflow: hidden; background: #000; border: 1px solid var(--wa-border); }
         .video-frame.main { grid-column: 1 / 3; padding-top: 60%; border: 2px solid var(--wa-green); box-shadow: 0 0 15px rgba(0,168,132,0.2);}
@@ -1248,7 +1249,6 @@
                 try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {} 
                 
                 db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); 
-                const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
                 if (window.currentTargetUser) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
                 if (window.currentRoomId === 'private_ai_bot') { 
@@ -1283,16 +1283,11 @@
                 const myMarquee = document.getElementById('speaker-marquee'); 
                 if(myMarquee) { myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${rawText}</span>`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; } 
                 
-                const listenerMarquees = document.querySelectorAll('.conf-listener-marquee'); 
-                listenerMarquees.forEach(async (el) => { 
-                    const tLang = el.getAttribute('data-lang'); const tFlag = el.getAttribute('data-flag'); 
-                    try { 
-                        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(rawText)}`).then(r => r.json()); 
-                        const translated = res[0][0][0]; 
-                        el.innerHTML = `<span class="text-white">${window.myUsername}:</span> ${tFlag} ${translated}`; 
-                        el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null; 
-                    } catch(e) {} 
-                }); 
+                let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
+                let textToShip = rawText; 
+                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {}
+
+                db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isConfMsg: true, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
             };
             
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.sendFirebaseMsg(); } });
@@ -1309,7 +1304,29 @@
                 if (!isMe && !isHistory && !isAI) {
                     if (data.isTransfer) { window.sndCash.play().catch(e=>{}); } else { window.sndMsg.play().catch(e=>{}); }
                     let textPreview = data.text; if(data.isAIAudio) textPreview = "🤖 AI Voice Message"; if(data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo"; if(data.isLocation) textPreview = "📍 Shared Location"; if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
-                    if (!isAppActiveAndInChat) window.showToast("Message | " + (data.name||'User'), textPreview, p.photo, "");
+                    if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + (data.name||'User').split(' ')[0], textPreview, p.photo, "");
+                }
+
+                // Логика бегущей строки Voice Room
+                let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                
+                if (data.isVoiceRoomMsg && !isMe) {
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.text)}`)
+                    .then(res=>res.json()).then(resData=>{
+                        let tText = resData[0][0][0];
+                        const vMarquee = document.getElementById('voice-info-marquee');
+                        if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${tText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
+                    }).catch(e=>{});
+                }
+
+                // Логика бегущей строки Конференции
+                if (data.isConfMsg && !isMe) {
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.text)}`)
+                    .then(res=>res.json()).then(resData=>{
+                        let tText = resData[0][0][0];
+                        let targetMarquee = document.getElementById(`conf-marquee-${data.userId}`);
+                        if(targetMarquee) { targetMarquee.innerHTML = `<span class="text-white">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${tText}</span>`; targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null; }
+                    }).catch(e=>{});
                 }
 
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
@@ -1337,7 +1354,7 @@
                 messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio) {
-                    let targetUsers = []; let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    let targetUsers = []; 
                     if (window.currentRoomId === 'global' && !isAI) { window.participants.filter(part => part.id !== 'ai').forEach(member => { let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; if (member.id !== data.userId && memberReadLang !== 'un') { targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); } }); } 
                     else if (window.currentRoomId.startsWith('private_') && !isAI) { if (isMe) { if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); } else { if (data.langCode && data.langCode !== myReadLang) targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); } }
 
@@ -1347,12 +1364,9 @@
                             const translationsRes = await Promise.all(fetchPromises); const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; let marqueeTextStr = ''; 
                             translationsRes.forEach(t => { 
                                 transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}       `; 
-                                
-                                // Обновление бегущей строки Voice Room с ФЛАГОМ
-                                if (data.isVoiceRoomMsg && !isMe && t.user.code === window.myProfileInfo.langCode) { const vMarquee = document.getElementById('voice-info-marquee'); if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; } }
                             }); 
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
-                            const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
+                            const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0] || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
                         } catch (e) {}
                     }
                 }
@@ -1366,10 +1380,8 @@
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
             window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
-            
             window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
 
-            // КРАСИВАЯ СЕТКА КОНФЕРЕНЦИИ НА 12 СЛОТОВ (С вашим фото в заглушках)
             window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
                 
@@ -1392,14 +1404,13 @@
                         <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
                         <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
                         <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Listening...</div></div>
+                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-${p.id}">${p.flag} Listening...</div></div>
                     </div>`;
                     renderedCount++;
                 });
 
                 const dummyFlags = ['us', 'gb', 'fr', 'de', 'jp', 'it', 'es', 'cn', 'ae', 'pt', 'tr'];
                 
-                // Используем llgar.jpg как заглушку для всех пустых слотов
                 for (let i = renderedCount; i < totalSlots; i++) {
                     let randomFlag = dummyFlags[i % dummyFlags.length];
                     confHtml += `
