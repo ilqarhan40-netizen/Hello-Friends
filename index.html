@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V47 (Push & Call System)</title>
+    <title>Hello Friends - Golden Master V48 (Ghost Fix)</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -896,7 +896,6 @@
             const iframe = document.getElementById('search-result-frame'); iframe.src = 'https://www.bing.com/search?q=' + encodeURIComponent(q); iframe.classList.remove('hidden'); 
         };
 
-        // --- ЛОГИКА НОВОГО КОШЕЛЬКА ---
         window.switchWalletTab = function(tab) {
             const btnCard = document.getElementById('tab-btn-card');
             const btnIntl = document.getElementById('tab-btn-intl');
@@ -1018,7 +1017,10 @@
             if(id === 'ai') return alert("Cannot delete AI System Core!");
             if (localStorage.getItem('hf_god_mode') === 'true') {
                 if (confirm("DANGER! Навсегда удалить этого пользователя из базы?")) {
-                    firebase.database().ref('users/' + id).remove(); alert("User has been eradicated from the system! 💀"); window.closeAdminModal();
+                    // Ставим метку "isDeleted", чтобы перебить встроенных персонажей
+                    firebase.database().ref('users/' + id).set({ id: id, isDeleted: true }); 
+                    alert("User has been eradicated from the system! 💀"); 
+                    window.closeAdminModal();
                 }
             } else { alert("Access Denied. God Mode is not active."); }
         };
@@ -1414,7 +1416,8 @@
             if (confirm("Are you sure you want to permanently delete your account and all data? This cannot be undone.")) {
                 let myId = window.myProfileInfo.id;
                 if (myId && !window.isGuest) {
-                    firebase.database().ref('users/' + myId).remove();
+                    // Ставим метку "isDeleted", чтобы навсегда скрыть пользователя из базы
+                    firebase.database().ref('users/' + myId).set({ id: myId, isDeleted: true });
                 }
                 localStorage.removeItem('hf_active_user');
                 localStorage.removeItem('hf_custom_' + myId);
@@ -1431,7 +1434,7 @@
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", lang: "Lang: EN", reg_title: "Welcome to Hello Friends!", reg_subtitle: "Please complete registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_prof: "Profession", reg_langs: "Languages", reg_bio: "Bio / CV", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Information" }, 
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Встреча", cv: "Резюме", social: "Соцсети", profile: "Мой Профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", delete_acc: "Удалить аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", app_creator_greet: "Создатель Привет Друзья", lang: "Язык: RU", reg_title: "Добро пожаловать в Hello Friends!", reg_subtitle: "Пожалуйста, пройдите регистрацию", reg_name: "Полное Имя", reg_country: "Страна", reg_phone: "Номер Телефона", reg_email: "Email", reg_prof: "Профессия", reg_langs: "Языки", reg_bio: "О себе / CV", reg_save: "Сохранить", edit_title: "Мой Профиль", edit_subtitle: "Основная информация" }, 
                 az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Görüş", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pulqabı", theme: "Mövzu", export: "İxrac et", import: "İdxal et", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", app_creator_greet: "Hello Friends Yaradıcısı", lang: "Dil: AZ", reg_title: "Hello Friends-ə Xoş Gəldiniz!", reg_subtitle: "Zəhmət olmasa qeydiyyatdan keçin", reg_name: "Ad və Soyad", reg_country: "Ölkə", reg_phone: "Telefon Nömrəsi", reg_email: "E-poçt", reg_prof: "İxtisas", reg_langs: "Dillər", reg_bio: "Haqqında / CV", reg_save: "Yadda Saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" }, 
-                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", delete_acc: "Elimina account", welcome_empty: "Benvenuto in Hello Friends!", app_creator_greet: "Creatore di Hello Friends", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", reg_email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
+                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Incontra", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta", import: "Importa", delete_acc: "Elimina account", welcome_empty: "Benvenuto in Hello Friends!", app_creator_greet: "Creatore di Hello Friends", lang: "Lingua: IT", reg_title: "Benvenuto in Hello Friends!", reg_subtitle: "Completa la registrazione", reg_name: "Nome Completo", reg_country: "Paese", reg_phone: "Telefono", email: "Email", reg_prof: "Professione", reg_langs: "Lingue", reg_bio: "Bio / CV", reg_save: "Salva", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
                 es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Reunión", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Cartera", theme: "Tema", export: "Exportar", import: "Importar", delete_acc: "Eliminar cuenta", welcome_empty: "¡Bienvenido a Hello Friends!", app_creator_greet: "Creador de Hello Friends", lang: "Idioma: ES", reg_title: "¡Bienvenido a Hello Friends!", reg_subtitle: "Completa el registro", reg_name: "Nombre Completo", reg_country: "País", reg_phone: "Teléfono", reg_email: "Correo", reg_prof: "Profesión", reg_langs: "Idiomas", reg_bio: "Biografía / CV", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
                 fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Réunion", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", delete_acc: "Supprimer le compte", welcome_empty: "Bienvenue sur Hello Friends!", app_creator_greet: "Créateur de Hello Friends", lang: "Langue: FR", reg_title: "Bienvenue sur Hello Friends!", reg_subtitle: "Veuillez vous inscrire", reg_name: "Nom Complet", reg_country: "Pays", reg_phone: "Téléphone", reg_email: "Email", reg_prof: "Profession", reg_langs: "Langues", reg_bio: "Bio / CV", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
                 pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Reunião", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar", import: "Importar", delete_acc: "Excluir conta", welcome_empty: "Bem-vindo ao Hello Friends!", app_creator_greet: "Criador do Hello Friends", lang: "Idioma: PT", reg_title: "Bem-vindo ao Hello Friends!", reg_subtitle: "Conclua o registro", reg_name: "Nome Completo", reg_country: "País", reg_phone: "Telefone", reg_email: "Email", reg_prof: "Profissão", reg_langs: "Idiomas", reg_bio: "Bio / CV", reg_save: "Salvar", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
@@ -1517,6 +1520,15 @@
                 
                 if (data) { 
                     if (!window.isGuest && activeUserId && data[activeUserId]) {
+                        // Если сам пользователь удален
+                        if (data[activeUserId].isDeleted) {
+                            localStorage.removeItem('hf_active_user');
+                            localStorage.removeItem('hf_custom_' + activeUserId);
+                            document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                            location.reload();
+                            return;
+                        }
+
                         window.myProfileInfo = { ...window.myProfileInfo, ...data[activeUserId] };
                         window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
                         try { localStorage.setItem('hf_custom_' + activeUserId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
@@ -1532,8 +1544,14 @@
                     Object.values(data).forEach(u => { 
                         if(!u.id) return; 
                         let existingIdx = mergedUsers.findIndex(vip => vip.id === u.id); 
-                        if (existingIdx === -1) mergedUsers.push(u); 
-                        else mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; 
+                        
+                        // === ФИЛЬТР ПРИЗРАКОВ ===
+                        if (u.isDeleted) {
+                            if (existingIdx !== -1) mergedUsers.splice(existingIdx, 1);
+                        } else {
+                            if (existingIdx === -1) mergedUsers.push(u); 
+                            else mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; 
+                        }
                     }); 
                 } 
                 
@@ -1626,9 +1644,9 @@
                 let p = isMe ? window.myProfileInfo : (isAI ? aiBot : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name='+(data.name||'U'), langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
                 
                 let isHistory = false;
-                if (data.timestamp && (Date.now() - data.timestamp) > 5000) { isHistory = true; } // Защита от спама звуками при загрузке
+                if (data.timestamp && (Date.now() - data.timestamp) > 5000) { isHistory = true; } 
 
-                // === ЗВУКИ И PUSH-УВЕДОМЛЕНИЯ ДЛЯ НОВЫХ СООБЩЕНИЙ ===
+                // === ЗВУКИ И PUSH-УВЕДОМЛЕНИЯ ===
                 if (!isMe && !isHistory && !isAI) {
                     if (data.isTransfer) { window.sndCash.play().catch(e=>{}); } 
                     else { window.sndMsg.play().catch(e=>{}); }
@@ -1841,7 +1859,6 @@
                 window.speechRecognizedText = ""; window.audioChunks = [];
                 
                 try {
-                    // Аппаратный захват реального звука
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     window.mediaRecorder = new MediaRecorder(stream);
                     window.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) window.audioChunks.push(e.data); };
@@ -1850,7 +1867,6 @@
                         stream.getTracks().forEach(track => track.stop());
                         if(currentMicBtn) { currentMicBtn.style.color = ''; currentMicBtn.classList.remove('animate-pulse', 'shadow-[0_0_15px_rgba(162,155,254,0.6)]'); }
                         
-                        // Если ИИ не сработал или телефон завис — отправляем сырое АУДИО!
                         if (!window.speechRecognizedText || window.speechRecognizedText.trim() === '') {
                             const audioBlob = new Blob(window.audioChunks, { type: 'audio/webm' });
                             const reader = new FileReader(); reader.readAsDataURL(audioBlob);
@@ -1860,18 +1876,15 @@
                     
                     window.mediaRecorder.start();
                     
-                    // Запуск ИИ параллельно
                     let langSelect = document.getElementById('plus-mic-lang'); 
                     if (rec) { rec.lang = langSelect ? langSelect.value : 'en-US'; try { rec.start(); } catch(e){} }
                     
-                    // Таймер-страховка (8 секунд)
                     if(fallbackTimer) clearTimeout(fallbackTimer);
                     fallbackTimer = setTimeout(() => {
                         if(window.mediaRecorder && window.mediaRecorder.state === 'recording') window.mediaRecorder.stop();
                         if(rec) { try{ rec.stop(); }catch(e){} }
                     }, 8000);
 
-                    // Визуализация AI Voice Sync
                     if(currentMicBtn) { currentMicBtn.style.color = '#a29bfe'; currentMicBtn.classList.add('animate-pulse', 'shadow-[0_0_15px_rgba(162,155,254,0.6)]'); } 
                     window.showToast("✨ AI Voice Sync", "Analyzing timbre & translating...", "", "");
                     
