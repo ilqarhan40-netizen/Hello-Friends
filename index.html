@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V52 (Google Auth Shield)</title>
+    <title>Hello Friends - Golden Master V53</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -24,7 +24,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
 
     <script>
-        // Инициализируем базу данных СРАЗУ
         const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7", messagingSenderId: "367351601053", appId: "1:367351601053:web:7852c0326db9cc233d44ba" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); 
         const db = firebase.database();
@@ -190,7 +189,6 @@
                     localStorage.setItem('hf_active_user', user.uid);
                     document.cookie = "hf_active_user=" + user.uid + "; max-age=31536000; path=/";
                     
-                    // Создаем профиль, если его еще нет
                     db.ref('users/' + user.uid).once('value').then(snap => {
                         if (!snap.exists()) {
                             db.ref('users/' + user.uid).set({
@@ -300,7 +298,10 @@
                 <a onclick="window.exportData()"><i class="fa-solid fa-file-export w-5 text-blue-400"></i> <span data-i18n="export">Export Data</span></a>
                 <a onclick="document.getElementById('import-file-input').click(); window.closeAllMenus()"><i class="fa-solid fa-file-import w-5 text-green-400"></i> <span data-i18n="import">Import Data</span></a>
                 
-                <a style="color: #ef4444;" onclick="window.signOutGoogle()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span>Log Out</span></a>
+                <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
+                
+                <a style="color: #eab308;" onclick="window.signOutGoogle()"><i class="fa-solid fa-right-from-bracket w-5"></i> <span>Log Out</span></a>
+                <a style="color: #ef4444;" onclick="window.deleteMyAccount()"><i class="fa-solid fa-user-xmark w-5"></i> <span data-i18n="delete_acc">Delete Account</span></a>
             </div>
         </header>
 
@@ -312,7 +313,6 @@
                     <p class="text-[#8696a0] text-sm">Global Smart Network</p>
                 </div>
                 <div class="mt-auto mb-20 flex items-center justify-center gap-3 p-3.5 bg-[#111b21] border border-[#202c33] rounded-full shadow-lg">
-                    <img src="llgar.jpg" class="w-12 h-12 rounded-full object-cover border-2 border-[#00a884] shadow-md">
                     <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
                 </div>
             </div>
@@ -585,10 +585,6 @@
                     </div>
                     <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
                     <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
-                    <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
-                        <img src="llgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
-                        <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Создатель Привет Друзья</span>
-                    </div>
                 </div>
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button></div>
             </div>
@@ -870,6 +866,7 @@
         };
 
         window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
+        
         window.secretClicks = 0;
         window.activateGodMode = function() {
             window.secretClicks++; if(window.secretClicks === 5) { window.secretClicks = 0; let pass = prompt("Enter Admin Password:"); if(pass === "777") { localStorage.setItem('hf_god_mode', 'true'); alert("GOD MODE UNLOCKED!"); location.reload(); } else { alert("Access Denied."); } }
@@ -887,7 +884,9 @@
             if (localStorage.getItem('hf_god_mode') === 'true') {
                 if (confirm("DANGER! Навсегда удалить этого пользователя из базы?")) {
                     const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Eradicating...';
-                    firebase.database().ref('users/' + id).set({ id: id, isDeleted: true }).then(() => { alert("Пользователь удален! 💀"); window.closeAdminModal(); btn.innerHTML = originalText; }).catch(err => { alert("Error: " + err.message); btn.innerHTML = originalText; });
+                    firebase.database().ref('users/' + id).remove().then(() => { 
+                        alert("Пользователь стерт из базы навсегда! 💀"); window.closeAdminModal(); btn.innerHTML = originalText; 
+                    }).catch(err => { alert("Error: " + err.message); btn.innerHTML = originalText; });
                 }
             } else { alert("Access Denied. God Mode is not active."); }
         };
@@ -991,7 +990,7 @@
         window.saveProfileData = function() {
             let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
             let phoneVal = document.getElementById('edit-phone').value.trim(); let emailVal = document.getElementById('edit-email').value.trim();
-            let newId = window.myProfileInfo.id; // ID уже пришел от Google
+            let newId = window.myProfileInfo.id; 
             let photo = document.getElementById('edit-preview-photo').src; 
             const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; 
             const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User in network' };
@@ -1044,7 +1043,18 @@
         window.openFullscreenImage = function(src) { if(src) document.getElementById('fullscreen-img-src').src = src; document.getElementById('fullscreen-image-modal').classList.add('active'); };
         window.closeFullscreenImage = function() { document.getElementById('fullscreen-image-modal').classList.remove('active'); };
         window.handleMediaUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const isVideo = file.type.startsWith('video/'); db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); window.closeAttachModal(); }; reader.readAsDataURL(file); };
-        window.deleteMyAccount = function() { if (confirm("Are you sure you want to permanently delete your account and all data? This cannot be undone.")) { let myId = window.myProfileInfo.id; if (myId && !window.isGuest) { db.ref('users/' + myId).set({ id: myId, isDeleted: true }); } localStorage.removeItem('hf_active_user'); document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; firebase.auth().signOut().then(() => location.reload()); } };
+        
+        window.deleteMyAccount = function() { 
+            if (confirm("ВНИМАНИЕ! Навсегда удалить ваш аккаунт из сети Hello Friends? Это действие нельзя отменить.")) { 
+                let myId = window.myProfileInfo.id; 
+                if (myId && !window.isGuest) { db.ref('users/' + myId).remove(); } 
+                localStorage.removeItem('hf_active_user'); 
+                document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; 
+                const user = firebase.auth().currentUser;
+                if (user) { user.delete().then(() => location.reload()).catch(() => { firebase.auth().signOut().then(() => location.reload()); }); } 
+                else { location.reload(); }
+            } 
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
@@ -1089,28 +1099,19 @@
             window.isGuest = !activeUserId; 
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
 
-            window.allCharacters = [
-                { id: 'ilgar', name: 'Ilgar', photo: 'https://images.unsplash.com/photo-1557862921-37829c790f19?w=200', profession: 'Founder', email: 'ilgar@hellofriends.com', phone: '+994 50 123 45 67', flag: '🇦🇿', flagCode: 'az', langCode: 'az', country: 'Azerbaijan', pop: '10.1M', seas: 'Caspian Sea', desc: 'Passionate about connecting people.', skills: 'Leadership, Architecture', experience: '10+ years in Tech', education: 'BSc Computer Science', languages: 'AZ, RU, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-businessman-having-a-video-call-with-his-team-41209-large.mp4' },
-                { id: 'klaus', name: 'Klaus Müller', photo: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200', profession: 'Senior Engineer', email: 'klaus@hellofriends.de', phone: '+49 176 1234 567', flag: '🇩🇪', flagCode: 'de', langCode: 'de', country: 'Germany', pop: '84M', seas: 'Baltic Sea', desc: 'Developing the core engine.', skills: 'JavaScript, Firebase, React', experience: '5 years at HF, 3 years Startup Inc', education: 'MSc Computer Engineering', languages: 'DE, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-man-having-a-video-call-on-his-laptop-41221-large.mp4' },
-                { id: 'marinella', name: 'Marinella', photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200', profession: 'Marketing', email: 'mary@hf.it', phone: '+39 333 123 4567', flag: '🇮🇹', flagCode: 'it', langCode: 'it', country: 'Italy', pop: '59M', seas: 'Mediterranean', desc: 'Leading global marketing.', skills: 'PR, Social Media, SEO', experience: 'Top Agencies in Milan', education: 'BA Marketing & Communications', languages: 'IT, EN', video: 'https://assets.mixkit.co/videos/preview/mixkit-woman-having-a-video-call-with-colleagues-41207-large.mp4' }
-            ];
+            // ОСТАЛСЯ ТОЛЬКО ИИ АССИСТЕНТ
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
 
-            let myChar = null;
-            if (window.isGuest) { 
-                window.myUsername = "Guest"; myChar = { id: 'guest' + Math.random().toString(36).substr(2,5), name: 'Guest', photo: 'https://ui-avatars.com/api/?name=Guest&background=00a884&color=fff', profession: '', email: '', phone: '', flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global', pop: 'Unknown', seas: 'Digital', desc: '', skills: '', experience: '', education: '', languages: 'Auto' }; 
-            } else { 
-                try { let saved = localStorage.getItem('hf_custom_' + activeUserId); if(saved) myChar = JSON.parse(saved); } catch(e) {} 
-                if(!myChar) myChar = window.allCharacters.find(c => c.id === activeUserId) || { id: activeUserId, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', flag: '🌐', flagCode: 'un', langCode: 'en' }; 
-                window.myUsername = (myChar && myChar.name) ? myChar.name.split(' ')[0] : "User"; 
-            }
-            
-            window.myProfileInfo = { ...myChar, id: myChar.id, name: window.myUsername }; window.participants = [aiBot, ...window.allCharacters];
+            window.myProfileInfo = { id: activeUserId || 'guest', name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', flag: '🌐', flagCode: 'un', langCode: 'en' };
+            window.myUsername = "User";
+            window.participants = [aiBot]; 
 
             setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = "You"; }, 1000);
 
+            // СЧИТЫВАЕМ БАЗУ РЕАЛЬНЫХ ЛЮДЕЙ
             db.ref('users').on('value', (snapshot) => { 
-                const data = snapshot.val(); let mergedUsers = [...window.allCharacters]; 
+                const data = snapshot.val(); 
+                let realUsers = []; 
                 if (data) { 
                     if (!window.isGuest && activeUserId && data[activeUserId]) {
                         if (data[activeUserId].isDeleted === true) { window.signOutGoogle(); return; }
@@ -1119,13 +1120,12 @@
                         const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName) myVoiceName.innerText = "You";
                     }
                     Object.values(data).forEach(u => { 
-                        if(!u.id) return; let existingIdx = mergedUsers.findIndex(vip => vip.id === u.id); 
-                        if (u.isDeleted === true) { if (existingIdx !== -1) mergedUsers.splice(existingIdx, 1); } 
-                        else { if (existingIdx === -1) mergedUsers.push(u); else mergedUsers[existingIdx] = { ...mergedUsers[existingIdx], ...u }; }
+                        if(u.id && u.isDeleted !== true) realUsers.push(u); 
                     }); 
                 } 
-                window.participants = [aiBot, ...mergedUsers.filter(c => { if (c.id === window.myProfileInfo.id || c.id.startsWith('guest')) return false; return true; })];
-                if(window.renderSidebar) window.renderSidebar(); if(document.getElementById('profession')?.classList.contains('active') && window.renderProfessionList) window.renderProfessionList(); 
+                window.participants = [aiBot, ...realUsers.filter(c => c.id !== window.myProfileInfo.id && !c.id.startsWith('guest'))];
+                if(window.renderSidebar) window.renderSidebar(); 
+                if(document.getElementById('profession')?.classList.contains('active') && window.renderProfessionList) window.renderProfessionList(); 
                 if(!window.isGuest && window.initSignalListener && !window.signalListenerActive) { window.initSignalListener(); window.signalListenerActive = true; }
             });
 
@@ -1143,8 +1143,8 @@
                 window.currentTargetUser = null; let headerTitle = "Global Chat"; let headerRoomId = "global";
                 if (targetId === 'global') { window.currentRoomId = "global"; window.showToast("Global Chat", "🌍 International Public Room", "", ""); }
                 else if (targetId === 'ai') { window.currentRoomId = "private_ai_bot"; headerTitle = "AI Assistant"; headerRoomId = window.currentRoomId; window.showToast("AI Assistant", "Powered by Gemini", "https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff", ""); }
-                else if (targetId === 'me') { window.currentRoomId = "private_me_" + window.myProfileInfo.id; headerTitle = "My Notes"; headerRoomId = window.currentRoomId; let langs = window.myProfileInfo.languages || "Auto"; let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#8696a0] mt-1 block">My personal secure space.</span>`; window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, ""); }
-                else { const targetUser = window.participants.find(p => p.id === targetId); if(targetUser) { window.currentTargetUser = targetUser; let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id); window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId; let langs = targetUser.languages || "Auto"; let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b><br><span class="text-[#8696a0] mt-1 block">${targetUser.countryDesc || 'User in network'}</span>`; window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, ""); } }
+                else if (targetId === 'me') { window.currentRoomId = "private_me_" + window.myProfileInfo.id; headerTitle = "My Notes"; headerRoomId = window.currentRoomId; let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#8696a0] mt-1 block">My personal secure space.</span>`; window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, ""); }
+                else { const targetUser = window.participants.find(p => p.id === targetId); if(targetUser) { window.currentTargetUser = targetUser; let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id); window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId; let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b><br><span class="text-[#8696a0] mt-1 block">${targetUser.countryDesc || 'User in network'}</span>`; window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, ""); } }
                 const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle; const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
                 window.renderSidebar(); window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
             };
@@ -1227,7 +1227,7 @@
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
             window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
-            window.voiceFriend = window.participants.find(c => c.id === 'marinella') || window.participants[1] || aiBot; 
+            window.voiceFriend = window.participants[1] || aiBot; 
             window.sendVoiceMsg = async function(mode = 'voice-text') { const inputEl = document.getElementById('voice-chat-input'); const text = inputEl.value.trim(); if(!text) return; inputEl.value = ''; const targetLang = window.voiceFriend.langCode || 'en'; try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`); const translated = (await res.json())[0][0][0]; const mText = document.getElementById('voice-info-marquee'); if(mText) { mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${window.voiceFriend.flag} ${translated}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } let id1 = String(window.myProfileInfo.id); let id2 = String(window.voiceFriend.id); let voiceRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); db.ref(voiceRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: text, isVoiceRoomMsg: true, speakAloud: (mode === 'voice-msg'), sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, langCode: window.myProfileInfo.langCode }); } catch(e) {} };
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') window.sendVoiceMsg('voice-text'); });
             window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
