@@ -196,7 +196,7 @@
                     new Notification(title, { body: body, icon: icon || 'https://ui-avatars.com/api/?name=HF&background=00a884&color=fff' });
                 }
             }
-        };
+        }
 
         window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -811,6 +811,32 @@
             }
         };
 
+        window.getSmartLang = function(userProfile) {
+            if (!userProfile) return 'en'; 
+            let phone = userProfile.phone || "";
+            let flag = userProfile.flagCode || "un";
+            
+            if (phone.startsWith('+7')) return 'ru';
+            if (phone.startsWith('+994')) return 'az';
+            if (phone.startsWith('+39')) return 'it';
+            if (phone.startsWith('+49')) return 'de';
+            if (phone.startsWith('+33')) return 'fr';
+            if (phone.startsWith('+81')) return 'ja';
+            if (phone.startsWith('+34')) return 'es';
+            if (phone.startsWith('+86')) return 'zh';
+            if (phone.startsWith('+351')) return 'pt';
+            if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
+            if (phone.startsWith('+971')) return 'ar';
+
+            const flagToLang = {
+                'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
+                'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
+            };
+            if (flagToLang[flag]) return flagToLang[flag];
+            
+            return userProfile.langCode || 'en';
+        };
+
         window.startUniversalMic = async function(mode) {
             window.speechRecognizedText = "";
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -825,8 +851,7 @@
             
             rec.onresult = async (e) => { 
                 window.speechRecognizedText = e.results[0][0].transcript; 
-                let targetLang = window.currentTargetUser ? window.currentTargetUser.langCode : window.myProfileInfo.langCode;
-                if (!targetLang) targetLang = 'en';
+                let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
 
                 window.showToast("Translating...", "Processing your voice...", "", "");
                 let textToShip = window.speechRecognizedText;
@@ -1353,7 +1378,7 @@
                             
                             translationsRes.forEach(t => { 
                                 transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
-                                marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                                marqueeTextStr += `${t.user.flag} ${t.text}        `; 
                             }); 
                             
                             messageGroup.appendChild(transContainer); 
@@ -1439,49 +1464,53 @@
                     });
                 }
 
-           // ==========================================
-// БЛОК 3: КОНФЕРЕНЦИЯ (MEET) - СКАНИРОВАННЫЙ И ИСПРАВЛЕННЫЙ
-// ==========================================
-if (data.isConfMsg) {
-    let originalText = data.originalText || data.text;
-    
-    // Читаем, какой язык ты выбрал кликом по видео (из localStorage)
-    let myReadLang = localStorage.getItem('hf_personal_lang');
-    if (!myReadLang || myReadLang === 'auto') myReadLang = window.myProfileInfo.langCode || 'en';
+                // ==========================================
+                // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
+                // ==========================================
+                if (data.isConfMsg) {
+                    let targetUsers = [];
+                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
 
-    // 1. Обновляем ТВОЕ ГЛАВНОЕ ОКНО (Твой личный перевод)
-    const myMarquee = document.getElementById('speaker-marquee');
-    if (myMarquee) {
-        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(originalText)}`)
-        .then(res => res.json())
-        .then(resData => {
-            let tText = resData[0][0][0];
-            myMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${tText}</span>`;
-            myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
-        }).catch(() => {});
-    }
+                    if (isMe) {
+                        window.participants.filter(part => part.id !== 'ai').forEach(member => {
+                            targetUsers.push({ code: member.langCode, flag: member.flag, id: member.id });
+                        });
+                        
+                        const myMarquee = document.getElementById('speaker-marquee');
+                        if (myMarquee) {
+                             myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
+                             myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
+                        }
+                    } else {
+                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, id: window.myProfileInfo.id });
+                    }
 
-    // 2. Оживляем ВСЕ остальные фреймы (и пустые, и полные)
-    // Мы просто ищем все элементы бегущих строк, которые есть в разметке
-    const allGuestMarquees = document.querySelectorAll('.conf-marquee-text');
-    
-    allGuestMarquees.forEach(m => {
-        // Пропускаем главный, его мы уже обновили выше
-        if (m.id === 'speaker-marquee') return;
-
-        // Для каждого маленького фрейма берем его "родной" язык (из атрибутов или флага)
-        let frameLang = m.getAttribute('data-lang') || 'en';
-        let frameFlag = m.getAttribute('data-flag') || '🌐';
-
-        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${frameLang}&dt=t&q=${encodeURIComponent(originalText)}`)
-        .then(res => res.json())
-        .then(resData => {
-            let tText = resData[0][0][0];
-            m.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${frameFlag} ${tText}</span>`;
-            m.style.animation = 'none'; void m.offsetWidth; m.style.animation = null;
-        }).catch(() => {});
-    });
-}
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                                .then(res => res.json())
+                                .then(resData => ({ user: u, text: resData[0][0][0] }))
+                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
+                            );
+                            
+                            const translationsRes = await Promise.all(fetchPromises);
+                            
+                            translationsRes.forEach(t => {
+                                let originalText = data.originalText || data.text;
+                                
+                                let frameIdToUpdate = isMe ? `conf-marquee-${t.user.id}` : `conf-marquee-${data.userId}`;
+                                let targetMarquee = document.getElementById(frameIdToUpdate);
+                                
+                                if (targetMarquee) {
+                                    targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
+                                    targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
+                                }
+                            });
+                        } catch (e) {}
+                    }
+                }
+            }
+ 
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
