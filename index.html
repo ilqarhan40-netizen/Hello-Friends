@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V57</title>
+    <title>Hello Friends - Golden Master V58</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -837,10 +837,13 @@
                     if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
                 } catch (err) {}
 
+                let isVoice = window.currentMicInputTarget === 'voice-chat-input';
+                let isConf = window.currentMicInputTarget === 'conf-chat-input';
+
                 if (mode === 'text') {
-                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
+                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
                 } else if (mode === 'ai-audio') {
-                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
+                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
                 }
             };
             try { rec.start(); } catch(e){}
@@ -1247,33 +1250,6 @@
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
                 inputField.value = ''; 
 
-                // ЛОКАЛЬНЫЙ ПОКАЗ ПЕРЕВОДА (Блок 1 и 2)
-                if (inputId === 'voice-chat-input') {
-                    if (window.currentTargetUser) {
-                        try {
-                            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${window.currentTargetUser.langCode}&dt=t&q=${encodeURIComponent(rawText)}`).then(r => r.json());
-                            const translated = res[0][0][0];
-                            const mText = document.getElementById('voice-info-marquee');
-                            if(mText) { mText.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${window.currentTargetUser.flag} ${translated}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; }
-                        } catch(e) {}
-                    }
-                } else if (inputId === 'conf-chat-input') {
-                    const myMarquee = document.getElementById('speaker-marquee');
-                    if(myMarquee) { myMarquee.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${rawText}</span>`; myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null; }
-                    
-                    const listenerMarquees = document.querySelectorAll('.conf-listener-marquee');
-                    listenerMarquees.forEach(async (el) => {
-                        const tLang = el.getAttribute('data-lang');
-                        const tFlag = el.getAttribute('data-flag');
-                        try {
-                            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(rawText)}`).then(r => r.json());
-                            const translated = res[0][0][0];
-                            el.innerHTML = `<span class="text-white mr-2">You:</span> <span class="text-[#00a884] font-bold">${tFlag} ${translated}</span>`;
-                            el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null;
-                        } catch(e) {}
-                    });
-                }
-
                 let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
                 let textToShip = rawText; 
                 try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {} 
@@ -1312,27 +1288,6 @@
                     if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + (data.name||'User').split(' ')[0], textPreview, p.photo, "");
                 }
 
-                // ПРИЕМ И ПЕРЕВОД У ПОЛУЧАТЕЛЯ (Блок 3)
-                let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
-                
-                if (data.isVoiceRoomMsg && !isMe) {
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                    .then(res=>res.json()).then(resData=>{
-                        let tText = resData[0][0][0];
-                        const vMarquee = document.getElementById('voice-info-marquee');
-                        if(vMarquee) { vMarquee.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${tText}</span>`; vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null; }
-                    }).catch(e=>{});
-                }
-
-                if (data.isConfMsg && !isMe) {
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                    .then(res=>res.json()).then(resData=>{
-                        let tText = resData[0][0][0];
-                        let targetMarquee = document.getElementById(`conf-marquee-${data.userId}`);
-                        if(targetMarquee) { targetMarquee.innerHTML = `<span class="text-white">${data.name.split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${data.flag} ${tText}</span>`; targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null; }
-                    }).catch(e=>{});
-                }
-
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
@@ -1354,23 +1309,81 @@
                 else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
                 else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
 
-                msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${window.myUsername}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${data.name || 'User'}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
+                msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${window.myUsername}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${(data.name || 'User').split(' ')[0]}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
                 messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio) {
                     let targetUsers = []; 
-                    if (window.currentRoomId === 'global' && !isAI) { window.participants.filter(part => part.id !== 'ai').forEach(member => { let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; if (member.id !== data.userId && memberReadLang !== 'un') { targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); } }); } 
-                    else if (window.currentRoomId.startsWith('private_') && !isAI) { if (isMe) { if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); } else { if (data.langCode && data.langCode !== myReadLang) targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); } }
+                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    
+                    if (window.currentRoomId === 'global' && !isAI) { 
+                        window.participants.filter(part => part.id !== 'ai').forEach(member => { 
+                            let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; 
+                            if (member.id !== data.userId && memberReadLang !== 'un') { 
+                                targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo, id: member.id }); 
+                            } 
+                        }); 
+                    } 
+                    else if (window.currentRoomId.startsWith('private_') && !isAI) { 
+                        if (isMe) { 
+                            if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) {
+                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo, id: window.currentTargetUser.id }); 
+                            } 
+                        } else { 
+                            if (data.langCode && data.langCode !== myReadLang) {
+                                targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo, id: window.myProfileInfo.id }); 
+                            } 
+                        } 
+                    }
 
                     if (targetUsers.length > 0) {
                         try {
-                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
-                            const translationsRes = await Promise.all(fetchPromises); const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; let marqueeTextStr = ''; 
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
+                            const translationsRes = await Promise.all(fetchPromises); 
+                            const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; 
+                            let marqueeTextStr = ''; 
+                            
                             translationsRes.forEach(t => { 
-                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
+                                marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                                
+                                // ОБНОВЛЕНИЕ БЕГУЩЕЙ СТРОКИ VOICE ROOM
+                                if (data.isVoiceRoomMsg) {
+                                    const vMarquee = document.getElementById('voice-info-marquee');
+                                    if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
+                                        // Если я отправитель, показываю флаг собеседника. Если мне прислали - мой флаг.
+                                        let senderName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
+                                        let displayFlag = isMe ? t.user.flag : data.flag;
+                                        if (isMe || t.user.id === window.myProfileInfo.id) {
+                                            vMarquee.innerHTML = `<span class="text-white mr-2">${senderName}:</span> <span class="text-[#00a884] font-bold">${displayFlag} ${t.text}</span>`;
+                                            vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
+                                        }
+                                    }
+                                }
+
+                                // ОБНОВЛЕНИЕ БЕГУЩИХ СТРОК CONFERENCE
+                                if (data.isConfMsg) {
+                                    let targetMarquee = document.getElementById(`conf-marquee-${t.user.id}`);
+                                    if (targetMarquee) {
+                                        let senderName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
+                                        let displayFlag = isMe ? t.user.flag : data.flag;
+                                        targetMarquee.innerHTML = `<span class="text-white">${senderName}:</span> <span class="text-[#00a884] font-bold">${displayFlag} ${t.text}</span>`;
+                                        targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
+                                    }
+                                }
                             }); 
+                            
+                            // Обновление своей бегущей строки в Конференции, если я отправитель
+                            if (data.isConfMsg && isMe) {
+                                const myMarquee = document.getElementById('speaker-marquee');
+                                if (myMarquee) {
+                                    myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
+                                    myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
+                                }
+                            }
+
                             messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
-                            const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${data.name.split(' ')[0] || 'User'}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
+                            const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${(data.name || 'User').split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
                         } catch (e) {}
                     }
                 }
@@ -1433,12 +1446,12 @@
                 const videoEl = document.getElementById('my-live-video'); 
                 if(videoEl) { 
                     videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
-                    videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
+                    videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; window.isMyCamOn = false; 
                 }
             }
             if (document.getElementById('conference-grid')) initConference(); 
             
-            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) videoEl.srcObject = null; btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
+            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
             window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
 
             window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
