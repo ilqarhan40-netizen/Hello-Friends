@@ -1289,7 +1289,10 @@
                     let textPreview = data.text; if(data.isAIAudio) textPreview = "🤖 AI Voice Message"; if(data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo"; if(data.isLocation) textPreview = "📍 Shared Location"; if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
                     if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + senderDisplayName, textPreview, p.photo, "");
                 }
+                
+               if (!data.isVoiceRoomMsg && !data.isConfMsg) {
 
+            
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
@@ -1364,7 +1367,7 @@
                         } catch (e) {}
                     }
                 }
-
+               }
            // ==========================================
                 // БЛОК 2: ГОЛОСОВАЯ КОМНАТА (Родной флаг + Выбранный язык)
                 // ==========================================
