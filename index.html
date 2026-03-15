@@ -1439,53 +1439,49 @@
                     });
                 }
 
-                // ==========================================
-                // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
-                // ==========================================
-                if (data.isConfMsg) {
-                    let targetUsers = [];
-                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+           // ==========================================
+// БЛОК 3: КОНФЕРЕНЦИЯ (MEET) - СКАНИРОВАННЫЙ И ИСПРАВЛЕННЫЙ
+// ==========================================
+if (data.isConfMsg) {
+    let originalText = data.originalText || data.text;
+    
+    // Читаем, какой язык ты выбрал кликом по видео (из localStorage)
+    let myReadLang = localStorage.getItem('hf_personal_lang');
+    if (!myReadLang || myReadLang === 'auto') myReadLang = window.myProfileInfo.langCode || 'en';
 
-                    if (isMe) {
-                        window.participants.filter(part => part.id !== 'ai').forEach(member => {
-                            targetUsers.push({ code: member.langCode, flag: member.flag, id: member.id });
-                        });
-                        
-                        const myMarquee = document.getElementById('speaker-marquee');
-                        if (myMarquee) {
-                             myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
-                             myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
-                        }
-                    } else {
-                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, id: window.myProfileInfo.id });
-                    }
+    // 1. Обновляем ТВОЕ ГЛАВНОЕ ОКНО (Твой личный перевод)
+    const myMarquee = document.getElementById('speaker-marquee');
+    if (myMarquee) {
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+        .then(res => res.json())
+        .then(resData => {
+            let tText = resData[0][0][0];
+            myMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${tText}</span>`;
+            myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
+        }).catch(() => {});
+    }
 
-                    if (targetUsers.length > 0) {
-                        try {
-                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                                .then(res => res.json())
-                                .then(resData => ({ user: u, text: resData[0][0][0] }))
-                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
-                            );
-                            
-                            const translationsRes = await Promise.all(fetchPromises);
-                            
-                            translationsRes.forEach(t => {
-                                let originalText = data.originalText || data.text;
-                                
-                                let frameIdToUpdate = isMe ? `conf-marquee-${t.user.id}` : `conf-marquee-${data.userId}`;
-                                let targetMarquee = document.getElementById(frameIdToUpdate);
-                                
-                                if (targetMarquee) {
-                                    targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
-                                    targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
-                                }
-                            });
-                        } catch (e) {}
-                    }
-                }
-            }
- 
+    // 2. Оживляем ВСЕ остальные фреймы (и пустые, и полные)
+    // Мы просто ищем все элементы бегущих строк, которые есть в разметке
+    const allGuestMarquees = document.querySelectorAll('.conf-marquee-text');
+    
+    allGuestMarquees.forEach(m => {
+        // Пропускаем главный, его мы уже обновили выше
+        if (m.id === 'speaker-marquee') return;
+
+        // Для каждого маленького фрейма берем его "родной" язык (из атрибутов или флага)
+        let frameLang = m.getAttribute('data-lang') || 'en';
+        let frameFlag = m.getAttribute('data-flag') || '🌐';
+
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${frameLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+        .then(res => res.json())
+        .then(resData => {
+            let tText = resData[0][0][0];
+            m.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${frameFlag} ${tText}</span>`;
+            m.style.animation = 'none'; void m.offsetWidth; m.style.animation = null;
+        }).catch(() => {});
+    });
+}
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
