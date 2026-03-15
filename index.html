@@ -1502,7 +1502,7 @@
                 
                 let confHtml = `
                 <div class="video-frame main" id="my-video-container">
-                    <video id="my-live-video" class="mirror-video" playsinline></video>
+                    <video id="my-live-video" class="mirror-video cursor-pointer hover:opacity-90 transition" onclick="window.openPersonalLangModal()" playsinline autoplay muted></video>
                     <div class="video-overlay">${window.myUsername}</div>
                     <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
                     <div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
