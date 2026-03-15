@@ -413,7 +413,7 @@
                         <div class="flex flex-col items-center flex-1">
                             <div class="w-24 h-24 sm:w-28 sm:h-28 relative mb-3">
                                 <div class="pulse-ring absolute top-0 left-0 w-full h-full"></div>
-                                <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] relative z-10 shadow-[0_0_15px_rgba(0,168,132,0.3)]">
+                               <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] relative z-10 shadow-[0_0_15px_rgba(0,168,132,0.3)] cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()">
                                 <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#111b21] rounded-full p-1 shadow"></span>
                             </div>
                             <h3 class="text-white font-bold text-sm text-center truncate w-full max-w-[100px]" id="voice-me-name"></h3>
@@ -1365,39 +1365,75 @@
                     }
                 }
 
-               // ==========================================
-                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
+           // ==========================================
+                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА (Родной флаг + Выбранный язык)
                 // ==========================================
                 if (data.isVoiceRoomMsg) {
-                    let targetUsers = [];
-                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
-
-                    if (isMe && window.currentTargetUser) {
-                        targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo });
-                    } else if (!isMe) {
-                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo });
+                    let originalText = data.originalText || data.text;
+                    
+                    // 1. Узнаем язык перевода из меню (но флаг больше не меняем!)
+                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
+                    if (!myPersonalLang || myPersonalLang === 'auto') {
+                        myPersonalLang = window.myProfileInfo.langCode; 
                     }
 
-                    if (targetUsers.length > 0) {
-                        try {
-                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                                .then(res => res.json())
-                                .then(resData => ({ user: u, text: resData[0][0][0] }))
-                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
-                            );
-                            
-                            const translationsRes = await Promise.all(fetchPromises);
-                            
-                            translationsRes.forEach(t => {
-                                const vMarquee = document.getElementById('voice-info-marquee');
-                                if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
-                                    let originalText = data.originalText || data.text;
-                                    vMarquee.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-2">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mr-2 text-[0.6rem]"></i> <img src="${t.user.photo}" class="w-4 h-4 rounded-full inline-block border border-[#00a884] mr-1"> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
-                                    vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
-                                }
-                            });
-                        } catch (e) {}
+                    // 2. Распределяем данные (ФЛАГИ СТРОГО ИЗ ПРОФИЛЕЙ)
+                    let senderPhoto, senderFlag, senderLang, senderName;
+                    let receiverPhoto, receiverFlag, receiverLang, receiverName;
+
+                    if (isMe) {
+                        senderPhoto = window.myProfileInfo.photo;
+                        senderFlag = window.myProfileInfo.flag; // РОДНОЙ ФЛАГ
+                        senderLang = myPersonalLang; // ВЫБРАННЫЙ ЯЗЫК ПЕРЕВОДА
+                        senderName = window.myUsername;
+
+                        receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U';
+                        receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐';
+                        receiverLang = window.currentTargetUser ? window.currentTargetUser.langCode : 'en';
+                        receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
+                    } else {
+                        senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U';
+                        senderFlag = data.flag || '🌐';
+                        senderLang = data.langCode || 'en';
+                        senderName = (data.name || 'User').split(' ')[0];
+
+                        receiverPhoto = window.myProfileInfo.photo;
+                        receiverFlag = window.myProfileInfo.flag; // РОДНОЙ ФЛАГ
+                        receiverLang = myPersonalLang; // ВЫБРАННЫЙ ЯЗЫК ПЕРЕВОДА
+                        receiverName = window.myUsername;
                     }
+
+                    // 3. Запускаем двойной перевод
+                    Promise.all([
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${senderLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${receiverLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
+                    ]).then(results => {
+                        const vMarquee = document.getElementById('voice-info-marquee');
+                        if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
+                            
+                            let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText;
+                            let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
+                            
+                            // 4. Отрисовка: Имена, Фото, РОДНЫЕ флаги и нужные переводы
+                            vMarquee.innerHTML = `
+                                <div class="flex items-center">
+                                    <img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">
+                                    <span class="text-white font-bold mr-1">${senderName}:</span>
+                                    <span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> 
+                                    
+                                    <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> 
+                                    
+                                    <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]">
+                                    <span class="text-white font-bold mr-1">${receiverName}:</span>
+                                    <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span>
+                                </div>
+                            `;
+                            
+                            vMarquee.style.animation = 'none'; 
+                            void vMarquee.offsetWidth; 
+                            vMarquee.style.animation = null;
+                        }
+                    });
                 }
 
                 // ==========================================
