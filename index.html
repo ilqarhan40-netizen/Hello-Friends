@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V58</title>
+    <title>Hello Friends - Golden Master V59</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -1282,10 +1282,12 @@
                 let isHistory = data.timestamp && (Date.now() - data.timestamp) > 5000;
                 let isAppActiveAndInChat = (document.visibilityState === 'visible' && window.currentIndex === 0);
 
+                let senderDisplayName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
+
                 if (!isMe && !isHistory && !isAI) {
                     if (data.isTransfer) { window.sndCash.play().catch(e=>{}); } else { window.sndMsg.play().catch(e=>{}); }
                     let textPreview = data.text; if(data.isAIAudio) textPreview = "🤖 AI Voice Message"; if(data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo"; if(data.isLocation) textPreview = "📍 Shared Location"; if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
-                    if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + (data.name||'User').split(' ')[0], textPreview, p.photo, "");
+                    if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + senderDisplayName, textPreview, p.photo, "");
                 }
 
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
@@ -1309,10 +1311,13 @@
                 else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
                 else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
 
-                msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${window.myUsername}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${(data.name || 'User').split(' ')[0]}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
+                msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
                 messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio) {
+                // ==========================================
+                // БЛОК 1: ГЛАВНЫЙ ЧАТ
+                // ==========================================
+                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
                     let targetUsers = []; 
                     let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
                     
@@ -1320,70 +1325,123 @@
                         window.participants.filter(part => part.id !== 'ai').forEach(member => { 
                             let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; 
                             if (member.id !== data.userId && memberReadLang !== 'un') { 
-                                targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo, id: member.id }); 
+                                targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); 
                             } 
                         }); 
-                    } 
-                    else if (window.currentRoomId.startsWith('private_') && !isAI) { 
+                    } else if (window.currentRoomId.startsWith('private_') && !isAI) { 
                         if (isMe) { 
                             if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) {
-                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo, id: window.currentTargetUser.id }); 
-                            } 
+                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                            }
                         } else { 
                             if (data.langCode && data.langCode !== myReadLang) {
-                                targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo, id: window.myProfileInfo.id }); 
-                            } 
+                                targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                            }
                         } 
                     }
 
                     if (targetUsers.length > 0) {
                         try {
-                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
                             const translationsRes = await Promise.all(fetchPromises); 
-                            const transContainer = document.createElement('div'); transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; 
+                            const transContainer = document.createElement('div'); 
+                            transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; 
                             let marqueeTextStr = ''; 
                             
                             translationsRes.forEach(t => { 
                                 transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
                                 marqueeTextStr += `${t.user.flag} ${t.text}       `; 
-                                
-                                // ОБНОВЛЕНИЕ БЕГУЩЕЙ СТРОКИ VOICE ROOM
-                                if (data.isVoiceRoomMsg) {
-                                    const vMarquee = document.getElementById('voice-info-marquee');
-                                    if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
-                                        // Если я отправитель, показываю флаг собеседника. Если мне прислали - мой флаг.
-                                        let senderName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
-                                        let displayFlag = isMe ? t.user.flag : data.flag;
-                                        if (isMe || t.user.id === window.myProfileInfo.id) {
-                                            vMarquee.innerHTML = `<span class="text-white mr-2">${senderName}:</span> <span class="text-[#00a884] font-bold">${displayFlag} ${t.text}</span>`;
-                                            vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
-                                        }
-                                    }
-                                }
-
-                                // ОБНОВЛЕНИЕ БЕГУЩИХ СТРОК CONFERENCE
-                                if (data.isConfMsg) {
-                                    let targetMarquee = document.getElementById(`conf-marquee-${t.user.id}`);
-                                    if (targetMarquee) {
-                                        let senderName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
-                                        let displayFlag = isMe ? t.user.flag : data.flag;
-                                        targetMarquee.innerHTML = `<span class="text-white">${senderName}:</span> <span class="text-[#00a884] font-bold">${displayFlag} ${t.text}</span>`;
-                                        targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
-                                    }
-                                }
                             }); 
                             
-                            // Обновление своей бегущей строки в Конференции, если я отправитель
-                            if (data.isConfMsg && isMe) {
-                                const myMarquee = document.getElementById('speaker-marquee');
-                                if (myMarquee) {
-                                    myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
-                                    myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
-                                }
-                            }
+                            messageGroup.appendChild(transContainer); 
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                            
+                            const mText = document.getElementById('chat-info-marquee'); 
+                            if (window.isMarqueeEnabled !== false && mText) { 
+                                mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
+                                mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; 
+                            } 
+                        } catch (e) {}
+                    }
+                }
 
-                            messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
-                            const mText = document.getElementById('chat-info-marquee'); if (window.isMarqueeEnabled !== false && mText) { mText.innerHTML = `<span class="text-white mr-2">${(data.name || 'User').split(' ')[0]}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; } 
+                // ==========================================
+                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
+                // ==========================================
+                if (data.isVoiceRoomMsg) {
+                    let targetUsers = [];
+                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+
+                    if (isMe && window.currentTargetUser) {
+                        targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo });
+                    } else if (!isMe) {
+                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo });
+                    }
+
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                                .then(res => res.json())
+                                .then(resData => ({ user: u, text: resData[0][0][0] }))
+                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
+                            );
+                            
+                            const translationsRes = await Promise.all(fetchPromises);
+                            
+                            translationsRes.forEach(t => {
+                                const vMarquee = document.getElementById('voice-info-marquee');
+                                if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
+                                    let originalText = data.originalText || data.text;
+                                    vMarquee.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-2">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mr-2 text-[0.6rem]"></i> <img src="${t.user.photo}" class="w-4 h-4 rounded-full inline-block border border-[#00a884] mr-1"> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
+                                    vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
+                                }
+                            });
+                        } catch (e) {}
+                    }
+                }
+
+                // ==========================================
+                // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
+                // ==========================================
+                if (data.isConfMsg) {
+                    let targetUsers = [];
+                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+
+                    if (isMe) {
+                        window.participants.filter(part => part.id !== 'ai').forEach(member => {
+                            targetUsers.push({ code: member.langCode, flag: member.flag, id: member.id });
+                        });
+                        
+                        const myMarquee = document.getElementById('speaker-marquee');
+                        if (myMarquee) {
+                             myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
+                             myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
+                        }
+                    } else {
+                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, id: window.myProfileInfo.id });
+                    }
+
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                                .then(res => res.json())
+                                .then(resData => ({ user: u, text: resData[0][0][0] }))
+                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
+                            );
+                            
+                            const translationsRes = await Promise.all(fetchPromises);
+                            
+                            translationsRes.forEach(t => {
+                                let originalText = data.originalText || data.text;
+                                
+                                let frameIdToUpdate = isMe ? `conf-marquee-${t.user.id}` : `conf-marquee-${data.userId}`;
+                                let targetMarquee = document.getElementById(frameIdToUpdate);
+                                
+                                if (targetMarquee) {
+                                    targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
+                                    targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
+                                }
+                            });
                         } catch (e) {}
                     }
                 }
@@ -1446,7 +1504,7 @@
                 const videoEl = document.getElementById('my-live-video'); 
                 if(videoEl) { 
                     videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
-                    videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; window.isMyCamOn = false; 
+                    videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
                 }
             }
             if (document.getElementById('conference-grid')) initConference(); 
