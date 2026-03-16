@@ -614,7 +614,9 @@
                     <div class="flex flex-col items-center mb-6 mt-2 shrink-0">
                         <div class="relative w-24 h-24"><img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] shadow-lg"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera"></i></button></div>
                     </div>
-                    <label class="form-label" data-i18n="reg_name">Full Name</label><input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
+                    <label class="form-label" data-i18n="reg_name">Full Name</label>
+                    <input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
+                    
                     <label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label>
                     <div class="flex items-center gap-3 mb-4 shrink-0">
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
@@ -625,10 +627,13 @@
                         </div>
                     </div>
                     
-                    <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
-                    <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    <label class="form-label" data-i18n="reg_phone">Phone Number</label>
+                    <input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
                     
-                    <label class="form-label mt-2">Languages Spoken</label>
+                    <label class="form-label" data-i18n="reg_email">Email</label>
+                    <input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    
+                    <label class="form-label mt-2">Languages Spoken (Profile)</label>
                     <input type="text" id="edit-profile-langs" class="form-input-box" placeholder="e.g. English, Русский...">
                     
                     <label class="form-label">About Me (Profile)</label>
@@ -650,12 +655,23 @@
                     <button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
                 <div class="overflow-y-auto flex-grow p-5 pb-10">
-                    <label class="form-label">Profession / Title</label><input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
-                    <label class="form-label">Languages Spoken</label><input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
-                    <label class="form-label">Core Skills</label><textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea>
-                    <label class="form-label">Work Experience</label><textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea>
-                    <label class="form-label">Education</label><textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
-                    <label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
+                    <label class="form-label">Profession / Title</label>
+                    <input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
+                    
+                    <label class="form-label">Languages (CV)</label>
+                    <input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
+                    
+                    <label class="form-label">Core Skills</label>
+                    <textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea>
+                    
+                    <label class="form-label">Work Experience</label>
+                    <textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea>
+                    
+                    <label class="form-label">Education</label>
+                    <textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
+                    
+                    <label class="form-label">About Me (CV)</label>
+                    <textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Professional summary..."></textarea>
                 </div>
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button></div>
             </div>
@@ -1054,7 +1070,7 @@
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
-        window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
+        window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯ীব 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
 
         window.openPersonalLangModal = function() {
             window.closeDropdown(); let current = localStorage.getItem('hf_personal_lang') || 'auto'; let html = '';
@@ -1068,6 +1084,7 @@
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
         window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 
+        // ГЛАВНАЯ КАРТОЧКА В ЧАТЕ (Берет данные напрямую из My Profile)
         window.openAvatarModal = function(id) {
             window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
@@ -1086,40 +1103,53 @@
             const modalDesc = document.getElementById('modal-desc');
             if(modalDesc) {
                 modalDesc.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Languages</span><span class="font-bold text-white text-base">${profLangs}</span></div></div>
-                    <div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div></div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div>
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Languages</span><span class="font-bold text-white text-base">${profLangs}</span></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div>
+                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div>
+                    </div>
                     ${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white font-bold">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}
-                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">ABOUT ME</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${profBio}</p></div>`;
+                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
+                        <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">ABOUT ME / BIO</span>
+                        <p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${profBio}</p>
+                    </div>`;
             }
             
             const actionButtons = document.getElementById('modal-action-buttons');
             if(actionButtons) {
                 if (id === 'ai') { actionButtons.style.display = 'none'; } 
                 else if (id === 'me') { 
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2 mt-2"><button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Edit Profile</button><button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button></div>`; actionButtons.style.display = 'block'; 
+                    actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile();" class="btn-primary w-full shadow-lg"><i class="fa-solid fa-user mr-1"></i> Edit Profile</button>`; 
+                    actionButtons.style.display = 'block'; 
                 } else {
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`; actionButtons.style.display = 'block'; 
+                    actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#00a884] border border-[#00a884] text-[#111b21] font-bold hover:bg-[#005c4b] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`; actionButtons.style.display = 'block'; 
                 }
             }
             document.getElementById('avatar-modal').classList.add('active');
         };
 
+        // АВТОНОМНОЕ ОКНО ДЛЯ ПРОСМОТРА CV ИЗ ВКЛАДКИ ПРОФЕССИЙ
         window.openViewCVModal = function(id) {
-            window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
+            window.closeDropdown();
+            let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id);
             if (!p) return;
-
-            document.getElementById('cv-view-img').src = p.photo; 
-            document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0]; 
+            
+            document.getElementById('cv-view-img').src = p.photo;
+            document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0];
             document.getElementById('cv-view-prof').innerText = p.profession || 'Profession not listed';
 
             let cvContent = '';
-            if(p.languages) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Languages</span><div class="whitespace-pre-wrap">${p.languages}</div></div>`;
+            if(p.languages) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Languages (CV)</span><div class="whitespace-pre-wrap">${p.languages}</div></div>`;
             if(p.desc) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">About Me (CV)</span><div class="whitespace-pre-wrap">${p.desc}</div></div>`;
             if(p.skills) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Core Skills</span><div class="whitespace-pre-wrap">${p.skills}</div></div>`;
             if(p.experience) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Experience</span><div class="whitespace-pre-wrap">${p.experience}</div></div>`;
             if(p.education) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Education</span><div class="whitespace-pre-wrap">${p.education}</div></div>`;
             
-            if(!cvContent) cvContent = `<p class="text-center text-[#8696a0] mt-4">CV is empty.</p>`;
+            if(!cvContent) cvContent = `<p class="text-center text-[#8696a0] mt-4 text-sm">This user hasn't filled out their CV yet.</p>`;
+            
             document.getElementById('cv-view-content').innerHTML = cvContent;
 
             const actionButtons = document.getElementById('cv-action-buttons');
@@ -1128,6 +1158,7 @@
             } else {
                 actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#00a884] border border-[#00a884] text-[#111b21] font-bold hover:bg-[#005c4b] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-lg"></i> Chat</button><button onclick="window.closeViewCVModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeViewCVModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`;
             }
+
             document.getElementById('view-cv-modal').classList.add('active');
         };
         window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
@@ -1144,8 +1175,11 @@
                 document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
                 document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; 
                 document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
-                document.getElementById('edit-profile-langs').value = window.myProfileInfo.profileLangs || ''; 
-                document.getElementById('edit-profile-bio').value = window.myProfileInfo.profileBio || ''; 
+                
+                let pLangsEl = document.getElementById('edit-profile-langs');
+                let pBioEl = document.getElementById('edit-profile-bio');
+                if(pLangsEl) pLangsEl.value = window.myProfileInfo.profileLangs || ''; 
+                if(pBioEl) pBioEl.value = window.myProfileInfo.profileBio || ''; 
             } 
             if(window.applyTranslations) window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); 
         };
@@ -1157,8 +1191,11 @@
         window.saveProfileData = function() {
             let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
             let phoneVal = document.getElementById('edit-phone').value.trim(); let emailVal = document.getElementById('edit-email').value.trim();
-            let pLangs = document.getElementById('edit-profile-langs').value.trim(); 
-            let pBio = document.getElementById('edit-profile-bio').value.trim(); 
+            
+            let pLangsEl = document.getElementById('edit-profile-langs');
+            let pBioEl = document.getElementById('edit-profile-bio');
+            let pLangs = pLangsEl ? pLangsEl.value.trim() : ''; 
+            let pBio = pBioEl ? pBioEl.value.trim() : ''; 
             
             let newId = window.myProfileInfo.id; 
             let photo = document.getElementById('edit-preview-photo').src; 
@@ -1172,7 +1209,8 @@
             db.ref('users/' + newId).update(updatedProfile); 
             window.myUsername = nameVal;
             
-            window.requestPushPermissions(); window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Access granted.", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
+            window.requestPushPermissions(); window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Data linked successfully.", photo, ""); 
+            setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
 
         window.openEditCV = function() { document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; document.getElementById('edit-cv-modal').classList.add('active'); };
@@ -1403,4 +1441,226 @@
                 }
                 else if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
                 else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
-                else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="1
+                else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
+
+                msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
+                messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
+
+                // ==========================================
+                // БЛОК 1: ГЛАВНЫЙ ЧАТ
+                // ==========================================
+                if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
+                    let targetUsers = []; 
+                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    
+                    if (window.currentRoomId === 'global' && !isAI) { 
+                        window.participants.filter(part => part.id !== 'ai').forEach(member => { 
+                            let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; 
+                            if (member.id !== data.userId && memberReadLang !== 'un') { 
+                                targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); 
+                            } 
+                        }); 
+                    } else if (window.currentRoomId.startsWith('private_') && !isAI) { 
+                        if (isMe) { 
+                            if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) {
+                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                            }
+                        } else { 
+                            if (data.langCode && data.langCode !== myReadLang) {
+                                targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
+                            }
+                        } 
+                    }
+
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
+                            const translationsRes = await Promise.all(fetchPromises); 
+                            const transContainer = document.createElement('div'); 
+                            transContainer.className = `flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; 
+                            let marqueeTextStr = ''; 
+                            
+                            translationsRes.forEach(t => { 
+                                transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
+                                marqueeTextStr += `${t.user.flag} ${t.text}        `; 
+                            }); 
+                            
+                            messageGroup.appendChild(transContainer); 
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                            
+                            const mText = document.getElementById('chat-info-marquee'); 
+                            if (window.isMarqueeEnabled !== false && mText) { 
+                                mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
+                                mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; 
+                            } 
+                        } catch (e) {}
+                    }
+                }
+
+                // ==========================================
+                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
+                // ==========================================
+                if (data.isVoiceRoomMsg) {
+                    let originalText = data.originalText || data.text;
+                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
+                    if (!myPersonalLang || myPersonalLang === 'auto') {
+                        myPersonalLang = window.myProfileInfo.langCode; 
+                    }
+
+                    let senderPhoto, senderFlag, senderLang, senderName;
+                    let receiverPhoto, receiverFlag, receiverLang, receiverName;
+
+                    if (isMe) {
+                        senderPhoto = window.myProfileInfo.photo;
+                        senderFlag = window.myProfileInfo.flag; 
+                        senderLang = myPersonalLang; 
+                        senderName = window.myUsername;
+
+                        receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U';
+                        receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐';
+                        receiverLang = window.currentTargetUser ? window.currentTargetUser.langCode : 'en';
+                        receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
+                    } else {
+                        senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U';
+                        senderFlag = data.flag || '🌐';
+                        senderLang = data.langCode || 'en';
+                        senderName = (data.name || 'User').split(' ')[0];
+
+                        receiverPhoto = window.myProfileInfo.photo;
+                        receiverFlag = window.myProfileInfo.flag; 
+                        receiverLang = myPersonalLang; 
+                        receiverName = window.myUsername;
+                    }
+
+                    Promise.all([
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${senderLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${receiverLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
+                    ]).then(results => {
+                        const vMarquee = document.getElementById('voice-info-marquee');
+                        if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
+                            
+                            let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText;
+                            let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
+                            
+                            vMarquee.innerHTML = `
+                                <div class="flex items-center">
+                                    <img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">
+                                    <span class="text-white font-bold mr-1">${senderName}:</span>
+                                    <span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> 
+                                    <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> 
+                                    <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]">
+                                    <span class="text-white font-bold mr-1">${receiverName}:</span>
+                                    <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span>
+                                </div>
+                            `;
+                            
+                            vMarquee.style.animation = 'none'; 
+                            void vMarquee.offsetWidth; 
+                            vMarquee.style.animation = null;
+                        }
+                    });
+                }
+
+                // ==========================================
+                // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
+                // ==========================================
+                if (data.isConfMsg) {
+                    let originalText = data.originalText || data.text;
+                    let myPersonalLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myPersonalLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+                        .then(r => r.json())
+                        .then(resData => {
+                            let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
+                            let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
+                            if (targetMarquee) {
+                                targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${p.flag} ${translatedText}</span>`;
+                                targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
+                            }
+                        }).catch(e => console.log('Meet Translate Error'));
+                }
+            }
+
+            window.renderProfessionList = function() { 
+                const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
+                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
+                validUsers.forEach((p) => { 
+                    let isMe = p.id === window.myProfileInfo.id; 
+                    let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
+                    let cvClick = isMe ? `window.openViewCVModal('me')` : `window.openViewCVModal('${p.id}')`; 
+                    let btnText = isMe ? `View My CV` : `View CV`; 
+                    let nameTxt = (p.name||'User').split(' ')[0]; 
+                    let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
+                    cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="${cvClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button></div>`; 
+                }); 
+                profContainer.innerHTML = cardsHTML + `</div>`; 
+            };
+            if(document.getElementById('profession-list')) window.renderProfessionList();
+
+            window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
+            
+            window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
+
+            window.initConference = function() {
+                const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
+                
+                let confHtml = `
+                <div class="video-frame main" id="my-video-container">
+                    <video id="my-live-video" class="mirror-video cursor-pointer hover:opacity-90 transition" onclick="window.openPersonalLangModal()" playsinline autoplay muted></video>
+                    <div class="video-overlay">${window.myUsername}</div>
+                    <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                    <div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
+                </div>`;
+                
+                let realParticipants = window.participants.filter(p => p.id !== 'ai'); 
+                let totalSlots = 12;
+                let renderedCount = 1; 
+                
+                realParticipants.forEach(p => {
+                    if (renderedCount >= totalSlots) return; 
+                    confHtml += `
+                    <div class="video-frame">
+                        <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
+                        <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
+                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-${p.id}" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Listening...</div></div>
+                    </div>`;
+                    renderedCount++;
+                });
+
+                const dummyFlags = ['us', 'gb', 'fr', 'de', 'jp', 'it', 'es', 'cn', 'ae', 'pt', 'tr'];
+                
+                for (let i = renderedCount; i < totalSlots; i++) {
+                    let randomFlag = dummyFlags[i % dummyFlags.length];
+                    confHtml += `
+                    <div class="video-frame border-2 border-[#2a3942]">
+                        <img src="llgar.jpg" class="placeholder-bg opacity-50 object-cover" style="filter: blur(1px);">
+                        <div class="absolute inset-0 bg-black/40"></div>
+                        <div class="video-overlay" style="background: rgba(0,0,0,0.5);">Connecting...</div>
+                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${randomFlag}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                        <div class="translation-bar"><div class="conf-marquee-text text-[#8696a0]">Waiting for user...</div></div>
+                    </div>`;
+                }
+
+                confGrid.innerHTML = confHtml; 
+                
+                const videoEl = document.getElementById('my-live-video'); 
+                if(videoEl) { 
+                    videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
+                    videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
+                }
+            }
+            if (document.getElementById('conference-grid')) initConference(); 
+            
+            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
+            window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
+
+            window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
+
+            window.switchChatRoom('global');
+            if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
+            window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
+        });
+    </script>
+</body>
+</html>
