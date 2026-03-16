@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Smart Profile Logic</title>
+    <title>Hello Friends - Smart Profile & CV</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -233,8 +233,7 @@
                                 name: user.displayName || 'User',
                                 email: user.email || '',
                                 photo: user.photoURL || 'https://ui-avatars.com/api/?name=User&background=00a884&color=fff',
-                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global',
-                                languages: '' // Инициализируем пустое поле для языков
+                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global'
                             }).then(() => { location.reload(); });
                         }
                     });
@@ -566,8 +565,32 @@
             <div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
             <div class="app-modal-content" onclick="event.stopPropagation();">
                 <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
-                <div class="flex items-center gap-4 mb-4 mt-2"><img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg"><div class="flex flex-col"><h3 id="modal-name" class="text-2xl font-bold text-white"></h3><span id="modal-id" class="text-xs text-[#8696a0] font-mono mb-1 mt-1 block"></span><span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span></div></div>
-                <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div><div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
+                <div class="flex items-center gap-4 mb-4 mt-2">
+                    <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
+                    <div class="flex flex-col">
+                        <h3 id="modal-name" class="text-2xl font-bold text-white"></h3>
+                        <span id="modal-id" class="text-xs text-[#8696a0] font-mono mb-1 mt-1 block"></span>
+                        <span id="modal-prof" class="text-[#a29bfe] font-bold text-sm"></span>
+                    </div>
+                </div>
+                <div id="modal-desc" class="flex flex-col gap-4 text-sm text-[#e9edef] mb-6"></div>
+                <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
+            </div>
+        </div>
+
+        <div id="view-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeViewCVModal();">
+            <div class="app-modal-content" onclick="event.stopPropagation();">
+                <div class="close-sheet-btn" onclick="window.closeViewCVModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closeViewCVModal()"></div>
+                <div class="flex items-center gap-4 mb-4 mt-2">
+                    <img id="cv-view-img" src="" class="w-16 h-16 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
+                    <div class="flex flex-col">
+                        <h3 id="cv-view-name" class="text-xl font-bold text-white"></h3>
+                        <span id="cv-view-prof" class="text-[#a29bfe] font-bold text-sm"></span>
+                    </div>
+                </div>
+                <div id="cv-view-content" class="flex flex-col gap-3 text-sm text-[#e9edef] mb-4"></div>
+                <div class="flex flex-col gap-2 w-full mt-auto" id="cv-action-buttons"></div>
             </div>
         </div>
 
@@ -581,27 +604,6 @@
             </div>
         </div>
 
-        <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
-            <div class="app-modal-content" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div><div class="sheet-handle" onclick="window.closeAdminModal()"></div>
-                <h2 class="text-xl font-bold mb-2 text-white"><i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel</h2>
-                <p class="text-xs text-[#8696a0] mb-4">Manage or Log In as any user in the database.</p>
-                <select id="admin-user-select" class="form-input-box mb-4"></select>
-                <div class="flex gap-2">
-                    <button onclick="window.adminLogin()" class="btn-primary flex-1 !bg-[#a29bfe] !text-[#111b21] hover:!bg-purple-400">Log In</button>
-                    <button onclick="window.adminDeleteUser(this)" class="btn-primary flex-1 !bg-red-500 !text-white hover:!bg-red-600"><i class="fa-solid fa-skull"></i> Delete</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();">
-            <div class="app-modal-content h-[75vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-address-book text-[#00a884] mr-2"></i> Quick Contacts</h2>
-                <div id="contacts-list-container" class="flex flex-col gap-3 overflow-y-auto pb-4"></div>
-            </div>
-        </div>
-
         <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
             <div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();">
                 <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
@@ -612,7 +614,9 @@
                     <div class="flex flex-col items-center mb-6 mt-2 shrink-0">
                         <div class="relative w-24 h-24"><img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] shadow-lg"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera"></i></button></div>
                     </div>
-                    <label class="form-label" data-i18n="reg_name">Full Name</label><input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
+                    <label class="form-label" data-i18n="reg_name">Full Name</label>
+                    <input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
+                    
                     <label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label>
                     <div class="flex items-center gap-3 mb-4 shrink-0">
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
@@ -623,11 +627,17 @@
                         </div>
                     </div>
                     
-                    <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
-                    <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    <label class="form-label" data-i18n="reg_phone">Phone Number</label>
+                    <input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
                     
-                    <label class="form-label">Languages Spoken</label>
-                    <input type="text" id="edit-langs" class="form-input-box" placeholder="e.g. English, Русский, Azərbaycanca">
+                    <label class="form-label" data-i18n="reg_email">Email</label>
+                    <input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    
+                    <label class="form-label mt-2">Languages Spoken (Profile)</label>
+                    <input type="text" id="edit-profile-langs" class="form-input-box" placeholder="e.g. English, Русский...">
+                    
+                    <label class="form-label">About Me (Profile)</label>
+                    <textarea id="edit-profile-bio" class="form-input-box resize-none" rows="3" placeholder="Tell us about yourself..."></textarea>
 
                     <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
                         <img src="llgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
@@ -645,11 +655,23 @@
                     <button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
                 <div class="overflow-y-auto flex-grow p-5 pb-10">
-                    <label class="form-label">Profession / Title</label><input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
-                    <label class="form-label">Core Skills</label><textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea>
-                    <label class="form-label">Work Experience</label><textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea>
-                    <label class="form-label">Education</label><textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
-                    <label class="form-label">About Me (Bio)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
+                    <label class="form-label">Profession / Title</label>
+                    <input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
+                    
+                    <label class="form-label">Languages (CV)</label>
+                    <input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
+                    
+                    <label class="form-label">Core Skills</label>
+                    <textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea>
+                    
+                    <label class="form-label">Work Experience</label>
+                    <textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea>
+                    
+                    <label class="form-label">Education</label>
+                    <textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
+                    
+                    <label class="form-label">About Me (CV)</label>
+                    <textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Professional summary..."></textarea>
                 </div>
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button></div>
             </div>
@@ -1062,7 +1084,6 @@
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
         window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 
-        // ИЗМЕНЕНА ЛОГИКА ОТРИСОВКИ КАРТОЧКИ (openAvatarModal)
         window.openAvatarModal = function(id) {
             window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
@@ -1072,43 +1093,26 @@
             if(idSpan) idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
             const modalProf = document.getElementById('modal-prof'); if(modalProf) modalProf.innerText = p.profession || 'User';
 
-            // Умная система описания страны
             let cDesc = p.countryDesc || 'User in network'; let cPop = p.pop || 'Unknown'; let cSeas = p.seas || 'Unknown';
             if (typeof window.countryData !== 'undefined' && window.countryData[p.flagCode]) { if(!p.countryDesc) cDesc = window.countryData[p.flagCode].desc; if(!p.pop) cPop = window.countryData[p.flagCode].pop; if(!p.seas) cSeas = window.countryData[p.flagCode].seas; }
             
-            // Собираем поля CV (только если они заполнены)
-            let extraFields = '';
-            if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`;
-            if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`;
-            if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
-
-            // Языки берем из базового профиля
-            let langsText = p.languages ? p.languages : (p.langCode || 'Auto');
+            let profLangs = p.profileLangs || p.langCode || 'Auto';
+            let profBio = p.profileBio || cDesc;
 
             const modalDesc = document.getElementById('modal-desc');
             if(modalDesc) {
                 modalDesc.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div>
-                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Languages</span><span class="font-bold text-white text-base">${langsText}</span></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div>
-                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div>
-                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Languages</span><span class="font-bold text-white text-base">${profLangs}</span></div></div>
+                    <div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div></div>
                     ${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white font-bold">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}
-                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
-                        <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW / BIO</span>
-                        <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
-                        ${extraFields}
-                    </div>`;
+                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">ABOUT ME</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${profBio}</p></div>`;
             }
             
             const actionButtons = document.getElementById('modal-action-buttons');
             if(actionButtons) {
                 if (id === 'ai') { actionButtons.style.display = 'none'; } 
                 else if (id === 'me') { 
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2 mt-2"><button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Edit Info</button><button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button></div>`; actionButtons.style.display = 'block'; 
+                    actionButtons.innerHTML = `<div class="flex w-full gap-2 mt-2"><button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Edit Profile</button><button onclick="window.closeAvatarModal(); window.openEditCV();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#a29bfe] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-file-signature mr-1"></i> Edit CV</button></div>`; actionButtons.style.display = 'block'; 
                 } else {
                     actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-[#00a884] text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`; actionButtons.style.display = 'block'; 
                 }
@@ -1116,14 +1120,49 @@
             document.getElementById('avatar-modal').classList.add('active');
         };
 
-        // ИЗМЕНЕНА ЛОГИКА ОТКРЫТИЯ ПРОФИЛЯ
+        window.openViewCVModal = function(id) {
+            window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
+            if (!p) return;
+
+            document.getElementById('cv-view-img').src = p.photo; 
+            document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0]; 
+            document.getElementById('cv-view-prof').innerText = p.profession || 'Profession not listed';
+
+            let cvContent = '';
+            if(p.languages) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Languages</span><div class="whitespace-pre-wrap">${p.languages}</div></div>`;
+            if(p.desc) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">About Me (CV)</span><div class="whitespace-pre-wrap">${p.desc}</div></div>`;
+            if(p.skills) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Core Skills</span><div class="whitespace-pre-wrap">${p.skills}</div></div>`;
+            if(p.experience) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Experience</span><div class="whitespace-pre-wrap">${p.experience}</div></div>`;
+            if(p.education) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Education</span><div class="whitespace-pre-wrap">${p.education}</div></div>`;
+            
+            if(!cvContent) cvContent = `<p class="text-center text-[#8696a0] mt-4">CV is empty.</p>`;
+            document.getElementById('cv-view-content').innerHTML = cvContent;
+
+            const actionButtons = document.getElementById('cv-action-buttons');
+            if (id === 'me') {
+                actionButtons.innerHTML = `<button onclick="window.closeViewCVModal(); window.openEditCV();" class="btn-primary !bg-[#a29bfe] !text-[#111b21] w-full shadow-lg"><i class="fa-solid fa-file-signature mr-1"></i> Edit My CV</button>`;
+            } else {
+                actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#00a884] border border-[#00a884] text-[#111b21] font-bold hover:bg-[#005c4b] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-lg"></i> Chat</button><button onclick="window.closeViewCVModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeViewCVModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`;
+            }
+            document.getElementById('view-cv-modal').classList.add('active');
+        };
+        window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
+
         window.openMyProfile = function() { 
             window.closeDropdown(); 
             if (window.isGuest) { 
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); document.getElementById('edit-preview-photo').src = window.myProfileInfo?.photo || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
             } else { 
-                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myUsername; document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
-                document.getElementById('edit-langs').value = window.myProfileInfo.languages || ''; // Грузим языки
+                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); 
+                document.getElementById('edit-name').value = window.myUsername; 
+                document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; 
+                document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; 
+                document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
+                document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; 
+                document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
+                
+                document.getElementById('edit-profile-langs').value = window.myProfileInfo.profileLangs || ''; 
+                document.getElementById('edit-profile-bio').value = window.myProfileInfo.profileBio || ''; 
             } 
             if(window.applyTranslations) window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); 
         };
@@ -1132,18 +1171,18 @@
 
         window.handleFileUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; reader.readAsDataURL(file); };
         
-        // ИЗМЕНЕНА ЛОГИКА СОХРАНЕНИЯ ПРОФИЛЯ
         window.saveProfileData = function() {
             let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
             let phoneVal = document.getElementById('edit-phone').value.trim(); let emailVal = document.getElementById('edit-email').value.trim();
-            let langsVal = document.getElementById('edit-langs').value.trim(); // Берем языки
+            let pLangs = document.getElementById('edit-profile-langs').value.trim(); 
+            let pBio = document.getElementById('edit-profile-bio').value.trim(); 
             
             let newId = window.myProfileInfo.id; 
             let photo = document.getElementById('edit-preview-photo').src; 
             const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; 
             const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User in network' };
             
-            let updatedProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal, languages: langsVal };
+            let updatedProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal, profileLangs: pLangs, profileBio: pBio };
 
             window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; 
             try { localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
@@ -1153,13 +1192,13 @@
             window.requestPushPermissions(); window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Access granted.", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
 
-        // ИЗМЕНЕНА ЛОГИКА CV (УБРАНЫ ЯЗЫКИ)
-        window.openEditCV = function() { document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; document.getElementById('edit-cv-modal').classList.add('active'); };
+        window.openEditCV = function() { document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; document.getElementById('edit-cv-modal').classList.add('active'); };
         window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
 
         window.saveCVData = function() { 
             const cvData = {
                 profession: document.getElementById('cv-edit-prof').value.trim(), 
+                languages: document.getElementById('cv-edit-langs').value.trim(), 
                 skills: document.getElementById('cv-edit-skills').value.trim(), 
                 experience: document.getElementById('cv-edit-exp').value.trim(), 
                 education: document.getElementById('cv-edit-edu').value.trim(), 
@@ -1170,7 +1209,7 @@
             db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
                 window.closeEditCV(); 
                 if(window.renderProfessionList) window.renderProfessionList(); 
-                setTimeout(() => { window.openAvatarModal('me'); }, 100); 
+                setTimeout(() => { window.openViewCVModal('me'); }, 100); 
             });
         };
 
@@ -1524,7 +1563,16 @@
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
-                validUsers.forEach((p) => { let isMe = p.id === window.myProfileInfo.id; let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; let btnText = isMe ? `View My CV` : `View CV`; let nameTxt = (p.name||'User').split(' ')[0]; let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="${avatarClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button></div>`; }); profContainer.innerHTML = cardsHTML + `</div>`; 
+                validUsers.forEach((p) => { 
+                    let isMe = p.id === window.myProfileInfo.id; 
+                    let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
+                    let cvClick = isMe ? `window.openViewCVModal('me')` : `window.openViewCVModal('${p.id}')`; 
+                    let btnText = isMe ? `View My CV` : `View CV`; 
+                    let nameTxt = (p.name||'User').split(' ')[0]; 
+                    let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
+                    cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="${cvClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button></div>`; 
+                }); 
+                profContainer.innerHTML = cardsHTML + `</div>`; 
             };
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
