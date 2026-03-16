@@ -1270,6 +1270,19 @@
             });
         };
 
+        window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
+
+window.openEditCV = function() { 
+    document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; 
+    document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; 
+    document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; 
+    document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; 
+    document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; 
+    document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; 
+    document.getElementById('edit-cv-modal').classList.add('active'); 
+};
+
+window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
