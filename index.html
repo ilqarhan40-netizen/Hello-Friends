@@ -648,76 +648,59 @@
             </div>
         </div>
 
-<div class="text-center mb-5">
-                <h3 class="text-xl font-bold text-white tracking-tight">Professional CV</h3>
-                <p class="text-[0.7rem] text-[#8696a0]">Business details for your network card</p>
-            </div>
+<div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
+            <div class="app-modal-content flex flex-col" style="max-height: 90vh;">
+                <div class="close-sheet-btn" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closeEditCV()"></div>
 
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Profession</label>
-                    <input type="text" id="cv-edit-prof" class="w-full bg-[#202c33] text-[#e9edef] px-4 py-3 rounded-xl border border-[#2a3942] focus:border-[#00a884] outline-none transition text-[0.85rem]" placeholder="Developer">
+                <div class="text-center mb-5 mt-2 shrink-0">
+                    <h3 class="text-xl font-bold text-white tracking-tight">Professional CV</h3>
+                    <p class="text-[0.7rem] text-[#8696a0]">Business contact details</p>
                 </div>
-                <div>
-                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Languages</label>
-                    <input type="text" id="cv-edit-langs" class="w-full bg-[#202c33] text-[#e9edef] px-4 py-3 rounded-xl border border-[#2a3942] focus:border-[#00a884] outline-none transition text-[0.85rem]" placeholder="English, French...">
-                </div>
-            </div>
 
-            <div class="mb-4">
-                <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Location</label>
-                <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#00a884] transition h-12">
-                    <div class="pl-4 pr-2 flex items-center bg-[#2a3942]/30 h-full">
-                        <img id="cv-edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-5 h-3.5 object-cover rounded-sm">
+                <div class="overflow-y-auto flex-grow pr-2 pb-4">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Profession</label>
+                            <input type="text" id="cv-edit-prof" class="form-input-box !mb-0" placeholder="Developer">
+                        </div>
+                        <div>
+                            <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Languages</label>
+                            <input type="text" id="cv-edit-langs" class="form-input-box !mb-0" placeholder="English, French...">
+                        </div>
                     </div>
-                    <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full px-3 outline-none text-[0.85rem] cursor-pointer appearance-none">
-                        <option value="un">Select Country</option>
-                    </select>
-                    <i class="fa-solid fa-chevron-down text-[#8696a0] mr-4 text-[0.6rem]"></i>
-                </div>
-            </div>
 
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Phone</label>
-                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition shadow-sm">
-                        <i class="fa-solid fa-phone text-[#00a884] text-sm shrink-0"></i>
-                        <input type="text" id="cv-edit-phone" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef] font-mono" placeholder="+1...">
+                    <div class="mb-4">
+                        <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Location</label>
+                        <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#00a884] transition h-12">
+                            <div class="pl-4 pr-2 flex items-center bg-[#2a3942]/30 h-full border-r border-[#2a3942]/50">
+                                <img id="cv-edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-5 h-3.5 object-cover rounded-sm">
+                            </div>
+                            <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full px-3 outline-none text-[0.85rem] cursor-pointer appearance-none">
+                                <option value="un">Select Country</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down text-[#8696a0] mr-4 text-[0.6rem]"></i>
+                        </div>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Email</label>
-                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition shadow-sm">
-                        <i class="fa-solid fa-envelope text-[#00a884] text-sm shrink-0"></i>
-                        <input type="email" id="cv-edit-email" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef]" placeholder="mail@pro.com">
-                    </div>
-                </div>
-            </div>
-        
 
-
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Phone</label>
-                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition">
-                        <i class="fa-solid fa-phone text-[#00a884] text-sm shrink-0"></i>
-                        <input type="text" id="cv-edit-phone" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef] font-mono" placeholder="+1...">
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Phone</label>
+                            <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition shadow-sm">
+                                <i class="fa-solid fa-phone text-[#00a884] text-sm shrink-0"></i>
+                                <input type="text" id="cv-edit-phone" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef] font-mono" placeholder="+1...">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Email</label>
+                            <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition shadow-sm">
+                                <i class="fa-solid fa-envelope text-[#00a884] text-sm shrink-0"></i>
+                                <input type="email" id="cv-edit-email" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef]" placeholder="mail@pro.com">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Email</label>
-                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition">
-                        <i class="fa-solid fa-envelope text-[#00a884] text-sm shrink-0"></i>
-                        <input type="email" id="cv-edit-email" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef]" placeholder="mail@pro.com">
-                    </div>
-                </div>
-            </div>
-        
 
-                    <label class="form-label mt-4">Languages (CV)</label>
-                    <input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
-                    
-                    <label class="form-label">Core Skills</label>
+                    <label class="form-label mt-2">Core Skills</label>
                     <textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea>
                     
                     <label class="form-label">Work Experience</label>
@@ -727,9 +710,12 @@
                     <textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
                     
                     <label class="form-label">About Me (CV)</label>
-                    <textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Professional summary..."></textarea>
+                    <textarea id="cv-edit-bio" class="form-input-box resize-none mb-2" rows="3" placeholder="Professional summary..."></textarea>
                 </div>
-                <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button></div>
+                
+                <div class="shrink-0 pt-4 border-t border-[#202c33] mt-2">
+                    <button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button>
+                </div>
             </div>
         </div>
         <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
