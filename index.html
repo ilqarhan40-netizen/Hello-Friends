@@ -1374,17 +1374,57 @@ window.participants = [aiBot];
                 window.participants.filter(p => p.id !== 'ai').forEach(p => { let id1 = String(window.myProfileInfo.id); let id2 = String(p.id); let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; });
             };
 
-            window.switchChatRoom = function(targetId) {
-                if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
-                const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
-                window.currentTargetUser = null; let headerTitle = "Global Chat"; let headerRoomId = "global";
-                if (targetId === 'global') { window.currentRoomId = "global"; window.showToast("Global Chat", "🌍 International Public Room", "", ""); }
-                else if (targetId === 'ai') { window.currentRoomId = "private_ai_bot"; headerTitle = "AI Assistant"; headerRoomId = window.currentRoomId; window.showToast("AI Assistant", "Powered by Gemini", "https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff", ""); }
-                else if (targetId === 'me') { window.currentRoomId = "private_me_" + window.myProfileInfo.id; headerTitle = "My Notes"; headerRoomId = window.currentRoomId; let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#8696a0] mt-1 block">My personal secure space.</span>`; window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, ""); }
-                else { const targetUser = window.participants.find(p => p.id === targetId); if(targetUser) { window.currentTargetUser = targetUser; let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id); window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId; let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b><br><span class="text-[#8696a0] mt-1 block">${targetUser.countryDesc || 'User in network'}</span>`; window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, ""); } }
-                const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle; const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
-                window.renderSidebar(); window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
-            };
+      window.switchChatRoom = function(targetId) {
+            if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
+            const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
+            window.currentTargetUser = null; let headerTitle = "Global Chat"; let headerRoomId = "global";
+            
+            if (targetId === 'global') { 
+                window.currentRoomId = "global"; 
+                window.showToast("Global Chat", "🌍 International Public Room", "", ""); 
+            }
+            else if (targetId === 'ai') { 
+                window.currentRoomId = "private_ai_bot"; headerTitle = "AI Assistant"; headerRoomId = window.currentRoomId; 
+                window.showToast("AI Assistant", "Powered by Gemini", "https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff", ""); 
+            }
+            else if (targetId === 'me') { 
+                window.currentRoomId = "private_me_" + window.myProfileInfo.id; headerTitle = "My Notes"; headerRoomId = window.currentRoomId; 
+                
+                // Берем только твои данные
+                let myBio = window.myProfileInfo.profileBio || ""; 
+                let myLangs = window.myProfileInfo.profileLangs ? `🗣️ ${window.myProfileInfo.profileLangs}<br>` : "";
+                let myEmail = window.myProfileInfo.email ? `✉️ ${window.myProfileInfo.email}<br>` : "";
+                let myPhone = window.myProfileInfo.phone || ""; 
+                
+                let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${myBio}</span>` : ""}`; 
+                
+                window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, myPhone); 
+            }
+            else { 
+                const targetUser = window.participants.find(p => p.id === targetId); 
+                if(targetUser) { 
+                    window.currentTargetUser = targetUser; 
+                    let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id); 
+                    window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
+                    headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId; 
+                    
+                    // Берем только данные другого пользователя
+                    let targetBio = targetUser.profileBio || ""; 
+                    let targetLangs = targetUser.profileLangs ? `🗣️ ${targetUser.profileLangs}<br>` : "";
+                    let targetEmail = targetUser.email ? `✉️ ${targetUser.email}<br>` : "";
+                    let targetPhone = targetUser.phone || ""; 
+                    
+                    let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}${targetLangs}</span>${targetBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${targetBio}</span>` : ""}`; 
+                    
+                    window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, targetPhone); 
+                } 
+            }
+            
+            const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle; 
+            const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
+            window.renderSidebar(); 
+            window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
+        };
 
             let isGeminiWaiting = false;
 
