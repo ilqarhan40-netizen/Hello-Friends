@@ -1132,8 +1132,7 @@
             document.getElementById('avatar-modal').classList.add('active');
         };
 
-        // ОТКРЫТИЕ АВТОНОМНОГО ОКНА CV (Из Профессий)
-        window.openViewCVModal = function(id) {
+     window.openViewCVModal = function(id) {
             window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) return;
 
@@ -1142,25 +1141,64 @@
             document.getElementById('cv-view-prof').innerText = p.profession || 'Profession not listed';
 
             let cvContent = '';
-            if(p.languages) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Languages (CV)</span><div class="whitespace-pre-wrap">${p.languages}</div></div>`;
-            if(p.desc) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">About Me (CV)</span><div class="whitespace-pre-wrap">${p.desc}</div></div>`;
-            if(p.skills) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Core Skills</span><div class="whitespace-pre-wrap">${p.skills}</div></div>`;
-            if(p.experience) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Experience</span><div class="whitespace-pre-wrap">${p.experience}</div></div>`;
-            if(p.education) cvContent += `<div class="bg-[#202c33] p-3 rounded-xl border border-[#2a3942]"><span class="text-[#00a884] text-xs font-bold uppercase block mb-1">Education</span><div class="whitespace-pre-wrap">${p.education}</div></div>`;
             
-            if(!cvContent) cvContent = `<p class="text-center text-[#8696a0] mt-4">CV is empty.</p>`;
+            // Заглушки, если навыки или языки не указаны
+            let blockLangs = p.languages || '—';
+            let blockSkills = p.skills || '—';
+            
+            // 1. Верхний блок сеткой (Языки и Навыки) в стиле 3-го фото
+            cvContent += `
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Languages</span>
+                    <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockLangs}</span>
+                </div>
+                <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Core Skills</span>
+                    <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockSkills}</span>
+                </div>
+            </div>`;
+
+            // 2. Блоки "Опыт работы", "Образование" и "О себе"
+            if(p.experience) {
+                cvContent += `
+                <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3">
+                    <span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2">Work Experience</span>
+                    <p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.experience}</p>
+                </div>`;
+            }
+            if(p.education) {
+                cvContent += `
+                <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3">
+                    <span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2">Education</span>
+                    <p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.education}</p>
+                </div>`;
+            }
+            if(p.desc) {
+                cvContent += `
+                <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3">
+                    <span class="text-[#a29bfe] text-[0.7rem] font-bold uppercase block mb-2">About Me (CV)</span>
+                    <p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.desc}</p>
+                </div>`;
+            }
+            
+            // Если совсем ничего не заполнено
+            if(!p.languages && !p.skills && !p.experience && !p.education && !p.desc) {
+                cvContent = `<p class="text-center text-[#8696a0] mt-4 text-sm">This user hasn't filled out their CV yet.</p>`;
+            }
+            
             document.getElementById('cv-view-content').innerHTML = cvContent;
 
+            // 3. Кнопки связи внизу (чат, смс, емейл) остаются на месте!
             const actionButtons = document.getElementById('cv-action-buttons');
             if (id === 'me') {
                 actionButtons.innerHTML = `<button onclick="window.closeViewCVModal(); window.openEditCV();" class="btn-primary !bg-[#a29bfe] !text-[#111b21] w-full shadow-lg"><i class="fa-solid fa-file-signature mr-1"></i> Edit My CV</button>`;
             } else {
                 actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#00a884] border border-[#00a884] text-[#111b21] font-bold hover:bg-[#005c4b] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-lg"></i> Chat</button><button onclick="window.closeViewCVModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeViewCVModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`;
             }
+
             document.getElementById('view-cv-modal').classList.add('active');
         };
-        window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
-
         window.openMyProfile = function() { 
             window.closeDropdown(); 
             if (window.isGuest) { 
