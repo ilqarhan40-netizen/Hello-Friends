@@ -1464,33 +1464,53 @@
                     });
                 }
 
-          // ==========================================
-                // БЛОК 3: ВИДЕО-КОНФЕРЕНЦИЯ (MEET)
+                // ==========================================
+                // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
                 if (data.isConfMsg) {
-                    let originalText = data.originalText || data.text;
-                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
-                    if (!myPersonalLang || myPersonalLang === 'auto') {
-                        myPersonalLang = window.myProfileInfo.langCode; 
+                    let targetUsers = [];
+                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+
+                    if (isMe) {
+                        window.participants.filter(part => part.id !== 'ai').forEach(member => {
+                            targetUsers.push({ code: member.langCode, flag: member.flag, id: member.id });
+                        });
+                        
+                        const myMarquee = document.getElementById('speaker-marquee');
+                        if (myMarquee) {
+                             myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
+                             myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
+                        }
+                    } else {
+                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, id: window.myProfileInfo.id });
                     }
-                    
-                    let senderId = data.userId;
-                    let senderName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
-                    let senderFlag = isMe ? window.myProfileInfo.flag : (data.flag || '🌐');
 
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myPersonalLang}&dt=t&q=${encodeURIComponent(originalText)}`)
-                        .then(r => r.json())
-                        .then(resData => {
-                            let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
+                    if (targetUsers.length > 0) {
+                        try {
+                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                                .then(res => res.json())
+                                .then(resData => ({ user: u, text: resData[0][0][0] }))
+                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
+                            );
                             
-                            let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${senderId}`);
-
-                            if (targetMarquee) {
-                                targetMarquee.innerHTML = `<span class="text-white font-bold">${senderName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${senderFlag} ${translatedText}</span>`;
-                                targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
-                            }
-                        }).catch(e => console.log(e));
+                            const translationsRes = await Promise.all(fetchPromises);
+                            
+                            translationsRes.forEach(t => {
+                                let originalText = data.originalText || data.text;
+                                
+                                let frameIdToUpdate = isMe ? `conf-marquee-${t.user.id}` : `conf-marquee-${data.userId}`;
+                                let targetMarquee = document.getElementById(frameIdToUpdate);
+                                
+                                if (targetMarquee) {
+                                    targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
+                                    targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
+                                }
+                            });
+                        } catch (e) {}
+                    }
                 }
+            }
+ 
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
