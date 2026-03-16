@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V59</title>
+    <title>Hello Friends - Golden Master V59 (Secured)</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=HF&background=00a884&color=fff&size=192">
     
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script> (function(){ emailjs.init("1jQAeZgeFaV2cvrR8"); })(); </script>
+    <script> (function(){ emailjs.init("_iFSpvIKpRoNrFh_e"); })(); </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -26,7 +26,14 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyBtIJPFKNNUn1XW5b44tdomXTPHNI2Px40", authDomain: "hello-friends-p8p3i7.firebaseapp.com", databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", projectId: "hello-friends-p8p3i7", messagingSenderId: "367351601053", appId: "1:367351601053:web:7852c0326db9cc233d44ba" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCVFkMsqelcnjjeIwGnAKmn1CFhDGc7kR0", 
+            authDomain: "hello-friends-p8p3i7.firebaseapp.com", 
+            databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", 
+            projectId: "hello-friends-p8p3i7", 
+            messagingSenderId: "367351601053", 
+            appId: "1:367351601053:web:7852c0326db9cc233d44ba" 
+        };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); 
         const db = firebase.database();
     </script>
@@ -196,7 +203,7 @@
                     new Notification(title, { body: body, icon: icon || 'https://ui-avatars.com/api/?name=HF&background=00a884&color=fff' });
                 }
             }
-        };
+        }
 
         window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
@@ -682,8 +689,8 @@
                     <div class="relative w-full mb-3">
                         <textarea id="email-text" class="form-input-box !mb-0 w-full resize-none pr-8" placeholder="Write your message here..." rows="4" required></textarea>
                         <div class="absolute right-3 top-3 flex flex-col gap-3">
-                           <i class="fa-solid fa-paperclip text-[#8696a0] hover:text-[#00a884] cursor-pointer text-lg transition" onclick="document.getElementById('email-attach-input').click()" title="Attach File"></i>
-                           <i class="fa-regular fa-face-smile text-[#8696a0] hover:text-white cursor-pointer text-lg transition" onclick="window.toggleEmojiPicker('email-text')" title="Emojis"></i>
+                            <i class="fa-solid fa-paperclip text-[#8696a0] hover:text-[#00a884] cursor-pointer text-lg transition" onclick="document.getElementById('email-attach-input').click()" title="Attach File"></i>
+                            <i class="fa-regular fa-face-smile text-[#8696a0] hover:text-white cursor-pointer text-lg transition" onclick="window.toggleEmojiPicker('email-text')" title="Emojis"></i>
                         </div>
                     </div>
                     <div class="flex gap-3 mt-2">
@@ -811,6 +818,32 @@
             }
         };
 
+        window.getSmartLang = function(userProfile) {
+            if (!userProfile) return 'en'; 
+            let phone = userProfile.phone || "";
+            let flag = userProfile.flagCode || "un";
+            
+            if (phone.startsWith('+7')) return 'ru';
+            if (phone.startsWith('+994')) return 'az';
+            if (phone.startsWith('+39')) return 'it';
+            if (phone.startsWith('+49')) return 'de';
+            if (phone.startsWith('+33')) return 'fr';
+            if (phone.startsWith('+81')) return 'ja';
+            if (phone.startsWith('+34')) return 'es';
+            if (phone.startsWith('+86')) return 'zh';
+            if (phone.startsWith('+351')) return 'pt';
+            if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
+            if (phone.startsWith('+971')) return 'ar';
+
+            const flagToLang = {
+                'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
+                'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
+            };
+            if (flagToLang[flag]) return flagToLang[flag];
+            
+            return userProfile.langCode || 'en';
+        };
+
         window.startUniversalMic = async function(mode) {
             window.speechRecognizedText = "";
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -825,8 +858,7 @@
             
             rec.onresult = async (e) => { 
                 window.speechRecognizedText = e.results[0][0].transcript; 
-                let targetLang = window.currentTargetUser ? window.currentTargetUser.langCode : window.myProfileInfo.langCode;
-                if (!targetLang) targetLang = 'en';
+                let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
 
                 window.showToast("Translating...", "Processing your voice...", "", "");
                 let textToShip = window.speechRecognizedText;
@@ -1290,9 +1322,6 @@
                     if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + senderDisplayName, textPreview, p.photo, "");
                 }
                 
-               if (!data.isVoiceRoomMsg && !data.isConfMsg) {
-
-            
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
@@ -1353,7 +1382,7 @@
                             
                             translationsRes.forEach(t => { 
                                 transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
-                                marqueeTextStr += `${t.user.flag} ${t.text}       `; 
+                                marqueeTextStr += `${t.user.flag} ${t.text}        `; 
                             }); 
                             
                             messageGroup.appendChild(transContainer); 
@@ -1367,27 +1396,24 @@
                         } catch (e) {}
                     }
                 }
-               }
-           // ==========================================
-                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА (Родной флаг + Выбранный язык)
+
+                // ==========================================
+                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
                 // ==========================================
                 if (data.isVoiceRoomMsg) {
                     let originalText = data.originalText || data.text;
-                    
-                    // 1. Узнаем язык перевода из меню (но флаг больше не меняем!)
                     let myPersonalLang = localStorage.getItem('hf_personal_lang');
                     if (!myPersonalLang || myPersonalLang === 'auto') {
                         myPersonalLang = window.myProfileInfo.langCode; 
                     }
 
-                    // 2. Распределяем данные (ФЛАГИ СТРОГО ИЗ ПРОФИЛЕЙ)
                     let senderPhoto, senderFlag, senderLang, senderName;
                     let receiverPhoto, receiverFlag, receiverLang, receiverName;
 
                     if (isMe) {
                         senderPhoto = window.myProfileInfo.photo;
-                        senderFlag = window.myProfileInfo.flag; // РОДНОЙ ФЛАГ
-                        senderLang = myPersonalLang; // ВЫБРАННЫЙ ЯЗЫК ПЕРЕВОДА
+                        senderFlag = window.myProfileInfo.flag; 
+                        senderLang = myPersonalLang; 
                         senderName = window.myUsername;
 
                         receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U';
@@ -1401,12 +1427,11 @@
                         senderName = (data.name || 'User').split(' ')[0];
 
                         receiverPhoto = window.myProfileInfo.photo;
-                        receiverFlag = window.myProfileInfo.flag; // РОДНОЙ ФЛАГ
-                        receiverLang = myPersonalLang; // ВЫБРАННЫЙ ЯЗЫК ПЕРЕВОДА
+                        receiverFlag = window.myProfileInfo.flag; 
+                        receiverLang = myPersonalLang; 
                         receiverName = window.myUsername;
                     }
 
-                    // 3. Запускаем двойной перевод
                     Promise.all([
                         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${senderLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
                         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${receiverLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
@@ -1417,15 +1442,12 @@
                             let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText;
                             let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
                             
-                            // 4. Отрисовка: Имена, Фото, РОДНЫЕ флаги и нужные переводы
                             vMarquee.innerHTML = `
                                 <div class="flex items-center">
                                     <img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">
                                     <span class="text-white font-bold mr-1">${senderName}:</span>
                                     <span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> 
-                                    
                                     <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> 
-                                    
                                     <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]">
                                     <span class="text-white font-bold mr-1">${receiverName}:</span>
                                     <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span>
@@ -1443,49 +1465,22 @@
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
                 if (data.isConfMsg) {
-                    let targetUsers = [];
-                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
-
-                    if (isMe) {
-                        window.participants.filter(part => part.id !== 'ai').forEach(member => {
-                            targetUsers.push({ code: member.langCode, flag: member.flag, id: member.id });
-                        });
-                        
-                        const myMarquee = document.getElementById('speaker-marquee');
-                        if (myMarquee) {
-                             myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
-                             myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
-                        }
-                    } else {
-                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, id: window.myProfileInfo.id });
-                    }
-
-                    if (targetUsers.length > 0) {
-                        try {
-                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                                .then(res => res.json())
-                                .then(resData => ({ user: u, text: resData[0][0][0] }))
-                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
-                            );
-                            
-                            const translationsRes = await Promise.all(fetchPromises);
-                            
-                            translationsRes.forEach(t => {
-                                let originalText = data.originalText || data.text;
-                                
-                                let frameIdToUpdate = isMe ? `conf-marquee-${t.user.id}` : `conf-marquee-${data.userId}`;
-                                let targetMarquee = document.getElementById(frameIdToUpdate);
-                                
-                                if (targetMarquee) {
-                                    targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
-                                    targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
-                                }
-                            });
-                        } catch (e) {}
-                    }
+                    let originalText = data.originalText || data.text;
+                    let myPersonalLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myPersonalLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+                        .then(r => r.json())
+                        .then(resData => {
+                            let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
+                            let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
+                            if (targetMarquee) {
+                                targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${p.flag} ${translatedText}</span>`;
+                                targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
+                            }
+                        }).catch(e => console.log('Meet Translate Error'));
                 }
             }
- 
+
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
@@ -1502,7 +1497,7 @@
                 
                 let confHtml = `
                 <div class="video-frame main" id="my-video-container">
-                    <video id="my-live-video" class="mirror-video" playsinline></video>
+                    <video id="my-live-video" class="mirror-video cursor-pointer hover:opacity-90 transition" onclick="window.openPersonalLangModal()" playsinline autoplay muted></video>
                     <div class="video-overlay">${window.myUsername}</div>
                     <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
                     <div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
@@ -1557,9 +1552,6 @@
             if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
             window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
-    </script>
-    <script>
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('firebase-messaging-sw.js').catch(err => console.error('SW Error', err)); }); }
     </script>
 </body>
 </html>
