@@ -633,10 +633,10 @@
                     <label class="form-label" data-i18n="reg_email">Email</label>
                     <input type="email" id="edit-email" class="form-input-box" placeholder="@...">
                     
-                    <label class="form-label mt-2">Languages Spoken (Profile)</label>
+                    <label class="form-label mt-2">Languages Spoken</label>
                     <input type="text" id="edit-profile-langs" class="form-input-box" placeholder="e.g. English, Русский...">
                     
-                    <label class="form-label">About Me (Profile)</label>
+                    <label class="form-label">About Me</label>
                     <textarea id="edit-profile-bio" class="form-input-box resize-none" rows="3" placeholder="Tell us about yourself..."></textarea>
 
                     <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
@@ -1084,6 +1084,7 @@
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
         window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 
+        // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
         window.openAvatarModal = function(id) {
             window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
@@ -1102,24 +1103,36 @@
             const modalDesc = document.getElementById('modal-desc');
             if(modalDesc) {
                 modalDesc.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Languages</span><span class="font-bold text-white text-base">${profLangs}</span></div></div>
-                    <div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div></div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div>
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Languages</span><span class="font-bold text-white text-base">${profLangs}</span></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div>
+                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div>
+                    </div>
                     ${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white font-bold">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}
-                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">ABOUT ME</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${profBio}</p></div>`;
+                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
+                        <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">ABOUT ME</span>
+                        <p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${profBio}</p>
+                    </div>`;
             }
             
             const actionButtons = document.getElementById('modal-action-buttons');
             if(actionButtons) {
                 if (id === 'ai') { actionButtons.style.display = 'none'; } 
                 else if (id === 'me') { 
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2 mt-2"><button onclick="window.closeAvatarModal(); window.openMyProfile();" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-[#00a884] font-bold hover:bg-[#2a3942] text-[0.7rem] transition shadow-sm"><i class="fa-solid fa-user mr-1"></i> Edit Profile Info</button></div>`; actionButtons.style.display = 'block'; 
+                    actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile();" class="btn-primary w-full shadow-lg"><i class="fa-solid fa-user mr-1"></i> Edit Profile Info</button>`; 
+                    actionButtons.style.display = 'block'; 
                 } else {
-                    actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#00a884] border border-[#00a884] text-[#111b21] font-bold hover:bg-[#005c4b] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`; actionButtons.style.display = 'block'; 
+                    actionButtons.innerHTML = `<div class="flex w-full gap-2"><button onclick="window.closeAvatarModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-2.5 rounded-2xl bg-[#00a884] border border-[#00a884] text-[#111b21] font-bold hover:bg-[#005c4b] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment text-lg"></i> Chat</button><button onclick="window.closeAvatarModal(); window.location.href='sms:${(p.phone || '').replace(/\\s+/g, '')}';" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button><button onclick="window.closeAvatarModal(); window.openDirectEmail('${p.email || ''}');" class="flex-1 py-2.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:bg-[#2a3942] text-[0.7rem] transition flex flex-col items-center justify-center gap-1 shadow-sm"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button></div>`; 
+                    actionButtons.style.display = 'block'; 
                 }
             }
             document.getElementById('avatar-modal').classList.add('active');
         };
 
+        // ОТКРЫТИЕ АВТОНОМНОГО ОКНА CV (Из Профессий)
         window.openViewCVModal = function(id) {
             window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) return;
@@ -1194,7 +1207,7 @@
             db.ref('users/' + newId).update(updatedProfile); 
             window.myUsername = nameVal;
             
-            window.requestPushPermissions(); window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Data updated.", photo, ""); 
+            window.requestPushPermissions(); window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Data updated successfully.", photo, ""); 
             setTimeout(() => { window.openAvatarModal('me'); }, 400); 
         };
 
