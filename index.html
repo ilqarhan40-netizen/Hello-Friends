@@ -648,27 +648,72 @@
             </div>
         </div>
 
-      <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
-            <div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();">
-                <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
-                    <div><h2 class="text-xl font-bold text-white mb-0.5"><i class="fa-solid fa-file-signature text-[#00a884] mr-2"></i> Edit CV</h2><p class="text-[0.7rem] text-[#8696a0] m-0">Professional Builder</p></div>
-                    <button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark text-xl"></i></button>
+<div class="text-center mb-5">
+                <h3 class="text-xl font-bold text-white tracking-tight">Professional CV</h3>
+                <p class="text-[0.7rem] text-[#8696a0]">Business details for your network card</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Profession</label>
+                    <input type="text" id="cv-edit-prof" class="w-full bg-[#202c33] text-[#e9edef] px-4 py-3 rounded-xl border border-[#2a3942] focus:border-[#00a884] outline-none transition text-[0.85rem]" placeholder="Developer">
                 </div>
-                <div class="overflow-y-auto flex-grow p-5 pb-10">
-                    <label class="form-label">Profession / Title</label>
-                    <input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
-                    
-                    <div class="flex gap-3 mb-2 mt-2">
-                        <div class="w-1/2">
-                            <label class="form-label">Phone (CV)</label>
-                            <input type="tel" id="cv-edit-phone" class="form-input-box !mb-0" placeholder="+1...">
-                        </div>
-                        <div class="w-1/2">
-                            <label class="form-label">Email (CV)</label>
-                            <input type="email" id="cv-edit-email" class="form-input-box !mb-0" placeholder="mail@...">
-                        </div>
+                <div>
+                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Languages</label>
+                    <input type="text" id="cv-edit-langs" class="w-full bg-[#202c33] text-[#e9edef] px-4 py-3 rounded-xl border border-[#2a3942] focus:border-[#00a884] outline-none transition text-[0.85rem]" placeholder="English, French...">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Location</label>
+                <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#00a884] transition h-12">
+                    <div class="pl-4 pr-2 flex items-center bg-[#2a3942]/30 h-full">
+                        <img id="cv-edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-5 h-3.5 object-cover rounded-sm">
                     </div>
-                    
+                    <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full px-3 outline-none text-[0.85rem] cursor-pointer appearance-none">
+                        <option value="un">Select Country</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down text-[#8696a0] mr-4 text-[0.6rem]"></i>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Phone</label>
+                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition shadow-sm">
+                        <i class="fa-solid fa-phone text-[#00a884] text-sm shrink-0"></i>
+                        <input type="text" id="cv-edit-phone" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef] font-mono" placeholder="+1...">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Email</label>
+                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition shadow-sm">
+                        <i class="fa-solid fa-envelope text-[#00a884] text-sm shrink-0"></i>
+                        <input type="email" id="cv-edit-email" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef]" placeholder="mail@pro.com">
+                    </div>
+                </div>
+            </div>
+        
+
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Phone</label>
+                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition">
+                        <i class="fa-solid fa-phone text-[#00a884] text-sm shrink-0"></i>
+                        <input type="text" id="cv-edit-phone" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef] font-mono" placeholder="+1...">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Email</label>
+                    <div class="bg-[#202c33] h-12 rounded-xl border border-[#2a3942] flex items-center gap-3 px-3 focus-within:border-[#00a884] transition">
+                        <i class="fa-solid fa-envelope text-[#00a884] text-sm shrink-0"></i>
+                        <input type="email" id="cv-edit-email" class="bg-transparent w-full outline-none text-[0.85rem] text-[#e9edef]" placeholder="mail@pro.com">
+                    </div>
+                </div>
+            </div>
+        
+
                     <label class="form-label mt-4">Languages (CV)</label>
                     <input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
                     
@@ -1199,101 +1244,114 @@
             
             document.getElementById('cv-view-content').innerHTML = cvContent;
 
-       // 3. Кнопки связи внизу (используют автономные контакты CV)
+// 3. Кнопки связи внизу (используют автономные контакты CV)
             const actionButtons = document.getElementById('cv-action-buttons');
             if (id === 'me') {
-                actionButtons.innerHTML = `<button onclick="window.closeViewCVModal(); window.openEditCV();" class="btn-primary !bg-[#a29bfe] !text-[#111b21] w-full shadow-lg mt-2 font-bold"><i class="fa-solid fa-file-signature mr-2"></i> Edit My CV</button>`;
+                actionButtons.innerHTML = `
+                <button onclick="window.closeViewCVModal(); window.openEditCV();" 
+                        class="w-full py-3.5 rounded-2xl bg-[#a29bfe] text-[#111b21] font-bold text-[0.85rem] flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition mt-2">
+                    <i class="fa-solid fa-file-signature text-lg"></i> Edit My CV
+                </button>`;
             } else {
                 let callT = p.cvPhone || p.phone || '';
                 let mailT = p.cvEmail || p.email || '';
                 actionButtons.innerHTML = `
-                <div class="flex w-full gap-2 mt-2">
-                    <button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-3 rounded-2xl bg-[#00a884] text-[#111b21] font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1 shadow-md"><i class="fa-solid fa-comment text-lg"></i> Chat</button>
-                    <button onclick="window.closeViewCVModal(); window.location.href='sms:${callT.replace(/\s+/g, '')}';" class="flex-1 py-3 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1 shadow-md"><i class="fa-solid fa-comment-sms text-blue-400 text-lg"></i> SMS</button>
-                    <button onclick="window.closeViewCVModal(); window.openDirectEmail('${mailT}');" class="flex-1 py-3 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1 shadow-md"><i class="fa-solid fa-envelope text-red-400 text-lg"></i> Email</button>
+                <div class="flex w-full gap-3 mt-4">
+                    <button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" 
+                            class="flex-1 py-3.5 rounded-2xl bg-[#00a884] text-[#111b21] font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
+                        <i class="fa-solid fa-comment text-xl"></i> CHAT
+                    </button>
+                    <button onclick="window.closeViewCVModal(); window.location.href='sms:${callT.replace(/\s+/g, '')}';" 
+                            class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
+                        <i class="fa-solid fa-comment-sms text-[#34b7f1] text-xl"></i> SMS
+                    </button>
+                    <button onclick="window.closeViewCVModal(); window.openDirectEmail('${mailT}');" 
+                            class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
+                        <i class="fa-solid fa-envelope text-[#ea4335] text-xl"></i> EMAIL
+                    </button>
                 </div>`;
             }
             document.getElementById('view-cv-modal').classList.add('active');
         };
 
+        // Умная логика выбора страны специально для формы CV
+        window.handleCVCountryChange = function(sel) {
+            const flagCode = sel.value;
+            const flagImg = document.getElementById('cv-edit-flag-icon');
+            if(flagImg) flagImg.src = `https://flagcdn.com/w40/${flagCode}.png`;
+            if (typeof window.countryData !== 'undefined') {
+                const cData = window.countryData[flagCode] || window.countryData['un'];
+                const phoneInput = document.getElementById('cv-edit-phone');
+                if (phoneInput && cData && cData.phone) {
+                    phoneInput.value = cData.phone + " ";
+                    phoneInput.focus();
+                }
+            }
+        };
+
         window.openMyProfile = function() { 
             window.closeDropdown(); 
+            const p = window.myProfileInfo;
             if (window.isGuest) { 
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); 
-                document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); 
-                document.getElementById('edit-preview-photo').src = window.myProfileInfo?.photo || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
+                document.getElementById('edit-preview-photo').src = p?.photo || 'https://ui-avatars.com/api/?name=New'; 
             } else { 
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); 
-                document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); 
                 document.getElementById('edit-name').value = window.myUsername; 
-                document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; 
-                document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; 
+                document.getElementById('edit-preview-photo').src = p.photo; 
+                document.getElementById('edit-country-select').value = p.flagCode || 'un'; 
                 document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
-                document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; 
-                document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
-                let pLangsEl = document.getElementById('edit-profile-langs');
-                let pBioEl = document.getElementById('edit-profile-bio');
-                if(pLangsEl) pLangsEl.value = window.myProfileInfo.profileLangs || ''; 
-                if(pBioEl) pBioEl.value = window.myProfileInfo.profileBio || ''; 
+                document.getElementById('edit-phone').value = p.phone || ''; 
+                document.getElementById('edit-email').value = p.email || ''; 
             } 
-            if(window.applyTranslations) window.applyTranslations(); 
             document.getElementById('edit-profile-modal').classList.add('active'); 
         };
 
-        window.handleCountryChange = function(sel) { 
-            const flagCode = sel.value; 
-            document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${flagCode}.png`; 
-            if (typeof window.countryData !== 'undefined') { 
-                const cData = window.countryData[flagCode] || window.countryData['un']; 
-                const phoneInput = document.getElementById('edit-phone'); 
-                if (phoneInput && cData && cData.phone) { phoneInput.value = cData.phone + " "; phoneInput.focus(); } 
-            } 
-        };
-
-        window.handleFileUpload = function(event) { 
-            const file = event.target.files[0]; if (!file) return; 
-            const reader = new FileReader(); 
-            reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; 
-            reader.readAsDataURL(file); 
-        };
-        
         window.saveProfileData = function() {
             let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
-            let phoneVal = document.getElementById('edit-phone').value.trim(); 
-            let emailVal = document.getElementById('edit-email').value.trim();
-            let pLangsEl = document.getElementById('edit-profile-langs');
-            let pBioEl = document.getElementById('edit-profile-bio');
-            let pLangs = pLangsEl ? pLangsEl.value.trim() : ''; 
-            let pBio = pBioEl ? pBioEl.value.trim() : ''; 
-            let newId = window.myProfileInfo.id; 
-            let photo = document.getElementById('edit-preview-photo').src; 
-            const sel = document.getElementById('edit-country-select'); 
-            const opt = sel.options[sel.selectedIndex]; 
-            const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User' };
-            let updatedP = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal, profileLangs: pLangs, profileBio: pBio };
+            let updatedP = { 
+                name: nameVal, 
+                photo: document.getElementById('edit-preview-photo').src, 
+                flagCode: document.getElementById('edit-country-select').value, 
+                phone: document.getElementById('edit-phone').value.trim(), 
+                email: document.getElementById('edit-email').value.trim() 
+            };
             window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
-            try { localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
-            db.ref('users/' + newId).update(updatedP); 
-            window.myUsername = nameVal;
-            window.closeProfileModal(); window.showToast("Profile Saved", "Updated!", photo, ""); 
-            setTimeout(() => { window.openAvatarModal('me'); }, 400); 
+            db.ref('users/' + window.myProfileInfo.id).update(updatedP); 
+            window.closeProfileModal(); window.showToast("Profile Saved", "Data updated.", updatedP.photo, "");
         };
 
-        window.openEditCV = function() { 
-            document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; 
-            document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; 
-            document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; 
-            document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; 
-            document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; 
-            document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; 
-            document.getElementById('cv-edit-phone').value = window.myProfileInfo.cvPhone || ''; 
-            document.getElementById('cv-edit-email').value = window.myProfileInfo.cvEmail || ''; 
+     window.openEditCV = function() { 
+            const cvSelect = document.getElementById('cv-edit-country-select');
+            const mainSelect = document.getElementById('edit-country-select');
+            
+            // Копируем страны из основного профиля
+            if (cvSelect && mainSelect && cvSelect.options.length <= 1) {
+                cvSelect.innerHTML = mainSelect.innerHTML;
+            }
+
+            const p = window.myProfileInfo;
+            document.getElementById('cv-edit-prof').value = p.profession || ''; 
+            document.getElementById('cv-edit-langs').value = p.languages || ''; 
+            document.getElementById('cv-edit-skills').value = p.skills || ''; 
+            document.getElementById('cv-edit-exp').value = p.experience || ''; 
+            document.getElementById('cv-edit-edu').value = p.education || ''; 
+            document.getElementById('cv-edit-bio').value = p.desc || ''; 
+            document.getElementById('cv-edit-phone').value = p.cvPhone || ''; 
+            document.getElementById('cv-edit-email').value = p.cvEmail || ''; 
+            
+            // Устанавливаем страну и обновляем префикс
+            if(cvSelect) {
+                cvSelect.value = p.cvFlagCode || p.flagCode || 'un';
+                window.handleCVCountryChange(cvSelect);
+            }
             document.getElementById('edit-cv-modal').classList.add('active'); 
         };
 
         window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
 
         window.saveCVData = function() { 
+            const sel = document.getElementById('cv-edit-country-select');
             const cvData = {
                 profession: document.getElementById('cv-edit-prof').value.trim(), 
                 languages: document.getElementById('cv-edit-langs').value.trim(), 
@@ -1302,7 +1360,9 @@
                 education: document.getElementById('cv-edit-edu').value.trim(), 
                 desc: document.getElementById('cv-edit-bio').value.trim(),
                 cvPhone: document.getElementById('cv-edit-phone').value.trim(),
-                cvEmail: document.getElementById('cv-edit-email').value.trim()
+                cvEmail: document.getElementById('cv-edit-email').value.trim(),
+                cvFlagCode: sel ? sel.value : 'un',
+                cvCountry: sel ? (sel.options[sel.selectedIndex].getAttribute('data-name') || 'Global') : 'Global'
             };
             window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
             try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){} 
@@ -1312,19 +1372,8 @@
                 setTimeout(() => { window.openViewCVModal('me'); }, 150); 
             });
         };
+        
         window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
-
-window.openEditCV = function() { 
-    document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; 
-    document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; 
-    document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; 
-    document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; 
-    document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; 
-    document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; 
-    document.getElementById('edit-cv-modal').classList.add('active'); 
-};
-
-window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
