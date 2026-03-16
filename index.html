@@ -1323,10 +1323,27 @@
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
 
-            window.myProfileInfo = { id: activeUserId || 'guest', name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', flag: '🌐', flagCode: 'un', langCode: 'en' };
-            window.myUsername = "User";
-            window.participants = [aiBot]; 
+       // --- ИСПРАВЛЕНИЕ 1: Достаем данные из кэша (localStorage) ПРИ СТАРТЕ ---
+let cachedProfile = null;
+if (activeUserId) {
+    try {
+        const storedData = localStorage.getItem('hf_custom_' + activeUserId);
+        if (storedData) cachedProfile = JSON.parse(storedData);
+    } catch(e) { console.error("Ошибка чтения кэша", e); }
+}
 
+// Если в кэше есть данные, берем их. Если нет — ставим заглушку.
+window.myProfileInfo = cachedProfile || { 
+    id: activeUserId || 'guest', 
+    name: 'User', 
+    photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', 
+    flag: '🌐', flagCode: 'un', langCode: 'en' 
+};
+
+// Имя пользователя тоже берем из кэша
+window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
+window.participants = [aiBot];
+// ----------------------------------------------------------------------
             setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = window.myUsername; }, 1000);
 
             db.ref('users').on('value', (snapshot) => { 
