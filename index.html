@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="google" content="notranslate">
-    <title>Hello Friends - Golden Master V59 (Secured)</title>
+    <title>Hello Friends - Smart Profile Logic</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
@@ -17,7 +17,6 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
     <link href="https://fonts.googleapis.com/css2?family=Allura&family=Orbitron:wght@700&display=swap" rel="stylesheet">
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -234,7 +233,8 @@
                                 name: user.displayName || 'User',
                                 email: user.email || '',
                                 photo: user.photoURL || 'https://ui-avatars.com/api/?name=User&background=00a884&color=fff',
-                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global'
+                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global',
+                                languages: '' // Инициализируем пустое поле для языков
                             }).then(() => { location.reload(); });
                         }
                     });
@@ -625,6 +625,10 @@
                     
                     <label class="form-label" data-i18n="reg_phone">Phone Number</label><input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
                     <label class="form-label" data-i18n="reg_email">Email</label><input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+                    
+                    <label class="form-label">Languages Spoken</label>
+                    <input type="text" id="edit-langs" class="form-input-box" placeholder="e.g. English, Русский, Azərbaycanca">
+
                     <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
                         <img src="llgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
                         <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
@@ -642,11 +646,10 @@
                 </div>
                 <div class="overflow-y-auto flex-grow p-5 pb-10">
                     <label class="form-label">Profession / Title</label><input type="text" id="cv-edit-prof" class="form-input-box" placeholder="e.g. Senior Software Engineer">
-                    <label class="form-label">Languages Spoken</label><input type="text" id="cv-edit-langs" class="form-input-box" placeholder="e.g. English (Native), Spanish (A2)">
                     <label class="form-label">Core Skills</label><textarea id="cv-edit-skills" class="form-input-box resize-none" rows="2" placeholder="e.g. JavaScript, Project Management..."></textarea>
                     <label class="form-label">Work Experience</label><textarea id="cv-edit-exp" class="form-input-box resize-none" rows="3" placeholder="2020 - Present: Tech Corp..."></textarea>
                     <label class="form-label">Education</label><textarea id="cv-edit-edu" class="form-input-box resize-none" rows="2" placeholder="BSc in Computer Science..."></textarea>
-                    <label class="form-label">About Me (Summary)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
+                    <label class="form-label">About Me (Bio)</label><textarea id="cv-edit-bio" class="form-input-box resize-none" rows="3" placeholder="Passionate professional with..."></textarea>
                 </div>
                 <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveCVData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg">Save CV</button></div>
             </div>
@@ -1059,6 +1062,7 @@
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
         window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 
+        // ИЗМЕНЕНА ЛОГИКА ОТРИСОВКИ КАРТОЧКИ (openAvatarModal)
         window.openAvatarModal = function(id) {
             window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
@@ -1068,21 +1072,36 @@
             if(idSpan) idSpan.innerText = "ID: " + (id === 'me' ? window.myProfileInfo.id : p.id);
             const modalProf = document.getElementById('modal-prof'); if(modalProf) modalProf.innerText = p.profession || 'User';
 
+            // Умная система описания страны
             let cDesc = p.countryDesc || 'User in network'; let cPop = p.pop || 'Unknown'; let cSeas = p.seas || 'Unknown';
             if (typeof window.countryData !== 'undefined' && window.countryData[p.flagCode]) { if(!p.countryDesc) cDesc = window.countryData[p.flagCode].desc; if(!p.pop) cPop = window.countryData[p.flagCode].pop; if(!p.seas) cSeas = window.countryData[p.flagCode].seas; }
             
+            // Собираем поля CV (только если они заполнены)
             let extraFields = '';
             if(p.skills) extraFields += `<div class="mt-4"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Core Skills</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner">${p.skills}</p></div>`;
             if(p.experience) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Experience</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.experience}</p></div>`;
             if(p.education) extraFields += `<div class="mt-3"><span class="text-[0.65rem] text-[#00a884] uppercase font-bold block mb-1">Education</span><p class="text-sm text-white bg-[#111b21] p-2.5 rounded-xl border border-[#2a3942] shadow-inner whitespace-pre-wrap">${p.education}</p></div>`;
 
+            // Языки берем из базового профиля
+            let langsText = p.languages ? p.languages : (p.langCode || 'Auto');
+
             const modalDesc = document.getElementById('modal-desc');
             if(modalDesc) {
                 modalDesc.innerHTML = `
-                    <div class="grid grid-cols-2 gap-3 mb-3"><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div><div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Language</span><span class="font-bold text-white text-base">${p.languages || 'Auto'}</span></div></div>
-                    <div class="grid grid-cols-2 gap-2 mb-3"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div></div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Country</span><span class="font-bold text-white text-base">${p.flag||'🌐'} ${p.country||'Global'}</span></div>
+                        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]"><span class="text-[0.65rem] text-[#8696a0] block uppercase">Languages</span><span class="font-bold text-white text-base">${langsText}</span></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Population"><i class="fa-solid fa-users text-blue-400 mr-1"></i> Pop: <span class="text-white font-bold">${cPop}</span></div>
+                        <div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate" title="Geography"><i class="fa-solid fa-water text-blue-400 mr-1"></i> <span class="text-white font-bold">${cSeas}</span></div>
+                    </div>
                     ${(id !== 'ai') ? `<div class="grid grid-cols-2 gap-2 mb-4"><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-phone text-[#00a884] mr-2"></i> <span class="text-white font-bold">${p.phone || 'Hidden'}</span></div><div class="bg-[#202c33] p-2 rounded-lg border border-[#2a3942] text-xs text-[#8696a0] truncate"><i class="fa-solid fa-envelope text-[#00a884] mr-2"></i> <span class="text-white">${p.email || 'Hidden'}</span></div></div>` : ''}
-                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]"><span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>${extraFields}</div>`;
+                    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
+                        <span class="text-[0.7rem] text-[#a29bfe] font-bold block mb-1">OVERVIEW / BIO</span>
+                        <p class="leading-relaxed text-[0.85rem] text-[#e9edef]">${cDesc} ${p.desc ? '<br><br>' + p.desc : ''}</p>
+                        ${extraFields}
+                    </div>`;
             }
             
             const actionButtons = document.getElementById('modal-action-buttons');
@@ -1097,12 +1116,14 @@
             document.getElementById('avatar-modal').classList.add('active');
         };
 
+        // ИЗМЕНЕНА ЛОГИКА ОТКРЫТИЯ ПРОФИЛЯ
         window.openMyProfile = function() { 
             window.closeDropdown(); 
             if (window.isGuest) { 
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'reg_subtitle'); document.getElementById('edit-preview-photo').src = window.myProfileInfo?.photo || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff'; 
             } else { 
                 document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); document.getElementById('profile-modal-subtitle').setAttribute('data-i18n', 'edit_subtitle'); document.getElementById('edit-name').value = window.myUsername; document.getElementById('edit-preview-photo').src = window.myProfileInfo.photo; document.getElementById('edit-country-select').value = window.myProfileInfo.flagCode !== 'un' ? window.myProfileInfo.flagCode : 'un'; document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; document.getElementById('edit-phone').value = window.myProfileInfo.phone || ''; document.getElementById('edit-email').value = window.myProfileInfo.email || ''; 
+                document.getElementById('edit-langs').value = window.myProfileInfo.languages || ''; // Грузим языки
             } 
             if(window.applyTranslations) window.applyTranslations(); document.getElementById('edit-profile-modal').classList.add('active'); 
         };
@@ -1111,15 +1132,18 @@
 
         window.handleFileUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { window.currentPhotoData = e.target.result; document.getElementById('edit-preview-photo').src = e.target.result; }; reader.readAsDataURL(file); };
         
+        // ИЗМЕНЕНА ЛОГИКА СОХРАНЕНИЯ ПРОФИЛЯ
         window.saveProfileData = function() {
             let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
             let phoneVal = document.getElementById('edit-phone').value.trim(); let emailVal = document.getElementById('edit-email').value.trim();
+            let langsVal = document.getElementById('edit-langs').value.trim(); // Берем языки
+            
             let newId = window.myProfileInfo.id; 
             let photo = document.getElementById('edit-preview-photo').src; 
             const sel = document.getElementById('edit-country-select'); const opt = sel.options[sel.selectedIndex]; 
             const cData = (typeof window.countryData !== 'undefined' ? window.countryData[sel.value] : null) || { pop: 'Unknown', seas: 'Digital', desc: 'User in network' };
             
-            let updatedProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal };
+            let updatedProfile = { id: newId, name: nameVal, photo: photo, flagCode: sel.value, flag: opt.getAttribute('data-emoji') || '🌐', country: opt.getAttribute('data-name') || 'Global', langCode: opt.getAttribute('data-lang') || 'en', pop: cData.pop, seas: cData.seas, countryDesc: cData.desc, phone: phoneVal, email: emailVal, languages: langsVal };
 
             window.myProfileInfo = { ...window.myProfileInfo, ...updatedProfile }; 
             try { localStorage.setItem('hf_custom_' + newId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
@@ -1129,10 +1153,26 @@
             window.requestPushPermissions(); window.closeProfileModal(); if(window.autoSetMicLang) window.autoSetMicLang(); window.showToast("Profile Saved", "Access granted.", photo, ""); setTimeout(() => { window.openAvatarModal('me'); }, 400);
         };
 
-        window.openEditCV = function() { document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('cv-edit-langs').value = window.myProfileInfo.languages || ''; document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; document.getElementById('edit-cv-modal').classList.add('active'); };
+        // ИЗМЕНЕНА ЛОГИКА CV (УБРАНЫ ЯЗЫКИ)
+        window.openEditCV = function() { document.getElementById('cv-edit-prof').value = window.myProfileInfo.profession || ''; document.getElementById('cv-edit-skills').value = window.myProfileInfo.skills || ''; document.getElementById('cv-edit-exp').value = window.myProfileInfo.experience || ''; document.getElementById('cv-edit-edu').value = window.myProfileInfo.education || ''; document.getElementById('cv-edit-bio').value = window.myProfileInfo.desc || ''; document.getElementById('edit-cv-modal').classList.add('active'); };
         window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
 
-        window.saveCVData = function() { window.myProfileInfo.profession = document.getElementById('cv-edit-prof').value.trim(); window.myProfileInfo.languages = document.getElementById('cv-edit-langs').value.trim(); window.myProfileInfo.skills = document.getElementById('cv-edit-skills').value.trim(); window.myProfileInfo.experience = document.getElementById('cv-edit-exp').value.trim(); window.myProfileInfo.education = document.getElementById('cv-edit-edu').value.trim(); window.myProfileInfo.desc = document.getElementById('cv-edit-bio').value.trim(); try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){} db.ref('users/' + window.myProfileInfo.id).update({ profession: window.myProfileInfo.profession, languages: window.myProfileInfo.languages, skills: window.myProfileInfo.skills, experience: window.myProfileInfo.experience, education: window.myProfileInfo.education, desc: window.myProfileInfo.desc }); window.closeEditCV(); if(window.renderProfessionList) window.renderProfessionList(); setTimeout(() => { window.openAvatarModal('me'); }, 100); };
+        window.saveCVData = function() { 
+            const cvData = {
+                profession: document.getElementById('cv-edit-prof').value.trim(), 
+                skills: document.getElementById('cv-edit-skills').value.trim(), 
+                experience: document.getElementById('cv-edit-exp').value.trim(), 
+                education: document.getElementById('cv-edit-edu').value.trim(), 
+                desc: document.getElementById('cv-edit-bio').value.trim()
+            };
+            window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
+            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){} 
+            db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
+                window.closeEditCV(); 
+                if(window.renderProfessionList) window.renderProfessionList(); 
+                setTimeout(() => { window.openAvatarModal('me'); }, 100); 
+            });
+        };
 
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
