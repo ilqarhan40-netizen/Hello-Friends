@@ -1464,53 +1464,39 @@
                     });
                 }
 
+           // ==========================================
+                // ОБНОВЛЕННЫЙ БЛОК 3: ВИДЕО-КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
-                // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
-                // ==========================================
-                if (data.isConfMsg) {
-                    let targetUsers = [];
-                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
-
-                    if (isMe) {
-                        window.participants.filter(part => part.id !== 'ai').forEach(member => {
-                            targetUsers.push({ code: member.langCode, flag: member.flag, id: member.id });
-                        });
+                if (data.isConfMsg && window.currentIndex === 2) {
+                    // Используем текст сообщения (оригинал)
+                    let textToTranslate = data.originalText || data.text;
+                    // Узнаем, какой язык выбрал ТЫ на своем телефоне
+                    let myReadLang = localStorage.getItem('hf_personal_lang') || (window.myProfileInfo && window.myProfileInfo.langCode) || 'en';
+                    
+                    // Делаем один чистый запрос на перевод для твоего экрана
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`)
+                    .then(r => r.json())
+                    .then(resData => {
+                        let translatedText = resData[0][0][0];
                         
-                        const myMarquee = document.getElementById('speaker-marquee');
-                        if (myMarquee) {
-                             myMarquee.innerHTML = `<span class="text-white">${window.myUsername}:</span> <span class="text-[#00a884] font-bold">${window.myProfileInfo.flag} ${data.originalText || data.text}</span>`;
-                             myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
+                        // Ищем, куда вставить текст: в твое окно или в окно собеседника
+                        let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
+                        
+                        if (targetMarquee) {
+                            // Вставляем имя, флаг и переведенный текст
+                            targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${p.flag || '🌐'} ${translatedText}</span>`;
+                            
+                            // Перезапускаем анимацию бегущей строки, чтобы она прокрутилась заново
+                            targetMarquee.style.animation = 'none';
+                            void targetMarquee.offsetWidth;
+                            targetMarquee.style.animation = null;
                         }
-                    } else {
-                        targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, id: window.myProfileInfo.id });
-                    }
-
-                    if (targetUsers.length > 0) {
-                        try {
-                            const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                                .then(res => res.json())
-                                .then(resData => ({ user: u, text: resData[0][0][0] }))
-                                .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
-                            );
-                            
-                            const translationsRes = await Promise.all(fetchPromises);
-                            
-                            translationsRes.forEach(t => {
-                                let originalText = data.originalText || data.text;
-                                
-                                let frameIdToUpdate = isMe ? `conf-marquee-${t.user.id}` : `conf-marquee-${data.userId}`;
-                                let targetMarquee = document.getElementById(frameIdToUpdate);
-                                
-                                if (targetMarquee) {
-                                    targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${t.user.flag} ${t.text}</span>`;
-                                    targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
-                                }
-                            });
-                        } catch (e) {}
-                    }
+                    })
+                    .catch(err => console.error("Ошибка перевода в видео:", err));
+                    
+                    // Возвращаемся, чтобы этот текст НЕ попал в обычный чат (заглушка)
+                    return; 
                 }
-            }
- 
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
