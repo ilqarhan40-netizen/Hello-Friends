@@ -163,10 +163,6 @@
             color-scheme: dark;
         }
 
-        /* Убиваем белый фон автозаполнения Chrome раз и навсегда */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-...
 
         /* Убиваем белый фон автозаполнения Chrome раз и навсегда */
         input:-webkit-autofill,
@@ -688,19 +684,18 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
+              <div class="mb-4">
                         <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Location</label>
-                        <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#00a884] transition h-12">
-                            <div class="pl-4 pr-2 flex items-center bg-[#2a3942]/30 h-full border-r border-[#2a3942]/50">
+                        <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#00a884] transition h-12 relative">
+                            <div class="pl-4 pr-2 flex items-center bg-[#2a3942]/30 h-full border-r border-[#2a3942]/50 relative z-20">
                                 <img id="cv-edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-5 h-3.5 object-cover rounded-sm">
                             </div>
-                            <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full px-3 outline-none text-[0.85rem] cursor-pointer appearance-none">
-                                <option value="un">Select Country</option>
+                            <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full pl-3 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
+                                <option value="un" class="bg-[#202c33] text-[#e9edef]">Select Country</option>
                             </select>
-                            <i class="fa-solid fa-chevron-down text-[#8696a0] mr-4 text-[0.6rem] pointer-events-none"></i>
+                            <i class="fa-solid fa-chevron-down text-[#8696a0] absolute right-4 text-[0.6rem] z-0"></i>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div>
                             <label class="block text-[0.65rem] text-[#8696a0] uppercase mb-1 ml-1 font-bold">Business Phone</label>
