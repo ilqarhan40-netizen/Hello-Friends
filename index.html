@@ -1361,8 +1361,13 @@
 
         window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
 
-        window.saveCVData = function() { 
+     window.saveCVData = function() { 
             const sel = document.getElementById('cv-edit-country-select');
+            let countryName = 'Global';
+            if (sel && sel.selectedIndex >= 0) {
+                countryName = sel.options[sel.selectedIndex].getAttribute('data-name') || 'Global';
+            }
+            
             const cvData = {
                 profession: document.getElementById('cv-edit-prof').value.trim(), 
                 languages: document.getElementById('cv-edit-langs').value.trim(), 
@@ -1373,15 +1378,19 @@
                 cvPhone: document.getElementById('cv-edit-phone').value.trim(),
                 cvEmail: document.getElementById('cv-edit-email').value.trim(),
                 cvFlagCode: sel ? sel.value : 'un',
-                cvCountry: sel ? (sel.options[sel.selectedIndex].getAttribute('data-name') || 'Global') : 'Global'
+                cvCountry: countryName
             };
+            
             window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
+            
             try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){} 
-            db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
-                window.closeEditCV(); 
-                if(window.renderProfessionList) window.renderProfessionList(); 
-                setTimeout(() => { window.openViewCVModal('me'); }, 150); 
-            });
+            
+            db.ref('users/' + window.myProfileInfo.id).update(cvData).catch(e => console.log('CV Sync Error'));
+            
+            window.closeEditCV(); 
+            if(window.renderProfessionList) window.renderProfessionList(); 
+            window.showToast("CV Saved", "Your professional profile is updated.", "", "");
+            setTimeout(() => { window.openViewCVModal('me'); }, 200); 
         };
         
         window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
@@ -1769,32 +1778,52 @@ window.participants = [aiBot];
                     });
                 }
 
-     // ==========================================
+ // ==========================================
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
                 if (data.isConfMsg) {
                     let originalText = data.originalText || data.text;
-                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
-                    
-                    // Если стоит Авто, берем реальный язык из профиля
-                    if (!myPersonalLang || myPersonalLang === 'auto') {
-                        myPersonalLang = window.myProfileInfo.langCode || 'en';
+
+                    // 1. Ставим чистый оригинал под видео ОТПРАВИТЕЛЯ
+                    let senderMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
+                    if (senderMarquee) {
+                        senderMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0]">${originalText}</span>`;
+                        senderMarquee.style.animation = 'none'; void senderMarquee.offsetWidth; senderMarquee.style.animation = '';
                     }
+
+                    // 2. Собираем рамки всех СЛУШАТЕЛЕЙ для индивидуального перевода
+                    let listenerMarquees = [];
+                    document.querySelectorAll('.conf-listener-marquee').forEach(el => {
+                        if (el.id !== `conf-marquee-${data.userId}`) listenerMarquees.push(el);
+                    });
                     
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myPersonalLang}&dt=t&q=${encodeURIComponent(originalText)}`)
-                        .then(r => r.json())
-                        .then(resData => {
-                            let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
-                            let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
-                            if (targetMarquee) {
-                                targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${p.flag} ${translatedText}</span>`;
-                                targetMarquee.style.animation = 'none'; 
-                                void targetMarquee.offsetWidth; 
-                                targetMarquee.style.animation = ''; 
-                            }
-                        }).catch(e => console.log('Meet Translate Error'));
+                    // Если отправитель не я, добавляем мою главную рамку в список слушателей
+                    if (!isMe) {
+                        let myMarquee = document.getElementById('speaker-marquee');
+                        if (myMarquee) {
+                            let myLang = localStorage.getItem('hf_personal_lang');
+                            if (!myLang || myLang === 'auto') myLang = window.myProfileInfo.langCode || 'en';
+                            myMarquee.setAttribute('data-lang', myLang);
+                            myMarquee.setAttribute('data-flag', window.myProfileInfo.flag);
+                            listenerMarquees.push(myMarquee);
+                        }
+                    }
+
+                    // 3. Раскидываем переводы слушателям на их языки
+                    listenerMarquees.forEach(marquee => {
+                        let targetLang = marquee.getAttribute('data-lang') || 'en';
+                        let targetFlag = marquee.getAttribute('data-flag') || '🌐';
+                        
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+                            .then(r => r.json())
+                            .then(resData => {
+                                let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
+                                marquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${targetFlag} ${translatedText}</span>`;
+                                marquee.style.animation = 'none'; void marquee.offsetWidth; marquee.style.animation = '';
+                            }).catch(e => console.log('Meet Translate Error'));
+                    });
                 }
-            } // Эта скобка закрывает функцию handleNewMessage
+            }
 
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
