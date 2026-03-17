@@ -380,7 +380,7 @@
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
                     <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News"><i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm">News</span></button>
-                    <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg"></i> Contacts</button>
+                  <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition relative z-50" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg pointer-events-none"></i><span class="pointer-events-none">Contacts</span></button>
                 </div>
                 
                 <div class="chat-info-marquee-container">
@@ -1858,5 +1858,38 @@ window.participants = [aiBot];
             window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
     </script>
+    });
+        </script>
+
+        <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closeAdminModal()"></div>
+                
+                <h2 class="text-xl font-bold mb-6 text-white text-center mt-2">
+                    <i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel
+                </h2>
+                
+                <div class="flex flex-col gap-3">
+                    <label class="block text-[0.65rem] text-[#a29bfe] uppercase mb-1 ml-1 font-bold">Select Target User</label>
+                    <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#a29bfe] transition h-12 mb-4 relative">
+                        <select id="admin-user-select" class="bg-transparent text-[#e9edef] w-full h-full pl-4 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
+                            </select>
+                        <i class="fa-solid fa-chevron-down text-[#8696a0] absolute right-4 text-[0.6rem] z-0 pointer-events-none"></i>
+                    </div>
+                    
+                    <button class="bg-[#a29bfe] text-[#111b21] rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(162,155,254,0.4)] relative z-20" onclick="window.adminLogin()">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Login as User
+                    </button>
+                    
+                    <button class="bg-red-500 text-white rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.4)] mt-2 relative z-20" onclick="window.adminDeleteUser(this)">
+                        <i class="fa-solid fa-skull mr-2"></i> Eradicate User
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>
 </body>
 </html>
