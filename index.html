@@ -1769,12 +1769,17 @@ window.participants = [aiBot];
                     });
                 }
 
-                // ==========================================
+     // ==========================================
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
                 if (data.isConfMsg) {
                     let originalText = data.originalText || data.text;
-                    let myPersonalLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
+                    
+                    // Если стоит Авто, берем реальный язык из профиля
+                    if (!myPersonalLang || myPersonalLang === 'auto') {
+                        myPersonalLang = window.myProfileInfo.langCode || 'en';
+                    }
                     
                     fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myPersonalLang}&dt=t&q=${encodeURIComponent(originalText)}`)
                         .then(r => r.json())
@@ -1783,11 +1788,13 @@ window.participants = [aiBot];
                             let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
                             if (targetMarquee) {
                                 targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${p.flag} ${translatedText}</span>`;
-                                targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
+                                targetMarquee.style.animation = 'none'; 
+                                void targetMarquee.offsetWidth; 
+                                targetMarquee.style.animation = ''; 
                             }
                         }).catch(e => console.log('Meet Translate Error'));
                 }
-            }
+            } // Эта скобка закрывает функцию handleNewMessage
 
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
