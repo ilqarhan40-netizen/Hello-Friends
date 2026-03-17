@@ -159,6 +159,14 @@
         .mic-opt-call { color: #3b82f6; }
         .mic-opt-ai { color: #a29bfe; }
         .mic-opt-text { color: #00a884; }
+        :root {
+            color-scheme: dark;
+        }
+
+        /* Убиваем белый фон автозаполнения Chrome раз и навсегда */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+...
 
         /* Убиваем белый фон автозаполнения Chrome раз и навсегда */
         input:-webkit-autofill,
@@ -689,7 +697,7 @@
                             <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full px-3 outline-none text-[0.85rem] cursor-pointer appearance-none">
                                 <option value="un">Select Country</option>
                             </select>
-                            <i class="fa-solid fa-chevron-down text-[#8696a0] mr-4 text-[0.6rem]"></i>
+                            <i class="fa-solid fa-chevron-down text-[#8696a0] mr-4 text-[0.6rem] pointer-events-none"></i>
                         </div>
                     </div>
 
