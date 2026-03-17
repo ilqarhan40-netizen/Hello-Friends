@@ -861,14 +861,12 @@
             </div>
         </div>
 
-        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
+      <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();">
             <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2>
-                <div class="flex flex-col gap-3">
-                    <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button>
-                    <button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button>
-                </div>
+                <div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closeContactsModal()"></div>
+                <h2 class="text-xl font-bold mb-4 text-white text-center mt-2"><i class="fa-solid fa-users text-[#00a884] mr-2"></i> Contacts</h2>
+                <div id="contacts-list-container" class="flex flex-col gap-2 overflow-y-auto pb-6" style="max-height: 60vh;"></div>
             </div>
         </div>
     </div>
