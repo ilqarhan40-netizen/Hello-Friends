@@ -213,7 +213,7 @@
     </div>
 
     <script>
-        window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
+    window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
         window.sndCash = new Audio('https://actions.google.com/sounds/v1/foley/cash_register.ogg');
         window.sndRing = new Audio('https://actions.google.com/sounds/v1/ringtones/phone_ringing.ogg');
         window.sndRing.loop = true;
@@ -234,14 +234,30 @@
 
         window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            
+            spinner.style.display = 'flex';
+            loginBox.style.display = 'none';
+
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-                return firebase.auth().signInWithPopup(provider);
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    return firebase.auth().signInWithRedirect(provider);
+                } else {
+                    return firebase.auth().signInWithPopup(provider);
+                }
             }).catch((error) => {
                 alert("Auth Error: " + error.message);
+                spinner.style.display = 'none';
+                loginBox.style.display = 'flex';
             });
         };
 
         window.addEventListener('load', () => {
+            if(firebase.auth().getRedirectResult) {
+                firebase.auth().getRedirectResult().catch(error => { console.error("Redirect Error:", error); });
+            }
+
             firebase.auth().onAuthStateChanged((user) => {
                 const lockScreen = document.getElementById('security-lock');
                 const spinner = document.getElementById('auth-spinner');
@@ -251,18 +267,28 @@
                     lockScreen.style.opacity = '0';
                     setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
                     
+                    let previousActiveUser = localStorage.getItem('hf_active_user');
+                    
                     localStorage.setItem('hf_active_user', user.uid);
                     document.cookie = "hf_active_user=" + user.uid + "; max-age=31536000; path=/";
                     
+                    if(window.myProfileInfo) window.myProfileInfo.id = user.uid;
+                    
                     db.ref('users/' + user.uid).once('value').then(snap => {
-                        if (!snap.exists()) {
-                            db.ref('users/' + user.uid).set({
+                        const data = snap.val();
+                        if (!snap.exists() || !data.id || !data.name) {
+                            db.ref('users/' + user.uid).update({
                                 id: user.uid,
-                                name: user.displayName || 'User',
-                                email: user.email || '',
-                                photo: user.photoURL || 'https://ui-avatars.com/api/?name=User&background=00a884&color=fff',
-                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global'
+                                name: (data && data.name) ? data.name : (user.displayName || 'User'),
+                                email: (data && data.email) ? data.email : (user.email || ''),
+                                photo: (data && data.photo) ? data.photo : (user.photoURL || 'https://ui-avatars.com/api/?name=User&background=00a884&color=fff'),
+                                flag: (data && data.flag) ? data.flag : '🌐', 
+                                flagCode: (data && data.flagCode) ? data.flagCode : 'un', 
+                                langCode: (data && data.langCode) ? data.langCode : 'en', 
+                                country: (data && data.country) ? data.country : 'Global'
                             }).then(() => { location.reload(); });
+                        } else if (!previousActiveUser) {
+                            location.reload();
                         }
                     });
 
