@@ -232,10 +232,8 @@
             }
         }
 
-    window.signInWithGoogle = function() {
+  window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            
-            // МАГИЧЕСКАЯ СТРОКА: Заставляет Google ВСЕГДА показывать выбор аккаунта!
             provider.setCustomParameters({ prompt: 'select_account' });
 
             const spinner = document.getElementById('auth-spinner');
@@ -245,13 +243,20 @@
             loginBox.style.display = 'none';
 
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-                return firebase.auth().signInWithPopup(provider);
+                // Проверка на мобильное устройство
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                if (isMobile) {
+                    return firebase.auth().signInWithRedirect(provider);
+                } else {
+                    return firebase.auth().signInWithPopup(provider);
+                }
             }).catch((error) => {
                 alert("Auth Error: " + error.message);
                 spinner.style.display = 'none';
                 loginBox.style.display = 'flex';
             });
         };
+        
         window.addEventListener('load', () => {
             firebase.auth().onAuthStateChanged((user) => {
                 const lockScreen = document.getElementById('security-lock');
@@ -262,27 +267,33 @@
                     lockScreen.style.opacity = '0';
                     setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
                     
-                    localStorage.setItem('hf_active_user', user.uid);
-                    document.cookie = "hf_active_user=" + user.uid + "; max-age=31536000; path=/";
+                    // --- АДМИНСКИЙ ПЕРЕХВАТ ---
+                    let actualUid = user.uid;
+                    if (localStorage.getItem('hf_god_mode') === 'true' && localStorage.getItem('hf_admin_target_user')) {
+                        actualUid = localStorage.getItem('hf_admin_target_user'); 
+                    }
+
+                    localStorage.setItem('hf_active_user', actualUid);
+                    document.cookie = "hf_active_user=" + actualUid + "; max-age=31536000; path=/";
                     
-                    if(window.myProfileInfo) window.myProfileInfo.id = user.uid;
+                    if(window.myProfileInfo) window.myProfileInfo.id = actualUid;
                     window.isGuest = false; // Точно не гость!
                     
-                    // ПРОВЕРЯЕМ БАЗУ И АВТОМАТИЧЕСКИ ОТКРЫВАЕМ ПРОФИЛЬ ДЛЯ НОВИЧКОВ
-                    db.ref('users/' + user.uid).once('value').then(snap => {
+                    // ПРОВЕРЯЕМ БАЗУ ПО АКТУАЛЬНОМУ UID
+                    db.ref('users/' + actualUid).once('value').then(snap => {
                         const data = snap.val();
                         // Если юзера нет в базе ИЛИ у него нет имени ИЛИ имя по умолчанию
                         if (!snap.exists() || !data.id || !data.name || data.name === 'User' || data.name === '') {
                             
                             const newUser = {
-                                id: user.uid,
+                                id: actualUid, // Используем перехваченный ID
                                 name: user.displayName || '',
                                 email: user.email || '',
                                 photo: user.photoURL || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff',
                                 flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global'
                             };
                             
-                            db.ref('users/' + user.uid).update(newUser).then(() => {
+                            db.ref('users/' + actualUid).update(newUser).then(() => {
                                 window.myProfileInfo = { ...window.myProfileInfo, ...newUser };
                                 window.myUsername = newUser.name;
                                 
@@ -914,14 +925,24 @@
     </div>
 
     <script>
-        window.signOutGoogle = function() {
-            firebase.auth().signOut().then(() => {
-                localStorage.removeItem('hf_active_user');
-                document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                location.reload();
-            });
-        };
+   window.signOutGoogle = function() {
+    firebase.auth().signOut().then(() => {
+        localStorage.removeItem('hf_active_user');
+        localStorage.removeItem('hf_admin_target_user'); // Очищаем хвосты админки
+        document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        location.reload();
+    });
+};
 
+window.adminLogin = function() { 
+    const id = document.getElementById('admin-user-select').value; 
+    if(confirm("Уверены, что хотите войти под этим пользователем?")) { 
+        localStorage.setItem('hf_admin_target_user', id); // Жестко фиксируем цель
+        localStorage.setItem('hf_active_user', id); 
+        document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; 
+        location.reload(); 
+    } 
+};
         window.closeAllMenus = function() { 
             document.getElementById('header-dropdown')?.classList.remove('active'); 
             document.getElementById('rhombus-actions')?.classList.remove('active'); 
@@ -1145,7 +1166,7 @@
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
         window.openAdminModal = function() { window.closeDropdown(); const sel = document.getElementById('admin-user-select'); sel.innerHTML = ''; window.participants.forEach(p => { if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag} - ${p.phone||'No phone'}</option>`; } }); sel.innerHTML += `<option value="${window.myProfileInfo.id}">${window.myUsername} ${window.myProfileInfo.flag} (Current)</option>`; document.getElementById('admin-modal').classList.add('active'); };
 
-        window.adminLogin = function() { const id = document.getElementById('admin-user-select').value; if(confirm("Are you sure you want to log in as this user?")) { localStorage.setItem('hf_active_user', id); document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; location.reload(); } };
+        
 
         window.adminDeleteUser = function(btn) {
             const id = document.getElementById('admin-user-select').value;
@@ -1357,18 +1378,33 @@ window.openMyProfile = function() {
             document.getElementById('edit-profile-modal').classList.add('active'); 
         };
 
-        window.saveProfileData = function() {
-            let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
+   window.saveProfileData = function() {
+            let nameVal = document.getElementById('edit-name').value.trim(); 
+            if (!nameVal) return alert("Enter Name!"); 
+            
+            // Получаем селект страны для точного вытаскивания флага и названия
+            const countrySel = document.getElementById('edit-country-select');
+            const selectedOption = countrySel.options[countrySel.selectedIndex];
+
             let updatedP = { 
                 name: nameVal, 
                 photo: document.getElementById('edit-preview-photo').src, 
-                flagCode: document.getElementById('edit-country-select').value, 
+                flagCode: countrySel.value, 
                 phone: document.getElementById('edit-phone').value.trim(), 
-                email: document.getElementById('edit-email').value.trim() 
+                email: document.getElementById('edit-email').value.trim(),
+                country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
+                flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
             };
+            
             window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
-            db.ref('users/' + window.myProfileInfo.id).update(updatedP); 
-            window.closeProfileModal(); window.showToast("Profile Saved", "Data updated.", updatedP.photo, "");
+            
+            // ПРИНУДИТЕЛЬНОЕ КЭШИРОВАНИЕ до отправки в сеть
+            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
+
+            db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
+                window.closeProfileModal(); 
+                window.showToast("Profile Saved", "Data updated.", updatedP.photo, "");
+            }).catch(err => alert("Network Sync Error: " + err.message));
         };
 
         // ================= БЛОК CV (РЕДАКТИРОВАНИЕ) =================
