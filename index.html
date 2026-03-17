@@ -232,7 +232,7 @@
             }
         }
 
- window.signInWithGoogle = function() {
+window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -242,10 +242,11 @@
             spinner.style.display = 'flex';
             loginBox.style.display = 'none';
 
-            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-                // ПРИНУДИТЕЛЬНО используем Popup даже на телефонах! 
-                // Redirect ломается из-за защиты мобильных браузеров (ITP).
-                return firebase.auth().signInWithPopup(provider);
+            // ВЫЗЫВАЕМ СРАЗУ! Без .then(). 
+            // Это гарантирует, что Safari и Chrome не заблокируют Popup, 
+            // так как он открывается синхронно с кликом пользователя.
+            firebase.auth().signInWithPopup(provider).then(() => {
+                // Успешный вход обработает onAuthStateChanged, тут ничего делать не надо
             }).catch((error) => {
                 if (error.code === 'auth/popup-blocked') {
                     alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна для этого сайта.");
