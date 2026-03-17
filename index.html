@@ -232,7 +232,7 @@
             }
         }
 
-  window.signInWithGoogle = function() {
+ window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -243,15 +243,15 @@
             loginBox.style.display = 'none';
 
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-                // Проверка на мобильное устройство
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                if (isMobile) {
-                    return firebase.auth().signInWithRedirect(provider);
-                } else {
-                    return firebase.auth().signInWithPopup(provider);
-                }
+                // ПРИНУДИТЕЛЬНО используем Popup даже на телефонах! 
+                // Redirect ломается из-за защиты мобильных браузеров (ITP).
+                return firebase.auth().signInWithPopup(provider);
             }).catch((error) => {
-                alert("Auth Error: " + error.message);
+                if (error.code === 'auth/popup-blocked') {
+                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна для этого сайта.");
+                } else {
+                    alert("Auth Error: " + error.message);
+                }
                 spinner.style.display = 'none';
                 loginBox.style.display = 'flex';
             });
