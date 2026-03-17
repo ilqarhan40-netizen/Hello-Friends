@@ -1295,35 +1295,7 @@
             }
             document.getElementById('view-cv-modal').classList.add('active');
         };
-
-     window.openEditCV = function() { 
-            const cvSelect = document.getElementById('cv-edit-country-select');
-            const mainSelect = document.getElementById('edit-country-select');
-            
-            // Копируем страны из основного профиля
-            if (cvSelect && mainSelect && cvSelect.options.length <= 1) {
-                cvSelect.innerHTML = mainSelect.innerHTML;
-            }
-
-            const p = window.myProfileInfo;
-            document.getElementById('cv-edit-prof').value = p.profession || ''; 
-            document.getElementById('cv-edit-langs').value = p.languages || ''; 
-            document.getElementById('cv-edit-skills').value = p.skills || ''; 
-            document.getElementById('cv-edit-exp').value = p.experience || ''; 
-            document.getElementById('cv-edit-edu').value = p.education || ''; 
-            document.getElementById('cv-edit-bio').value = p.desc || ''; 
-            document.getElementById('cv-edit-phone').value = p.cvPhone || ''; 
-            document.getElementById('cv-edit-email').value = p.cvEmail || ''; 
-            
-            // Устанавливаем страну и обновляем префикс
-            if(cvSelect) {
-                cvSelect.value = p.cvFlagCode || p.flagCode || 'un';
-                window.handleCVCountryChange(cvSelect, true); // <--- Вот она, защита от стирания! (true)
-            }
-            document.getElementById('edit-cv-modal').classList.add('active'); 
-        };
-
-        window.openMyProfile = function() { 
+window.openMyProfile = function() { 
             window.closeDropdown(); 
             const p = window.myProfileInfo;
             if (window.isGuest) { 
@@ -1355,58 +1327,74 @@
             window.closeProfileModal(); window.showToast("Profile Saved", "Data updated.", updatedP.photo, "");
         };
 
-     window.openEditCV = function() { 
+        // ================= БЛОК CV (РЕДАКТИРОВАНИЕ) =================
+        window.handleCVCountryChange = function(sel, isAutoLoad = false) {
+            const flagCode = sel.value;
+            const flagImg = document.getElementById('cv-edit-flag-icon');
+            if(flagImg) flagImg.src = `https://flagcdn.com/w40/${flagCode}.png`;
+            if (typeof window.countryData !== 'undefined') {
+                const cData = window.countryData[flagCode] || window.countryData['un'];
+                const phoneInput = document.getElementById('cv-edit-phone');
+                if (phoneInput && cData && cData.phone) {
+                    if (!isAutoLoad || phoneInput.value.trim() === '') {
+                        phoneInput.value = cData.phone + " ";
+                        if (!isAutoLoad) phoneInput.focus();
+                    }
+                }
+            }
+        };
+
+        window.openEditCV = function() {
             const cvSelect = document.getElementById('cv-edit-country-select');
             const mainSelect = document.getElementById('edit-country-select');
-            
+
             // Копируем страны из основного профиля
             if (cvSelect && mainSelect && cvSelect.options.length <= 1) {
                 cvSelect.innerHTML = mainSelect.innerHTML;
             }
 
             const p = window.myProfileInfo;
-            document.getElementById('cv-edit-prof').value = p.profession || ''; 
-            document.getElementById('cv-edit-langs').value = p.languages || ''; 
-            document.getElementById('cv-edit-skills').value = p.skills || ''; 
-            document.getElementById('cv-edit-exp').value = p.experience || ''; 
-            document.getElementById('cv-edit-edu').value = p.education || ''; 
-            document.getElementById('cv-edit-bio').value = p.desc || ''; 
-            document.getElementById('cv-edit-phone').value = p.cvPhone || ''; 
-            document.getElementById('cv-edit-email').value = p.cvEmail || ''; 
-            
+            document.getElementById('cv-edit-prof').value = p.profession || '';
+            document.getElementById('cv-edit-langs').value = p.languages || '';
+            document.getElementById('cv-edit-skills').value = p.skills || '';
+            document.getElementById('cv-edit-exp').value = p.experience || '';
+            document.getElementById('cv-edit-edu').value = p.education || '';
+            document.getElementById('cv-edit-bio').value = p.desc || '';
+            document.getElementById('cv-edit-phone').value = p.cvPhone || '';
+            document.getElementById('cv-edit-email').value = p.cvEmail || '';
+
             // Устанавливаем страну и обновляем префикс
             if(cvSelect) {
                 cvSelect.value = p.cvFlagCode || p.flagCode || 'un';
-                window.handleCVCountryChange(cvSelect);
+                window.handleCVCountryChange(cvSelect, true);
             }
-            document.getElementById('edit-cv-modal').classList.add('active'); 
+            document.getElementById('edit-cv-modal').classList.add('active');
         };
 
         window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
 
-        window.saveCVData = function() { 
+        window.saveCVData = function() {
             const sel = document.getElementById('cv-edit-country-select');
             const cvData = {
-                profession: document.getElementById('cv-edit-prof').value.trim(), 
-                languages: document.getElementById('cv-edit-langs').value.trim(), 
-                skills: document.getElementById('cv-edit-skills').value.trim(), 
-                experience: document.getElementById('cv-edit-exp').value.trim(), 
-                education: document.getElementById('cv-edit-edu').value.trim(), 
+                profession: document.getElementById('cv-edit-prof').value.trim(),
+                languages: document.getElementById('cv-edit-langs').value.trim(),
+                skills: document.getElementById('cv-edit-skills').value.trim(),
+                experience: document.getElementById('cv-edit-exp').value.trim(),
+                education: document.getElementById('cv-edit-edu').value.trim(),
                 desc: document.getElementById('cv-edit-bio').value.trim(),
                 cvPhone: document.getElementById('cv-edit-phone').value.trim(),
                 cvEmail: document.getElementById('cv-edit-email').value.trim(),
                 cvFlagCode: sel ? sel.value : 'un',
-                cvCountry: sel ? (sel.options[sel.selectedIndex].getAttribute('data-name') || 'Global') : 'Global'
+                cvCountry: sel ? (sel.options[sel.selectedIndex]?.getAttribute('data-name') || 'Global') : 'Global'
             };
             window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
-            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){} 
+            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
             db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
-                window.closeEditCV(); 
-                if(window.renderProfessionList) window.renderProfessionList(); 
-                setTimeout(() => { window.openViewCVModal('me'); }, 150); 
+                window.closeEditCV();
+                if(window.renderProfessionList) window.renderProfessionList();
+                setTimeout(() => { window.openViewCVModal('me'); }, 150);
             });
         };
-        
         window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
         window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
