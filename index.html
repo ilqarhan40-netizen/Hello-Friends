@@ -937,10 +937,17 @@ window.signInWithGoogle = function() {
 
 window.adminLogin = function() { 
     const id = document.getElementById('admin-user-select').value; 
-    if(confirm("Уверены, что хотите войти под этим пользователем?")) { 
-        localStorage.setItem('hf_admin_target_user', id); // Жестко фиксируем цель
-        localStorage.setItem('hf_active_user', id); 
-        document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; 
+    if(confirm("Выполнить системный перехват аккаунта?")) { 
+        if (window.myProfileInfo && window.myProfileInfo.id) {
+            localStorage.removeItem('hf_custom_' + window.myProfileInfo.id);
+        }
+        if (id === 'RESET_TO_REAL') {
+            localStorage.removeItem('hf_admin_target_user');
+        } else {
+            localStorage.setItem('hf_admin_target_user', id); 
+            localStorage.removeItem('hf_custom_' + id); 
+        }
+        localStorage.removeItem('hf_active_user'); 
         location.reload(); 
     } 
 };
@@ -1165,9 +1172,17 @@ window.adminLogin = function() {
         };
 
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
-        window.openAdminModal = function() { window.closeDropdown(); const sel = document.getElementById('admin-user-select'); sel.innerHTML = ''; window.participants.forEach(p => { if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag} - ${p.phone||'No phone'}</option>`; } }); sel.innerHTML += `<option value="${window.myProfileInfo.id}">${window.myUsername} ${window.myProfileInfo.flag} (Current)</option>`; document.getElementById('admin-modal').classList.add('active'); };
-
-        
+     window.openAdminModal = function() { 
+    window.closeDropdown(); 
+    const sel = document.getElementById('admin-user-select'); 
+    sel.innerHTML = '<option value="RESET_TO_REAL">👑 Вернуться к себе (Снять маску)</option>'; 
+    window.participants.forEach(p => { 
+        if(p.id !== 'ai') { 
+            sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; 
+        } 
+    }); 
+    document.getElementById('admin-modal').classList.add('active'); 
+};
 
         window.adminDeleteUser = function(btn) {
             const id = document.getElementById('admin-user-select').value;
