@@ -861,6 +861,17 @@
             </div>
         </div>
 
+        <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2>
+                <div class="flex flex-col gap-3">
+                    <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.smartArchive()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button>
+                    <button class="btn-primary !bg-red-500 !text-white" onclick="window.smartClear()"><i class="fa-solid fa-trash mr-2"></i> Clear History</button>
+                </div>
+            </div>
+        </div>
+
       <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div>
