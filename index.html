@@ -232,8 +232,12 @@
             }
         }
 
-        window.signInWithGoogle = function() {
+    window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
+            
+            // МАГИЧЕСКАЯ СТРОКА: Заставляет Google ВСЕГДА показывать выбор аккаунта!
+            provider.setCustomParameters({ prompt: 'select_account' });
+
             const spinner = document.getElementById('auth-spinner');
             const loginBox = document.getElementById('auth-login-box');
             
@@ -241,7 +245,6 @@
             loginBox.style.display = 'none';
 
             firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-                // Возвращаем Popup, так как Redirect блокируется защитой телефонов от слежения
                 return firebase.auth().signInWithPopup(provider);
             }).catch((error) => {
                 alert("Auth Error: " + error.message);
@@ -249,7 +252,6 @@
                 loginBox.style.display = 'flex';
             });
         };
-
         window.addEventListener('load', () => {
             firebase.auth().onAuthStateChanged((user) => {
                 const lockScreen = document.getElementById('security-lock');
@@ -1118,13 +1120,26 @@
             firebase.database().ref(chatRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, isTransfer: true, transferTypeLabel: typeLabel, amount: amt.toFixed(2), total: total.toFixed(2), recName: recName, text: `💸 ${typeLabel}`, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
             window.closeBankTransferModal(); window.showToast("Transfer Sent", `Sent $${amt.toFixed(2)} to ${recName}. Network fee: $0.01`, "", "");
             document.getElementById(amtInputId).value = ''; window.updateTransferFeeUI(type); window.switchTab(0); window.switchChatRoom(recId);
-        };
+ };
 
         window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
         
         window.secretClicks = 0;
         window.activateGodMode = function() {
-            window.secretClicks++; if(window.secretClicks === 5) { window.secretClicks = 0; let pass = prompt("Enter Admin Password:"); if(pass === "777") { localStorage.setItem('hf_god_mode', 'true'); alert("GOD MODE UNLOCKED!"); location.reload(); } else { alert("Access Denied."); } }
+            window.secretClicks++; 
+            if(window.secretClicks === 5) { 
+                window.secretClicks = 0; 
+                let pass = prompt("Enter Admin Password:"); 
+                if(pass === "777") { 
+                    localStorage.setItem('hf_god_mode', 'true'); 
+                    // Мгновенно показываем кнопку в меню без перезагрузки страницы!
+                    const adminBtn = document.getElementById('admin-menu-btn');
+                    if (adminBtn) adminBtn.style.display = 'flex';
+                    alert("GOD MODE UNLOCKED! Open the menu."); 
+                } else { 
+                    alert("Access Denied."); 
+                } 
+            }
         };
 
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
