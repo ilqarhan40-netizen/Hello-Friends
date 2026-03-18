@@ -1886,19 +1886,20 @@ window.participants = [aiBot];
                     });
                 }
 
-        // ==========================================
+   // ==========================================
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
                 if (data.isConfMsg) {
-                    let originalText = data.originalText || data.text;
+                    let originalText = data.originalText || data.text; // То, что физически набрали на клавиатуре
+                    let displayedText = data.text; // То, во что это перевелось (Мастер-перевод из панели)
 
                     // Определяем ID окна того, кто говорит
                     let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
                     let speakerMarquee = document.getElementById(senderMarqueeId);
                     
-                    // 1. ФРЕЙМ ГОВОРЯЩЕГО (Оригинальный текст без перевода)
+                    // 1. ФРЕЙМ ГОВОРЯЩЕГО (Оригинальный текст на выбранном языке)
                     if (speakerMarquee) {
-                        speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${p.flag} ${originalText}</span>`;
+                        speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${p.flag} ${displayedText}</span>`;
                         speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
                     }
 
@@ -1910,7 +1911,7 @@ window.participants = [aiBot];
                         let targetLang = listenerMarquee.getAttribute('data-lang') || 'en';
                         let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
 
-                        // Запрашиваем индивидуальный перевод
+                        // Запрашиваем индивидуальный перевод с ИСХОДНИКА
                         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(originalText)}`)
                             .then(r => r.json())
                             .then(resData => {
@@ -1921,7 +1922,7 @@ window.participants = [aiBot];
                             }).catch(e => console.log('Meet Translate Error'));
                     });
                 }
-            }
+            } 
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
