@@ -269,15 +269,27 @@ window.addEventListener('load', () => {
         lockScreen.style.display = 'none'; 
     }
 
-    firebase.auth().onAuthStateChanged((user) => {
+firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             lockScreen.style.opacity = '0';
             setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
             
             let actualUid = user.uid;
+            let actualUid = user.uid;
+            
+            // ВОЗВРАЩАЕМ АДМИНСКИЙ ПЕРЕХВАТ
+            if (localStorage.getItem('hf_god_mode') === 'true' && localStorage.getItem('hf_admin_target_user')) {
+                actualUid = localStorage.getItem('hf_admin_target_user'); 
+            }
+            
+            localStorage.setItem('hf_active_user', actualUid);
             localStorage.setItem('hf_active_user', actualUid);
             
-            // 2. СИСТЕМА ПРИСУТСТВИЯ (Чтобы устройства видели друг друга)
+            // ЖЕСТКОЕ ПРИСВОЕНИЕ ID (Убиваем "Гостя" моментально)
+            if (window.myProfileInfo) window.myProfileInfo.id = actualUid;
+            window.isGuest = false;
+            
+            // Система присутствия
             const userStatusRef = db.ref('users/' + actualUid + '/status');
             db.ref('.info/connected').on('value', snap => {
                 if (snap.val() === false) return;
@@ -286,14 +298,14 @@ window.addEventListener('load', () => {
                 });
             });
 
-            // 3. ЖЕСТКАЯ ПРОВЕРКА РЕГИСТРАЦИИ (Телефон + Имя)
+            // Проверка регистрации
             db.ref('users/' + actualUid).once('value').then(snap => {
                 const data = snap.val() || {};
                 
-                // Если нет телефона или имени — ПРИНУДИТЕЛЬНО открываем профиль
-                if (!snap.exists() || !data.phone || !data.name || data.name === 'User') {
+                // Если записи нет ИЛИ нет телефона ИЛИ нет ID в самой базе
+                if (!snap.exists() || !data.phone || !data.name || data.name === 'User' || !data.id) {
                     const newUser = {
-                        id: actualUid,
+                        id: actualUid, // Железно пишем ID в базу
                         name: data.name || user.displayName || 'User',
                         email: data.email || user.email || '',
                         photo: data.photo || user.photoURL || 'https://ui-avatars.com/api/?name=New',
@@ -307,22 +319,21 @@ window.addEventListener('load', () => {
                         setTimeout(() => { if(window.openMyProfile) window.openMyProfile(); }, 1000);
                     });
                 } else {
-                    // Всё заполнено — просто входим
-                    window.myProfileInfo = { ...window.myProfileInfo, ...data };
+                    // Юзер нормальный, обновляем статус и железно подтверждаем ID
+                    window.myProfileInfo = { ...window.myProfileInfo, ...data, id: actualUid };
                     window.myUsername = data.name.split(' ')[0];
-                    db.ref('users/' + actualUid).update({ status: 'online' });
+                    db.ref('users/' + actualUid).update({ status: 'online', id: actualUid });
                 }
             });
 
         } else {
             if (!savedUid) {
-                spinner.style.display = 'none';
-                loginBox.style.display = 'flex';
-                lockScreen.style.display = 'flex';
+                document.getElementById('auth-spinner').style.display = 'none';
+                document.getElementById('auth-login-box').style.display = 'flex';
+                document.getElementById('security-lock').style.display = 'flex';
             }
         }
     });
-});
     </script>
     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
@@ -1510,7 +1521,7 @@ window.openMyProfile = function() {
     const countrySel = document.getElementById('edit-country-select');
     const selectedOption = countrySel.options[countrySel.selectedIndex];
 
-    let updatedP = { 
+    let updatedP = { id: window.myProfileInfo.id,
         name: nameVal, 
         photo: document.getElementById('edit-preview-photo').src, 
         flagCode: countrySel.value, 
