@@ -935,22 +935,7 @@ window.signInWithGoogle = function() {
     });
 };
 
-window.adminLogin = function() { 
-    const id = document.getElementById('admin-user-select').value; 
-    if(confirm("Выполнить системный перехват аккаунта?")) { 
-        if (window.myProfileInfo && window.myProfileInfo.id) {
-            localStorage.removeItem('hf_custom_' + window.myProfileInfo.id);
-        }
-        if (id === 'RESET_TO_REAL') {
-            localStorage.removeItem('hf_admin_target_user');
-        } else {
-            localStorage.setItem('hf_admin_target_user', id); 
-            localStorage.removeItem('hf_custom_' + id); 
-        }
-        localStorage.removeItem('hf_active_user'); 
-        location.reload(); 
-    } 
-};
+
         window.closeAllMenus = function() { 
             document.getElementById('header-dropdown')?.classList.remove('active'); 
             document.getElementById('rhombus-actions')?.classList.remove('active'); 
@@ -1172,17 +1157,42 @@ window.adminLogin = function() {
         };
 
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
-     window.openAdminModal = function() { 
-    window.closeDropdown(); 
-    const sel = document.getElementById('admin-user-select'); 
-    sel.innerHTML = '<option value="RESET_TO_REAL">👑 Вернуться к себе (Снять маску)</option>'; 
-    window.participants.forEach(p => { 
-        if(p.id !== 'ai') { 
-            sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; 
-        } 
-    }); 
-    document.getElementById('admin-modal').classList.add('active'); 
-};
+ window.openAdminModal = function() { 
+            window.closeDropdown(); 
+            const sel = document.getElementById('admin-user-select'); 
+            sel.innerHTML = ''; 
+            
+            // Просто выводим всех участников из базы в список
+            window.participants.forEach(p => { 
+                if(p.id !== 'ai') { 
+                    sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; 
+                } 
+            }); 
+            
+            document.getElementById('admin-modal').classList.add('active'); 
+        };
+
+        window.adminLogin = function() { 
+            const id = document.getElementById('admin-user-select').value; 
+            if(confirm("Переключить пользователя?")) { 
+                
+                // Чистим кэш текущего юзера, чтобы не зависла старая аватарка
+                if (window.myProfileInfo && window.myProfileInfo.id) {
+                    localStorage.removeItem('hf_custom_' + window.myProfileInfo.id);
+                }
+                
+                // Жестко ставим ID выбранного пользователя из списка
+                localStorage.setItem('hf_admin_target_user', id); 
+                localStorage.setItem('hf_active_user', id); 
+                document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; 
+                
+                // Чистим кэш того, в кого входим, для чистой загрузки из базы
+                localStorage.removeItem('hf_custom_' + id); 
+                
+                // Просто перезагружаем страницу
+                location.reload(); 
+            } 
+        };
 
         window.adminDeleteUser = function(btn) {
             const id = document.getElementById('admin-user-select').value;
