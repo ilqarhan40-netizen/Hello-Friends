@@ -1886,26 +1886,41 @@ window.participants = [aiBot];
                     });
                 }
 
-                // ==========================================
+        // ==========================================
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
                 if (data.isConfMsg) {
                     let originalText = data.originalText || data.text;
-                    let myPersonalLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
-                    
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myPersonalLang}&dt=t&q=${encodeURIComponent(originalText)}`)
-                        .then(r => r.json())
-                        .then(resData => {
-                            let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
-                            let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
-                            if (targetMarquee) {
-                                targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${p.flag} ${translatedText}</span>`;
-                                targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
-                            }
-                        }).catch(e => console.log('Meet Translate Error'));
-                }
-            }
 
+                    // Определяем ID окна того, кто говорит
+                    let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
+                    let speakerMarquee = document.getElementById(senderMarqueeId);
+                    
+                    // 1. ФРЕЙМ ГОВОРЯЩЕГО (Оригинальный текст без перевода)
+                    if (speakerMarquee) {
+                        speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${p.flag} ${originalText}</span>`;
+                        speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
+                    }
+
+                    // 2. ФРЕЙМЫ СЛУШАТЕЛЕЙ (Все остальные окошки на экране, включая манекены)
+                    document.querySelectorAll('.conf-listener-marquee').forEach(listenerMarquee => {
+                        // Исключаем окно говорящего (Надежная проверка по ID!)
+                        if (listenerMarquee.id === senderMarqueeId) return;
+                        
+                        let targetLang = listenerMarquee.getAttribute('data-lang') || 'en';
+                        let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
+
+                        // Запрашиваем индивидуальный перевод
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+                            .then(r => r.json())
+                            .then(resData => {
+                                let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
+                                // Красивый дизайн слушателей с именем говорящего
+                                listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
+                                listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
+                            }).catch(e => console.log('Meet Translate Error'));
+                    });
+                }
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
@@ -1926,15 +1941,18 @@ window.participants = [aiBot];
             
             window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
 
-            window.initConference = function() {
+     window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
                 
+                let myLang = localStorage.getItem('hf_personal_lang');
+                if (!myLang || myLang === 'auto') myLang = window.myProfileInfo.langCode || 'en';
+
                 let confHtml = `
                 <div class="video-frame main" id="my-video-container">
                     <video id="my-live-video" class="mirror-video cursor-pointer hover:opacity-90 transition" onclick="window.openPersonalLangModal()" playsinline autoplay muted></video>
                     <div class="video-overlay">${window.myUsername}</div>
-                    <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                    <div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
+                    <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode || 'un'}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                    <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="speaker-marquee" data-lang="${myLang}" data-flag="${window.myProfileInfo.flag}">➔ [AUTO] Welcome!</div></div>
                 </div>`;
                 
                 let realParticipants = window.participants.filter(p => p.id !== 'ai'); 
@@ -1947,23 +1965,31 @@ window.participants = [aiBot];
                     <div class="video-frame">
                         <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
                         <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
-                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-${p.id}" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Listening...</div></div>
+                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-${p.id}" data-lang="${p.langCode || 'en'}" data-flag="${p.flag || '🌐'}">${p.flag} Listening...</div></div>
                     </div>`;
                     renderedCount++;
                 });
 
-                const dummyFlags = ['us', 'gb', 'fr', 'de', 'jp', 'it', 'es', 'cn', 'ae', 'pt', 'tr'];
+                // База языков для симуляции "глобальной сети" в пустых окнах
+                const dummyData = [
+                    {code: 'us', lang: 'en', flag: '🇺🇸'}, {code: 'gb', lang: 'en', flag: '🇬🇧'}, 
+                    {code: 'fr', lang: 'fr', flag: '🇫🇷'}, {code: 'de', lang: 'de', flag: '🇩🇪'}, 
+                    {code: 'jp', lang: 'ja', flag: '🇯🇵'}, {code: 'it', lang: 'it', flag: '🇮🇹'}, 
+                    {code: 'es', lang: 'es', flag: '🇪🇸'}, {code: 'cn', lang: 'zh', flag: '🇨🇳'}, 
+                    {code: 'ae', lang: 'ar', flag: '🇦🇪'}, {code: 'pt', lang: 'pt', flag: '🇵🇹'}, 
+                    {code: 'tr', lang: 'tr', flag: '🇹🇷'}
+                ];
                 
                 for (let i = renderedCount; i < totalSlots; i++) {
-                    let randomFlag = dummyFlags[i % dummyFlags.length];
+                    let dummy = dummyData[i % dummyData.length];
                     confHtml += `
                     <div class="video-frame border-2 border-[#2a3942]">
                         <img src="llgar.jpg" class="placeholder-bg opacity-50 object-cover" style="filter: blur(1px);">
                         <div class="absolute inset-0 bg-black/40"></div>
                         <div class="video-overlay" style="background: rgba(0,0,0,0.5);">Connecting...</div>
-                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${randomFlag}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                        <div class="translation-bar"><div class="conf-marquee-text text-[#8696a0]">Waiting for user...</div></div>
+                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${dummy.code}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-dummy-${i}" data-lang="${dummy.lang}" data-flag="${dummy.flag}">${dummy.flag} Waiting...</div></div>
                     </div>`;
                 }
 
@@ -1974,7 +2000,7 @@ window.participants = [aiBot];
                     videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
                     videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
                 }
-            }
+            };
             if (document.getElementById('conference-grid')) initConference(); 
             
             window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
