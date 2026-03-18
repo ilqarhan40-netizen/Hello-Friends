@@ -930,10 +930,10 @@ window.addEventListener('load', () => {
     </div>
 
     <script>
-   window.signOutGoogle = function() {
+window.signOutGoogle = function() {
     firebase.auth().signOut().then(() => {
-        localStorage.removeItem('hf_active_user');
-        localStorage.removeItem('hf_admin_target_user'); // Очищаем хвосты админки
+        // Выжигаем всю локальную память (Админку, старые ID, кэш профилей)
+        localStorage.clear();
         document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         location.reload();
     });
