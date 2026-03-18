@@ -258,12 +258,18 @@ window.signInWithGoogle = function() {
             });
         };
         
-        window.addEventListener('load', () => {
-            firebase.auth().onAuthStateChanged((user) => {
-                const lockScreen = document.getElementById('security-lock');
-                const spinner = document.getElementById('auth-spinner');
-                const loginBox = document.getElementById('auth-login-box');
+    window.addEventListener('load', () => {
+            // 1. ЖЕСТКАЯ ПРОПИСКА: Мгновенно пускаем юзера, если есть кэш, не ждем Гугл!
+            const savedUid = localStorage.getItem('hf_active_user');
+            const lockScreen = document.getElementById('security-lock');
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
 
+            if (savedUid) {
+                lockScreen.style.display = 'none'; // Мгновенный вход без миганий
+            }
+
+            firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     lockScreen.style.opacity = '0';
                     setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
@@ -274,12 +280,23 @@ window.signInWithGoogle = function() {
                         actualUid = localStorage.getItem('hf_admin_target_user'); 
                     }
 
+                    // Намертво бетонируем сессию
                     localStorage.setItem('hf_active_user', actualUid);
                     document.cookie = "hf_active_user=" + actualUid + "; max-age=31536000; path=/";
                     
                     if(window.myProfileInfo) window.myProfileInfo.id = actualUid;
-                    window.isGuest = false; // Точно не гость!
+                    window.isGuest = false; 
                     
+                    // 2. СИСТЕМА ПРИСУТСТВИЯ: Устройства мгновенно видят статус друг друга
+                    const userStatusRef = db.ref('users/' + actualUid + '/status');
+                    db.ref('.info/connected').on('value', function(snapshot) {
+                        if (snapshot.val() === false) return;
+                        // Если связь оборвалась (закрыл вкладку), пишем offline
+                        userStatusRef.onDisconnect().set('offline').then(function() {
+                            userStatusRef.set('online'); // При входе пишем online
+                        });
+                    });
+
                     // ПРОВЕРЯЕМ БАЗУ ПО АКТУАЛЬНОМУ UID
                     db.ref('users/' + actualUid).once('value').then(snap => {
                         const data = snap.val();
@@ -287,11 +304,12 @@ window.signInWithGoogle = function() {
                         if (!snap.exists() || !data.id || !data.name || data.name === 'User' || data.name === '') {
                             
                             const newUser = {
-                                id: actualUid, // Используем перехваченный ID
+                                id: actualUid,
                                 name: user.displayName || '',
                                 email: user.email || '',
                                 photo: user.photoURL || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff',
-                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global'
+                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global',
+                                status: 'online'
                             };
                             
                             db.ref('users/' + actualUid).update(newUser).then(() => {
@@ -306,20 +324,26 @@ window.signInWithGoogle = function() {
                                     }
                                 }, 800);
                             });
+                        } else {
+                            // Жестко обновляем статус при возвращении в приложение
+                            db.ref('users/' + actualUid).update({ status: 'online' });
                         }
                     });
 
                     window.requestPushPermissions();
                     if(window.initFCM) window.initFCM();
                 } else {
-                    spinner.style.display = 'none';
-                    loginBox.style.display = 'flex';
-                    localStorage.removeItem('hf_active_user');
+                    // Если юзер реально разлогинился, а не просто обновил страницу
+                    if (!savedUid) {
+                        spinner.style.display = 'none';
+                        loginBox.style.display = 'flex';
+                        lockScreen.style.display = 'flex';
+                        localStorage.removeItem('hf_active_user');
+                    }
                 }
             });
         });
     </script>
-
     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
     <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
@@ -1404,34 +1428,7 @@ window.openMyProfile = function() {
             document.getElementById('edit-profile-modal').classList.add('active'); 
         };
 
-   window.saveProfileData = function() {
-            let nameVal = document.getElementById('edit-name').value.trim(); 
-            if (!nameVal) return alert("Enter Name!"); 
-            
-            // Получаем селект страны для точного вытаскивания флага и названия
-            const countrySel = document.getElementById('edit-country-select');
-            const selectedOption = countrySel.options[countrySel.selectedIndex];
 
-            let updatedP = { 
-                name: nameVal, 
-                photo: document.getElementById('edit-preview-photo').src, 
-                flagCode: countrySel.value, 
-                phone: document.getElementById('edit-phone').value.trim(), 
-                email: document.getElementById('edit-email').value.trim(),
-                country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
-                flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
-            };
-            
-            window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
-            
-            // ПРИНУДИТЕЛЬНОЕ КЭШИРОВАНИЕ до отправки в сеть
-            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
-
-            db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
-                window.closeProfileModal(); 
-                window.showToast("Profile Saved", "Data updated.", updatedP.photo, "");
-            }).catch(err => alert("Network Sync Error: " + err.message));
-        };
 
         // ================= БЛОК CV (РЕДАКТИРОВАНИЕ) =================
         window.handleCVCountryChange = function(sel, isAutoLoad = false) {
@@ -1502,7 +1499,70 @@ window.openMyProfile = function() {
             });
         };
         window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
-        window.closeProfileModal = function() { document.getElementById('edit-profile-modal').classList.remove('active'); };
+     // =========================================================
+        // БРОНЕБОЙНАЯ РЕГИСТРАЦИЯ И СОХРАНЕНИЕ ПРОФИЛЯ
+        // =========================================================
+        window.closeProfileModal = function() { 
+            // КАПКАН: Если имя пустое или стандартное, не даем закрыть окно!
+            if (!window.myProfileInfo.name || window.myProfileInfo.name === 'User' || window.myProfileInfo.name.trim() === '') {
+                alert("Please enter your Full Name to complete registration!");
+                document.getElementById('edit-name').focus();
+                return; // Прерываем закрытие
+            }
+            document.getElementById('edit-profile-modal').classList.remove('active'); 
+        };
+
+        window.saveProfileData = function() {
+            let nameVal = document.getElementById('edit-name').value.trim(); 
+            if (!nameVal) {
+                alert("Name is required!"); 
+                return;
+            }
+            
+            const countrySel = document.getElementById('edit-country-select');
+            const selectedOption = countrySel.options[countrySel.selectedIndex];
+
+            let updatedP = { 
+                name: nameVal, 
+                photo: document.getElementById('edit-preview-photo').src, 
+                flagCode: countrySel.value, 
+                phone: document.getElementById('edit-phone').value.trim(), 
+                email: document.getElementById('edit-email').value.trim(),
+                country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
+                flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
+            };
+            
+            // Жестко прописываем в локальную память устройства
+            window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
+            window.myUsername = nameVal.split(' ')[0]; // Сразу обновляем короткое имя
+            
+            try { 
+                localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
+            } catch(e){}
+
+            // Отправляем в Firebase (раздаем всем устройствам)
+            const btn = document.querySelector('#edit-profile-modal .btn-primary');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+            db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
+                btn.innerHTML = originalText;
+                document.getElementById('edit-profile-modal').classList.remove('active'); // Закрываем принудительно в обход капкана
+                window.showToast("Registration Complete", "Welcome to Hello Friends, " + window.myUsername + "!", updatedP.photo, "");
+                
+                // Обновляем свое фото и флаг в голосовой панели сразу же
+                const myVoicePhoto = document.getElementById('voice-me-photo'); 
+                const myVoiceFlag = document.getElementById('voice-me-flag'); 
+                const myVoiceName = document.getElementById('voice-me-name'); 
+                if(myVoicePhoto) myVoicePhoto.src = updatedP.photo; 
+                if(myVoiceFlag) myVoiceFlag.innerText = updatedP.flag; 
+                if(myVoiceName) myVoiceName.innerText = window.myUsername;
+                
+            }).catch(err => {
+                btn.innerHTML = originalText;
+                alert("Network Sync Error: " + err.message);
+            });
+        };
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
         window.smartArchive = function() { const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none'; let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`; archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); };
