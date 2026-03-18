@@ -275,7 +275,7 @@ firebase.auth().onAuthStateChanged((user) => {
             setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
             
             let actualUid = user.uid;
-            let actualUid = user.uid;
+            
             
             // ВОЗВРАЩАЕМ АДМИНСКИЙ ПЕРЕХВАТ
             if (localStorage.getItem('hf_god_mode') === 'true' && localStorage.getItem('hf_admin_target_user')) {
@@ -283,7 +283,7 @@ firebase.auth().onAuthStateChanged((user) => {
             }
             
             localStorage.setItem('hf_active_user', actualUid);
-            localStorage.setItem('hf_active_user', actualUid);
+            
             
             // ЖЕСТКОЕ ПРИСВОЕНИЕ ID (Убиваем "Гостя" моментально)
             if (window.myProfileInfo) window.myProfileInfo.id = actualUid;
