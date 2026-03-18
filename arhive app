@@ -212,7 +212,7 @@
         </div>
     </div>
 
-    <script>
+ <script>
         window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
         window.sndCash = new Audio('https://actions.google.com/sounds/v1/foley/cash_register.ogg');
         window.sndRing = new Audio('https://actions.google.com/sounds/v1/ringtones/phone_ringing.ogg');
@@ -232,15 +232,32 @@
             }
         }
 
-        window.signInWithGoogle = function() {
+window.signInWithGoogle = function() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
-                return firebase.auth().signInWithPopup(provider);
+            provider.setCustomParameters({ prompt: 'select_account' });
+
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            
+            spinner.style.display = 'flex';
+            loginBox.style.display = 'none';
+
+            // ВЫЗЫВАЕМ СРАЗУ! Без .then(). 
+            // Это гарантирует, что Safari и Chrome не заблокируют Popup, 
+            // так как он открывается синхронно с кликом пользователя.
+            firebase.auth().signInWithPopup(provider).then(() => {
+                // Успешный вход обработает onAuthStateChanged, тут ничего делать не надо
             }).catch((error) => {
-                alert("Auth Error: " + error.message);
+                if (error.code === 'auth/popup-blocked') {
+                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна для этого сайта.");
+                } else {
+                    alert("Auth Error: " + error.message);
+                }
+                spinner.style.display = 'none';
+                loginBox.style.display = 'flex';
             });
         };
-
+        
         window.addEventListener('load', () => {
             firebase.auth().onAuthStateChanged((user) => {
                 const lockScreen = document.getElementById('security-lock');
@@ -251,18 +268,44 @@
                     lockScreen.style.opacity = '0';
                     setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
                     
-                    localStorage.setItem('hf_active_user', user.uid);
-                    document.cookie = "hf_active_user=" + user.uid + "; max-age=31536000; path=/";
+                    // --- АДМИНСКИЙ ПЕРЕХВАТ ---
+                    let actualUid = user.uid;
+                    if (localStorage.getItem('hf_god_mode') === 'true' && localStorage.getItem('hf_admin_target_user')) {
+                        actualUid = localStorage.getItem('hf_admin_target_user'); 
+                    }
+
+                    localStorage.setItem('hf_active_user', actualUid);
+                    document.cookie = "hf_active_user=" + actualUid + "; max-age=31536000; path=/";
                     
-                    db.ref('users/' + user.uid).once('value').then(snap => {
-                        if (!snap.exists()) {
-                            db.ref('users/' + user.uid).set({
-                                id: user.uid,
-                                name: user.displayName || 'User',
+                    if(window.myProfileInfo) window.myProfileInfo.id = actualUid;
+                    window.isGuest = false; // Точно не гость!
+                    
+                    // ПРОВЕРЯЕМ БАЗУ ПО АКТУАЛЬНОМУ UID
+                    db.ref('users/' + actualUid).once('value').then(snap => {
+                        const data = snap.val();
+                        // Если юзера нет в базе ИЛИ у него нет имени ИЛИ имя по умолчанию
+                        if (!snap.exists() || !data.id || !data.name || data.name === 'User' || data.name === '') {
+                            
+                            const newUser = {
+                                id: actualUid, // Используем перехваченный ID
+                                name: user.displayName || '',
                                 email: user.email || '',
-                                photo: user.photoURL || 'https://ui-avatars.com/api/?name=User&background=00a884&color=fff',
+                                photo: user.photoURL || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff',
                                 flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global'
-                            }).then(() => { location.reload(); });
+                            };
+                            
+                            db.ref('users/' + actualUid).update(newUser).then(() => {
+                                window.myProfileInfo = { ...window.myProfileInfo, ...newUser };
+                                window.myUsername = newUser.name;
+                                
+                                // МГНОВЕННО ВЫВОДИМ ФОРМУ РЕГИСТРАЦИИ (ПРОФИЛЯ) НА ЭКРАН
+                                setTimeout(() => {
+                                    if(window.openMyProfile) {
+                                        window.openMyProfile();
+                                        if(window.showToast) window.showToast("Registration", "Please complete your profile setup.", newUser.photo, "");
+                                    }
+                                }, 800);
+                            });
                         }
                     });
 
@@ -883,13 +926,15 @@
     </div>
 
     <script>
-        window.signOutGoogle = function() {
-            firebase.auth().signOut().then(() => {
-                localStorage.removeItem('hf_active_user');
-                document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                location.reload();
-            });
-        };
+   window.signOutGoogle = function() {
+    firebase.auth().signOut().then(() => {
+        localStorage.removeItem('hf_active_user');
+        localStorage.removeItem('hf_admin_target_user'); // Очищаем хвосты админки
+        document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        location.reload();
+    });
+};
+
 
         window.closeAllMenus = function() { 
             document.getElementById('header-dropdown')?.classList.remove('active'); 
@@ -1089,19 +1134,65 @@
             firebase.database().ref(chatRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, isTransfer: true, transferTypeLabel: typeLabel, amount: amt.toFixed(2), total: total.toFixed(2), recName: recName, text: `💸 ${typeLabel}`, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode });
             window.closeBankTransferModal(); window.showToast("Transfer Sent", `Sent $${amt.toFixed(2)} to ${recName}. Network fee: $0.01`, "", "");
             document.getElementById(amtInputId).value = ''; window.updateTransferFeeUI(type); window.switchTab(0); window.switchChatRoom(recId);
-        };
+ };
 
         window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
         
         window.secretClicks = 0;
         window.activateGodMode = function() {
-            window.secretClicks++; if(window.secretClicks === 5) { window.secretClicks = 0; let pass = prompt("Enter Admin Password:"); if(pass === "777") { localStorage.setItem('hf_god_mode', 'true'); alert("GOD MODE UNLOCKED!"); location.reload(); } else { alert("Access Denied."); } }
+            window.secretClicks++; 
+            if(window.secretClicks === 5) { 
+                window.secretClicks = 0; 
+                let pass = prompt("Enter Admin Password:"); 
+                if(pass === "777") { 
+                    localStorage.setItem('hf_god_mode', 'true'); 
+                    // Мгновенно показываем кнопку в меню без перезагрузки страницы!
+                    const adminBtn = document.getElementById('admin-menu-btn');
+                    if (adminBtn) adminBtn.style.display = 'flex';
+                    alert("GOD MODE UNLOCKED! Open the menu."); 
+                } else { 
+                    alert("Access Denied."); 
+                } 
+            }
         };
 
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
-        window.openAdminModal = function() { window.closeDropdown(); const sel = document.getElementById('admin-user-select'); sel.innerHTML = ''; window.participants.forEach(p => { if(p.id !== 'ai') { sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag} - ${p.phone||'No phone'}</option>`; } }); sel.innerHTML += `<option value="${window.myProfileInfo.id}">${window.myUsername} ${window.myProfileInfo.flag} (Current)</option>`; document.getElementById('admin-modal').classList.add('active'); };
+ window.openAdminModal = function() { 
+            window.closeDropdown(); 
+            const sel = document.getElementById('admin-user-select'); 
+            sel.innerHTML = ''; 
+            
+            // Просто выводим всех участников из базы в список
+            window.participants.forEach(p => { 
+                if(p.id !== 'ai') { 
+                    sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; 
+                } 
+            }); 
+            
+            document.getElementById('admin-modal').classList.add('active'); 
+        };
 
-        window.adminLogin = function() { const id = document.getElementById('admin-user-select').value; if(confirm("Are you sure you want to log in as this user?")) { localStorage.setItem('hf_active_user', id); document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; location.reload(); } };
+        window.adminLogin = function() { 
+            const id = document.getElementById('admin-user-select').value; 
+            if(confirm("Переключить пользователя?")) { 
+                
+                // Чистим кэш текущего юзера, чтобы не зависла старая аватарка
+                if (window.myProfileInfo && window.myProfileInfo.id) {
+                    localStorage.removeItem('hf_custom_' + window.myProfileInfo.id);
+                }
+                
+                // Жестко ставим ID выбранного пользователя из списка
+                localStorage.setItem('hf_admin_target_user', id); 
+                localStorage.setItem('hf_active_user', id); 
+                document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; 
+                
+                // Чистим кэш того, в кого входим, для чистой загрузки из базы
+                localStorage.removeItem('hf_custom_' + id); 
+                
+                // Просто перезагружаем страницу
+                location.reload(); 
+            } 
+        };
 
         window.adminDeleteUser = function(btn) {
             const id = document.getElementById('admin-user-select').value;
@@ -1313,18 +1404,33 @@ window.openMyProfile = function() {
             document.getElementById('edit-profile-modal').classList.add('active'); 
         };
 
-        window.saveProfileData = function() {
-            let nameVal = document.getElementById('edit-name').value.trim(); if (!nameVal) return alert("Enter Name!"); 
+   window.saveProfileData = function() {
+            let nameVal = document.getElementById('edit-name').value.trim(); 
+            if (!nameVal) return alert("Enter Name!"); 
+            
+            // Получаем селект страны для точного вытаскивания флага и названия
+            const countrySel = document.getElementById('edit-country-select');
+            const selectedOption = countrySel.options[countrySel.selectedIndex];
+
             let updatedP = { 
                 name: nameVal, 
                 photo: document.getElementById('edit-preview-photo').src, 
-                flagCode: document.getElementById('edit-country-select').value, 
+                flagCode: countrySel.value, 
                 phone: document.getElementById('edit-phone').value.trim(), 
-                email: document.getElementById('edit-email').value.trim() 
+                email: document.getElementById('edit-email').value.trim(),
+                country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
+                flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
             };
+            
             window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
-            db.ref('users/' + window.myProfileInfo.id).update(updatedP); 
-            window.closeProfileModal(); window.showToast("Profile Saved", "Data updated.", updatedP.photo, "");
+            
+            // ПРИНУДИТЕЛЬНОЕ КЭШИРОВАНИЕ до отправки в сеть
+            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
+
+            db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
+                window.closeProfileModal(); 
+                window.showToast("Profile Saved", "Data updated.", updatedP.photo, "");
+            }).catch(err => alert("Network Sync Error: " + err.message));
         };
 
         // ================= БЛОК CV (РЕДАКТИРОВАНИЕ) =================
@@ -1780,26 +1886,42 @@ window.participants = [aiBot];
                     });
                 }
 
-                // ==========================================
+        // ==========================================
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
                 if (data.isConfMsg) {
                     let originalText = data.originalText || data.text;
-                    let myPersonalLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+
+                    // Определяем ID окна того, кто говорит
+                    let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
+                    let speakerMarquee = document.getElementById(senderMarqueeId);
                     
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myPersonalLang}&dt=t&q=${encodeURIComponent(originalText)}`)
-                        .then(r => r.json())
-                        .then(resData => {
-                            let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
-                            let targetMarquee = isMe ? document.getElementById('speaker-marquee') : document.getElementById(`conf-marquee-${data.userId}`);
-                            if (targetMarquee) {
-                                targetMarquee.innerHTML = `<span class="text-white">${senderDisplayName}:</span> <span class="text-[#8696a0] mr-1">${originalText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-1 text-[0.6rem]"></i> <span class="text-[#00a884] font-bold">${p.flag} ${translatedText}</span>`;
-                                targetMarquee.style.animation = 'none'; void targetMarquee.offsetWidth; targetMarquee.style.animation = null;
-                            }
-                        }).catch(e => console.log('Meet Translate Error'));
+                    // 1. ФРЕЙМ ГОВОРЯЩЕГО (Оригинальный текст без перевода)
+                    if (speakerMarquee) {
+                        speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${p.flag} ${originalText}</span>`;
+                        speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
+                    }
+
+                    // 2. ФРЕЙМЫ СЛУШАТЕЛЕЙ (Все остальные окошки на экране, включая манекены)
+                    document.querySelectorAll('.conf-listener-marquee').forEach(listenerMarquee => {
+                        // Исключаем окно говорящего (Надежная проверка по ID!)
+                        if (listenerMarquee.id === senderMarqueeId) return;
+                        
+                        let targetLang = listenerMarquee.getAttribute('data-lang') || 'en';
+                        let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
+
+                        // Запрашиваем индивидуальный перевод
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+                            .then(r => r.json())
+                            .then(resData => {
+                                let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
+                                // Красивый дизайн слушателей с именем говорящего
+                                listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
+                                listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
+                            }).catch(e => console.log('Meet Translate Error'));
+                    });
                 }
             }
-
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
@@ -1820,15 +1942,18 @@ window.participants = [aiBot];
             
             window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
 
-            window.initConference = function() {
+     window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
                 
+                let myLang = localStorage.getItem('hf_personal_lang');
+                if (!myLang || myLang === 'auto') myLang = window.myProfileInfo.langCode || 'en';
+
                 let confHtml = `
                 <div class="video-frame main" id="my-video-container">
                     <video id="my-live-video" class="mirror-video cursor-pointer hover:opacity-90 transition" onclick="window.openPersonalLangModal()" playsinline autoplay muted></video>
                     <div class="video-overlay">${window.myUsername}</div>
-                    <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                    <div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div>
+                    <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode || 'un'}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                    <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="speaker-marquee" data-lang="${myLang}" data-flag="${window.myProfileInfo.flag}">➔ [AUTO] Welcome!</div></div>
                 </div>`;
                 
                 let realParticipants = window.participants.filter(p => p.id !== 'ai'); 
@@ -1841,23 +1966,31 @@ window.participants = [aiBot];
                     <div class="video-frame">
                         <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
                         <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
-                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-${p.id}" data-lang="${p.langCode}" data-flag="${p.flag}">${p.flag} Listening...</div></div>
+                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-${p.id}" data-lang="${p.langCode || 'en'}" data-flag="${p.flag || '🌐'}">${p.flag} Listening...</div></div>
                     </div>`;
                     renderedCount++;
                 });
 
-                const dummyFlags = ['us', 'gb', 'fr', 'de', 'jp', 'it', 'es', 'cn', 'ae', 'pt', 'tr'];
+                // База языков для симуляции "глобальной сети" в пустых окнах
+                const dummyData = [
+                    {code: 'us', lang: 'en', flag: '🇺🇸'}, {code: 'gb', lang: 'en', flag: '🇬🇧'}, 
+                    {code: 'fr', lang: 'fr', flag: '🇫🇷'}, {code: 'de', lang: 'de', flag: '🇩🇪'}, 
+                    {code: 'jp', lang: 'ja', flag: '🇯🇵'}, {code: 'it', lang: 'it', flag: '🇮🇹'}, 
+                    {code: 'es', lang: 'es', flag: '🇪🇸'}, {code: 'cn', lang: 'zh', flag: '🇨🇳'}, 
+                    {code: 'ae', lang: 'ar', flag: '🇦🇪'}, {code: 'pt', lang: 'pt', flag: '🇵🇹'}, 
+                    {code: 'tr', lang: 'tr', flag: '🇹🇷'}
+                ];
                 
                 for (let i = renderedCount; i < totalSlots; i++) {
-                    let randomFlag = dummyFlags[i % dummyFlags.length];
+                    let dummy = dummyData[i % dummyData.length];
                     confHtml += `
                     <div class="video-frame border-2 border-[#2a3942]">
                         <img src="llgar.jpg" class="placeholder-bg opacity-50 object-cover" style="filter: blur(1px);">
                         <div class="absolute inset-0 bg-black/40"></div>
                         <div class="video-overlay" style="background: rgba(0,0,0,0.5);">Connecting...</div>
-                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${randomFlag}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                        <div class="translation-bar"><div class="conf-marquee-text text-[#8696a0]">Waiting for user...</div></div>
+                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${dummy.code}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
+                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-dummy-${i}" data-lang="${dummy.lang}" data-flag="${dummy.flag}">${dummy.flag} Waiting...</div></div>
                     </div>`;
                 }
 
@@ -1868,7 +2001,7 @@ window.participants = [aiBot];
                     videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
                     videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
                 }
-            }
+            };
             if (document.getElementById('conference-grid')) initConference(); 
             
             window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
