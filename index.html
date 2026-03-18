@@ -258,91 +258,71 @@ window.signInWithGoogle = function() {
             });
         };
         
-    window.addEventListener('load', () => {
-            // 1. ЖЕСТКАЯ ПРОПИСКА: Мгновенно пускаем юзера, если есть кэш, не ждем Гугл!
-            const savedUid = localStorage.getItem('hf_active_user');
-            const lockScreen = document.getElementById('security-lock');
-            const spinner = document.getElementById('auth-spinner');
-            const loginBox = document.getElementById('auth-login-box');
+window.addEventListener('load', () => {
+    const savedUid = localStorage.getItem('hf_active_user');
+    const lockScreen = document.getElementById('security-lock');
+    const spinner = document.getElementById('auth-spinner');
+    const loginBox = document.getElementById('auth-login-box');
 
-            if (savedUid) {
-                lockScreen.style.display = 'none'; // Мгновенный вход без миганий
-            }
+    // 1. МГНОВЕННЫЙ ПРОПУСК (Чтобы не выбрасывало при перезагрузке)
+    if (savedUid) {
+        lockScreen.style.display = 'none'; 
+    }
 
-            firebase.auth().onAuthStateChanged((user) => {
-                if (user) {
-                    lockScreen.style.opacity = '0';
-                    setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
-                    
-                    // --- АДМИНСКИЙ ПЕРЕХВАТ ---
-                    let actualUid = user.uid;
-                    if (localStorage.getItem('hf_god_mode') === 'true' && localStorage.getItem('hf_admin_target_user')) {
-                        actualUid = localStorage.getItem('hf_admin_target_user'); 
-                    }
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            lockScreen.style.opacity = '0';
+            setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
+            
+            let actualUid = user.uid;
+            localStorage.setItem('hf_active_user', actualUid);
+            
+            // 2. СИСТЕМА ПРИСУТСТВИЯ (Чтобы устройства видели друг друга)
+            const userStatusRef = db.ref('users/' + actualUid + '/status');
+            db.ref('.info/connected').on('value', snap => {
+                if (snap.val() === false) return;
+                userStatusRef.onDisconnect().set('offline').then(() => {
+                    userStatusRef.set('online');
+                });
+            });
 
-                    // Намертво бетонируем сессию
-                    localStorage.setItem('hf_active_user', actualUid);
-                    document.cookie = "hf_active_user=" + actualUid + "; max-age=31536000; path=/";
+            // 3. ЖЕСТКАЯ ПРОВЕРКА РЕГИСТРАЦИИ (Телефон + Имя)
+            db.ref('users/' + actualUid).once('value').then(snap => {
+                const data = snap.val() || {};
+                
+                // Если нет телефона или имени — ПРИНУДИТЕЛЬНО открываем профиль
+                if (!snap.exists() || !data.phone || !data.name || data.name === 'User') {
+                    const newUser = {
+                        id: actualUid,
+                        name: data.name || user.displayName || 'User',
+                        email: data.email || user.email || '',
+                        photo: data.photo || user.photoURL || 'https://ui-avatars.com/api/?name=New',
+                        flag: data.flag || '🌐',
+                        flagCode: data.flagCode || 'un',
+                        status: 'online'
+                    };
                     
-                    if(window.myProfileInfo) window.myProfileInfo.id = actualUid;
-                    window.isGuest = false; 
-                    
-                    // 2. СИСТЕМА ПРИСУТСТВИЯ: Устройства мгновенно видят статус друг друга
-                    const userStatusRef = db.ref('users/' + actualUid + '/status');
-                    db.ref('.info/connected').on('value', function(snapshot) {
-                        if (snapshot.val() === false) return;
-                        // Если связь оборвалась (закрыл вкладку), пишем offline
-                        userStatusRef.onDisconnect().set('offline').then(function() {
-                            userStatusRef.set('online'); // При входе пишем online
-                        });
+                    db.ref('users/' + actualUid).update(newUser).then(() => {
+                        window.myProfileInfo = { ...window.myProfileInfo, ...newUser };
+                        setTimeout(() => { if(window.openMyProfile) window.openMyProfile(); }, 1000);
                     });
-
-                    // ПРОВЕРЯЕМ БАЗУ ПО АКТУАЛЬНОМУ UID
-                    db.ref('users/' + actualUid).once('value').then(snap => {
-                        const data = snap.val();
-                        // Если юзера нет в базе ИЛИ у него нет имени ИЛИ имя по умолчанию
-                        if (!snap.exists() || !data.id || !data.name || data.name === 'User' || data.name === '') {
-                            
-                            const newUser = {
-                                id: actualUid,
-                                name: user.displayName || '',
-                                email: user.email || '',
-                                photo: user.photoURL || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff',
-                                flag: '🌐', flagCode: 'un', langCode: 'en', country: 'Global',
-                                status: 'online'
-                            };
-                            
-                            db.ref('users/' + actualUid).update(newUser).then(() => {
-                                window.myProfileInfo = { ...window.myProfileInfo, ...newUser };
-                                window.myUsername = newUser.name;
-                                
-                                // МГНОВЕННО ВЫВОДИМ ФОРМУ РЕГИСТРАЦИИ (ПРОФИЛЯ) НА ЭКРАН
-                                setTimeout(() => {
-                                    if(window.openMyProfile) {
-                                        window.openMyProfile();
-                                        if(window.showToast) window.showToast("Registration", "Please complete your profile setup.", newUser.photo, "");
-                                    }
-                                }, 800);
-                            });
-                        } else {
-                            // Жестко обновляем статус при возвращении в приложение
-                            db.ref('users/' + actualUid).update({ status: 'online' });
-                        }
-                    });
-
-                    window.requestPushPermissions();
-                    if(window.initFCM) window.initFCM();
                 } else {
-                    // Если юзер реально разлогинился, а не просто обновил страницу
-                    if (!savedUid) {
-                        spinner.style.display = 'none';
-                        loginBox.style.display = 'flex';
-                        lockScreen.style.display = 'flex';
-                        localStorage.removeItem('hf_active_user');
-                    }
+                    // Всё заполнено — просто входим
+                    window.myProfileInfo = { ...window.myProfileInfo, ...data };
+                    window.myUsername = data.name.split(' ')[0];
+                    db.ref('users/' + actualUid).update({ status: 'online' });
                 }
             });
-        });
+
+        } else {
+            if (!savedUid) {
+                spinner.style.display = 'none';
+                loginBox.style.display = 'flex';
+                lockScreen.style.display = 'flex';
+            }
+        }
+    });
+});
     </script>
     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
@@ -1411,23 +1391,31 @@ window.signInWithGoogle = function() {
             document.getElementById('view-cv-modal').classList.add('active');
         };
 window.openMyProfile = function() { 
-            window.closeDropdown(); 
-            const p = window.myProfileInfo;
-            if (window.isGuest) { 
-                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); 
-                document.getElementById('edit-preview-photo').src = p?.photo || 'https://ui-avatars.com/api/?name=New'; 
-            } else { 
-                document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); 
-                document.getElementById('edit-name').value = window.myUsername; 
-                document.getElementById('edit-preview-photo').src = p.photo; 
-                document.getElementById('edit-country-select').value = p.flagCode || 'un'; 
-                document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
-                document.getElementById('edit-phone').value = p.phone || ''; 
-                document.getElementById('edit-email').value = p.email || ''; 
-            } 
-            document.getElementById('edit-profile-modal').classList.add('active'); 
-        };
+    window.closeDropdown(); 
+    const p = window.myProfileInfo;
 
+    if (window.isGuest) { 
+        document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); 
+        document.getElementById('edit-preview-photo').src = p?.photo || 'https://ui-avatars.com/api/?name=New'; 
+    } else { 
+        document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); 
+        document.getElementById('edit-name').value = window.myUsername; 
+        document.getElementById('edit-preview-photo').src = p.photo; 
+        document.getElementById('edit-country-select').value = p.flagCode || 'un'; 
+        document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
+        document.getElementById('edit-phone').value = p.phone || ''; 
+        document.getElementById('edit-email').value = p.email || ''; 
+        
+        // Подгружаем новые поля, чтобы они не стирались при открытии
+        const langsInput = document.getElementById('edit-profile-langs');
+        if (langsInput) langsInput.value = p.profileLangs || ''; 
+        
+        const bioInput = document.getElementById('edit-profile-bio');
+        if (bioInput) bioInput.value = p.profileBio || ''; 
+    } 
+    
+    document.getElementById('edit-profile-modal').classList.add('active'); 
+};
 
 
         // ================= БЛОК CV (РЕДАКТИРОВАНИЕ) =================
@@ -1512,57 +1500,70 @@ window.openMyProfile = function() {
             document.getElementById('edit-profile-modal').classList.remove('active'); 
         };
 
-        window.saveProfileData = function() {
-            let nameVal = document.getElementById('edit-name').value.trim(); 
-            if (!nameVal) {
-                alert("Name is required!"); 
-                return;
-            }
-            
-            const countrySel = document.getElementById('edit-country-select');
-            const selectedOption = countrySel.options[countrySel.selectedIndex];
+     window.saveProfileData = function() {
+    let nameVal = document.getElementById('edit-name').value.trim(); 
+    let phoneVal = document.getElementById('edit-phone').value.trim();
+    
+    if (!nameVal || nameVal === 'User') { alert("Please enter your Real Name!"); return; }
+    if (!phoneVal || phoneVal.length < 5) { alert("Please enter your Phone Number!"); return; }
+    
+    const countrySel = document.getElementById('edit-country-select');
+    const selectedOption = countrySel.options[countrySel.selectedIndex];
 
-            let updatedP = { 
-                name: nameVal, 
-                photo: document.getElementById('edit-preview-photo').src, 
-                flagCode: countrySel.value, 
-                phone: document.getElementById('edit-phone').value.trim(), 
-                email: document.getElementById('edit-email').value.trim(),
-                country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
-                flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
-            };
-            
-            // Жестко прописываем в локальную память устройства
-            window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
-            window.myUsername = nameVal.split(' ')[0]; // Сразу обновляем короткое имя
-            
-            try { 
-                localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
-            } catch(e){}
+    let updatedP = { 
+        name: nameVal, 
+        photo: document.getElementById('edit-preview-photo').src, 
+        flagCode: countrySel.value, 
+        phone: phoneVal, 
+        email: document.getElementById('edit-email').value.trim(),
+        profileLangs: document.getElementById('edit-profile-langs').value.trim(),
+        profileBio: document.getElementById('edit-profile-bio').value.trim(),
+        country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
+        flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
+    };
+    
+    window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
+    window.myUsername = nameVal.split(' ')[0];
+    
+    try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
 
-            // Отправляем в Firebase (раздаем всем устройствам)
-            const btn = document.querySelector('#edit-profile-modal .btn-primary');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    const btn = document.querySelector('#edit-profile-modal .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
-            db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
-                btn.innerHTML = originalText;
-                document.getElementById('edit-profile-modal').classList.remove('active'); // Закрываем принудительно в обход капкана
-                window.showToast("Registration Complete", "Welcome to Hello Friends, " + window.myUsername + "!", updatedP.photo, "");
-                
-                // Обновляем свое фото и флаг в голосовой панели сразу же
-                const myVoicePhoto = document.getElementById('voice-me-photo'); 
-                const myVoiceFlag = document.getElementById('voice-me-flag'); 
-                const myVoiceName = document.getElementById('voice-me-name'); 
-                if(myVoicePhoto) myVoicePhoto.src = updatedP.photo; 
-                if(myVoiceFlag) myVoiceFlag.innerText = updatedP.flag; 
-                if(myVoiceName) myVoiceName.innerText = window.myUsername;
-                
-            }).catch(err => {
-                btn.innerHTML = originalText;
-                alert("Network Sync Error: " + err.message);
-            });
-        };
+    db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
+        btn.innerHTML = 'Save Profile';
+        document.getElementById('edit-profile-modal').classList.remove('active'); 
+        window.showToast("Success", "Profile updated and synced!", updatedP.photo, "");
+
+        const myVoicePhoto = document.getElementById('voice-me-photo'); 
+        const myVoiceFlag = document.getElementById('voice-me-flag'); 
+        const myVoiceName = document.getElementById('voice-me-name'); 
+        if(myVoicePhoto) myVoicePhoto.src = updatedP.photo; 
+        if(myVoiceFlag) myVoiceFlag.innerText = updatedP.flag; 
+        if(myVoiceName) myVoiceName.innerText = window.myUsername;
+        
+    }).catch(err => {
+        btn.innerHTML = 'Save Profile'; 
+        alert("Sync Error: " + err.message);
+    });
+};
+
+window.handleCountryChange = function(sel) {
+    const flagCode = sel.value;
+    const opt = sel.options[sel.selectedIndex];
+    
+    const flagImg = document.getElementById('edit-flag-icon');
+    if(flagImg) flagImg.src = `https://flagcdn.com/w40/${flagCode}.png`;
+    
+    if (window.countryData && window.countryData[flagCode]) {
+        const phoneInput = document.getElementById('edit-phone');
+        if (phoneInput) {
+            phoneInput.value = window.countryData[flagCode].phone + " ";
+            phoneInput.focus(); 
+        }
+    }
+};
         window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
         window.smartArchive = function() { const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none'; let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`; archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); };
