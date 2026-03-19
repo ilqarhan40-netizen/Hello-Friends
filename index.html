@@ -1511,6 +1511,16 @@ window.openMyProfile = function() {
             }
             document.getElementById('edit-profile-modal').classList.remove('active'); 
         };
+        window.handleFileUpload = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        // Берем загруженную картинку и ставим ее в кружок предпросмотра
+        document.getElementById('edit-preview-photo').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
 
      window.saveProfileData = function() {
     let nameVal = document.getElementById('edit-name').value.trim(); 
