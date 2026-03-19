@@ -2126,15 +2126,53 @@ window.participants = [aiBot];
             </div>
         </div>
     </div>
-    <script>
+<script>
+        let deferredPrompt;
+
+        // 1. Регистрируем Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('PWA Service Worker Зарегистрирован! Установка разрешена.', reg.scope))
+                .then(reg => console.log('PWA Service Worker Зарегистрирован!', reg.scope))
                 .catch(err => console.error('Ошибка регистрации PWA:', err));
             });
         }
-    </script>
 
+        // 2. Ловим момент, когда телефон готов к установке
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Отменяем автоматический показ стандартной системной плашки
+            e.preventDefault();
+            // Сохраняем событие для нашей кнопки
+            deferredPrompt = e;
+            // Показываем нашу красивую кнопку в меню
+            const installBtn = document.getElementById('install-app-btn');
+            if (installBtn) installBtn.style.display = 'flex';
+        });
+
+        // 3. Действие при нажатии на нашу кнопку
+        window.installPWA = async function() {
+            if (deferredPrompt) {
+                // Показываем системное окно "Установить приложение?"
+                deferredPrompt.prompt();
+                // Ждем ответа пользователя
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Пользователь установил приложение');
+                    // Прячем кнопку, так как уже установлено
+                    document.getElementById('install-app-btn').style.display = 'none';
+                }
+                deferredPrompt = null;
+                window.closeAllMenus();
+            }
+        };
+
+        // 4. Прячем кнопку, если приложение уже успешно установлено
+        window.addEventListener('appinstalled', () => {
+            const installBtn = document.getElementById('install-app-btn');
+            if (installBtn) installBtn.style.display = 'none';
+            deferredPrompt = null;
+            console.log('PWA было установлено');
+        });
+    </script>
 </body>
 </html>
