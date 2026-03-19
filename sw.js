@@ -1,8 +1,8 @@
-const CACHE_NAME = 'hf-pwa-cache-v1';
+const CACHE_NAME = 'hf-pwa-cache-v2';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/manifest.json'
+    './',
+    './index.html',
+    './manifest.json'
 ];
 
 // Установка воркера и кэширование
@@ -37,7 +37,7 @@ self.addEventListener('fetch', event => {
         caches.match(event.request).then(response => {
             return response || fetch(event.request);
         }).catch(() => {
-            return caches.match('/index.html');
+            return caches.match('./index.html');
         })
     );
 });
