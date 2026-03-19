@@ -1,11 +1,12 @@
 {
   "name": "Hello Friends",
-  "short_name": "HF App",
-  "start_url": "./index.html",
+  "short_name": "HF Network",
+  "description": "Global Smart Network",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0b141a",
   "theme_color": "#00a884",
-  "description": "Global Secure Messenger & Voice Room",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "https://ui-avatars.com/api/?name=HF&background=00a884&color=fff&size=192",
@@ -16,7 +17,8 @@
     {
       "src": "https://ui-avatars.com/api/?name=HF&background=00a884&color=fff&size=512",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
