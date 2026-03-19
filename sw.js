@@ -1,21 +1,43 @@
-const CACHE_NAME = 'hf-app-v1';
+const CACHE_NAME = 'hf-pwa-cache-v1';
+const urlsToCache = [
+    '/',
+    '/index.html',
+    '/manifest.json'
+];
 
-// Установка сервис-воркера
-self.addEventListener('install', (event) => {
-    console.log('[Service Worker] Установлен');
+// Установка воркера и кэширование
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.addAll(urlsToCache);
+        })
+    );
     self.skipWaiting();
 });
 
-// Активация
-self.addEventListener('activate', (event) => {
-    console.log('[Service Worker] Активирован');
+// Очистка старого кэша при обновлении
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cache => {
+                    if (cache !== CACHE_NAME) {
+                        return caches.delete(cache);
+                    }
+                })
+            );
+        })
+    );
+    self.clients.claim();
 });
 
-// Перехват запросов (обязательно для PWA)
-self.addEventListener('fetch', (event) => {
+// Перехват запросов (чтобы работало без сбоев)
+self.addEventListener('fetch', event => {
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
+        caches.match(event.request).then(response => {
+            return response || fetch(event.request);
+        }).catch(() => {
+            return caches.match('/index.html');
         })
     );
 });
