@@ -1793,36 +1793,56 @@ window.participants = [aiBot];
 
             let isGeminiWaiting = false;
 
-            window.sendFirebaseMsg = async function() { 
-                let inputId = window.currentMicInputTarget || 'chat-input';
-                const inputField = document.getElementById(inputId);
-                if (!inputField) return;
-                
-                const rawText = inputField.value.trim(); if (!rawText) return; 
-                if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
-                inputField.value = ''; 
+    window.sendFirebaseMsg = async function() { 
+            let inputId = window.currentMicInputTarget || 'chat-input';
+            const inputField = document.getElementById(inputId);
+            if (!inputField) return;
+            
+            const rawText = inputField.value.trim(); if (!rawText) return; 
+            if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
+            inputField.value = ''; 
 
-                let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
-                let textToShip = rawText; 
-                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {} 
-                
-                let isVoice = inputId === 'voice-chat-input';
-                let isConf = inputId === 'conf-chat-input';
+            // 1. Умная логика выбора ЯЗЫКА ОТПРАВКИ
+            let personalLang = localStorage.getItem('hf_personal_lang'); 
+            let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.getSmartLang(window.myProfileInfo);
+            
+            let textToShip = rawText; 
+            try { 
+                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
+                const data = await res.json(); 
+                if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
+            } catch (e) {} 
+            
+            let isVoice = inputId === 'voice-chat-input';
+            let isConf = inputId === 'conf-chat-input';
 
-                db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf }); 
-                
-                const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
-                if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
+            // 2. ВАЖНО: Сохраняем в базу именно ТОТ язык, на котором отправлен текст (targetSendLang)
+            db.ref(window.currentRoomId).push({ 
+                userId: window.myProfileInfo.id, 
+                name: window.myUsername, 
+                text: textToShip, 
+                originalText: rawText, 
+                sessionId: window.mySessionId, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                photo: window.myProfileInfo.photo, 
+                flag: window.myProfileInfo.flag, 
+                flagCode: window.myProfileInfo.flagCode, 
+                langCode: targetSendLang, // <--- ИСПРАВЛЕНО
+                isVoiceRoomMsg: isVoice, 
+                isConfMsg: isConf 
+            }); 
+            
+            const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
+            if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
-                if (window.currentRoomId === 'private_ai_bot') { 
-                    isGeminiWaiting = true; 
-                    const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
-                    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) })
-                    .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
-                    .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
-                } 
-            };
-
+            if (window.currentRoomId === 'private_ai_bot') { 
+                isGeminiWaiting = true; 
+                const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
+                fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) })
+                .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
+                .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
+            } 
+        };
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); } });
@@ -1866,29 +1886,35 @@ window.participants = [aiBot];
                 msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
                 messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-                // ==========================================
+            // ==========================================
                 // БЛОК 1: ГЛАВНЫЙ ЧАТ
                 // ==========================================
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
                     let targetUsers = []; 
-                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    let savedLang = localStorage.getItem('hf_personal_lang');
+                    let myReadLang = (savedLang && savedLang !== 'auto') ? savedLang : window.getSmartLang(window.myProfileInfo);
                     
                     if (window.currentRoomId === 'global' && !isAI) { 
                         window.participants.filter(part => part.id !== 'ai').forEach(member => { 
-                            let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; 
-                            if (member.id !== data.userId && memberReadLang !== 'un') { 
+                            let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : window.getSmartLang(member); 
+                            // Переводим только если язык читателя отличается от реального языка сообщения
+                            if (member.id !== data.userId && memberReadLang !== 'un' && memberReadLang !== data.langCode) { 
                                 targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); 
                             } 
                         }); 
                     } else if (window.currentRoomId.startsWith('private_') && !isAI) { 
                         if (isMe) { 
-                            if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) {
-                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                            if (window.currentTargetUser) {
+                                let targetLang = window.getSmartLang(window.currentTargetUser);
+                                if (targetLang !== data.langCode) {
+                                    targetUsers.push({ code: targetLang, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                                }
                             }
                         } else { 
-                            if (data.langCode && data.langCode !== myReadLang) {
+                            // Я получатель. Сравниваем МОЙ язык с фактическим языком сообщения (data.langCode)
+                            if (data.langCode !== myReadLang) {
                                 targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
-                            }
+                            } 
                         } 
                     }
 
@@ -1916,16 +1942,14 @@ window.participants = [aiBot];
                         } catch (e) {}
                     }
                 }
-
                 // ==========================================
                 // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
                 // ==========================================
                 if (data.isVoiceRoomMsg) {
-                    let originalText = data.originalText || data.text;
-                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
-                    if (!myPersonalLang || myPersonalLang === 'auto') {
-                        myPersonalLang = window.myProfileInfo.langCode; 
-                    }
+             let myPersonalLang = localStorage.getItem('hf_personal_lang');
+        if (!myPersonalLang || myPersonalLang === 'auto') {
+            myPersonalLang = window.getSmartLang(window.myProfileInfo); 
+        }
 
                     let senderPhoto, senderFlag, senderLang, senderName;
                     let receiverPhoto, receiverFlag, receiverLang, receiverName;
