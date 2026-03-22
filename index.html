@@ -1007,7 +1007,7 @@ window.signOutGoogle = function() {
             return userProfile.langCode || 'en';
         };
 
-        window.startUniversalMic = async function(mode) {
+  window.startUniversalMic = async function(mode) {
             window.speechRecognizedText = "";
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             let rec = SpeechRec ? new SpeechRec() : null;
@@ -1015,26 +1015,28 @@ window.signOutGoogle = function() {
             
             rec.continuous = false; rec.interimResults = false;
             let langSelect = document.getElementById('plus-mic-lang');
-            rec.lang = langSelect ? langSelect.value : 'en-US';
+            let selectedMicLang = langSelect ? langSelect.value : 'auto';
+
+            // Умное определение языка, если стоит "Auto"
+            if (selectedMicLang === 'auto') {
+                let smartCode = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
+                const voiceMap = { 'en': 'en-US', 'ru': 'ru-RU', 'az': 'az-AZ', 'it': 'it-IT', 'es': 'es-ES', 'fr': 'fr-FR', 'pt': 'pt-PT', 'ja': 'ja-JP', 'zh': 'zh-CN', 'ar': 'ar-AE' };
+                rec.lang = voiceMap[smartCode] || 'en-US';
+            } else {
+                rec.lang = selectedMicLang; // Жестко ставим выбранный язык
+            }
             
             window.showToast("Listening...", "Speak into the microphone", "", "");
             
             rec.onresult = async (e) => { 
                 window.speechRecognizedText = e.results[0][0].transcript; 
-                let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
-
-                window.showToast("Translating...", "Processing your voice...", "", "");
-                let textToShip = window.speechRecognizedText;
+                window.showToast("Processing...", "Preparing your voice message...", "", "");
                 
-                try { 
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
-                    const data = await res.json(); 
-                    if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
-                } catch (err) {}
-
+                let textToShip = window.speechRecognizedText;
                 let isVoice = window.currentMicInputTarget === 'voice-chat-input';
                 let isConf = window.currentMicInputTarget === 'conf-chat-input';
 
+                // Отправляем текст в базу как есть (в оригинале)
                 if (mode === 'text') {
                     db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
                 } else if (mode === 'ai-audio') {
@@ -1635,7 +1637,17 @@ window.handleCountryChange = function(sel) {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
             window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
             
-            const i18n = { en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info" } };
+const i18n = { 
+    en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info" },
+    ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Видео", cv: "Резюме", social: "Соцсети", profile: "Мой профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт Данных", import: "Импорт Данных", delete_acc: "Удалить Аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", app_creator_greet: "Создатель Hello Friends", reg_title: "Добро пожаловать!", reg_subtitle: "Завершите регистрацию", reg_name: "Полное имя", reg_country: "Страна", reg_phone: "Номер телефона", reg_email: "Email", reg_save: "Сохранить", edit_title: "Мой профиль", edit_subtitle: "Основная информация" },
+    az: { menu: "Tənzimləmələr", chat: "Söhbət", voice: "Səs", meet: "Zəng", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pul kisəsi", theme: "Mövzu", export: "Məlumatı İxrac et", import: "Məlumatı İdxal et", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", app_creator_greet: "Hello Friends Yaradıcısı", reg_title: "Xoş gəldiniz!", reg_subtitle: "Qeydiyyatı tamamlayın", reg_name: "Tam adınız", reg_country: "Ölkə", reg_phone: "Telefon nömrəsi", reg_email: "E-poçt", reg_save: "Yadda saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" },
+    it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Video", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta Dati", import: "Importa Dati", delete_acc: "Elimina Account", welcome_empty: "Benvenuto su Hello Friends!", app_creator_greet: "Creatore di Hello Friends", reg_title: "Benvenuto!", reg_subtitle: "Completa la registrazione", reg_name: "Nome completo", reg_country: "Paese", reg_phone: "Numero di telefono", reg_email: "Email", reg_save: "Salva profilo", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
+    es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Video", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Billetera", theme: "Tema", export: "Exportar Datos", import: "Importar Datos", delete_acc: "Eliminar Cuenta", welcome_empty: "¡Bienvenido a Hello Friends!", app_creator_greet: "Creador de Hello Friends", reg_title: "¡Bienvenido!", reg_subtitle: "Completa el registro", reg_name: "Nombre completo", reg_country: "País", reg_phone: "Número de teléfono", reg_email: "Correo", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
+    fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Vidéo", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", delete_acc: "Supprimer le compte", welcome_empty: "Bienvenue sur Hello Friends !", app_creator_greet: "Créateur de Hello Friends", reg_title: "Bienvenue !", reg_subtitle: "Terminer l'inscription", reg_name: "Nom complet", reg_country: "Pays", reg_phone: "Numéro de téléphone", reg_email: "E-mail", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
+    pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Vídeo", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar Dados", import: "Importar Dados", delete_acc: "Excluir Conta", welcome_empty: "Bem-vindo ao Hello Friends!", app_creator_greet: "Criador do Hello Friends", reg_title: "Bem-vindo!", reg_subtitle: "Concluir registro", reg_name: "Nome completo", reg_country: "País", reg_phone: "Número de telefone", reg_email: "E-mail", reg_save: "Salvar perfil", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
+    ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "ビデオ", cv: "履歴書", social: "ソーシャル", profile: "プロフィール", wallet: "ウォレット", theme: "テーマ", export: "データ出力", import: "データ入力", delete_acc: "アカウント削除", welcome_empty: "Hello Friendsへようこそ！", app_creator_greet: "Hello Friendsの作成者", reg_title: "ようこそ！", reg_subtitle: "登録を完了する", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_save: "保存", edit_title: "プロフィール", edit_subtitle: "基本情報" },
+    zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "视频", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", delete_acc: "删除帐户", welcome_empty: "欢迎来到 Hello Friends！", app_creator_greet: "Hello Friends 创建者", reg_title: "欢迎！", reg_subtitle: "完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话号码", reg_email: "电子邮件", reg_save: "保存资料", edit_title: "我的资料", edit_subtitle: "基本信息" }
+};
             let sysLang = navigator.language.slice(0, 2); let defLang = i18n[sysLang] ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             window.changeAppLanguage = function(langCode) { window.appLang = langCode; localStorage.setItem('hf_app_lang', window.appLang); window.applyTranslations(); window.closeDropdown(); };
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
