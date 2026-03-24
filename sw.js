@@ -1,13 +1,15 @@
-const CACHE_NAME = 'hf-chat-v2'; // Изменили на v2, чтобы сбросить старый кэш!
+const CACHE_NAME = 'hf-chat-v2'; 
+
+// Добавили точки! Теперь пути относительные 📁
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 // 1. Установка Service Worker и кэширование файлов
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Заставляет новый Service Worker активироваться сразу
+  self.skipWaiting(); 
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -16,13 +18,12 @@ self.addEventListener('install', event => {
   );
 });
 
-// 2. Активация и УДАЛЕНИЕ старого кэша (то, что нам нужно!)
+// 2. Активация и УДАЛЕНИЕ старого кэша
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          // Если имя кэша не совпадает с текущим (v2), удаляем его
           if (cacheName !== CACHE_NAME) {
             console.log('Старый кэш удален:', cacheName);
             return caches.delete(cacheName);
