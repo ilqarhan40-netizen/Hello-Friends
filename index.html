@@ -89,7 +89,7 @@
         .nav-item.active { color: var(--wa-green); }
         .nav-item.active i { transform: scale(1.15); }
         .rhombus-wrapper { position: relative; width: 46px; height: 46px; flex-shrink: 0; }
-        .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: box-shadow: 0 4px 15px rgba(162, 155, 254, 0.4); transition: transform 0.3s; }
+        .rhombus-btn { width: 100%; height: 100%; background: linear-gradient(135deg, #a29bfe, #6c5ce7); border-radius: 12px; transform: rotate(45deg); display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(162, 155, 254, 0.4); transition: transform 0.3s; }
         .rhombus-btn.active { transform: rotate(180deg); }
         .rhombus-btn i { transform: rotate(-45deg); color: white; font-size: 1.2rem; }
         .rhombus-menu { position: absolute; bottom: 65px; right: 0; background: var(--wa-panel); border: 1px solid var(--wa-border); border-radius: 16px; padding: 12px; display: none; grid-template-columns: repeat(3, 1fr); gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 100; }
@@ -213,6 +213,113 @@
             </button>
         </div>
     </div>
+
+    <script>
+        window.sndMsg = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
+        window.sndCash = new Audio('https://www.soundjay.com/misc/sounds/cash-register-01.mp3');
+        window.sndRing = new Audio('https://www.soundjay.com/phone/sounds/telephone-ring-03a.mp3');
+        window.sndRing.loop = true;
+
+        window.requestPushPermissions = function() {
+            if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        };
+
+        window.firePush = function(title, body, icon) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                if (document.visibilityState === 'hidden' || document.hidden) {
+                    new Notification(title, { body: body, icon: icon || 'https://ui-avatars.com/api/?name=HF&background=00a884&color=fff' });
+                }
+            }
+        };
+
+        window.signInWithGoogle = function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            
+            spinner.style.display = 'flex';
+            loginBox.style.display = 'none';
+
+            firebase.auth().signInWithPopup(provider).catch((error) => {
+                if (error.code === 'auth/popup-blocked') {
+                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна.");
+                } else {
+                    alert("Auth Error: " + error.message);
+                }
+                spinner.style.display = 'none';
+                loginBox.style.display = 'flex';
+            });
+        };
+
+        window.addEventListener('load', () => {
+            const savedUid = localStorage.getItem('hf_active_user');
+            const lockScreen = document.getElementById('security-lock');
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+
+            if (savedUid) {
+                lockScreen.style.display = 'none'; 
+            }
+
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    lockScreen.style.opacity = '0';
+                    setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
+                    
+                    let actualUid = user.uid;
+                    if (localStorage.getItem('hf_god_mode') === 'true' && localStorage.getItem('hf_admin_target_user')) {
+                        actualUid = localStorage.getItem('hf_admin_target_user'); 
+                    }
+                    localStorage.setItem('hf_active_user', actualUid);
+                    
+                    if (window.myProfileInfo) window.myProfileInfo.id = actualUid;
+                    window.isGuest = false;
+                    
+                    const userStatusRef = db.ref('users/' + actualUid + '/status');
+                    db.ref('.info/connected').on('value', snap => {
+                        if (snap.val() === false) return;
+                        userStatusRef.onDisconnect().set('offline').then(() => {
+                            userStatusRef.set('online');
+                        });
+                    });
+
+                    db.ref('users/' + actualUid).once('value').then(snap => {
+                        const data = snap.val() || {};
+                        if (!snap.exists() || !data.phone || !data.name || data.name === 'User' || !data.id) {
+                            const newUser = {
+                                id: actualUid,
+                                name: data.name || user.displayName || 'User',
+                                email: data.email || user.email || '',
+                                photo: data.photo || user.photoURL || 'https://ui-avatars.com/api/?name=New&background=00a884&color=fff',
+                                flag: data.flag || '🌐',
+                                flagCode: data.flagCode || 'un',
+                                status: 'online'
+                            };
+                            db.ref('users/' + actualUid).update(newUser).then(() => {
+                                window.myProfileInfo = { ...window.myProfileInfo, ...newUser };
+                                setTimeout(() => { if(window.openMyProfile) window.openMyProfile(); }, 1000);
+                            });
+                        } else {
+                            window.myProfileInfo = { ...window.myProfileInfo, ...data, id: actualUid };
+                            window.myUsername = data.name.split(' ')[0];
+                            db.ref('users/' + actualUid).update({ status: 'online', id: actualUid });
+                        }
+                    });
+
+                    if(window.initOneSignal) window.initOneSignal();
+
+                } else {
+                    document.getElementById('auth-spinner').style.display = 'none';
+                    document.getElementById('auth-login-box').style.display = 'flex';
+                    document.getElementById('security-lock').style.display = 'flex';
+                    document.getElementById('security-lock').style.opacity = '1';
+                }
+            });
+        });
+    </script>
 
     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
@@ -496,7 +603,7 @@
                         <option value="es-ES">🇪🇸 Español</option>
                         <option value="fr-FR">🇫🇷 Français</option>
                         <option value="pt-PT">🇵🇹 Português</option>
-                        <option value="ja-JP">🇯🇵 日本語</option>
+                        <option value="ja-JP">🇯播 日本語</option>
                         <option value="zh-CN">🇨🇳 中文</option>
                     </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call"><i class="fa-solid fa-video"></i></div>
@@ -1415,6 +1522,8 @@
                 if(myVoicePhoto) myVoicePhoto.src = updatedP.photo; 
                 if(myVoiceFlag) myVoiceFlag.innerText = updatedP.flag; 
                 if(myVoiceName) myVoiceName.innerText = window.myUsername;
+
+                window.requestPushPermissions(); 
                 
             }).catch(err => {
                 btn.innerHTML = 'Save Profile'; 
@@ -1483,7 +1592,7 @@
 
         window.sendPushToUser = function(targetUserId, title, body) {
             const REST_API_KEY = "y2ksieuhcuil4dnra3fssnwnt"; 
-            if (REST_API_KEY === "ТВОЙ_REST_API_KEY_СЮДА") return;
+            if (!REST_API_KEY) return;
 
             fetch('https://onesignal.com/api/v1/notifications', {
                 method: 'POST',
@@ -1499,6 +1608,16 @@
                     contents: { "en": body }
                 })
             }).catch(e => console.log('Push Error:', e));
+        };
+
+        window.initOneSignal = function() {
+            try {
+                window.OneSignalDeferred.push(async function(OneSignal) {
+                    if (window.myProfileInfo && window.myProfileInfo.id) {
+                        await OneSignal.login(window.myProfileInfo.id); 
+                    }
+                });
+            } catch(e) { console.log('OneSignal init error:', e); }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1921,70 +2040,4 @@
                 for (let i = renderedCount; i < totalSlots; i++) {
                     let dummy = dummyData[i % dummyData.length];
                     confHtml += `
-                    <div class="video-frame border-2 border-[#2a3942]">
-                        <img src="https://ui-avatars.com/api/?name=Ilgar&background=00a884&color=fff" class="placeholder-bg opacity-50 object-cover" style="filter: blur(1px);">
-                        <div class="absolute inset-0 bg-black/40"></div>
-                        <div class="video-overlay" style="background: rgba(0,0,0,0.5);">Connecting...</div>
-                        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${dummy.code}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
-                        <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" id="conf-marquee-dummy-${i}" data-lang="${dummy.lang}" data-flag="${dummy.flag}">${dummy.flag} Waiting...</div></div>
-                    </div>`;
-                }
-
-                confGrid.innerHTML = confHtml; 
-                
-                const videoEl = document.getElementById('my-live-video'); 
-                if(videoEl) { videoEl.src = window.myProfileInfo.video || 'https://www.w3schools.com/html/mov_bbb.mp4';
-                    videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
-                }
-            };
-            if (document.getElementById('conference-grid')) initConference(); 
-            
-            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null;videoEl.src = window.myProfileInfo.video || 'https://www.w3schools.com/html/mov_bbb.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
-            window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
-
-            window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
-
-            window.switchChatRoom('global');
-            if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
-            window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
-        });
-    </script>
-
-    <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
-        <div class="app-modal-content">
-            <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div>
-            <div class="sheet-handle" onclick="window.closeAdminModal()"></div>
-            
-            <h2 class="text-xl font-bold mb-6 text-white text-center mt-2">
-                <i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel
-            </h2>
-            
-            <div class="flex flex-col gap-3">
-                <label class="block text-[0.65rem] text-[#a29bfe] uppercase mb-1 ml-1 font-bold">Select Target User</label>
-                <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#a29bfe] transition h-12 mb-4 relative">
-                    <select id="admin-user-select" class="bg-transparent text-[#e9edef] w-full h-full pl-4 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
-                        </select>
-                    <i class="fa-solid fa-chevron-down text-[#8696a0] absolute right-4 text-[0.6rem] z-0 pointer-events-none"></i>
-                </div>
-                
-                <button class="bg-[#a29bfe] text-[#111b21] rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(162,155,254,0.4)] relative z-20" onclick="window.adminLogin()">
-                    <i class="fa-solid fa-right-to-bracket mr-2"></i> Login as User
-                </button>
-                
-                <button class="bg-red-500 text-white rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.4)] mt-2 relative z-20" onclick="window.adminDeleteUser(this)">
-                    <i class="fa-solid fa-skull mr-2"></i> Eradicate User
-                </button>
-            </div>
-        </div>
-    </div>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker зарегистрирован!', reg.scope))
-            .catch(err => console.error('Ошибка Service Worker:', err));
-        });
-      }
-    </script>
-</body>
-</html>
+                    <div class="video-
