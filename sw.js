@@ -30,16 +30,29 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // Захват управления вкладками
   );
 });
 
 // 3. Отдача файлов из сети или кэша
 self.addEventListener('fetch', event => {
+  // Игнорируем всё, кроме обычных GET-запросов (не трогаем Firebase и WebSockets)
+  if (event.request.method !== 'GET') {
+      return; 
+  }
+
+  // Игнорируем запросы к самому Firebase API, чтобы чат не вис
+  if (event.request.url.includes('firebaseio.com') || event.request.url.includes('googleapis.com')) {
+      return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        return response || fetch(event.request);
+        return response || fetch(event.request).catch(() => {
+             // Тихий fallback на случай отсутствия сети
+             console.log('Оффлайн: ресурс недоступен', event.request.url);
+        });
       })
   );
 });
