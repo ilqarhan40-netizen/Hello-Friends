@@ -223,11 +223,10 @@
     </div>
 
  <script>
-        window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
-        window.sndCash = new Audio('https://actions.google.com/sounds/v1/foley/cash_register.ogg');
-        window.sndRing = new Audio('https://actions.google.com/sounds/v1/ringtones/phone_ringing.ogg');
+  window.sndMsg = new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3');
+        window.sndCash = new Audio('https://www.soundjay.com/misc/sounds/cash-register-01.mp3');
+        window.sndRing = new Audio('https://www.soundjay.com/phone/sounds/telephone-ring-03a.mp3');
         window.sndRing.loop = true;
-
         window.requestPushPermissions = function() {
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
@@ -445,7 +444,7 @@ firebase.auth().onAuthStateChanged((user) => {
                     <p class="text-[#8696a0] text-sm">Global Smart Network</p>
                 </div>
                 <div class="mt-auto mb-20 flex items-center justify-center gap-3 p-3.5 bg-[#111b21] border border-[#202c33] rounded-full shadow-lg">
-                    <img src="llgar.jpg" class="w-12 h-12 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+                    <img src="https://ui-avatars.com/api/?name=Ilgar&background=00a884&color=fff" class="w-12 h-12 rounded-full object-cover border-2 border-[#00a884] shadow-md">
                     <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
                 </div>
             </div>
@@ -737,7 +736,7 @@ firebase.auth().onAuthStateChanged((user) => {
                     <textarea id="edit-profile-bio" class="form-input-box resize-none" rows="3" placeholder="Tell us about yourself..."></textarea>
 
                     <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
-                        <img src="llgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+                        <img src="https://ui-avatars.com/api/?name=Ilgar&background=00a884&color=fff" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
                         <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
                     </div>
                 </div>
@@ -2116,7 +2115,7 @@ window.participants = [aiBot];
                     let dummy = dummyData[i % dummyData.length];
                     confHtml += `
                     <div class="video-frame border-2 border-[#2a3942]">
-                        <img src="llgar.jpg" class="placeholder-bg opacity-50 object-cover" style="filter: blur(1px);">
+                        <img src="https://ui-avatars.com/api/?name=Ilgar&background=00a884&color=fff" class="placeholder-bg opacity-50 object-cover" style="filter: blur(1px);">
                         <div class="absolute inset-0 bg-black/40"></div>
                         <div class="video-overlay" style="background: rgba(0,0,0,0.5);">Connecting...</div>
                         <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${dummy.code}.png" class="w-6 h-4.5 rounded-[3px] border border-[#2a3942] shadow-sm"></div>
@@ -2127,14 +2126,13 @@ window.participants = [aiBot];
                 confGrid.innerHTML = confHtml; 
                 
                 const videoEl = document.getElementById('my-live-video'); 
-                if(videoEl) { 
-                    videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
+                if(videoEl) { videoEl.src = window.myProfileInfo.video || 'https://www.w3schools.com/html/mov_bbb.mp4';
                     videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; videoEl.classList.remove('mirror-video'); 
                 }
             };
             if (document.getElementById('conference-grid')) initConference(); 
             
-            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
+            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null;videoEl.src = window.myProfileInfo.video || 'https://www.w3schools.com/html/mov_bbb.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
             window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
 
             window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
