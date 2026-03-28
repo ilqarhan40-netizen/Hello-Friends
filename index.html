@@ -837,6 +837,56 @@
     </div>
 
     <script>
+
+        window.signInWithGoogle = function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider).catch(err => alert("Login Error: " + err.message));
+        };
+
+        window.addEventListener('load', () => {
+            const lockScreen = document.getElementById('security-lock');
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    lockScreen.style.opacity = '0';
+                    setTimeout(() => { lockScreen.style.display = 'none'; }, 400);
+                    
+                    let actualUid = user.uid;
+                    localStorage.setItem('hf_active_user', actualUid);
+                    if (window.myProfileInfo) window.myProfileInfo.id = actualUid;
+                    window.isGuest = false;
+                    
+                    db.ref('users/' + actualUid).once('value').then(snap => {
+                        const data = snap.val() || {};
+                        if (!snap.exists() || !data.name || data.name === 'User') {
+                            const newUser = {
+                                id: actualUid,
+                                name: user.displayName || 'User',
+                                email: user.email || '',
+                                photo: user.photoURL || 'https://ui-avatars.com/api/?name=New',
+                                flag: '🌐', flagCode: 'un', status: 'online'
+                            };
+                            db.ref('users/' + actualUid).update(newUser).then(() => {
+                                window.myProfileInfo = { ...window.myProfileInfo, ...newUser };
+                            });
+                        } else {
+                            window.myProfileInfo = { ...window.myProfileInfo, ...data, id: actualUid };
+                            window.myUsername = data.name.split(' ')[0];
+                        }
+                    });
+                } else {
+                    localStorage.removeItem('hf_active_user');
+                    if(spinner) spinner.style.display = 'none';
+                    if(loginBox) loginBox.style.display = 'flex';
+                    if(lockScreen) {
+                        lockScreen.style.display = 'flex';
+                        lockScreen.style.opacity = '1';
+                    }
+                }
+            });
+        });
         window.signOutGoogle = function() {
             firebase.auth().signOut().then(() => {
                 localStorage.clear();
