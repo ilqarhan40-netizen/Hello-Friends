@@ -242,30 +242,33 @@
         }
 
 window.signInWithGoogle = function() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
 
-            const spinner = document.getElementById('auth-spinner');
-            const loginBox = document.getElementById('auth-login-box');
-            
-            spinner.style.display = 'flex';
-            loginBox.style.display = 'none';
+    const spinner = document.getElementById('auth-spinner');
+    const loginBox = document.getElementById('auth-login-box');
+    
+    spinner.style.display = 'flex';
+    loginBox.style.display = 'none';
 
-            // ВЫЗЫВАЕМ СРАЗУ! Без .then(). 
-            // Это гарантирует, что Safari и Chrome не заблокируют Popup, 
-            // так как он открывается синхронно с кликом пользователя.
-            firebase.auth().signInWithPopup(provider).then(() => {
-                // Успешный вход обработает onAuthStateChanged, тут ничего делать не надо
-            }).catch((error) => {
-                if (error.code === 'auth/popup-blocked') {
-                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна для этого сайта.");
-                } else {
-                    alert("Auth Error: " + error.message);
-                }
-                spinner.style.display = 'none';
-                loginBox.style.display = 'flex';
-            });
-        };
+    // Используем Redirect для надежности на мобильных (решает ошибку Cross-Origin)
+    firebase.auth().signInWithRedirect(provider).catch((error) => {
+        alert("Auth Error: " + error.message);
+        spinner.style.display = 'none';
+        loginBox.style.display = 'flex';
+    });
+};
+
+// Обработчик возврата после редиректа
+firebase.auth().getRedirectResult().then((result) => {
+    if (result.user) {
+        // Успешный вход обработает onAuthStateChanged
+    }
+}).catch((error) => {
+     alert("Auth Redirect Error: " + error.message);
+     document.getElementById('auth-spinner').style.display = 'none';
+     document.getElementById('auth-login-box').style.display = 'flex';
+});
         
 window.addEventListener('load', () => {
     const savedUid = localStorage.getItem('hf_active_user');
@@ -411,15 +414,18 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
                     <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
                     <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
-                        <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
-                        <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
-                        <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
-                        <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
-                        <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
-                        <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
-                        <option value="pt" class="bg-[#111b21]">🇵🇹 Português</option>
-                        <option value="ja" class="bg-[#111b21]">🇯🇵 日本語</option>
-                        <option value="zh" class="bg-[#111b21]">🇨🇳 中文</option>
+                    <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
+                        <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
+                        <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                        <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
+                        <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
+                        <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
+                        <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
+                        <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
+                        <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
+                        <option value="pt" class="bg-[#111b21]">🇵🇹 Português</option>
+                        <option value="ja" class="bg-[#111b21]">🇯🇵 日本語</option>
+                        <option value="zh" class="bg-[#111b21]">🇨🇳 中文</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-xs pointer-events-none"></i>
                 </div>
@@ -620,15 +626,18 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
                     <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
-                        <option value="en-US">🇬🇧 English</option>
-                        <option value="ru-RU">🇷🇺 Русский</option>
-                        <option value="az-AZ">🇦🇿 Azərbaycanca</option>
-                        <option value="it-IT">🇮🇹 Italiano</option>
-                        <option value="es-ES">🇪🇸 Español</option>
-                        <option value="fr-FR">🇫🇷 Français</option>
-                        <option value="pt-PT">🇵🇹 Português</option>
-                        <option value="ja-JP">🇯🇵 日本語</option>
-                        <option value="zh-CN">🇨🇳 中文</option>
+                    <option value="en-US">🇬🇧 English</option>
+                        <option value="ru-RU">🇷🇺 Русский</option>
+                        <option value="az-AZ">🇦🇿 Azərbaycanca</option>
+                        <option value="de-DE">🇩🇪 Deutsch</option>
+                        <option value="tr-TR">🇹🇷 Türkçe</option>
+                        <option value="ar-AE">🇦🇪 العربية</option>
+                        <option value="it-IT">🇮🇹 Italiano</option>
+                        <option value="es-ES">🇪🇸 Español</option>
+                        <option value="fr-FR">🇫🇷 Français</option>
+                        <option value="pt-PT">🇵🇹 Português</option>
+                        <option value="ja-JP">🇯🇵 日本語</option>
+                        <option value="zh-CN">🇨🇳 中文</option>
                     </select>
                     <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call"><i class="fa-solid fa-video"></i></div>
                     <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeAllMenus();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
@@ -718,7 +727,7 @@ firebase.auth().onAuthStateChanged((user) => {
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
                         <div class="relative w-full">
                             <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
-                                <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
+                              <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
                             </select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
                         </div>
                     </div>
@@ -1265,8 +1274,7 @@ window.signOutGoogle = function() {
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
-        window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
-
+   window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'de', label: '🇩🇪 Deutsch' }, { val: 'tr', label: '🇹🇷 Türkçe' }, { val: 'ar', label: '🇦🇪 العربية' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
         window.openPersonalLangModal = function() {
             window.closeDropdown(); let current = localStorage.getItem('hf_personal_lang') || 'auto'; let html = '';
             window.personalLangs.forEach(l => {
@@ -1458,57 +1466,72 @@ window.openMyProfile = function() { 
             }
         };
 
-        window.openEditCV = function() {
-            const cvSelect = document.getElementById('cv-edit-country-select');
-            const mainSelect = document.getElementById('edit-country-select');
+  window.openEditCV = function() {
+    const cvSelect = document.getElementById('cv-edit-country-select');
+    const mainSelect = document.getElementById('edit-country-select');
 
-            // Копируем страны из основного профиля
-            if (cvSelect && mainSelect && cvSelect.options.length <= 1) {
-                cvSelect.innerHTML = mainSelect.innerHTML;
-            }
+    // Копируем страны из основного профиля
+    if (cvSelect && mainSelect && cvSelect.options.length <= 1) {
+        cvSelect.innerHTML = mainSelect.innerHTML;
+    }
 
-            const p = window.myProfileInfo;
-            document.getElementById('cv-edit-prof').value = p.profession || '';
-            document.getElementById('cv-edit-langs').value = p.languages || '';
-            document.getElementById('cv-edit-skills').value = p.skills || '';
-            document.getElementById('cv-edit-exp').value = p.experience || '';
-            document.getElementById('cv-edit-edu').value = p.education || '';
-            document.getElementById('cv-edit-bio').value = p.desc || '';
-            document.getElementById('cv-edit-phone').value = p.cvPhone || '';
-            document.getElementById('cv-edit-email').value = p.cvEmail || '';
+    const p = window.myProfileInfo;
+    document.getElementById('cv-edit-prof').value = p.profession || '';
+    document.getElementById('cv-edit-langs').value = p.languages || '';
+    document.getElementById('cv-edit-skills').value = p.skills || '';
+    document.getElementById('cv-edit-exp').value = p.experience || '';
+    document.getElementById('cv-edit-edu').value = p.education || '';
+    document.getElementById('cv-edit-bio').value = p.desc || '';
+    document.getElementById('cv-edit-phone').value = p.cvPhone || '';
+    document.getElementById('cv-edit-email').value = p.cvEmail || '';
 
-            // Устанавливаем страну и обновляем префикс
-            if(cvSelect) {
-                cvSelect.value = p.cvFlagCode || p.flagCode || 'un';
-                window.handleCVCountryChange(cvSelect, true);
-            }
-            document.getElementById('edit-cv-modal').classList.add('active');
-        };
+    // Устанавливаем страну и обновляем префикс
+    if(cvSelect) {
+        cvSelect.value = p.cvFlagCode || p.flagCode || 'un';
+        window.handleCVCountryChange(cvSelect, true);
+    }
+    document.getElementById('edit-cv-modal').classList.add('active');
+};
 
-        window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
+window.closeEditCV = function() { 
+    document.getElementById('edit-cv-modal').classList.remove('active'); 
+};
 
-        window.saveCVData = function() {
-            const sel = document.getElementById('cv-edit-country-select');
-            const cvData = {
-                profession: document.getElementById('cv-edit-prof').value.trim(),
-                languages: document.getElementById('cv-edit-langs').value.trim(),
-                skills: document.getElementById('cv-edit-skills').value.trim(),
-                experience: document.getElementById('cv-edit-exp').value.trim(),
-                education: document.getElementById('cv-edit-edu').value.trim(),
-                desc: document.getElementById('cv-edit-bio').value.trim(),
-                cvPhone: document.getElementById('cv-edit-phone').value.trim(),
-                cvEmail: document.getElementById('cv-edit-email').value.trim(),
-                cvFlagCode: sel ? sel.value : 'un',
-                cvCountry: sel ? (sel.options[sel.selectedIndex]?.getAttribute('data-name') || 'Global') : 'Global'
-            };
-            window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
-            try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
-            db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
-                window.closeEditCV();
-                if(window.renderProfessionList) window.renderProfessionList();
-                setTimeout(() => { window.openViewCVModal('me'); }, 150);
-            });
-        };
+window.saveCVData = function() {
+    const sel = document.getElementById('cv-edit-country-select');
+    const cvData = {
+        profession: document.getElementById('cv-edit-prof').value.trim(),
+        languages: document.getElementById('cv-edit-langs').value.trim(),
+        skills: document.getElementById('cv-edit-skills').value.trim(),
+        experience: document.getElementById('cv-edit-exp').value.trim(),
+        education: document.getElementById('cv-edit-edu').value.trim(),
+        desc: document.getElementById('cv-edit-bio').value.trim(),
+        cvPhone: document.getElementById('cv-edit-phone').value.trim(),
+        cvEmail: document.getElementById('cv-edit-email').value.trim(),
+        cvFlagCode: sel ? sel.value : 'un',
+        cvCountry: sel ? (sel.options[sel.selectedIndex]?.getAttribute('data-name') || 'Global') : 'Global'
+    };
+    
+    window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
+    try { 
+        localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
+    } catch(e){}
+    
+    // --- АНИМАЦИЯ КНОПКИ ЗАГРУЗКИ ---
+    const btn = document.querySelector('#edit-cv-modal .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+    db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
+        btn.innerHTML = originalText; // Возвращаем обычный текст
+        window.closeEditCV();
+        if(window.renderProfessionList) window.renderProfessionList();
+        setTimeout(() => { window.openViewCVModal('me'); }, 150);
+    }).catch(err => {
+        btn.innerHTML = originalText;
+        alert("Error saving CV: " + err.message);
+    });
+};
         window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
      // =========================================================
         // БРОНЕБОЙНАЯ РЕГИСТРАЦИЯ И СОХРАНЕНИЕ ПРОФИЛЯ
@@ -1646,16 +1669,19 @@ window.handleCountryChange = function(sel) {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
             window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
             
-const i18n = { 
-    en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info" },
-    ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Видео", cv: "Резюме", social: "Соцсети", profile: "Мой профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт Данных", import: "Импорт Данных", delete_acc: "Удалить Аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", app_creator_greet: "Создатель Hello Friends", reg_title: "Добро пожаловать!", reg_subtitle: "Завершите регистрацию", reg_name: "Полное имя", reg_country: "Страна", reg_phone: "Номер телефона", reg_email: "Email", reg_save: "Сохранить", edit_title: "Мой профиль", edit_subtitle: "Основная информация" },
-    az: { menu: "Tənzimləmələr", chat: "Söhbət", voice: "Səs", meet: "Zəng", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pul kisəsi", theme: "Mövzu", export: "Məlumatı İxrac et", import: "Məlumatı İdxal et", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", app_creator_greet: "Hello Friends Yaradıcısı", reg_title: "Xoş gəldiniz!", reg_subtitle: "Qeydiyyatı tamamlayın", reg_name: "Tam adınız", reg_country: "Ölkə", reg_phone: "Telefon nömrəsi", reg_email: "E-poçt", reg_save: "Yadda saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" },
-    it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Video", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta Dati", import: "Importa Dati", delete_acc: "Elimina Account", welcome_empty: "Benvenuto su Hello Friends!", app_creator_greet: "Creatore di Hello Friends", reg_title: "Benvenuto!", reg_subtitle: "Completa la registrazione", reg_name: "Nome completo", reg_country: "Paese", reg_phone: "Numero di telefono", reg_email: "Email", reg_save: "Salva profilo", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
-    es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Video", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Billetera", theme: "Tema", export: "Exportar Datos", import: "Importar Datos", delete_acc: "Eliminar Cuenta", welcome_empty: "¡Bienvenido a Hello Friends!", app_creator_greet: "Creador de Hello Friends", reg_title: "¡Bienvenido!", reg_subtitle: "Completa el registro", reg_name: "Nombre completo", reg_country: "País", reg_phone: "Número de teléfono", reg_email: "Correo", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
-    fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Vidéo", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", delete_acc: "Supprimer le compte", welcome_empty: "Bienvenue sur Hello Friends !", app_creator_greet: "Créateur de Hello Friends", reg_title: "Bienvenue !", reg_subtitle: "Terminer l'inscription", reg_name: "Nom complet", reg_country: "Pays", reg_phone: "Numéro de téléphone", reg_email: "E-mail", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
-    pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Vídeo", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar Dados", import: "Importar Dados", delete_acc: "Excluir Conta", welcome_empty: "Bem-vindo ao Hello Friends!", app_creator_greet: "Criador do Hello Friends", reg_title: "Bem-vindo!", reg_subtitle: "Concluir registro", reg_name: "Nome completo", reg_country: "País", reg_phone: "Número de telefone", reg_email: "E-mail", reg_save: "Salvar perfil", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
-    ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "ビデオ", cv: "履歴書", social: "ソーシャル", profile: "プロフィール", wallet: "ウォレット", theme: "テーマ", export: "データ出力", import: "データ入力", delete_acc: "アカウント削除", welcome_empty: "Hello Friendsへようこそ！", app_creator_greet: "Hello Friendsの作成者", reg_title: "ようこそ！", reg_subtitle: "登録を完了する", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_save: "保存", edit_title: "プロフィール", edit_subtitle: "基本情報" },
-    zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "视频", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", delete_acc: "删除帐户", welcome_empty: "欢迎来到 Hello Friends！", app_creator_greet: "Hello Friends 创建者", reg_title: "欢迎！", reg_subtitle: "完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话号码", reg_email: "电子邮件", reg_save: "保存资料", edit_title: "我的资料", edit_subtitle: "基本信息" }
+const i18n = { 
+    en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info" },
+    ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Видео", cv: "Резюме", social: "Соцсети", profile: "Мой профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт Данных", import: "Импорт Данных", delete_acc: "Удалить Аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", app_creator_greet: "Создатель Hello Friends", reg_title: "Добро пожаловать!", reg_subtitle: "Завершите регистрацию", reg_name: "Полное имя", reg_country: "Страна", reg_phone: "Номер телефона", reg_email: "Email", reg_save: "Сохранить", edit_title: "Мой профиль", edit_subtitle: "Основная информация" },
+    az: { menu: "Tənzimləmələr", chat: "Söhbət", voice: "Səs", meet: "Zəng", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pul kisəsi", theme: "Mövzu", export: "Məlumatı İxrac et", import: "Məlumatı İdxal et", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", app_creator_greet: "Hello Friends Yaradıcısı", reg_title: "Xoş gəldiniz!", reg_subtitle: "Qeydiyyatı tamamlayın", reg_name: "Tam adınız", reg_country: "Ölkə", reg_phone: "Telefon nömrəsi", reg_email: "E-poçt", reg_save: "Yadda saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" },
+    de: { menu: "Einstellungen", chat: "Chat", voice: "Stimme", meet: "Treffen", cv: "Lebenslauf", social: "Sozial", profile: "Mein Profil", wallet: "Brieftasche", theme: "Thema", export: "Daten Exportieren", import: "Daten Importieren", delete_acc: "Konto Löschen", welcome_empty: "Willkommen bei Hello Friends!", app_creator_greet: "Ersteller von Hello Friends", reg_title: "Willkommen!", reg_subtitle: "Registrierung abschließen", reg_name: "Vollständiger Name", reg_country: "Land", reg_phone: "Telefonnummer", reg_email: "E-Mail", reg_save: "Profil speichern", edit_title: "Mein Profil", edit_subtitle: "Grundlegende Info" },
+    tr: { menu: "Ayarlar", chat: "Sohbet", voice: "Ses", meet: "Toplantı", cv: "Özgeçmiş", social: "Sosyal", profile: "Profilim", wallet: "Cüzdan", theme: "Tema", export: "Veri Dışa Aktar", import: "Veri İçe Aktar", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends'e Hoş Geldiniz!", app_creator_greet: "Hello Friends Yaratıcısı", reg_title: "Hoş Geldiniz!", reg_subtitle: "Kaydı Tamamla", reg_name: "Ad Soyad", reg_country: "Ülke", reg_phone: "Telefon Numarası", reg_email: "E-posta", reg_save: "Profili Kaydet", edit_title: "Profilim", edit_subtitle: "Temel Bilgiler" },
+    ar: { menu: "الإعدادات", chat: "محادثة", voice: "صوت", meet: "لقاء", cv: "السيرة الذاتية", social: "اجتماعي", profile: "ملفي الشخصي", wallet: "محفظة", theme: "سمة", export: "تصدير البيانات", import: "استيراد البيانات", delete_acc: "حذف الحساب", welcome_empty: "مرحبًا بك في Hello Friends!", app_creator_greet: "منشئ Hello Friends", reg_title: "مرحباً!", reg_subtitle: "إكمال التسجيل", reg_name: "الاسم الكامل", reg_country: "البلد", reg_phone: "رقم الهاتف", reg_email: "البريد الإلكتروني", reg_save: "حفظ الملف الشخصي", edit_title: "ملفي الشخصي", edit_subtitle: "معلومات أساسية" },
+    it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Video", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta Dati", import: "Importa Dati", delete_acc: "Elimina Account", welcome_empty: "Benvenuto su Hello Friends!", app_creator_greet: "Creatore di Hello Friends", reg_title: "Benvenuto!", reg_subtitle: "Completa la registrazione", reg_name: "Nome completo", reg_country: "Paese", reg_phone: "Numero di telefono", reg_email: "Email", reg_save: "Salva profilo", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
+    es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Video", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Billetera", theme: "Tema", export: "Exportar Datos", import: "Importar Datos", delete_acc: "Eliminar Cuenta", welcome_empty: "¡Bienvenido a Hello Friends!", app_creator_greet: "Creador de Hello Friends", reg_title: "¡Bienvenido!", reg_subtitle: "Completa el registro", reg_name: "Nombre completo", reg_country: "País", reg_phone: "Número de teléfono", reg_email: "Correo", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
+    fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Vidéo", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", delete_acc: "Supprimer le compte", welcome_empty: "Bienvenue sur Hello Friends !", app_creator_greet: "Créateur de Hello Friends", reg_title: "Bienvenue !", reg_subtitle: "Terminer l'inscription", reg_name: "Nom complet", reg_country: "Pays", reg_phone: "Numéro de téléphone", reg_email: "E-mail", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
+    pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Vídeo", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar Dados", import: "Importar Dados", delete_acc: "Excluir Conta", welcome_empty: "Bem-vindo ao Hello Friends!", app_creator_greet: "Criador do Hello Friends", reg_title: "Bem-vindo!", reg_subtitle: "Concluir registro", reg_name: "Nome completo", reg_country: "País", reg_phone: "Número de telefone", reg_email: "E-mail", reg_save: "Salvar perfil", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
+    ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "ビデオ", cv: "履歴書", social: "ソーシャル", profile: "プロフィール", wallet: "ウォレット", theme: "テーマ", export: "データ出力", import: "データ入力", delete_acc: "アカウント削除", welcome_empty: "Hello Friendsへようこそ！", app_creator_greet: "Hello Friendsの作成者", reg_title: "ようこそ！", reg_subtitle: "登録を完了する", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_save: "保存", edit_title: "プロフィール", edit_subtitle: "基本情報" },
+    zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "视频", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", delete_acc: "删除帐户", welcome_empty: "欢迎来到 Hello Friends！", app_creator_greet: "Hello Friends 创建者", reg_title: "欢迎！", reg_subtitle: "完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话号码", reg_email: "电子邮件", reg_save: "保存资料", edit_title: "我的资料", edit_subtitle: "基本信息" }
 };
             let sysLang = navigator.language.slice(0, 2); let defLang = i18n[sysLang] ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             window.changeAppLanguage = function(langCode) { window.appLang = langCode; localStorage.setItem('hf_app_lang', window.appLang); window.applyTranslations(); window.closeDropdown(); };
@@ -1739,15 +1765,59 @@ window.participants = [aiBot];
                 if(document.getElementById('profession')?.classList.contains('active') && window.renderProfessionList) window.renderProfessionList(); 
                 if(!window.isGuest && window.initSignalListener && !window.signalListenerActive) { window.initSignalListener(); window.signalListenerActive = true; }
             });
+window.renderSidebar = function() {
+    const chatSidebar = document.getElementById('chat-sidebar'); 
+    if (!chatSidebar) return;
+    
+    let html = '';
 
-            window.renderSidebar = function() {
-                const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
-                chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
-                window.participants.filter(p => p.id !== 'ai').forEach(p => { let id1 = String(window.myProfileInfo.id); let id2 = String(p.id); let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; });
-            };
+    // 1. Global Room
+    html += `
+        <div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')">
+            <div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div>
+            <span class="chat-contact-name text-white">Global</span>
+        </div>
+    `;
 
+    // 2. AI Bot
+    html += `
+        <div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')">
+            <div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div>
+            <span class="chat-contact-name text-[#a29bfe]">AI Bot</span>
+        </div>
+    `;
+
+    // 3. My Notes (Мои заметки / Сохраненное)
+    let myRoomId = 'private_me_' + window.myProfileInfo.id;
+    html += `
+        <div class="chat-contact ${window.currentRoomId === myRoomId ? 'active-room' : ''}" onclick="window.switchChatRoom('me')">
+            <div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');">
+                <img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode || 'un'}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]">
+            </div>
+            <span class="chat-contact-name text-white">${window.myUsername}</span>
+        </div>
+    `;
+
+    // 4. Список контактов (Приватные чаты)
+    window.participants.filter(p => p.id !== 'ai').forEach(p => { 
+        let id1 = String(window.myProfileInfo.id); 
+        let id2 = String(p.id); 
+        let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
+        let contactName = (p.name || 'User').split(' ')[0];
+        
+        html += `
+            <div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')">
+                <div class="chat-contact-icon" style="background-image: url('${p.photo}');">
+                    <img src="https://flagcdn.com/w20/${p.flagCode || 'un'}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]">
+                </div>
+                <span class="chat-contact-name text-white">${contactName}</span>
+            </div>
+        `; 
+    });
+
+    // Вставляем собранный код один раз (быстро и без лагов)
+    chatSidebar.innerHTML = html;
+};
       window.switchChatRoom = function(targetId) {
             if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
             const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
@@ -1802,56 +1872,108 @@ window.participants = [aiBot];
 
             let isGeminiWaiting = false;
 
-    window.sendFirebaseMsg = async function() { 
-            let inputId = window.currentMicInputTarget || 'chat-input';
-            const inputField = document.getElementById(inputId);
-            if (!inputField) return;
-            
-            const rawText = inputField.value.trim(); if (!rawText) return; 
-            if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
-            inputField.value = ''; 
+window.sendFirebaseMsg = async function() { 
+    let inputId = window.currentMicInputTarget || 'chat-input';
+    const inputField = document.getElementById(inputId);
+    if (!inputField) return;
+    
+    const rawText = inputField.value.trim(); 
+    if (!rawText) return; 
 
-            // 1. Умная логика выбора ЯЗЫКА ОТПРАВКИ
-            let personalLang = localStorage.getItem('hf_personal_lang'); 
-            let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.getSmartLang(window.myProfileInfo);
-            
-            let textToShip = rawText; 
-            try { 
-                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
-                const data = await res.json(); 
-                if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
-            } catch (e) {} 
-            
-            let isVoice = inputId === 'voice-chat-input';
-            let isConf = inputId === 'conf-chat-input';
+    // Защита от спама: если ждем ответа от ИИ, блокируем отправку
+    if (window.currentRoomId === 'private_ai_bot' && window.isGeminiWaiting) { 
+        window.showToast("Google AI", "Please wait a moment...", "", ""); 
+        return; 
+    }
+    inputField.value = ''; 
 
-            // 2. ВАЖНО: Сохраняем в базу именно ТОТ язык, на котором отправлен текст (targetSendLang)
-            db.ref(window.currentRoomId).push({ 
-                userId: window.myProfileInfo.id, 
-                name: window.myUsername, 
-                text: textToShip, 
-                originalText: rawText, 
-                sessionId: window.mySessionId, 
-                timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                photo: window.myProfileInfo.photo, 
-                flag: window.myProfileInfo.flag, 
-                flagCode: window.myProfileInfo.flagCode, 
-                langCode: targetSendLang, // <--- ИСПРАВЛЕНО
-                isVoiceRoomMsg: isVoice, 
-                isConfMsg: isConf 
-            }); 
-            
-            const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
-            if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
+    // 1. Умная логика выбора ЯЗЫКА ОТПРАВКИ
+    let personalLang = localStorage.getItem('hf_personal_lang'); 
+    let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.getSmartLang(window.myProfileInfo);
+    
+    let textToShip = rawText; 
+    
+    // Автоперевод через Google Translate API (бесплатный gtx endpoint)
+    try { 
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
+        const data = await res.json(); 
+        if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
+    } catch (e) {
+        console.log("Translation API failed", e);
+    }
+    
+    let isVoice = inputId === 'voice-chat-input';
+    let isConf = inputId === 'conf-chat-input';
 
-            if (window.currentRoomId === 'private_ai_bot') { 
-                isGeminiWaiting = true; 
-                const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
-                fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) })
-                .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
-                .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
-            } 
-        };
+    // 2. Отправка сообщения в Firebase
+    db.ref(window.currentRoomId).push({ 
+        userId: window.myProfileInfo.id, 
+        name: window.myUsername, 
+        text: textToShip, 
+        originalText: rawText, 
+        sessionId: window.mySessionId, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP, 
+        photo: window.myProfileInfo.photo, 
+        flag: window.myProfileInfo.flag, 
+        flagCode: window.myProfileInfo.flagCode, 
+        langCode: targetSendLang, 
+        isVoiceRoomMsg: isVoice, 
+        isConfMsg: isConf 
+    }); 
+    
+    // Прокрутка чата вниз
+    const chatMsgs = document.getElementById('chat-messages'); 
+    if (chatMsgs) { 
+        setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
+    } 
+    
+    // Отправка Push-уведомления (если это приватный чат)
+    if (window.currentTargetUser && !isConf && !isVoice) { 
+        window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); 
+    }
+
+    // 3. Интеграция с ИИ (Gemini)
+    if (window.currentRoomId === 'private_ai_bot') { 
+        window.isGeminiWaiting = true; 
+        const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
+        
+        // Формируем безопасный запрос
+        const aiPrompt = "Reply in the exact same language: " + rawText;
+        const requestBody = {
+            contents: [{
+                parts: [{ text: aiPrompt }]
+            }]
+        };
+
+        fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(requestBody) // Безопасная упаковка
+        })
+        .then(res => res.json())
+        .then(data => { 
+            if (data.candidates && data.candidates[0].content) {
+                let replyText = data.candidates[0].content.parts[0].text; 
+                db.ref(window.currentRoomId).push({ 
+                    name: "AI Assistant", 
+                    text: replyText, 
+                    sessionId: "ai-bot-session", 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    userId: 'ai', 
+                    langCode: 'en', // AI пока отвечает без флага страны
+                    flag: '🤖', 
+                    photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' 
+                });
+            } else {
+                console.error("Gemini Error:", data);
+            }
+        })
+        .catch(err => console.error("Fetch Gemini error:", err))
+        .finally(() => { 
+            setTimeout(() => { window.isGeminiWaiting = false; }, 2000); 
+        });
+    } 
+};
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); } });
@@ -2131,11 +2253,81 @@ window.participants = [aiBot];
                 }
             };
             if (document.getElementById('conference-grid')) initConference(); 
-            
-            window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null;videoEl.src = window.myProfileInfo.video || 'https://www.w3schools.com/html/mov_bbb.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
-            window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
+  window.toggleMyCamera = async function(btn) { 
+    const videoEl = document.getElementById('my-live-video'); 
+    if (window.myVideoStream) { 
+        window.myVideoStream.getTracks().forEach(t => t.stop()); 
+        window.myVideoStream = null; 
+        if(videoEl) { 
+            videoEl.srcObject = null; 
+            videoEl.src = window.myProfileInfo.video || 'https://www.w3schools.com/html/mov_bbb.mp4'; 
+            videoEl.play(); 
+            videoEl.classList.remove('mirror-video'); 
+        } 
+        btn.classList.remove('bg-red-500'); 
+        btn.classList.add('bg-[#202c33]'); 
+        btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
+    } else { 
+        try { 
+            window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
+            if(videoEl) { 
+                videoEl.src = ""; 
+                videoEl.srcObject = window.myVideoStream; 
+                videoEl.muted = true; 
+                videoEl.play(); 
+                videoEl.classList.add('mirror-video'); 
+            } 
+            btn.classList.add('bg-red-500'); 
+            btn.classList.remove('bg-[#202c33]'); 
+            btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
+        } catch(e) { 
+            alert("Camera access denied!"); 
+        } 
+    } 
+};
 
-            window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
+window.isMeetMarqueeEnabled = true; 
+window.toggleMeetMarquee = function() { 
+    window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; 
+    document.querySelectorAll('.translation-bar').forEach(b => { 
+        b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; 
+    }); 
+};
+
+window.autoSetMicLang = function() { 
+    let phone = window.myProfileInfo.phone || ""; 
+    let flag = window.myProfileInfo.flagCode || "un"; 
+    let finalLang = 'en-US'; // По умолчанию
+
+    // Проверка по номеру телефона
+    if (phone.startsWith('+7')) finalLang = 'ru-RU'; 
+    else if (phone.startsWith('+994')) finalLang = 'az-AZ'; 
+    else if (phone.startsWith('+39')) finalLang = 'it-IT'; 
+    else if (phone.startsWith('+49')) finalLang = 'de-DE'; // Немецкий
+    else if (phone.startsWith('+33')) finalLang = 'fr-FR'; 
+    else if (phone.startsWith('+81')) finalLang = 'ja-JP'; 
+    else if (phone.startsWith('+34')) finalLang = 'es-ES'; 
+    else if (phone.startsWith('+86')) finalLang = 'zh-CN'; 
+    else if (phone.startsWith('+351')) finalLang = 'pt-PT'; 
+    else if (phone.startsWith('+90')) finalLang = 'tr-TR'; // Турецкий
+    else if (phone.startsWith('+971')) finalLang = 'ar-AE'; // Арабский (ОАЭ)
+    
+    // Проверка по флагу
+    else if (flag === 'ru') finalLang = 'ru-RU'; 
+    else if (flag === 'az') finalLang = 'az-AZ'; 
+    else if (flag === 'it') finalLang = 'it-IT'; 
+    else if (flag === 'de') finalLang = 'de-DE'; 
+    else if (flag === 'fr') finalLang = 'fr-FR'; 
+    else if (flag === 'jp') finalLang = 'ja-JP'; 
+    else if (flag === 'es') finalLang = 'es-ES'; 
+    else if (flag === 'cn') finalLang = 'zh-CN'; 
+    else if (flag === 'pt') finalLang = 'pt-PT'; 
+    else if (flag === 'tr') finalLang = 'tr-TR'; 
+    else if (flag === 'ae') finalLang = 'ar-AE'; 
+
+    let rMic = document.getElementById('plus-mic-lang'); 
+    if(rMic) rMic.value = finalLang; 
+};
 
             window.switchChatRoom('global');
             if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
