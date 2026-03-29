@@ -401,10 +401,13 @@ firebase.auth().onAuthStateChanged((user) => {
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
                     <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
-                    <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
+             <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
                         <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
                         <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
                         <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                        <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
+                        <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
+                        <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
                         <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
                         <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
                         <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
@@ -610,10 +613,13 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
-                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+                  <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ru-RU">🇷🇺 Русский</option>
                         <option value="az-AZ">🇦🇿 Azərbaycanca</option>
+                        <option value="de-DE">🇩🇪 Deutsch</option>
+                        <option value="tr-TR">🇹🇷 Türkçe</option>
+                        <option value="ar-AE">🇦🇪 العربية</option>
                         <option value="it-IT">🇮🇹 Italiano</option>
                         <option value="es-ES">🇪🇸 Español</option>
                         <option value="fr-FR">🇫🇷 Français</option>
@@ -708,9 +714,22 @@ firebase.auth().onAuthStateChanged((user) => {
                     <div class="flex items-center gap-3 mb-4 shrink-0">
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
                         <div class="relative w-full">
-                            <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
-                                <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
-                            </select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
+                         <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
+    <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option>
+    <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
+    <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
+    <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
+    <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
+    <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
+    <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
+    <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
+    <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option>
+    <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
+    <option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option>
+    <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
+    <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option>
+    <option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
+</select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i> 
                         </div>
                     </div>
                     
@@ -1254,7 +1273,7 @@ window.signOutGoogle = function() {
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
-        window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
+window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'de', label: '🇩🇪 Deutsch' }, { val: 'tr', label: '🇹🇷 Türkçe' }, { val: 'ar', label: '🇦🇪 العربية' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
 
         window.openPersonalLangModal = function() {
             window.closeDropdown(); let current = localStorage.getItem('hf_personal_lang') || 'auto'; let html = '';
@@ -1522,7 +1541,7 @@ window.openMyProfile = function() {
     reader.readAsDataURL(file);
 };
 
-     window.saveProfileData = function() {
+window.saveProfileData = function() {
     let nameVal = document.getElementById('edit-name').value.trim(); 
     let phoneVal = document.getElementById('edit-phone').value.trim();
     
@@ -1531,6 +1550,9 @@ window.openMyProfile = function() {
     
     const countrySel = document.getElementById('edit-country-select');
     const selectedOption = countrySel.options[countrySel.selectedIndex];
+
+    // УМНАЯ ЛОГИКА: Берем код языка из выбранной страны (для всех)
+    let smartLangCode = selectedOption ? selectedOption.getAttribute('data-lang') : 'en';
 
     let updatedP = { id: window.myProfileInfo.id,
         name: nameVal, 
@@ -1541,11 +1563,16 @@ window.openMyProfile = function() {
         profileLangs: document.getElementById('edit-profile-langs').value.trim(),
         profileBio: document.getElementById('edit-profile-bio').value.trim(),
         country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
-        flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
+        flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐',
+        langCode: smartLangCode // <--- Жестко пишем системный язык в профиль
     };
     
     window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
     window.myUsername = nameVal.split(' ')[0];
+    
+    // Сбрасываем ручной выбор языка, чтобы микрофон и чат сразу подхватили страну из профиля
+    localStorage.setItem('hf_personal_lang', 'auto');
+    if (window.autoSetMicLang) window.autoSetMicLang();
     
     try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
 
@@ -1570,7 +1597,6 @@ window.openMyProfile = function() {
         alert("Sync Error: " + err.message);
     });
 };
-
 window.handleCountryChange = function(sel) {
     const flagCode = sel.value;
     const opt = sel.options[sel.selectedIndex];
@@ -1635,7 +1661,20 @@ window.handleCountryChange = function(sel) {
             if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
             window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
             
-            const i18n = { en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info" } };
+   const i18n = { 
+                en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info" },
+                ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Видео", cv: "Резюме", social: "Соцсети", profile: "Мой профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт Данных", import: "Импорт Данных", delete_acc: "Удалить Аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", app_creator_greet: "Создатель Hello Friends", reg_title: "Добро пожаловать!", reg_subtitle: "Завершите регистрацию", reg_name: "Полное имя", reg_country: "Страна", reg_phone: "Номер телефона", reg_email: "Email", reg_save: "Сохранить", edit_title: "Мой профиль", edit_subtitle: "Основная информация" },
+                az: { menu: "Tənzimləmələr", chat: "Söhbət", voice: "Səs", meet: "Zəng", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Pul kisəsi", theme: "Mövzu", export: "Məlumatı İxrac et", import: "Məlumatı İdxal et", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", app_creator_greet: "Hello Friends Yaradıcısı", reg_title: "Xoş gəldiniz!", reg_subtitle: "Qeydiyyatı tamamlayın", reg_name: "Tam adınız", reg_country: "Ölkə", reg_phone: "Telefon nömrəsi", reg_email: "E-poçt", reg_save: "Yadda saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar" },
+                de: { menu: "Einstellungen", chat: "Chat", voice: "Stimme", meet: "Treffen", cv: "Lebenslauf", social: "Sozial", profile: "Mein Profil", wallet: "Brieftasche", theme: "Thema", export: "Daten Exportieren", import: "Daten Importieren", delete_acc: "Konto Löschen", welcome_empty: "Willkommen bei Hello Friends!", app_creator_greet: "Ersteller von Hello Friends", reg_title: "Willkommen!", reg_subtitle: "Registrierung abschließen", reg_name: "Vollständiger Name", reg_country: "Land", reg_phone: "Telefonnummer", reg_email: "E-Mail", reg_save: "Profil speichern", edit_title: "Mein Profil", edit_subtitle: "Grundlegende Info" },
+                tr: { menu: "Ayarlar", chat: "Sohbet", voice: "Ses", meet: "Toplantı", cv: "Özgeçmiş", social: "Sosyal", profile: "Profilim", wallet: "Cüzdan", theme: "Tema", export: "Veri Dışa Aktar", import: "Veri İçe Aktar", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends'e Hoş Geldiniz!", app_creator_greet: "Hello Friends Yaratıcısı", reg_title: "Hoş Geldiniz!", reg_subtitle: "Kaydı Tamamla", reg_name: "Ad Soyad", reg_country: "Ülke", reg_phone: "Telefon Numarası", reg_email: "E-posta", reg_save: "Profili Kaydet", edit_title: "Profilim", edit_subtitle: "Temel Bilgiler" },
+                ar: { menu: "الإعدادات", chat: "محادثة", voice: "صوت", meet: "لقاء", cv: "السيرة الذاتية", social: "اجتماعي", profile: "ملفي الشخصي", wallet: "محفظة", theme: "سمة", export: "تصدير البيانات", import: "استيراد البيانات", delete_acc: "حذف الحساب", welcome_empty: "مرحبًا بك في Hello Friends!", app_creator_greet: "منشئ Hello Friends", reg_title: "مرحباً!", reg_subtitle: "إكمال التسجيل", reg_name: "الاسم الكامل", reg_country: "البلد", reg_phone: "رقم الهاتف", reg_email: "البريد الإلكتروني", reg_save: "حفظ الملف الشخصي", edit_title: "ملفي الشخصي", edit_subtitle: "معلومات أساسية" },
+                it: { menu: "Impostazioni", chat: "Chat", voice: "Voce", meet: "Video", cv: "CV", social: "Social", profile: "Mio Profilo", wallet: "Portafoglio", theme: "Tema", export: "Esporta Dati", import: "Importa Dati", delete_acc: "Elimina Account", welcome_empty: "Benvenuto su Hello Friends!", app_creator_greet: "Creatore di Hello Friends", reg_title: "Benvenuto!", reg_subtitle: "Completa la registrazione", reg_name: "Nome completo", reg_country: "Paese", reg_phone: "Numero di telefono", reg_email: "Email", reg_save: "Salva profilo", edit_title: "Mio Profilo", edit_subtitle: "Informazioni di base" },
+                es: { menu: "Ajustes", chat: "Chat", voice: "Voz", meet: "Video", cv: "CV", social: "Social", profile: "Mi Perfil", wallet: "Billetera", theme: "Tema", export: "Exportar Datos", import: "Importar Datos", delete_acc: "Eliminar Cuenta", welcome_empty: "¡Bienvenido a Hello Friends!", app_creator_greet: "Creador de Hello Friends", reg_title: "¡Bienvenido!", reg_subtitle: "Completa el registro", reg_name: "Nombre completo", reg_country: "País", reg_phone: "Número de teléfono", reg_email: "Correo", reg_save: "Guardar", edit_title: "Mi Perfil", edit_subtitle: "Información básica" },
+                fr: { menu: "Paramètres", chat: "Chat", voice: "Voix", meet: "Vidéo", cv: "CV", social: "Social", profile: "Mon Profil", wallet: "Portefeuille", theme: "Thème", export: "Exporter", import: "Importer", delete_acc: "Supprimer le compte", welcome_empty: "Bienvenue sur Hello Friends !", app_creator_greet: "Créateur de Hello Friends", reg_title: "Bienvenue !", reg_subtitle: "Terminer l'inscription", reg_name: "Nom complet", reg_country: "Pays", reg_phone: "Numéro de téléphone", reg_email: "E-mail", reg_save: "Enregistrer", edit_title: "Mon Profil", edit_subtitle: "Informations de base" },
+                pt: { menu: "Configurações", chat: "Chat", voice: "Voz", meet: "Vídeo", cv: "CV", social: "Social", profile: "Meu Perfil", wallet: "Carteira", theme: "Tema", export: "Exportar Dados", import: "Importar Dados", delete_acc: "Excluir Conta", welcome_empty: "Bem-vindo ao Hello Friends!", app_creator_greet: "Criador do Hello Friends", reg_title: "Bem-vindo!", reg_subtitle: "Concluir registro", reg_name: "Nome completo", reg_country: "País", reg_phone: "Número de telefone", reg_email: "E-mail", reg_save: "Salvar perfil", edit_title: "Meu Perfil", edit_subtitle: "Informações básicas" },
+                ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "ビデオ", cv: "履歴書", social: "ソーシャル", profile: "プロフィール", wallet: "ウォレット", theme: "テーマ", export: "データ出力", import: "データ入力", delete_acc: "アカウント削除", welcome_empty: "Hello Friendsへようこそ！", app_creator_greet: "Hello Friendsの作成者", reg_title: "ようこそ！", reg_subtitle: "登録を完了する", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_save: "保存", edit_title: "プロフィール", edit_subtitle: "基本情報" },
+                zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "视频", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出数据", import: "导入数据", delete_acc: "删除帐户", welcome_empty: "欢迎来到 Hello Friends！", app_creator_greet: "Hello Friends 创建者", reg_title: "欢迎！", reg_subtitle: "完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话号码", reg_email: "电子邮件", reg_save: "保存资料", edit_title: "我的资料", edit_subtitle: "基本信息" }
+            };
             let sysLang = navigator.language.slice(0, 2); let defLang = i18n[sysLang] ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             window.changeAppLanguage = function(langCode) { window.appLang = langCode; localStorage.setItem('hf_app_lang', window.appLang); window.applyTranslations(); window.closeDropdown(); };
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
@@ -1790,7 +1829,8 @@ window.participants = [aiBot];
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
                 inputField.value = ''; 
 
-                let personalLang = localStorage.getItem('hf_personal_lang'); let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.myProfileInfo.langCode;
+             let personalLang = localStorage.getItem('hf_personal_lang'); 
+                let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.getSmartLang(window.myProfileInfo);
                 let textToShip = rawText; 
                 try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {} 
                 
@@ -1854,27 +1894,36 @@ window.participants = [aiBot];
                 msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
                 messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
 
-                // ==========================================
+        // ==========================================
                 // БЛОК 1: ГЛАВНЫЙ ЧАТ
                 // ==========================================
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
                     let targetUsers = []; 
-                    let myReadLang = localStorage.getItem('hf_personal_lang') || window.myProfileInfo.langCode;
+                    let myPref = localStorage.getItem('hf_personal_lang');
+                    // УМНАЯ ЛОГИКА: Вычисляем язык чтения по моему флагу/телефону
+                    let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
                     
                     if (window.currentRoomId === 'global' && !isAI) { 
                         window.participants.filter(part => part.id !== 'ai').forEach(member => { 
-                            let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : member.langCode; 
-                            if (member.id !== data.userId && memberReadLang !== 'un') { 
+                            // УМНАЯ ЛОГИКА: Вычисляем язык для каждого участника глобального чата
+                            let memberReadLang = (member.id === window.myProfileInfo.id) ? myReadLang : window.getSmartLang(member); 
+                            if (member.id !== data.userId && memberReadLang && memberReadLang !== 'un') { 
                                 targetUsers.push({ code: memberReadLang, flag: member.flag, photo: member.photo }); 
                             } 
                         }); 
                     } else if (window.currentRoomId.startsWith('private_') && !isAI) { 
                         if (isMe) { 
-                            if (window.currentTargetUser && window.currentTargetUser.langCode !== myReadLang) {
-                                targetUsers.push({ code: window.currentTargetUser.langCode, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                            if (window.currentTargetUser) {
+                                // УМНАЯ ЛОГИКА: Вычисляем язык собеседника по его флагу/телефону
+                                let targetLang = window.getSmartLang(window.currentTargetUser);
+                                if (targetLang !== myReadLang) {
+                                    targetUsers.push({ code: targetLang, flag: window.currentTargetUser.flag, photo: window.currentTargetUser.photo }); 
+                                }
                             }
                         } else { 
-                            if (data.langCode && data.langCode !== myReadLang) {
+                            // УМНАЯ ЛОГИКА: Вычисляем язык отправителя
+                            let senderLang = window.getSmartLang({ phone: data.phone, flagCode: data.flagCode, langCode: data.langCode });
+                            if (senderLang !== myReadLang) {
                                 targetUsers.push({ code: myReadLang, flag: window.myProfileInfo.flag, photo: window.myProfileInfo.photo }); 
                             }
                         } 
