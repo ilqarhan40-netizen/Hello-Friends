@@ -401,10 +401,13 @@ firebase.auth().onAuthStateChanged((user) => {
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
                     <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
-                    <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
+             <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
                         <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
                         <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
                         <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                        <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
+                        <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
+                        <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
                         <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
                         <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
                         <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
@@ -708,9 +711,22 @@ firebase.auth().onAuthStateChanged((user) => {
                     <div class="flex items-center gap-3 mb-4 shrink-0">
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
                         <div class="relative w-full">
-                            <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
-                                <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
-                            </select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
+                         <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
+    <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option>
+    <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
+    <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
+    <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
+    <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
+    <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
+    <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
+    <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
+    <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option>
+    <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
+    <option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option>
+    <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
+    <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option>
+    <option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
+</select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i> 
                         </div>
                     </div>
                     
@@ -1522,7 +1538,7 @@ window.openMyProfile = function() {
     reader.readAsDataURL(file);
 };
 
-     window.saveProfileData = function() {
+ window.saveProfileData = function() {
     let nameVal = document.getElementById('edit-name').value.trim(); 
     let phoneVal = document.getElementById('edit-phone').value.trim();
     
@@ -1531,6 +1547,9 @@ window.openMyProfile = function() {
     
     const countrySel = document.getElementById('edit-country-select');
     const selectedOption = countrySel.options[countrySel.selectedIndex];
+
+    // УМНАЯ ЛОГИКА: Берем код языка из выбранной страны (работает для всех пользователей)
+    let smartLangCode = selectedOption ? selectedOption.getAttribute('data-lang') : 'en';
 
     let updatedP = { id: window.myProfileInfo.id,
         name: nameVal, 
@@ -1541,11 +1560,16 @@ window.openMyProfile = function() {
         profileLangs: document.getElementById('edit-profile-langs').value.trim(),
         profileBio: document.getElementById('edit-profile-bio').value.trim(),
         country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
-        flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐'
+        flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐',
+        langCode: smartLangCode // <--- Жестко пишем системный язык в профиль
     };
     
     window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
     window.myUsername = nameVal.split(' ')[0];
+    
+    // Сбрасываем ручной выбор языка, чтобы микрофон и чат сразу подхватили страну из профиля
+    localStorage.setItem('hf_personal_lang', 'auto');
+    if (window.autoSetMicLang) window.autoSetMicLang();
     
     try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
 
@@ -1570,7 +1594,6 @@ window.openMyProfile = function() {
         alert("Sync Error: " + err.message);
     });
 };
-
 window.handleCountryChange = function(sel) {
     const flagCode = sel.value;
     const opt = sel.options[sel.selectedIndex];
