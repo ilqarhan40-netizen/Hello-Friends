@@ -1,6 +1,5 @@
-const CACHE_NAME = 'hf-chat-v2'; 
+const CACHE_NAME = 'hf-chat-v3'; // ВАЖНО: Сменили v2 на v3! Это даст команду браузерам обновиться.
 
-// Добавили точки! Теперь пути относительные 📁
 const urlsToCache = [
   './',
   './index.html',
@@ -9,7 +8,7 @@ const urlsToCache = [
 
 // 1. Установка Service Worker и кэширование файлов
 self.addEventListener('install', event => {
-  self.skipWaiting(); 
+  self.skipWaiting(); // Заставляет воркер активироваться немедленно
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -18,14 +17,14 @@ self.addEventListener('install', event => {
   );
 });
 
-// 2. Активация и УДАЛЕНИЕ старого кэша
+// 2. Активация и бронебойное УДАЛЕНИЕ старого кэша
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Старый кэш удален:', cacheName);
+            console.log('Старый зомби-кэш убит:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -34,24 +33,33 @@ self.addEventListener('activate', event => {
   );
 });
 
-// 3. Отдача файлов из сети или кэша
+// 3. БРОНЕБОЙНАЯ ОТДАЧА ФАЙЛОВ (Network-First)
 self.addEventListener('fetch', event => {
-  // Игнорируем всё, кроме обычных GET-запросов (не трогаем Firebase и WebSockets)
-  if (event.request.method !== 'GET') {
-      return; 
-  }
+  if (event.request.method !== 'GET') return; 
 
-  // Игнорируем запросы к самому Firebase API, чтобы чат не вис
+  // Игнорируем запросы к Firebase API, чтобы чат летал в реальном времени
   if (event.request.url.includes('firebaseio.com') || event.request.url.includes('googleapis.com')) {
       return;
   }
 
   event.respondWith(
-    caches.match(event.request)
+    // СНАЧАЛА идем в интернет за свежим кодом (например, на GitHub)
+    fetch(event.request)
       .then(response => {
-        return response || fetch(event.request).catch(() => {
-             // Тихий fallback на случай отсутствия сети
-             console.log('Оффлайн: ресурс недоступен', event.request.url);
+        // Если скачали успешно - параллельно обновляем кэш
+        const clonedResponse = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, clonedResponse);
+        });
+        return response; // Отдаем свежую версию юзеру
+      })
+      .catch(() => {
+        // ЕСЛИ ИНТЕРНЕТА НЕТ (оффлайн) - только тогда берем из кэша
+        return caches.match(event.request).then(cachedResponse => {
+            if (cachedResponse) {
+                console.log('Оффлайн режим: загружено из кэша', event.request.url);
+                return cachedResponse;
+            }
         });
       })
   );
