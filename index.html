@@ -172,10 +172,14 @@
     </style>
     
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
+  <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({ appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1" });
+        await OneSignal.init({ 
+            appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+            serviceWorkerPath: "/Hello-Friends/OneSignalSDKWorker.js",
+            serviceWorkerParam: { scope: "/Hello-Friends/" }
+        });
       });
     </script>
 </head>
@@ -2117,20 +2121,19 @@ let activeUserId = null;
             if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
          window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
-  <script>
+ <script>
       if ('serviceWorker' in navigator) {
         document.addEventListener('DOMContentLoaded', () => {
           navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            // Убиваем старый кэш, если он есть
-            if (registrations.length > 0 && !localStorage.getItem('hf_force_update_v1')) {
+            if (registrations.length > 0 && !localStorage.getItem('hf_force_update_v2')) {
               for (let registration of registrations) {
                 registration.unregister(); 
               }
-              try { localStorage.setItem('hf_force_update_v1', 'true'); } catch(e){}
+              try { localStorage.setItem('hf_force_update_v2', 'true'); } catch(e){}
               window.location.reload(true); 
             } else {
-              // Ставим свежий воркер
-              navigator.serviceWorker.register('./sw.js?v=' + new Date().getTime())
+              // АБСОЛЮТНЫЙ ПУТЬ: теперь он точно найдет sw.js
+              navigator.serviceWorker.register('/Hello-Friends/sw.js?v=' + new Date().getTime())
                 .catch(err => console.error('Ошибка SW:', err));
             }
           });
