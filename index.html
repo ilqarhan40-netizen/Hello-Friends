@@ -613,10 +613,13 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
-                    <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+                  <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ru-RU">🇷🇺 Русский</option>
                         <option value="az-AZ">🇦🇿 Azərbaycanca</option>
+                        <option value="de-DE">🇩🇪 Deutsch</option>
+                        <option value="tr-TR">🇹🇷 Türkçe</option>
+                        <option value="ar-AE">🇦🇪 العربية</option>
                         <option value="it-IT">🇮🇹 Italiano</option>
                         <option value="es-ES">🇪🇸 Español</option>
                         <option value="fr-FR">🇫🇷 Français</option>
@@ -1538,7 +1541,7 @@ window.openMyProfile = function() {
     reader.readAsDataURL(file);
 };
 
- window.saveProfileData = function() {
+window.saveProfileData = function() {
     let nameVal = document.getElementById('edit-name').value.trim(); 
     let phoneVal = document.getElementById('edit-phone').value.trim();
     
@@ -1548,7 +1551,7 @@ window.openMyProfile = function() {
     const countrySel = document.getElementById('edit-country-select');
     const selectedOption = countrySel.options[countrySel.selectedIndex];
 
-    // УМНАЯ ЛОГИКА: Берем код языка из выбранной страны (работает для всех пользователей)
+    // УМНАЯ ЛОГИКА: Берем код языка из выбранной страны (для всех)
     let smartLangCode = selectedOption ? selectedOption.getAttribute('data-lang') : 'en';
 
     let updatedP = { id: window.myProfileInfo.id,
