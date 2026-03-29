@@ -1608,21 +1608,23 @@
                     }
                 });
             };
-
-            let activeUserId = localStorage.getItem('hf_active_user');
+let activeUserId = null;
+            let cachedProfile = null;
+            
+            try {
+                activeUserId = localStorage.getItem('hf_active_user');
+                if (activeUserId) {
+                    const storedData = localStorage.getItem('hf_custom_' + activeUserId);
+                    if (storedData) cachedProfile = JSON.parse(storedData);
+                }
+            } catch (e) {
+                console.warn("Браузер заблокировал хранилище. Работаем в гостевом режиме.");
+            }
+            
             window.isGuest = !activeUserId; 
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
-
-            let cachedProfile = null;
-            if (activeUserId) {
-                try {
-                    const storedData = localStorage.getItem('hf_custom_' + activeUserId);
-                    if (storedData) cachedProfile = JSON.parse(storedData);
-                } catch(e) { console.error("Ошибка чтения кэша", e); }
-            }
-
             window.myProfileInfo = cachedProfile || { 
                 id: activeUserId || 'guest', name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', flag: '🌐', flagCode: 'un', langCode: 'en' 
             };
@@ -2115,44 +2117,25 @@
             if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
          window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
-    </script>
-
-    <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
-        <div class="app-modal-content">
-            <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div>
-            <div class="sheet-handle" onclick="window.closeAdminModal()"></div>
-            
-            <h2 class="text-xl font-bold mb-6 text-white text-center mt-2">
-                <i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel
-            </h2>
-            
-            <div class="flex flex-col gap-3">
-                <label class="block text-[0.65rem] text-[#a29bfe] uppercase mb-1 ml-1 font-bold">Select Target User</label>
-                <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#a29bfe] transition h-12 mb-4 relative">
-                    <select id="admin-user-select" class="bg-transparent text-[#e9edef] w-full h-full pl-4 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
-                        </select>
-                    <i class="fa-solid fa-chevron-down text-[#8696a0] absolute right-4 text-[0.6rem] z-0 pointer-events-none"></i>
-                </div>
-                
-                <button class="bg-[#a29bfe] text-[#111b21] rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(162,155,254,0.4)] relative z-20" onclick="window.adminLogin()">
-                    <i class="fa-solid fa-right-to-bracket mr-2"></i> Login as User
-                </button>
-                
-                <button class="bg-red-500 text-white rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.4)] mt-2 relative z-20" onclick="window.adminDeleteUser(this)">
-                    <i class="fa-solid fa-skull mr-2"></i> Eradicate User
-                </button>
-            </div>
-        </div>
-    </div>
- <script>
+  <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker зарегистрирован!', reg.scope))
-            .catch(err => console.error('Ошибка Service Worker:', err));
+        document.addEventListener('DOMContentLoaded', () => {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            // Убиваем старый кэш, если он есть
+            if (registrations.length > 0 && !localStorage.getItem('hf_force_update_v1')) {
+              for (let registration of registrations) {
+                registration.unregister(); 
+              }
+              try { localStorage.setItem('hf_force_update_v1', 'true'); } catch(e){}
+              window.location.reload(true); 
+            } else {
+              // Ставим свежий воркер
+              navigator.serviceWorker.register('./sw.js?v=' + new Date().getTime())
+                .catch(err => console.error('Ошибка SW:', err));
+            }
+          });
         });
       }
     </script>
-
 </body>
 </html>
