@@ -1822,17 +1822,16 @@ window.participants = [aiBot];
             });
         };
 
-   window.switchChatRoom = function(targetId) {
+window.switchChatRoom = function(targetId) {
             if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
             const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
             window.currentTargetUser = null; let headerTitle = "Global Chat"; let headerRoomId = "global";
             
-            // --- ИСПРАВЛЕНИЕ: Учим функцию понимать видео-комнату ---
+            // Защита от смешения чатов (изоляция видео-комнаты)
             if (targetId === 'video_room_global') {
                 window.currentRoomId = "video_room_global";
                 headerTitle = "Conference"; headerRoomId = window.currentRoomId;
             }
-            // --------------------------------------------------------
             else if (targetId === 'global') { 
                 window.currentRoomId = "global"; 
                 window.showToast("Global Chat", "🌍 International Public Room", "", ""); 
@@ -1869,11 +1868,6 @@ window.participants = [aiBot];
                 } 
             }
             
-            const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle; 
-            const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
-            window.renderSidebar(); 
-            window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
-        };
             const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle; 
             const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
             window.renderSidebar(); 
