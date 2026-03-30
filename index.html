@@ -359,7 +359,7 @@ firebase.auth().onAuthStateChanged((user) => {
             </div>
         </div>
 
-        <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white p-3 rounded-2xl shadow-2xl z-[5000] flex flex-col gap-2 w-[92%] opacity-0 pointer-events-none" style="top: -150px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+       <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white p-3 rounded-2xl shadow-2xl z-[10005] flex flex-col gap-2 w-[92%] opacity-0 pointer-events-none" style="top: -150px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
             <div class="flex items-center gap-3">
                 <div id="toast-icon-wrap" class="w-12 h-12 rounded-full bg-[#005c4b] flex items-center justify-center text-xl shrink-0 hidden">🌍</div>
                 <img id="toast-img" src="" class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[#00a884] shadow-md">
@@ -1822,12 +1822,18 @@ window.participants = [aiBot];
             });
         };
 
-      window.switchChatRoom = function(targetId) {
+   window.switchChatRoom = function(targetId) {
             if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
             const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
             window.currentTargetUser = null; let headerTitle = "Global Chat"; let headerRoomId = "global";
             
-            if (targetId === 'global') { 
+            // --- ИСПРАВЛЕНИЕ: Учим функцию понимать видео-комнату ---
+            if (targetId === 'video_room_global') {
+                window.currentRoomId = "video_room_global";
+                headerTitle = "Conference"; headerRoomId = window.currentRoomId;
+            }
+            // --------------------------------------------------------
+            else if (targetId === 'global') { 
                 window.currentRoomId = "global"; 
                 window.showToast("Global Chat", "🌍 International Public Room", "", ""); 
             }
@@ -1837,15 +1843,11 @@ window.participants = [aiBot];
             }
             else if (targetId === 'me') { 
                 window.currentRoomId = "private_me_" + window.myProfileInfo.id; headerTitle = "My Notes"; headerRoomId = window.currentRoomId; 
-                
-                // Берем только твои данные
                 let myBio = window.myProfileInfo.profileBio || ""; 
                 let myLangs = window.myProfileInfo.profileLangs ? `🗣️ ${window.myProfileInfo.profileLangs}<br>` : "";
                 let myEmail = window.myProfileInfo.email ? `✉️ ${window.myProfileInfo.email}<br>` : "";
                 let myPhone = window.myProfileInfo.phone || ""; 
-                
                 let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${myBio}</span>` : ""}`; 
-                
                 window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, myPhone); 
             }
             else { 
@@ -1856,7 +1858,6 @@ window.participants = [aiBot];
                     window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                     headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId; 
                     
-                    // Берем только данные другого пользователя
                     let targetBio = targetUser.profileBio || ""; 
                     let targetLangs = targetUser.profileLangs ? `🗣️ ${targetUser.profileLangs}<br>` : "";
                     let targetEmail = targetUser.email ? `✉️ ${targetUser.email}<br>` : "";
@@ -1868,6 +1869,11 @@ window.participants = [aiBot];
                 } 
             }
             
+            const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle; 
+            const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
+            window.renderSidebar(); 
+            window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
+        };
             const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle; 
             const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
             window.renderSidebar(); 
