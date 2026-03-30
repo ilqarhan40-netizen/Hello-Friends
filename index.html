@@ -1290,21 +1290,20 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
         window.openAvatarModal = function(id, fromSidebar = false) {
             window.closeDropdown(); 
 
-            // 1. Жмем на себя -> Языковая панель
+            // Клик на себя -> Языки
             if (id === 'me' || (window.myProfileInfo && id === window.myProfileInfo.id)) {
                 if (window.openPersonalLangModal) window.openPersonalLangModal();
                 return;
             }
 
-            // 2. БЛОКИРОВКА В ПРИВАТЕ: Если мы в приватном чате и клик НЕ из левой колонки - блокируем меню
-            if (!fromSidebar && window.currentIndex === 0 && window.currentRoomId && window.currentRoomId.startsWith('private_')) {
+            // БЛОКИРОВКА В ПРИВАТЕ: Если мы в приватном чате и клик НЕ из левой колонки - блокируем меню
+            if (!fromSidebar && window.currentRoomId !== 'global') {
                 return; 
             }
 
             let p = window.participants.find(part => part.id === id); 
             if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
             
-            // 3. Вызываем верхний зеленый Toast
             if (id !== 'ai') {
                 let targetLangs = p.profileLangs || p.langCode || "Auto";
                 let targetEmail = p.email ? `✉️ ${p.email}<br>` : "";
@@ -1313,7 +1312,6 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
                 window.showToast((p.name || 'User').split(' ')[0], infoHtml, p.photo, targetPhone);
             }
 
-            // 4. Окно с фото и 5 модулями-маршрутизаторами
             const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
             const modalName = document.getElementById('modal-name'); if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; 
             let idSpan = document.getElementById('modal-id'); if(!idSpan) { idSpan = document.createElement('span'); idSpan.id = 'modal-id'; idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block'; if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling); }
@@ -1770,12 +1768,20 @@ window.participants = [aiBot];
                 if(!window.isGuest && window.initSignalListener && !window.signalListenerActive) { window.initSignalListener(); window.signalListenerActive = true; }
             });
 
-            window.renderSidebar = function() {
+       window.renderSidebar = function() {
                 const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
+                
                 chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
                 chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
-                window.participants.filter(p => p.id !== 'ai').forEach(p => { let id1 = String(window.myProfileInfo.id); let id2 = String(p.id); let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; });
+                
+                window.participants.filter(p => p.id !== 'ai').forEach(p => { 
+                    let id1 = String(window.myProfileInfo.id); 
+                    let id2 = String(p.id); 
+                    let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
+                    
+                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.openAvatarModal('${p.id}', true)"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; 
+                });
             };
 
       window.switchChatRoom = function(targetId) {
