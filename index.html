@@ -97,7 +97,7 @@
         .rhombus-menu.active { display: grid; animation: scaleIn 0.2s;}
         .action-icon { width: 44px; height: 44px; background-color: var(--wa-border); color: var(--wa-text); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 1.1rem;}
         .action-icon:hover { background-color: var(--wa-green); color: #111b21; }
-        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.80); display: none; align-items: flex-end; justify-content: center; z-index: 9999; }
+         .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.80); display: none; align-items: flex-end; justify-content: center; z-index: 9999; }
         .app-modal.active { display: flex !important; animation: fadeInBg 0.3s; }
         .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; display: flex; flex-direction: column; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .app-modal.active .app-modal-content { transform: translateY(0); }
@@ -1688,7 +1688,7 @@ window.handleCountryChange = function(sel) {
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
             window.applyTranslations();
 
-     window.switchTab = function(index) { 
+    window.switchTab = function(index) { 
             const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
             const pages = document.querySelectorAll('.page-content'); 
             const emptyState = document.getElementById('empty-state-screen');
@@ -1708,11 +1708,18 @@ window.handleCountryChange = function(sel) {
             pages.forEach(p => p.classList.remove('active')); 
             navLinks.forEach(l => l.classList.remove('active')); 
             
-            // ИЗОЛЯЦИЯ: Отделяем видео-комнату от общего чата
+            // ЖЕЛЕЗОБЕТОННАЯ ИЗОЛЯЦИЯ КОМНАТ
             if (index === 2) { 
-                window.currentRoomId = 'video_room_global'; 
-                if(window.activeChatListener) db.ref().off(); 
-                window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
+                // Уходим в ВИДЕО -> запоминаем текущий чат и жестко переключаем базу на видео
+                if (window.currentRoomId !== 'video_room_global') {
+                    window.lastSavedChatRoom = window.currentRoomId; 
+                }
+                if (window.switchChatRoom) window.switchChatRoom('video_room_global');
+            } else if (index === 0 || index === 1) {
+                // Возвращаемся в ЧАТ или ГОЛОС -> возвращаем ту базу, где были (или Global)
+                if (window.currentRoomId === 'video_room_global') {
+                    if (window.switchChatRoom) window.switchChatRoom(window.lastSavedChatRoom || 'global');
+                }
             }
             
             const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
@@ -1792,21 +1799,28 @@ window.participants = [aiBot];
             });
 
    window.renderSidebar = function() {
-                const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
+            const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
+            
+            // --- АВТООБНОВЛЕНИЕ ФОТО НА ЭКРАНЕ ПРИВЕТСТВИЯ ---
+            const welcomeImg = document.getElementById('welcome-user-photo');
+            if (welcomeImg && window.myProfileInfo && window.myProfileInfo.photo) {
+                welcomeImg.src = window.myProfileInfo.photo;
+            }
+            // ------------------------------------------------
+            
+            chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
+            chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
+            chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
+            
+            window.participants.filter(p => p.id !== 'ai').forEach(p => { 
+                let id1 = String(window.myProfileInfo.id); 
+                let id2 = String(p.id); 
+                let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                 
-                chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
-                
-                window.participants.filter(p => p.id !== 'ai').forEach(p => { 
-                    let id1 = String(window.myProfileInfo.id); 
-                    let id2 = String(p.id); 
-                    let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
-                    
-                    // ДОБАВЛЕНО true - чтобы меню 5 кнопок открывалось из сайдбара
-                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.openAvatarModal('${p.id}', true)"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; 
-                });
-            };
+                // ДОБАВЛЕНО true - чтобы меню 5 кнопок открывалось из сайдбара
+                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.openAvatarModal('${p.id}', true)"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; 
+            });
+        };
 
       window.switchChatRoom = function(targetId) {
             if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
