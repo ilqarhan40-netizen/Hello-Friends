@@ -1316,8 +1316,9 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
             
             const actionButtons = document.getElementById('modal-action-buttons');
             if(actionButtons) {
-                if (id === 'ai') { actionButtons.style.display = 'none'; } 
-                else if (id === 'me') { 
+                if (id === 'ai') { 
+                    actionButtons.style.display = 'none'; 
+                } else if (id === 'me') { 
                     actionButtons.innerHTML = `<button onclick="window.closeAvatarModal(); window.openMyProfile();" class="btn-primary w-full shadow-lg"><i class="fa-solid fa-user mr-1"></i> Edit Profile Info</button>`; 
                     actionButtons.style.display = 'block'; 
                 } else {
@@ -1338,7 +1339,6 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
             }
             document.getElementById('avatar-modal').classList.add('active');
         };
-            
             const actionButtons = document.getElementById('modal-action-buttons');
             if(actionButtons) {
                 if (id === 'ai') { actionButtons.style.display = 'none'; } 
