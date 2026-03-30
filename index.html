@@ -1287,17 +1287,17 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
         window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
-        window.openAvatarModal = function(id) {
+        window.openAvatarModal = function(id, fromSidebar = false) {
             window.closeDropdown(); 
 
-            // 1. Если кликаем на себя - открываем выбор языка и прерываем функцию
+            // 1. Жмем на себя -> Языковая панель
             if (id === 'me' || (window.myProfileInfo && id === window.myProfileInfo.id)) {
                 if (window.openPersonalLangModal) window.openPersonalLangModal();
                 return;
             }
 
-            // 2. Если мы НЕ в глобальном чате - прерываем функцию (панель не вылезет)
-            if (window.currentRoomId !== 'global') {
+            // 2. БЛОКИРОВКА В ПРИВАТЕ: Если мы в приватном чате и клик НЕ из левой колонки - блокируем меню
+            if (!fromSidebar && window.currentIndex === 0 && window.currentRoomId && window.currentRoomId.startsWith('private_')) {
                 return; 
             }
 
@@ -1313,14 +1313,13 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
                 window.showToast((p.name || 'User').split(' ')[0], infoHtml, p.photo, targetPhone);
             }
 
-            // 4. Заполняем компактное нижнее окно с кнопками
+            // 4. Окно с фото и 5 модулями-маршрутизаторами
             const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
             const modalName = document.getElementById('modal-name'); if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; 
             let idSpan = document.getElementById('modal-id'); if(!idSpan) { idSpan = document.createElement('span'); idSpan.id = 'modal-id'; idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block'; if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling); }
             if(idSpan) idSpan.innerText = "ID: " + p.id;
             const modalProf = document.getElementById('modal-prof'); if(modalProf) modalProf.innerText = p.profession || 'User';
 
-            // Очищаем старую анкету
             const modalDesc = document.getElementById('modal-desc');
             if(modalDesc) {
                 modalDesc.innerHTML = ''; 
@@ -1333,13 +1332,13 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
                 } else {
                     actionButtons.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 w-full mt-1">
-                        <button onclick="window.closeAvatarModal(); setTimeout(() => { window.switchTab(0); window.switchChatRoom('${p.id}'); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat</button>
+                        <button onclick="window.closeAvatarModal(); setTimeout(() => { if(window.currentIndex === 0) window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}'); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat</button>
                         
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { window.switchTab(1); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { if(window.currentIndex === 1) window.currentIndex = null; window.switchTab(1); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg</button>
                         
-                        <button onclick="window.closeAvatarModal(); window.startDirectAppCall('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { if(window.currentIndex === 1) window.currentIndex = null; window.startInAppCall(); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio</button>
                         
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { window.switchTab(2); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { if(window.currentIndex === 2) window.currentIndex = null; window.switchTab(2); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video</button>
                         
                         <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call</button>
                     </div>`; 
