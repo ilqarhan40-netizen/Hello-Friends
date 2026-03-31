@@ -1905,70 +1905,63 @@ window.switchChatRoom = function(targetId) {
 
             let isGeminiWaiting = false;
 
-         window.sendFirebaseMsg = async function() { 
-                let inputId = window.currentMicInputTarget || 'chat-input';
-                const inputField = document.getElementById(inputId);
-                if (!inputField) return;
-                
-                const rawText = inputField.value.trim(); 
-                if (!rawText) return; 
+      window.sendFirebaseMsg = async function() { 
+    let inputId = window.currentMicInputTarget || 'chat-input';
+    const inputField = document.getElementById(inputId);
+    if (!inputField) return;
+    
+    const rawText = inputField.value.trim(); 
+    if (!rawText) return; 
 
-                if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { 
-                    window.showToast("Google AI", "Please wait a moment...", "", ""); 
-                    return; 
-                }
-                
-                inputField.value = ''; 
+    if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) {
+        window.showToast("Google AI", "Please wait...", "", "");
+        return;
+    }
+    
+    inputField.value = ''; 
 
-                // УМНАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА ОТПРАВКИ
-                let personalLang = localStorage.getItem('hf_personal_lang'); 
-                let activeLang = (personalLang && personalLang !== 'auto') 
-                    ? personalLang 
-                    : window.getSmartLang(window.myProfileInfo);
-                
-                let isVoice = inputId === 'voice-chat-input';
-                let isConf = inputId === 'conf-chat-input';
+    // 1. АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ ПО ФЛАГУ И ПРЕФИКСУ (Как ты и просил)
+    let activeLang = window.getSmartLang(window.myProfileInfo);
+    
+    let isVoice = inputId === 'voice-chat-input';
+    let isConf = inputId === 'conf-chat-input';
 
-                // ГЛАВНОЕ ИСПРАВЛЕНИЕ: Отправляем чистый текст без предварительного перевода
-                db.ref(window.currentRoomId).push({ 
-                    userId: window.myProfileInfo.id, 
-                    name: window.myUsername, 
-                    text: rawText, // Раньше тут был textToShip (перевод), теперь чистый оригинал
-                    originalText: rawText, 
-                    sessionId: window.mySessionId, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                    photo: window.myProfileInfo.photo, 
-                    flag: window.myProfileInfo.flag, 
-                    flagCode: window.myProfileInfo.flagCode, 
-                    langCode: activeLang, // Метка активного языка отправителя
-                    isVoiceRoomMsg: isVoice, 
-                    isConfMsg: isConf 
-                }); 
-                
-                const chatMsgs = document.getElementById('chat-messages'); 
-                if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
+    // 2. ОТПРАВЛЯЕМ ОРИГИНАЛ (Текст с любой клавиатуры уходит как есть)
+    db.ref(window.currentRoomId).push({ 
+        userId: window.myProfileInfo.id, 
+        name: window.myUsername, 
+        text: rawText,          // Чистый оригинал
+        originalText: rawText,  // Чистый оригинал
+        sessionId: window.mySessionId, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP, 
+        photo: window.myProfileInfo.photo, 
+        flag: window.myProfileInfo.flag, 
+        flagCode: window.myProfileInfo.flagCode, 
+        langCode: activeLang,   // Система сама поняла, что ты из AZ (по префиксу +994)
+        isVoiceRoomMsg: isVoice, 
+        isConfMsg: isConf 
+    }); 
+    
+    const chatMsgs = document.getElementById('chat-messages'); 
+    if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
 
-                // Пуш уходит тоже в оригинале
-                if (window.currentTargetUser && !isConf && !isVoice) { 
-                    window.sendPushToUser(window.currentTargetUser.id, window.myUsername, rawText); 
-                }
+    if (window.currentTargetUser && !isConf && !isVoice) { 
+        window.sendPushToUser(window.currentTargetUser.id, window.myUsername, rawText); 
+    }
 
-                // AI Assistant остается на связи
-                if (window.currentRoomId === 'private_ai_bot') { 
-                    isGeminiWaiting = true; 
-                    const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
-                    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) 
-                    })
-                    .then(res => res.json()).then(data => { 
-                        let replyText = data.candidates[0].content.parts[0].text; 
-                        db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); 
-                    })
-                    .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
-                } 
-            };
+    // ... (дальше идет стандартный код ответа AI бота, его не меняем)
+    if (window.currentRoomId === 'private_ai_bot') { 
+        isGeminiWaiting = true; 
+        const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
+        fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) 
+        })
+        .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
+        .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
+    } 
+};
 
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); } });
