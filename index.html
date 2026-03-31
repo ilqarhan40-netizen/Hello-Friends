@@ -1287,7 +1287,8 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
         window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
-   window.openAvatarModal = function(id, fromSidebar = false) {
+  // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
+        window.openAvatarModal = function(id, fromSidebar = false) {
             window.closeDropdown(); 
 
             // Клик на себя -> Языки
@@ -1296,37 +1297,39 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
                 return;
             }
 
-            // ПРАВИЛО: Работает ТОЛЬКО если клик из левой колонки ИЛИ если мы в Общем чате
+            // БЛОКИРОВКА В ПРИВАТЕ: Если мы в приватном чате и клик НЕ из левой колонки - блокируем меню
             if (!fromSidebar && window.currentRoomId !== 'global') {
                 return; 
             }
 
             let p = window.participants.find(part => part.id === id); 
-            if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U', flag: '🌐', flagCode: 'un', profession: 'Guest' };
+            if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
             
-            // ТОСТ (Всплывашка сверху)
             if (id !== 'ai') {
                 let targetLangs = p.profileLangs || p.langCode || "Auto";
-                let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${p.flag} ${p.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">✉️ ${p.email || ''}<br>🗣️ ${targetLangs}</span>`; 
-                window.showToast((p.name || 'User').split(' ')[0], infoHtml, p.photo, p.phone || "");
+                let targetEmail = p.email ? `✉️ ${p.email}<br>` : "";
+                let targetPhone = p.phone || ""; 
+                let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${p.flag} ${p.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}🗣️ ${targetLangs}</span>`; 
+                window.showToast((p.name || 'User').split(' ')[0], infoHtml, p.photo, targetPhone);
             }
 
-            // 5 КНОПОК
-            const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI' : p.photo; 
+            const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
             const modalName = document.getElementById('modal-name'); if(modalName) modalName.innerText = (p.name||'User').split(' ')[0]; 
+            let idSpan = document.getElementById('modal-id'); if(!idSpan) { idSpan = document.createElement('span'); idSpan.id = 'modal-id'; idSpan.className = 'text-xs text-[#8696a0] font-mono mb-1 mt-1 block'; if(modalName) modalName.parentNode.insertBefore(idSpan, modalName.nextSibling); }
+            if(idSpan) idSpan.innerText = "ID: " + p.id;
             const modalProf = document.getElementById('modal-prof'); if(modalProf) modalProf.innerText = p.profession || 'User';
-            
+
             const modalDesc = document.getElementById('modal-desc');
             if(modalDesc) {
                 modalDesc.innerHTML = ''; 
             }
-
+            
             const actionButtons = document.getElementById('modal-action-buttons');
             if(actionButtons) {
                 if (id === 'ai') { 
                     actionButtons.style.display = 'none'; 
                 } else {
-           actionButtons.innerHTML = `
+                    actionButtons.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 w-full mt-1">
                         <button onclick="window.closeAvatarModal(); window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat
@@ -1344,10 +1347,43 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
                             <i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video
                         </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                        <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call
                         </button>
                     </div>`;
+                    actionButtons.style.display = 'block'; 
+                }
+            }
+            document.getElementById('avatar-modal').classList.add('active');
+        };
+
+        window.openViewCVModal = function(id) {
+            window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
+            if (!p) return;
+
+            document.getElementById('cv-view-img').src = p.photo; 
+            document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0]; 
+            document.getElementById('cv-view-prof').innerText = p.profession || 'Profession not listed';
+
+            let cvContent = '';
+            
+            // Заглушки, если навыки или языки не указаны
+            let blockLangs = p.languages || '—';
+            let blockSkills = p.skills || '—';
+            
+            // 1. Верхний блок сеткой (Языки и Навыки) в стиле 3-го фото
+            cvContent += `
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Languages</span>
+                    <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockLangs}</span>
+                </div>
+                <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
+                    <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Core Skills</span>
+                    <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockSkills}</span>
+                </div>
+            </div>`;
+
             // 2. Блоки "Опыт работы", "Образование" и "О себе"
             if(p.experience) {
                 cvContent += `
@@ -1378,7 +1414,7 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
             
             document.getElementById('cv-view-content').innerHTML = cvContent;
 
-// 3. Кнопки связи внизу (используют автономные контакты CV)
+            // 3. Кнопки связи внизу (используют автономные контакты CV)
             const actionButtons = document.getElementById('cv-action-buttons');
             if (id === 'me') {
                 actionButtons.innerHTML = `
