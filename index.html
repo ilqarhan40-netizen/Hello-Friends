@@ -1025,56 +1025,40 @@ window.signOutGoogle = function() {
             return userProfile.langCode || 'en';
         };
 
-    window.startUniversalMic = async function(mode) {
+        window.startUniversalMic = async function(mode) {
             window.speechRecognizedText = "";
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             let rec = SpeechRec ? new SpeechRec() : null;
             if (!rec) return alert("Browser does not support Speech Recognition.");
             
-            rec.continuous = false; 
-            rec.interimResults = false;
-
-            // ПРИОРИТЕТ: Берем язык напрямую из выбранного в меню "+"
+            rec.continuous = false; rec.interimResults = false;
             let langSelect = document.getElementById('plus-mic-lang');
-            let selectedMicLang = langSelect ? langSelect.value : 'en-US';
-            rec.lang = selectedMicLang;
+            rec.lang = langSelect ? langSelect.value : 'en-US';
             
-            // Получаем короткий код (например, "ru" из "ru-RU") для базы
-            let shortMicLang = selectedMicLang.split('-')[0]; 
-            
-            window.showToast("Listening...", "Speak now", "", "");
+            window.showToast("Listening...", "Speak into the microphone", "", "");
             
             rec.onresult = async (e) => { 
-                let recognizedText = e.results[0][0].transcript; 
-                window.speechRecognizedText = recognizedText;
+                window.speechRecognizedText = e.results[0][0].transcript; 
+                let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
+
+                window.showToast("Translating...", "Processing your voice...", "", "");
+                let textToShip = window.speechRecognizedText;
+                
+                try { 
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
+                    const data = await res.json(); 
+                    if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
+                } catch (err) {}
 
                 let isVoice = window.currentMicInputTarget === 'voice-chat-input';
                 let isConf = window.currentMicInputTarget === 'conf-chat-input';
 
-                // ОТПРАВЛЯЕМ КАК ЕСТЬ: Что микрофон услышал, то и летит в базу
-                // Блок 1 в handleNewMessage сам разберется, кому и как это показать
-                let msgData = { 
-                    userId: window.myProfileInfo.id, 
-                    name: window.myUsername, 
-                    text: recognizedText, // Оригинал
-                    originalText: recognizedText, 
-                    sessionId: window.mySessionId, 
-                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
-                    photo: window.myProfileInfo.photo, 
-                    flag: window.myProfileInfo.flag, 
-                    flagCode: window.myProfileInfo.flagCode, 
-                    langCode: shortMicLang, // ЯЗЫК МИКРОФОНА, а не профиля!
-                    isVoiceRoomMsg: isVoice, 
-                    isConfMsg: isConf 
-                };
-
-                if (mode === 'ai-audio') {
-                    msgData.isAIAudio = true;
+                if (mode === 'text') {
+                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+                } else if (mode === 'ai-audio') {
+                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
                 }
-
-                db.ref(window.currentRoomId).push(msgData);
             };
-            
             try { rec.start(); } catch(e){}
         };
 
@@ -1905,63 +1889,36 @@ window.switchChatRoom = function(targetId) {
 
             let isGeminiWaiting = false;
 
-      window.sendFirebaseMsg = async function() { 
-    let inputId = window.currentMicInputTarget || 'chat-input';
-    const inputField = document.getElementById(inputId);
-    if (!inputField) return;
-    
-    const rawText = inputField.value.trim(); 
-    if (!rawText) return; 
+            window.sendFirebaseMsg = async function() { 
+                let inputId = window.currentMicInputTarget || 'chat-input';
+                const inputField = document.getElementById(inputId);
+                if (!inputField) return;
+                
+                const rawText = inputField.value.trim(); if (!rawText) return; 
+                if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
+                inputField.value = ''; 
 
-    if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) {
-        window.showToast("Google AI", "Please wait...", "", "");
-        return;
-    }
-    
-    inputField.value = ''; 
+             let personalLang = localStorage.getItem('hf_personal_lang'); 
+                let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.getSmartLang(window.myProfileInfo);
+                let textToShip = rawText; 
+                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {} 
+                
+                let isVoice = inputId === 'voice-chat-input';
+                let isConf = inputId === 'conf-chat-input';
 
-    // 1. АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ ПО ФЛАГУ И ПРЕФИКСУ (Как ты и просил)
-    let activeLang = window.getSmartLang(window.myProfileInfo);
-    
-    let isVoice = inputId === 'voice-chat-input';
-    let isConf = inputId === 'conf-chat-input';
+                db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf }); 
+                
+                const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
+                if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
-    // 2. ОТПРАВЛЯЕМ ОРИГИНАЛ (Текст с любой клавиатуры уходит как есть)
-    db.ref(window.currentRoomId).push({ 
-        userId: window.myProfileInfo.id, 
-        name: window.myUsername, 
-        text: rawText,          // Чистый оригинал
-        originalText: rawText,  // Чистый оригинал
-        sessionId: window.mySessionId, 
-        timestamp: firebase.database.ServerValue.TIMESTAMP, 
-        photo: window.myProfileInfo.photo, 
-        flag: window.myProfileInfo.flag, 
-        flagCode: window.myProfileInfo.flagCode, 
-        langCode: activeLang,   // Система сама поняла, что ты из AZ (по префиксу +994)
-        isVoiceRoomMsg: isVoice, 
-        isConfMsg: isConf 
-    }); 
-    
-    const chatMsgs = document.getElementById('chat-messages'); 
-    if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
-
-    if (window.currentTargetUser && !isConf && !isVoice) { 
-        window.sendPushToUser(window.currentTargetUser.id, window.myUsername, rawText); 
-    }
-
-    // ... (дальше идет стандартный код ответа AI бота, его не меняем)
-    if (window.currentRoomId === 'private_ai_bot') { 
-        isGeminiWaiting = true; 
-        const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
-        fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) 
-        })
-        .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
-        .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
-    } 
-};
+                if (window.currentRoomId === 'private_ai_bot') { 
+                    isGeminiWaiting = true; 
+                    const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
+                    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) })
+                    .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
+                    .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
+                } 
+            };
 
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); } });
@@ -1986,49 +1943,18 @@ window.switchChatRoom = function(targetId) {
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
                 let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${isMe ? 'window.openPersonalLangModal()' : `window.openAvatarModal('${isAI ? 'ai' : p.id}')`}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
-       // ПРИОРИТЕТ: Настройка аватара > Префикс телефона (Авто)
-                let myManualLang = localStorage.getItem('hf_personal_lang');
-                let myCurrentLang = (myManualLang && myManualLang !== 'auto') 
-                    ? myManualLang 
-                    : window.getSmartLang(window.myProfileInfo);
-
-                // ЛОГИКА ТЕКСТА: Я вижу оригинал, собеседник видит перевод
-                let bubbleContent = (isMe && data.originalText) ? data.originalText : data.text; 
-                let bubbleClasses = `chat-bubble`;
+                
+                let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
                 
                 if (data.isAIAudio) {
-                    if (isMe && data.originalText) {
-                        // 1. ДЛЯ ОТПРАВИТЕЛЯ (Твой зеленый пузырь)
-                        let escText = escape(data.originalText); 
-                        // Озвучка: если есть langCode от микрофона - берем его, иначе - свой язык
-                        let playLang = data.langCode || myCurrentLang; 
-                        
-                        bubbleContent = `
-                            <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${playLang}')">
-                                <i class="fa-solid fa-circle-play"></i>
-                                <span>Play Voice</span>
-                            </div>
-                            <div style="font-size:0.85rem; margin-top:6px; opacity:0.95;">
-                                ${data.originalText}
-                                <div class="mt-2 pt-1.5 border-t border-white/20 text-[0.7rem] text-yellow-400 font-bold tracking-wide">➔ Перевод: ${data.text}</div>
-                            </div>
-                        `;
-                    } else {
-                        // 2. ДЛЯ ПОЛУЧАТЕЛЯ (Серый пузырь у друга)
-                        let escText = escape(data.text); 
-                        // Для получателя всегда используем его "умный" или выбранный язык
-                        let playLang = myCurrentLang; 
-
-                        bubbleContent = `
-                            <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${playLang}')">
-                                <i class="fa-solid fa-circle-play"></i>
-                                <span>Play Voice</span>
-                            </div>
-                            <div style="font-size:0.85rem; margin-top:6px; opacity:0.95;">
-                                ${data.text}
-                            </div>
-                        `;
-                    }
+                    let escText = escape(data.text);
+                    bubbleContent = `
+                        <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${data.langCode}')">
+                            <i class="fa-solid fa-circle-play"></i>
+                            <span>Play Voice</span>
+                        </div>
+                        <div style="font-size:0.8rem; margin-top:6px; opacity:0.9;">${data.text}</div>
+                    `;
                 }
                 else if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
                 else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
