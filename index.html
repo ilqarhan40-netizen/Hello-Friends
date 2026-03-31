@@ -1326,50 +1326,28 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
                 if (id === 'ai') { 
                     actionButtons.style.display = 'none'; 
                 } else {
-                    actionButtons.innerHTML = `
+           actionButtons.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 w-full mt-1">
-                        <button onclick="window.closeAvatarModal(); window.switchChatRoom('${p.id}'); setTimeout(()=>window.switchTab(0),100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat</button>
+                        <button onclick="window.closeAvatarModal(); window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.switchChatRoom('${p.id}'); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { window.currentIndex = null; window.switchTab(1); }, 150);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(1); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.switchChatRoom('${p.id}'); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { window.currentIndex = null; window.startInAppCall(); }, 150);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchChatRoom('${p.id}'); window.startInAppCall();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.currentRoomId='video_room_global'; window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { window.currentIndex = null; window.switchTab(2); }, 150);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call</button>
-                    </div>`; 
-                    actionButtons.style.display = 'block'; 
-                }
-            }
-            document.getElementById('avatar-modal').classList.add('active');
-        };
-        window.openViewCVModal = function(id) {
-            window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
-            if (!p) return;
-
-            document.getElementById('cv-view-img').src = p.photo; 
-            document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0]; 
-            document.getElementById('cv-view-prof').innerText = p.profession || 'Profession not listed';
-
-            let cvContent = '';
-            
-            // Заглушки, если навыки или языки не указаны
-            let blockLangs = p.languages || '—';
-            let blockSkills = p.skills || '—';
-            
-            // 1. Верхний блок сеткой (Языки и Навыки) в стиле 3-го фото
-            cvContent += `
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Languages</span>
-                    <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockLangs}</span>
-                </div>
-                <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Core Skills</span>
-                    <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockSkills}</span>
-                </div>
-            </div>`;
-
+                        <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call
+                        </button>
+                    </div>`;
             // 2. Блоки "Опыт работы", "Образование" и "О себе"
             if(p.experience) {
                 cvContent += `
