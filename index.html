@@ -654,10 +654,10 @@ firebase.auth().onAuthStateChanged((user) => {
             <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
         </div>
 
-        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
-            <div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
             <div class="app-modal-content" onclick="event.stopPropagation();">
                 <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
+                <div class="close-sheet-btn" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="flex items-center gap-4 mb-4 mt-2">
                     <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
                     <div class="flex flex-col">
@@ -670,7 +670,6 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
         </div>
-
         <div id="view-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeViewCVModal();">
             <div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeViewCVModal()"><i class="fa-solid fa-xmark"></i></div>
             <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
