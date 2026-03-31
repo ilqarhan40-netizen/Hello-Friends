@@ -97,7 +97,7 @@
         .rhombus-menu.active { display: grid; animation: scaleIn 0.2s;}
         .action-icon { width: 44px; height: 44px; background-color: var(--wa-border); color: var(--wa-text); border-radius: 12px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; font-size: 1.1rem;}
         .action-icon:hover { background-color: var(--wa-green); color: #111b21; }
-        .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: flex-end; justify-content: center; z-index: 9999; backdrop-filter: blur(4px); }
+         .app-modal { position: absolute; inset: 0; background: rgba(0,0,0,0.80); display: none; align-items: flex-end; justify-content: center; z-index: 9999; }
         .app-modal.active { display: flex !important; animation: fadeInBg 0.3s; }
         .app-modal-content { background: var(--wa-panel); width: 100%; max-width: 400px; border-radius: 32px 32px 0 0; padding: 24px; position: relative; display: flex; flex-direction: column; max-height: 90vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         .app-modal.active .app-modal-content { transform: translateY(0); }
@@ -359,7 +359,7 @@ firebase.auth().onAuthStateChanged((user) => {
             </div>
         </div>
 
-        <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white p-3 rounded-2xl shadow-2xl z-[5000] flex flex-col gap-2 w-[92%] opacity-0 pointer-events-none" style="top: -150px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+       <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white p-3 rounded-2xl shadow-2xl z-[10005] flex flex-col gap-2 w-[92%] opacity-0 pointer-events-none" style="top: -150px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
             <div class="flex items-center gap-3">
                 <div id="toast-icon-wrap" class="w-12 h-12 rounded-full bg-[#005c4b] flex items-center justify-center text-xl shrink-0 hidden">🌍</div>
                 <img id="toast-img" src="" class="w-12 h-12 rounded-full object-cover shrink-0 border-2 border-[#00a884] shadow-md">
@@ -654,10 +654,10 @@ firebase.auth().onAuthStateChanged((user) => {
             <img id="fullscreen-img-src" src="" class="max-w-[95%] max-h-[85vh] object-contain rounded-xl shadow-2xl">
         </div>
 
-        <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
-            <div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div id="avatar-modal" class="app-modal" onclick="if(event.target===this) window.closeAvatarModal();">
             <div class="app-modal-content" onclick="event.stopPropagation();">
                 <div class="sheet-handle" onclick="window.closeAvatarModal()"></div>
+                <div class="close-sheet-btn" onclick="window.closeAvatarModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="flex items-center gap-4 mb-4 mt-2">
                     <img id="modal-img" src="" class="w-20 h-20 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
                     <div class="flex flex-col">
@@ -670,7 +670,6 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
         </div>
-
         <div id="view-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeViewCVModal();">
             <div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeViewCVModal()"><i class="fa-solid fa-xmark"></i></div>
             <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
@@ -1287,6 +1286,7 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
         window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
+  // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
         window.openAvatarModal = function(id, fromSidebar = false) {
             window.closeDropdown(); 
 
@@ -1330,21 +1330,32 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
                 } else {
                     actionButtons.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 w-full mt-1">
-                        <button onclick="window.closeAvatarModal(); setTimeout(() => { if(window.currentIndex === 0) window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}'); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat</button>
+                        <button onclick="window.closeAvatarModal(); window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { if(window.currentIndex === 1) window.currentIndex = null; window.switchTab(1); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(1); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { if(window.currentIndex === 1) window.currentIndex = null; window.startInAppCall(); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchChatRoom('${p.id}'); window.startInAppCall();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); setTimeout(() => { if(window.currentIndex === 2) window.currentIndex = null; window.switchTab(2); }, 100);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video</button>
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video
+                        </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm"><i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call</button>
-                    </div>`; 
+                        <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call
+                        </button>
+                    </div>`;
                     actionButtons.style.display = 'block'; 
                 }
             }
             document.getElementById('avatar-modal').classList.add('active');
         };
+
         window.openViewCVModal = function(id) {
             window.closeDropdown(); let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
             if (!p) return;
@@ -1402,7 +1413,7 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
             
             document.getElementById('cv-view-content').innerHTML = cvContent;
 
-// 3. Кнопки связи внизу (используют автономные контакты CV)
+            // 3. Кнопки связи внизу (используют автономные контакты CV)
             const actionButtons = document.getElementById('cv-action-buttons');
             if (id === 'me') {
                 actionButtons.innerHTML = `
@@ -1690,15 +1701,47 @@ window.handleCountryChange = function(sel) {
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
             window.applyTranslations();
 
-            window.switchTab = function(index) { 
-                const navLinks = Array.from(document.querySelectorAll('.nav-item')); const pages = document.querySelectorAll('.page-content'); const emptyState = document.getElementById('empty-state-screen');
-                if (window.currentIndex === index) { pages.forEach(p => p.classList.remove('active')); navLinks.forEach(l => l.classList.remove('active')); window.currentIndex = null; window.closeAllMenus(); document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active')); if(emptyState) emptyState.style.display = 'flex'; return; }
-                window.closeAllMenus(); document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
-                pages.forEach(p => p.classList.remove('active')); navLinks.forEach(l => l.classList.remove('active')); 
-                const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
-                document.getElementById(screens[index])?.classList.add('active'); if (navLinks[index]) navLinks[index].classList.add('active'); 
-                window.currentIndex = index; if(emptyState) emptyState.style.display = 'none';
-            };
+    window.switchTab = function(index) { 
+            const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
+            const pages = document.querySelectorAll('.page-content'); 
+            const emptyState = document.getElementById('empty-state-screen');
+            
+            if (window.currentIndex === index) { 
+                pages.forEach(p => p.classList.remove('active')); 
+                navLinks.forEach(l => l.classList.remove('active')); 
+                window.currentIndex = null; 
+                window.closeAllMenus(); 
+                document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active')); 
+                if(emptyState) emptyState.style.display = 'flex'; 
+                return; 
+            }
+            
+            window.closeAllMenus(); 
+            document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
+            pages.forEach(p => p.classList.remove('active')); 
+            navLinks.forEach(l => l.classList.remove('active')); 
+            
+            // ЖЕЛЕЗОБЕТОННАЯ ИЗОЛЯЦИЯ КОМНАТ
+            if (index === 2) { 
+                // Уходим в ВИДЕО -> запоминаем текущий чат и жестко переключаем базу на видео
+                if (window.currentRoomId !== 'video_room_global') {
+                    window.lastSavedChatRoom = window.currentRoomId; 
+                }
+                if (window.switchChatRoom) window.switchChatRoom('video_room_global');
+            } else if (index === 0 || index === 1) {
+                // Возвращаемся в ЧАТ или ГОЛОС -> возвращаем ту базу, где были (или Global)
+                if (window.currentRoomId === 'video_room_global') {
+                    if (window.switchChatRoom) window.switchChatRoom(window.lastSavedChatRoom || 'global');
+                }
+            }
+            
+            const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
+            document.getElementById(screens[index])?.classList.add('active'); 
+            if (navLinks[index]) navLinks[index].classList.add('active'); 
+            
+            window.currentIndex = index; 
+            if(emptyState) emptyState.style.display = 'none';
+        };
 
             window.initFCM = function() {
                 try {
@@ -1768,28 +1811,41 @@ window.participants = [aiBot];
                 if(!window.isGuest && window.initSignalListener && !window.signalListenerActive) { window.initSignalListener(); window.signalListenerActive = true; }
             });
 
-       window.renderSidebar = function() {
-                const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
+   window.renderSidebar = function() {
+            const chatSidebar = document.getElementById('chat-sidebar'); if (!chatSidebar) return;
+            
+            // --- АВТООБНОВЛЕНИЕ ФОТО НА ЭКРАНЕ ПРИВЕТСТВИЯ ---
+            const welcomeImg = document.getElementById('welcome-user-photo');
+            if (welcomeImg && window.myProfileInfo && window.myProfileInfo.photo) {
+                welcomeImg.src = window.myProfileInfo.photo;
+            }
+            // ------------------------------------------------
+            
+            chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
+            chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
+            chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
+            
+            window.participants.filter(p => p.id !== 'ai').forEach(p => { 
+                let id1 = String(window.myProfileInfo.id); 
+                let id2 = String(p.id); 
+                let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                 
-                chatSidebar.innerHTML = `<div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')"><div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div><span class="chat-contact-name text-white">Global</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === 'private_ai_bot' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')"><div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div><span class="chat-contact-name text-[#a29bfe]">AI Bot</span></div>`;
-                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === ('private_me_' + window.myProfileInfo.id) ? 'active-room' : ''}" onclick="window.switchChatRoom('me')"><div class="chat-contact-icon" style="background-image: url('${window.myProfileInfo.photo}');"><img src="https://flagcdn.com/w20/${window.myProfileInfo.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${window.myUsername}</span></div>`;
-                
-                window.participants.filter(p => p.id !== 'ai').forEach(p => { 
-                    let id1 = String(window.myProfileInfo.id); 
-                    let id2 = String(p.id); 
-                    let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
-                    
-                    chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.openAvatarModal('${p.id}', true)"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; 
-                });
-            };
+                // ДОБАВЛЕНО true - чтобы меню 5 кнопок открывалось из сайдбара
+                chatSidebar.innerHTML += `<div class="chat-contact ${window.currentRoomId === expectedId ? 'active-room' : ''}" onclick="window.openAvatarModal('${p.id}', true)"><div class="chat-contact-icon" style="background-image: url('${p.photo}');"><img src="https://flagcdn.com/w20/${p.flagCode}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]"></div><span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span></div>`; 
+            });
+        };
 
-      window.switchChatRoom = function(targetId) {
+window.switchChatRoom = function(targetId) {
             if (window.activeChatListener) { db.ref(window.currentRoomId).off("child_added", window.activeChatListener); }
             const chatMessages = document.getElementById('chat-messages'); if (chatMessages) chatMessages.innerHTML = ''; 
             window.currentTargetUser = null; let headerTitle = "Global Chat"; let headerRoomId = "global";
             
-            if (targetId === 'global') { 
+            // Защита от смешения чатов (изоляция видео-комнаты)
+            if (targetId === 'video_room_global') {
+                window.currentRoomId = "video_room_global";
+                headerTitle = "Conference"; headerRoomId = window.currentRoomId;
+            }
+            else if (targetId === 'global') { 
                 window.currentRoomId = "global"; 
                 window.showToast("Global Chat", "🌍 International Public Room", "", ""); 
             }
@@ -1799,15 +1855,11 @@ window.participants = [aiBot];
             }
             else if (targetId === 'me') { 
                 window.currentRoomId = "private_me_" + window.myProfileInfo.id; headerTitle = "My Notes"; headerRoomId = window.currentRoomId; 
-                
-                // Берем только твои данные
                 let myBio = window.myProfileInfo.profileBio || ""; 
                 let myLangs = window.myProfileInfo.profileLangs ? `🗣️ ${window.myProfileInfo.profileLangs}<br>` : "";
                 let myEmail = window.myProfileInfo.email ? `✉️ ${window.myProfileInfo.email}<br>` : "";
                 let myPhone = window.myProfileInfo.phone || ""; 
-                
                 let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${myBio}</span>` : ""}`; 
-                
                 window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, myPhone); 
             }
             else { 
@@ -1818,7 +1870,6 @@ window.participants = [aiBot];
                     window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1); 
                     headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId; 
                     
-                    // Берем только данные другого пользователя
                     let targetBio = targetUser.profileBio || ""; 
                     let targetLangs = targetUser.profileLangs ? `🗣️ ${targetUser.profileLangs}<br>` : "";
                     let targetEmail = targetUser.email ? `✉️ ${targetUser.email}<br>` : "";
