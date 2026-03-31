@@ -1943,37 +1943,42 @@ window.switchChatRoom = function(targetId) {
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
                 let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${isMe ? 'window.openPersonalLangModal()' : `window.openAvatarModal('${isAI ? 'ai' : p.id}')`}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
+            // ЛОГИКА ТЕКСТА: Я вижу оригинал, собеседник видит перевод
+                let bubbleContent = (isMe && data.originalText) ? data.originalText : data.text; 
+                let bubbleClasses = `chat-bubble`;
                 
-                let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
-                
-             if (data.isAIAudio) {
-                    let escText = escape(data.text);
-                    
-                    // УМНАЯ ЛОГИКА ОЗВУЧКИ: Определяем правильный акцент
-                    let playLang = data.langCode; 
-                    
-                    if (window.currentRoomId.startsWith('private_')) {
-                        if (!isMe) {
-                            // Если сообщение пришло МНЕ от кого-то, озвучиваем моим языком
-                            let myPref = localStorage.getItem('hf_personal_lang');
-                            playLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
-                        } else if (window.currentTargetUser) {
-                            // Если Я отправил сообщение, озвучиваем языком собеседника (ведь перевели для него)
-                            playLang = window.getSmartLang(window.currentTargetUser);
-                        }
-                    } else if (window.currentRoomId === 'global') {
-                        // В глобальном чате каждый слушает на своем родном
+                if (data.isAIAudio) {
+                    if (isMe && data.originalText) {
+                        // 1. ДЛЯ ОТПРАВИТЕЛЯ (Твой зеленый пузырь)
+                        let escText = escape(data.originalText); // Озвучиваем оригинал
+                        let playLang = data.langCode; // Твой язык
+                        
+                        bubbleContent = `
+                            <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${playLang}')">
+                                <i class="fa-solid fa-circle-play"></i>
+                                <span>Play Voice</span>
+                            </div>
+                            <div style="font-size:0.85rem; margin-top:6px; opacity:0.95;">
+                                ${data.originalText}
+                                <div class="mt-2 pt-1.5 border-t border-white/20 text-[0.7rem] text-yellow-400 font-bold tracking-wide">➔ Перевод: ${data.text}</div>
+                            </div>
+                        `;
+                    } else {
+                        // 2. ДЛЯ ПОЛУЧАТЕЛЯ (Серый пузырь у друга)
+                        let escText = escape(data.text); // Озвучиваем перевод
                         let myPref = localStorage.getItem('hf_personal_lang');
-                        playLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
-                    }
+                        let playLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
 
-                    bubbleContent = `
-                        <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${playLang}')">
-                            <i class="fa-solid fa-circle-play"></i>
-                            <span>Play Voice</span>
-                        </div>
-                        <div style="font-size:0.8rem; margin-top:6px; opacity:0.9;">${data.text}</div>
-                    `;
+                        bubbleContent = `
+                            <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${playLang}')">
+                                <i class="fa-solid fa-circle-play"></i>
+                                <span>Play Voice</span>
+                            </div>
+                            <div style="font-size:0.85rem; margin-top:6px; opacity:0.95;">
+                                ${data.text}
+                            </div>
+                        `;
+                    }
                 }
                 else if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
                 else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
