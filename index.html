@@ -1979,6 +1979,33 @@ window.switchChatRoom = function(targetId) {
                 let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${isMe ? 'window.openPersonalLangModal()' : `window.openAvatarModal('${isAI ? 'ai' : p.id}')`}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
                 
                 let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
+                // === УМНАЯ ЛОГИКА ТОЛЬКО ДЛЯ ГОЛОСОВОГО ВВОДА ТЕКСТА (НЕ ТРОГАЕТ АУДИО) ===
+                if (data.originalText && !data.isAIAudio) {
+                    // Базовый язык того, кто отправил сообщение
+                    let senderBaseLang = p.langCode || 'en'; 
+                    // Проверяем, переключал ли он язык микрофона вручную
+                    let isMicLangChanged = data.langCode && !senderBaseLang.startsWith(data.langCode);
+
+                    // Шаблон для двойного пузыря (оригинал + перевод)
+                    let doubleLangHTML = `
+                        <div class="text-[#e9edef]">${data.originalText}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ Перевод: ${data.text}</div>
+                    `;
+
+                    if (isMe) {
+                        // ПРАВИЛО 1: Я (отправитель) ВСЕГДА вижу оба языка в текстовом виде
+                        bubbleContent = doubleLangHTML;
+                    } else {
+                        // ПРАВИЛО 2 И 3: Что видит друг (получатель)
+                        if (isMicLangChanged) {
+                            // Язык микрофона переключали специально -> Друг видит оба языка
+                            bubbleContent = doubleLangHTML;
+                        } else {
+                            // Язык по умолчанию -> Друг видит ТОЛЬКО свой язык
+                            bubbleContent = data.text;
+                        }
+                    }
+                }
                 
         if (data.isAIAudio) {
                     // ПРИОРИТЕТ: Настройка аватара > Префикс телефона
