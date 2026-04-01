@@ -2409,6 +2409,14 @@ window.switchChatRoom = function(targetId) {
             </div>
         </div>
     </div>
-
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA SW Registered!', reg.scope))
+                    .catch(err => console.log('PWA SW Failed!', err));
+            });
+        }
+    </script>
 </body>
 </html>
