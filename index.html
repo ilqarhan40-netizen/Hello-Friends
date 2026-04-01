@@ -284,7 +284,10 @@ firebase.auth().onAuthStateChanged((user) => {
             
             localStorage.setItem('hf_active_user', actualUid);
             
-            
+            // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ ЗВОНКОВ ---
+            window.callTimeout = null;      // Таймер для автоматического сброса звонка (30 сек)
+            window.vibrateInterval = null;  // Таймер для цикличной вибрации при входящем
+            // -----------------------------------------
             // ЖЕСТКОЕ ПРИСВОЕНИЕ ID (Убиваем "Гостя" моментально)
             if (window.myProfileInfo) window.myProfileInfo.id = actualUid;
             window.isGuest = false;
@@ -1713,7 +1716,23 @@ window.handleCountryChange = function(sel) {
 
         window.startInAppCall = function() { if (!window.currentTargetUser) { alert("Please open a private chat with a contact first!"); window.closePhoneChoiceModal(); return; } const target = window.currentTargetUser; window.closePhoneChoiceModal(); db.ref('signals/' + target.id).push({ type: 'call', callerId: window.myProfileInfo.id, callerName: window.myUsername, callerPhoto: window.myProfileInfo.photo, timestamp: firebase.database.ServerValue.TIMESTAMP }); window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); };
 
-        window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { window.currentIncomingSignalKey = signalKey; window.currentCallerId = callerId; document.getElementById('incoming-call-name').innerText = callerName; document.getElementById('incoming-call-photo').src = callerPhoto; document.getElementById('incoming-call-modal').classList.add('active'); window.sndRing.play().catch(e=>{}); window.firePush("Incoming Call 📞", `${callerName} is calling you on Hello Friends!`, callerPhoto); };
+   window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { 
+    window.currentIncomingSignalKey = signalKey; 
+    window.currentCallerId = callerId; 
+    document.getElementById('incoming-call-name').innerText = callerName; 
+    document.getElementById('incoming-call-photo').src = callerPhoto; 
+    document.getElementById('incoming-call-modal').classList.add('active'); 
+    window.sndRing.play().catch(e=>{}); 
+    window.firePush("Incoming Call 📞", `${callerName} is calling you on Hello Friends!`, callerPhoto);
+    
+    // --- НАЧАЛО: Запуск вибрации ---
+    if (navigator.vibrate) {
+        window.vibrateInterval = setInterval(() => {
+            navigator.vibrate([500, 1000, 500]); 
+        }, 2000);
+    }
+    // --- КОНЕЦ: Запуск вибрации ---
+};
    window.acceptCall = function() { 
             window.sndRing.pause(); window.sndRing.currentTime = 0; 
             document.getElementById('incoming-call-modal').classList.remove('active'); 
