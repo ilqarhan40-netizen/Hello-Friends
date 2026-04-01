@@ -1061,15 +1061,17 @@ window.signOutGoogle = function() {
             };
             try { rec.start(); } catch(e){}
         };
-window.playAIVoice = function(encodedText, langCode) {
+
+  window.playAIVoice = function(encodedText, langCode) {
             if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
             window.speechSynthesis.cancel(); 
             
-            // ИСПРАВЛЕНИЕ: Расшифровываем текст из "компьютерного" обратно в нормальные слова
+            // ИСПРАВЛЕНИЕ: Расшифровываем текст из "компьютерного" обратно в человеческий!
             let text = "";
             try { text = decodeURIComponent(encodedText); } catch(e) { text = unescape(encodedText); }
 
             const utterance = new SpeechSynthesisUtterance(text);
+            // az перекидываем на tr-TR, так как у браузеров обычно нет азербайджанского голоса, турецкий звучит ближе всего
             const voiceMap = { 'en': 'en-US', 'ru': 'ru-RU', 'az': 'tr-TR', 'it': 'it-IT', 'es': 'es-ES', 'fr': 'fr-FR', 'pt': 'pt-PT', 'ja': 'ja-JP', 'zh': 'zh-CN' };
             utterance.lang = voiceMap[langCode] || langCode; 
             utterance.rate = 1.0;
@@ -1978,7 +1980,7 @@ window.switchChatRoom = function(targetId) {
                 
                 let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
                 
-          if (data.isAIAudio) {
+        if (data.isAIAudio) {
                     // ПРИОРИТЕТ: Настройка аватара > Префикс телефона
                     let myManualLang = localStorage.getItem('hf_personal_lang');
                     let myCurrentLang = (myManualLang && myManualLang !== 'auto') ? myManualLang : window.getSmartLang(window.myProfileInfo);
