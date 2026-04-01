@@ -1962,15 +1962,61 @@ window.switchChatRoom = function(targetId) {
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
                 inputField.value = ''; 
 
-             let personalLang = localStorage.getItem('hf_personal_lang'); 
-                let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : window.getSmartLang(window.myProfileInfo);
-                let textToShip = rawText; 
-                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {} 
+  let personalLang = localStorage.getItem('hf_personal_lang'); 
                 
+                // === БЛОКИРОВКА ЯЗЫКА КЛАВИАТУРЫ (ЗАМОК) ===
+                let myActiveLang = window.myProfileInfo.langCode || 'en';
+                let activeFlag = window.myProfileInfo.flag || '🌐';
+                let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+
+                if (personalLang && personalLang !== 'auto') {
+                    myActiveLang = personalLang;
+                    const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
+                    if (langMap[personalLang]) {
+                        activeFlagCode = langMap[personalLang][0];
+                        activeFlag = langMap[personalLang][1];
+                    }
+                }
+
+                // 1. ЖЕСТКО переводим то, что ты набрал (на любой раскладке), в твой Активный Язык (Авто или из Панели)
+                let myBaseText = rawText;
+                try { 
+                    const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
+                    const data1 = await res1.json(); 
+                    if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0]; 
+                } catch (e) {}
+
+                // 2. Узнаем язык собеседника (в привате)
+                let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
+                
+                // 3. Переводим уже ЧИСТЫЙ текст для друга (если языки разные)
+                let textToShip = myBaseText; 
+                if (targetSendLang !== myActiveLang) {
+                    try { 
+                        const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`); 
+                        const data2 = await res2.json(); 
+                        if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0]; 
+                    } catch (e) {}
+                }
+
                 let isVoice = inputId === 'voice-chat-input';
                 let isConf = inputId === 'conf-chat-input';
 
-                db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf }); 
+                // 4. Отправляем в базу с подмененным оригиналом и флагами!
+                db.ref(window.currentRoomId).push({ 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: textToShip, 
+                    originalText: myBaseText, // <--- МАГИЯ ЗДЕСЬ! Физическая клавиатура забыта.
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flag: activeFlag, 
+                    flagCode: activeFlagCode, 
+                    langCode: myActiveLang, 
+                    isVoiceRoomMsg: isVoice, 
+                    isConfMsg: isConf 
+                });
                 
                 const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
                 if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
@@ -2006,36 +2052,38 @@ window.switchChatRoom = function(targetId) {
                 const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
                 const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                 
-                let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${isMe ? 'window.openPersonalLangModal()' : `window.openAvatarModal('${isAI ? 'ai' : p.id}')`}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
+             let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
                 
-                let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
-                // === УМНАЯ ЛОГИКА ТОЛЬКО ДЛЯ ГОЛОСОВОГО ВВОДА ТЕКСТА (НЕ ТРОГАЕТ АУДИО) ===
-                if (data.originalText && !data.isAIAudio) {
-                    // Базовый язык того, кто отправил сообщение
-                    let senderBaseLang = p.langCode || 'en'; 
-                    // Проверяем, переключал ли он язык микрофона вручную
-                    let isMicLangChanged = data.langCode && !senderBaseLang.startsWith(data.langCode);
+        let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
 
-                    // Шаблон для двойного пузыря (оригинал + перевод)
+                // === УМНАЯ ЛОГИКА ДВОЙНЫХ ПУЗЫРЕЙ (РУЧНОЙ ТЕКСТ + ГОЛОС) ===
+                if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
+                    let myPref = localStorage.getItem('hf_personal_lang');
+                    let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
+                    let senderLang = data.langCode || 'en'; // Язык, с которого было отправлено
+                    
                     let doubleLangHTML = `
                         <div class="text-[#e9edef]">${data.originalText}</div>
-                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ Перевод: ${data.text}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>
                     `;
 
                     if (isMe) {
-                        // ПРАВИЛО 1: Я (отправитель) ВСЕГДА вижу оба языка в текстовом виде
-                        bubbleContent = doubleLangHTML;
-                    } else {
-                        // ПРАВИЛО 2 И 3: Что видит друг (получатель)
-                        if (isMicLangChanged) {
-                            // Язык микрофона переключали специально -> Друг видит оба языка
-                            bubbleContent = doubleLangHTML;
+                        // ПРАВИЛО 1 (ОТПРАВИТЕЛЬ): Если перевода не было (языки совпали) - один текст. Иначе - два.
+                        if (data.originalText === data.text) {
+                            bubbleContent = data.originalText;
                         } else {
-                            // Язык по умолчанию -> Друг видит ТОЛЬКО свой язык
+                            bubbleContent = doubleLangHTML;
+                        }
+                    } else {
+                        // ПРАВИЛО 2 (ПОЛУЧАТЕЛЬ): Если языки одинаковые - один пузырь. Разные - два (оригинал + перевод).
+                        if (senderLang.startsWith(myReadLang) || myReadLang.startsWith(senderLang) || data.originalText === data.text) {
                             bubbleContent = data.text;
+                        } else {
+                            bubbleContent = doubleLangHTML;
                         }
                     }
                 }
+                // ===============================================
                 
         if (data.isAIAudio) {
                     // ПРИОРИТЕТ: Настройка аватара > Префикс телефона
@@ -2361,6 +2409,14 @@ window.switchChatRoom = function(targetId) {
             </div>
         </div>
     </div>
-
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA SW Registered!', reg.scope))
+                    .catch(err => console.log('PWA SW Failed!', err));
+            });
+        }
+    </script>
 </body>
 </html>
