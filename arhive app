@@ -670,10 +670,10 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div class="flex flex-col gap-2 w-full mt-auto" id="modal-action-buttons"></div>
             </div>
         </div>
-        <div id="view-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeViewCVModal();">
-            <div class="close-sheet-btn" style="position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeViewCVModal()"><i class="fa-solid fa-xmark"></i></div>
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="sheet-handle" onclick="window.closeViewCVModal()"></div>
+    <div id="view-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeViewCVModal();">
+    <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
+        <div class="close-sheet-btn" style="background: #ef4444; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.5);" onclick="window.closeViewCVModal()"><i class="fa-solid fa-xmark"></i></div>
+        <div class="sheet-handle" onclick="window.closeViewCVModal()"></div>
                 <div class="flex items-center gap-4 mb-4 mt-2">
                     <img id="cv-view-img" src="" class="w-16 h-16 rounded-full object-cover border-2 border-[#00a884] shadow-lg">
                     <div class="flex flex-col">
@@ -1265,11 +1265,21 @@ window.signOutGoogle = function() {
         };
         window.closeContactsModal = function() { document.getElementById('contacts-modal').classList.remove('active'); };
 
-        window.startDirectAppCall = function(id) {
-            window.closeContactsModal(); let target = window.participants.find(p => p.id === id);
-            if(target) { window.currentTargetUser = target; document.getElementById('voice-friend-photo').src = target.photo; document.getElementById('voice-friend-flag').innerText = target.flag; document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); }
-        };
-
+    window.startDirectAppCall = function(id) {
+    window.closeContactsModal(); 
+    let target = window.participants.find(p => p.id === id);
+    if(target) { 
+        window.currentTargetUser = target; 
+        document.getElementById('voice-friend-photo').src = target.photo; 
+        document.getElementById('voice-friend-flag').innerText = target.flag; 
+        document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; 
+        window.voiceFriend = target; 
+        
+        // ИСПРАВЛЕНИЕ: Переключаем базу на приватный чат с нужным человеком
+        window.switchChatRoom(target.id);
+        window.switchTab(1); 
+    }
+};
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
 window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'de', label: '🇩🇪 Deutsch' }, { val: 'tr', label: '🇹🇷 Türkçe' }, { val: 'ar', label: '🇦🇪 العربية' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
@@ -1652,7 +1662,26 @@ window.handleCountryChange = function(sel) {
         window.startInAppCall = function() { if (!window.currentTargetUser) { alert("Please open a private chat with a contact first!"); window.closePhoneChoiceModal(); return; } const target = window.currentTargetUser; window.closePhoneChoiceModal(); db.ref('signals/' + target.id).push({ type: 'call', callerId: window.myProfileInfo.id, callerName: window.myUsername, callerPhoto: window.myProfileInfo.photo, timestamp: firebase.database.ServerValue.TIMESTAMP }); window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); };
 
         window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { window.currentIncomingSignalKey = signalKey; window.currentCallerId = callerId; document.getElementById('incoming-call-name').innerText = callerName; document.getElementById('incoming-call-photo').src = callerPhoto; document.getElementById('incoming-call-modal').classList.add('active'); window.sndRing.play().catch(e=>{}); window.firePush("Incoming Call 📞", `${callerName} is calling you on Hello Friends!`, callerPhoto); };
-        window.acceptCall = function() { window.sndRing.pause(); window.sndRing.currentTime = 0; document.getElementById('incoming-call-modal').classList.remove('active'); db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); let target = window.participants.find(p => p.id === window.currentCallerId); if(target) { window.currentTargetUser = target; const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); } };
+   window.acceptCall = function() { 
+            window.sndRing.pause(); window.sndRing.currentTime = 0; 
+            document.getElementById('incoming-call-modal').classList.remove('active'); 
+            db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+            let target = window.participants.find(p => p.id === window.currentCallerId); 
+            if(target) { 
+                window.currentTargetUser = target; 
+                const photoEl = document.getElementById('voice-friend-photo'); 
+                const flagEl = document.getElementById('voice-friend-flag'); 
+                const nameEl = document.getElementById('voice-friend-name'); 
+                if(photoEl) photoEl.src = target.photo; 
+                if(flagEl) flagEl.innerText = target.flag; 
+                if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
+                window.voiceFriend = target; 
+                
+                // ИСПРАВЛЕНИЕ: Переключаем базу при ответе на входящий звонок!
+                window.switchChatRoom(target.id);
+                window.switchTab(1); 
+            } 
+        };
         window.declineCall = function() { window.sndRing.pause(); window.sndRing.currentTime = 0; document.getElementById('incoming-call-modal').classList.remove('active'); db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); };
 
         window.initSignalListener = function() { db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { const sig = snap.val(); if (!sig) return; if (Date.now() - sig.timestamp < 30000) { if (sig.type === 'call') { window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); } } else { db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove(); } }); };
@@ -1959,10 +1988,15 @@ window.switchChatRoom = function(targetId) {
                 else if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
                 else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
                 else if (data.isLocation) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; }
-
-                msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
-                messageGroup.appendChild(msgWrapper); if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
-
+// БЛОКИРУЕМ ПУЗЫРИ: Голосовая и Видео комната не должны засорять текстовый чат
+                if (!data.isVoiceRoomMsg && !data.isConfMsg) {
+                    msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`; 
+                    messageGroup.appendChild(msgWrapper); 
+                    if(chatMessages) { 
+                        chatMessages.appendChild(messageGroup); 
+                        chatMessages.scrollTop = chatMessages.scrollHeight; 
+                    }
+                }
         // ==========================================
                 // БЛОК 1: ГЛАВНЫЙ ЧАТ
                 // ==========================================
