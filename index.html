@@ -613,7 +613,8 @@ firebase.auth().onAuthStateChanged((user) => {
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
-                  <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+               <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+                        <option value="auto" selected>🤖 Auto (Profile)</option>
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ru-RU">🇷🇺 Русский</option>
                         <option value="az-AZ">🇦🇿 Azərbaycanca</option>
@@ -1025,15 +1026,44 @@ window.signOutGoogle = function() {
             return userProfile.langCode || 'en';
         };
 
-        window.startUniversalMic = async function(mode) {
+     window.startUniversalMic = async function(mode) {
             window.speechRecognizedText = "";
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             let rec = SpeechRec ? new SpeechRec() : null;
             if (!rec) return alert("Browser does not support Speech Recognition.");
             
             rec.continuous = false; rec.interimResults = false;
+            
             let langSelect = document.getElementById('plus-mic-lang');
-            rec.lang = langSelect ? langSelect.value : 'en-US';
+            let selectedMicLang = langSelect ? langSelect.value : 'auto';
+            
+            // ИЗОЛИРОВАННАЯ ЛОГИКА МИКРОФОНА: Если "Авто", вычисляем язык по профилю
+            if (selectedMicLang === 'auto') {
+                let phone = window.myProfileInfo.phone || ""; 
+                let flag = window.myProfileInfo.flagCode || "un"; 
+                let autoLang = 'en-US'; 
+                if (phone.startsWith('+7')) autoLang = 'ru-RU'; 
+                else if (phone.startsWith('+994')) autoLang = 'az-AZ'; 
+                else if (phone.startsWith('+39')) autoLang = 'it-IT'; 
+                else if (phone.startsWith('+49')) autoLang = 'de-DE'; 
+                else if (phone.startsWith('+33')) autoLang = 'fr-FR'; 
+                else if (phone.startsWith('+81')) autoLang = 'ja-JP'; 
+                else if (phone.startsWith('+34')) autoLang = 'es-ES'; 
+                else if (phone.startsWith('+86')) autoLang = 'zh-CN'; 
+                else if (phone.startsWith('+351')) autoLang = 'pt-PT'; 
+                else if (flag === 'ru') autoLang = 'ru-RU'; 
+                else if (flag === 'az') autoLang = 'az-AZ'; 
+                else if (flag === 'it') autoLang = 'it-IT'; 
+                else if (flag === 'de') autoLang = 'de-DE'; 
+                else if (flag === 'fr') autoLang = 'fr-FR'; 
+                else if (flag === 'jp') autoLang = 'ja-JP'; 
+                else if (flag === 'es') autoLang = 'es-ES'; 
+                else if (flag === 'cn') autoLang = 'zh-CN'; 
+                else if (flag === 'pt') autoLang = 'pt-PT';
+                rec.lang = autoLang;
+            } else {
+                rec.lang = selectedMicLang; // Ручной выбор языка
+            }
             
             window.showToast("Listening...", "Speak into the microphone", "", "");
             
@@ -2293,7 +2323,10 @@ window.switchChatRoom = function(targetId) {
             window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
             window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
 
-            window.autoSetMicLang = function() { let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; let finalLang = 'en-US'; if (phone.startsWith('+7')) finalLang = 'ru-RU'; else if (phone.startsWith('+994')) finalLang = 'az-AZ'; else if (phone.startsWith('+39')) finalLang = 'it-IT'; else if (phone.startsWith('+49')) finalLang = 'de-DE'; else if (phone.startsWith('+33')) finalLang = 'fr-FR'; else if (phone.startsWith('+81')) finalLang = 'ja-JP'; else if (phone.startsWith('+34')) finalLang = 'es-ES'; else if (phone.startsWith('+86')) finalLang = 'zh-CN'; else if (phone.startsWith('+351')) finalLang = 'pt-PT'; else if (flag === 'ru') finalLang = 'ru-RU'; else if (flag === 'az') finalLang = 'az-AZ'; else if (flag === 'it') finalLang = 'it-IT'; else if (flag === 'de') finalLang = 'de-DE'; else if (flag === 'fr') finalLang = 'fr-FR'; else if (flag === 'jp') finalLang = 'ja-JP'; else if (flag === 'es') finalLang = 'es-ES'; else if (flag === 'cn') finalLang = 'zh-CN'; else if (flag === 'pt') finalLang = 'pt-PT'; let rMic = document.getElementById('plus-mic-lang'); if(rMic) rMic.value = finalLang; };
+         window.autoSetMicLang = function() { 
+            let rMic = document.getElementById('plus-mic-lang'); 
+            if(rMic && !rMic.value) rMic.value = 'auto'; 
+        };
 
             window.switchChatRoom('global');
             if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
