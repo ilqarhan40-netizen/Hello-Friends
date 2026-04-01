@@ -1962,17 +1962,61 @@ window.switchChatRoom = function(targetId) {
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
                 inputField.value = ''; 
 
-         let personalLang = localStorage.getItem('hf_personal_lang'); 
+  let personalLang = localStorage.getItem('hf_personal_lang'); 
                 
-                // УМНАЯ ЛОГИКА АВАТАРА: Если стоит "Авто", переводим на язык собеседника (в привате). Если выбран язык вручную - переводим на него.
-                let targetSendLang = (personalLang && personalLang !== 'auto') ? personalLang : (window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo));
+                // === БЛОКИРОВКА ЯЗЫКА КЛАВИАТУРЫ (ЗАМОК) ===
+                let myActiveLang = window.myProfileInfo.langCode || 'en';
+                let activeFlag = window.myProfileInfo.flag || '🌐';
+                let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+
+                if (personalLang && personalLang !== 'auto') {
+                    myActiveLang = personalLang;
+                    const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
+                    if (langMap[personalLang]) {
+                        activeFlagCode = langMap[personalLang][0];
+                        activeFlag = langMap[personalLang][1];
+                    }
+                }
+
+                // 1. ЖЕСТКО переводим то, что ты набрал (на любой раскладке), в твой Активный Язык (Авто или из Панели)
+                let myBaseText = rawText;
+                try { 
+                    const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
+                    const data1 = await res1.json(); 
+                    if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0]; 
+                } catch (e) {}
+
+                // 2. Узнаем язык собеседника (в привате)
+                let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
                 
-                let textToShip = rawText; 
-                try { const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(rawText)}`); const data = await res.json(); if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; } catch (e) {}
+                // 3. Переводим уже ЧИСТЫЙ текст для друга (если языки разные)
+                let textToShip = myBaseText; 
+                if (targetSendLang !== myActiveLang) {
+                    try { 
+                        const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`); 
+                        const data2 = await res2.json(); 
+                        if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0]; 
+                    } catch (e) {}
+                }
+
                 let isVoice = inputId === 'voice-chat-input';
                 let isConf = inputId === 'conf-chat-input';
 
-                db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: rawText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf }); 
+                // 4. Отправляем в базу с подмененным оригиналом и флагами!
+                db.ref(window.currentRoomId).push({ 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: textToShip, 
+                    originalText: myBaseText, // <--- МАГИЯ ЗДЕСЬ! Физическая клавиатура забыта.
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flag: activeFlag, 
+                    flagCode: activeFlagCode, 
+                    langCode: myActiveLang, 
+                    isVoiceRoomMsg: isVoice, 
+                    isConfMsg: isConf 
+                });
                 
                 const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
                 if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
