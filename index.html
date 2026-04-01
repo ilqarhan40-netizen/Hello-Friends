@@ -1062,16 +1062,21 @@ window.signOutGoogle = function() {
             try { rec.start(); } catch(e){}
         };
 
-        window.playAIVoice = function(text, langCode) {
+  window.playAIVoice = function(encodedText, langCode) {
             if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
             window.speechSynthesis.cancel(); 
+            
+            // ИСПРАВЛЕНИЕ: Расшифровываем текст из "компьютерного" обратно в человеческий!
+            let text = "";
+            try { text = decodeURIComponent(encodedText); } catch(e) { text = unescape(encodedText); }
+
             const utterance = new SpeechSynthesisUtterance(text);
+            // az перекидываем на tr-TR, так как у браузеров обычно нет азербайджанского голоса, турецкий звучит ближе всего
             const voiceMap = { 'en': 'en-US', 'ru': 'ru-RU', 'az': 'tr-TR', 'it': 'it-IT', 'es': 'es-ES', 'fr': 'fr-FR', 'pt': 'pt-PT', 'ja': 'ja-JP', 'zh': 'zh-CN' };
             utterance.lang = voiceMap[langCode] || langCode; 
             utterance.rate = 1.0;
             window.speechSynthesis.speak(utterance);
         };
-
         window.currentEmojiTargetId = null;
         window.toggleEmojiPicker = function(targetId) {
             window.currentEmojiTargetId = targetId;
@@ -1975,15 +1980,33 @@ window.switchChatRoom = function(targetId) {
                 
                 let bubbleContent = data.text; let bubbleClasses = `chat-bubble`;
                 
-                if (data.isAIAudio) {
-                    let escText = escape(data.text);
-                    bubbleContent = `
-                        <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${data.langCode}')">
-                            <i class="fa-solid fa-circle-play"></i>
-                            <span>Play Voice</span>
-                        </div>
-                        <div style="font-size:0.8rem; margin-top:6px; opacity:0.9;">${data.text}</div>
-                    `;
+        if (data.isAIAudio) {
+                    // ПРИОРИТЕТ: Настройка аватара > Префикс телефона
+                    let myManualLang = localStorage.getItem('hf_personal_lang');
+                    let myCurrentLang = (myManualLang && myManualLang !== 'auto') ? myManualLang : window.getSmartLang(window.myProfileInfo);
+
+                    if (isMe && data.originalText) {
+                        // Для отправителя: кодируем оригинал
+                        let escText = encodeURIComponent(data.originalText); 
+                        let playLang = data.langCode || myCurrentLang; 
+                        bubbleContent = `
+                            <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${playLang}')">
+                                <i class="fa-solid fa-circle-play"></i><span>Play Voice</span>
+                            </div>
+                            <div style="font-size:0.85rem; margin-top:6px; opacity:0.95;">
+                                ${data.originalText}
+                                <div class="mt-2 pt-1.5 border-t border-white/20 text-[0.7rem] text-yellow-400 font-bold tracking-wide">➔ Перевод: ${data.text}</div>
+                            </div>`;
+                    } else {
+                        // Для получателя: кодируем ПЕРЕВОД
+                        let escText = encodeURIComponent(data.text); 
+                        let playLang = myCurrentLang; 
+                        bubbleContent = `
+                            <div class="ai-audio-player" onclick="window.playAIVoice('${escText}', '${playLang}')">
+                                <i class="fa-solid fa-circle-play"></i><span>Play Voice</span>
+                            </div>
+                            <div style="font-size:0.85rem; margin-top:6px; opacity:0.95;">${data.text}</div>`;
+                    }
                 }
                 else if (data.mediaUrl) { if (data.mediaType === 'video') { bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`; } else { bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; } bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; }
                 else if (data.isTransfer) { bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; }
