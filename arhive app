@@ -628,12 +628,29 @@ firebase.auth().onAuthStateChanged((user) => {
                         <option value="ja-JP">🇯🇵 日本語</option>
                         <option value="zh-CN">🇨🇳 中文</option>
                     </select>
-                    <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call"><i class="fa-solid fa-video"></i></div>
-                    <div class="action-icon" onclick="window.openPhoneChoiceModal(); window.closeAllMenus();" title="Phone Call"><i class="fa-solid fa-phone"></i></div>
-                    <div class="action-icon" onclick="window.openEmailModal(); window.closeAllMenus();" title="Send Email"><i class="fa-solid fa-envelope"></i></div>
-                    <div class="action-icon" onclick="window.openLocationModal(); window.closeAllMenus();" title="Location"><i class="fa-solid fa-location-dot"></i></div>
-                    <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeAllMenus();" title="Archive"><i class="fa-solid fa-box-archive"></i></div>
-                    <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeAllMenus();" title="Clear Chat"><i class="fa-solid fa-trash"></i></div>
+           <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
+    <i class="fa-solid fa-video"></i>
+</div>
+
+<div class="action-icon text-[#a29bfe] hover:text-white" onclick="window.showMyQR(); window.closeAllMenus();" title="My QR Code">
+    <i class="fa-solid fa-qrcode"></i>
+</div>
+
+<div class="action-icon" onclick="window.openEmailModal(); window.closeAllMenus();" title="Send Email">
+    <i class="fa-solid fa-envelope"></i>
+</div>
+
+<div class="action-icon" onclick="window.openLocationModal(); window.closeAllMenus();" title="Location">
+    <i class="fa-solid fa-location-dot"></i>
+</div>
+
+<div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeAllMenus();" title="Archive">
+    <i class="fa-solid fa-box-archive"></i>
+</div>
+
+<div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeAllMenus();" title="Clear Chat">
+    <i class="fa-solid fa-trash-can"></i>
+</div>
                 </div>
             </div>
         </div>
@@ -2418,5 +2435,47 @@ window.switchChatRoom = function(targetId) {
             });
         }
     </script>
+    <div id="qr-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
+    <div class="app-modal-content flex flex-col items-center text-center">
+        <div class="close-sheet-btn" onclick="document.getElementById('qr-modal').classList.remove('active')">
+            <i class="fa-solid fa-xmark"></i>
+        </div>
+        
+        <h2 class="text-2xl font-bold text-white mb-2 mt-4 tracking-tight">Hello Friends</h2>
+        <p class="text-[#00a884] text-[10px] font-bold uppercase tracking-[3px] mb-6 text-center">Global Smart Network</p>
+        
+        <div class="bg-white p-5 rounded-[32px] shadow-[0_0_30px_rgba(0,168,132,0.2)] mb-8">
+            <img id="qr-image" src="" alt="QR Code" class="w-52 h-52">
+        </div>
+        
+        <button onclick="window.downloadQR()" class="btn-primary !bg-[#202c33] !text-white border border-[#2a3942] w-full flex items-center justify-center gap-2">
+            <i class="fa-solid fa-download"></i> Save QR Image
+        </button>
+        
+        <p class="text-[#8696a0] text-[10px] mt-6 leading-relaxed">
+            Scan this code to join our global professional community.
+        </p>
+    </div>
+</div>
+    <script>
+    window.showMyQR = function() {
+        const appUrl = "https://hello-friends-p8p3i7.web.app"; 
+        const qrImg = document.getElementById('qr-image');
+        const qrModal = document.getElementById('qr-modal');
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
+        qrModal.classList.add('active');
+    };
+
+    window.downloadQR = function() {
+        const qrImg = document.getElementById('qr-image');
+        if (!qrImg.src) return;
+        const link = document.createElement('a');
+        link.href = qrImg.src;
+        link.download = 'Hello_Friends_QR.png'; 
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+</script>
 </body>
 </html>
