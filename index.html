@@ -22,15 +22,18 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
- <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
-    });
-  });
-</script>
+    
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+        });
+        OneSignal.Notifications.requestPermission();
+      });
+    </script>
+    
     <script>
         const firebaseConfig = { 
             apiKey: "AIzaSyCVFkMsqelcnjjeIwGnAKmn1CFhDGc7kR0", 
@@ -1725,7 +1728,49 @@ window.handleCountryChange = function(sel) {
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
-        window.startInAppCall = function() { if (!window.currentTargetUser) { alert("Please open a private chat with a contact first!"); window.closePhoneChoiceModal(); return; } const target = window.currentTargetUser; window.closePhoneChoiceModal(); db.ref('signals/' + target.id).push({ type: 'call', callerId: window.myProfileInfo.id, callerName: window.myUsername, callerPhoto: window.myProfileInfo.photo, timestamp: firebase.database.ServerValue.TIMESTAMP }); window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); };
+window.startInAppCall = function() { 
+    if (!window.currentTargetUser) { 
+        alert("Please open a private chat with a contact first!"); 
+        window.closePhoneChoiceModal(); 
+        return; 
+    } 
+    const target = window.currentTargetUser; 
+    window.closePhoneChoiceModal(); 
+    
+    // Создаем звонок в базе
+    let callRef = db.ref('signals/' + target.id).push();
+    callRef.set({ 
+        type: 'call', 
+        callerId: window.myProfileInfo.id, 
+        callerName: window.myUsername, 
+        callerPhoto: window.myProfileInfo.photo, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    }); 
+    
+    // Отправляем PUSH через OneSignal
+    window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); 
+    
+    // Обновляем картинки на экране
+    const photoEl = document.getElementById('voice-friend-photo'); 
+    const flagEl = document.getElementById('voice-friend-flag'); 
+    const nameEl = document.getElementById('voice-friend-name'); 
+    if(photoEl) photoEl.src = target.photo; 
+    if(flagEl) flagEl.innerText = target.flag; 
+    if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
+    
+    window.voiceFriend = target; 
+    window.switchTab(1); 
+    window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); 
+    
+    // --- ТАЙМЕР ОТБОЯ (30 СЕК) ---
+    if (window.callTimeout) clearTimeout(window.callTimeout);
+    window.callTimeout = setTimeout(() => {
+        db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
+        callRef.remove(); 
+        window.showToast("No Answer", `${target.name} is unavailable.`, "", "");
+        window.callTimeout = null;
+    }, 30000);
+};
 
    window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { 
     window.currentIncomingSignalKey = signalKey; 
@@ -1744,29 +1789,67 @@ window.handleCountryChange = function(sel) {
     }
     // --- КОНЕЦ: Запуск вибрации ---
 };
-   window.acceptCall = function() { 
-            window.sndRing.pause(); window.sndRing.currentTime = 0; 
-            document.getElementById('incoming-call-modal').classList.remove('active'); 
-            db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
-            let target = window.participants.find(p => p.id === window.currentCallerId); 
-            if(target) { 
-                window.currentTargetUser = target; 
-                const photoEl = document.getElementById('voice-friend-photo'); 
-                const flagEl = document.getElementById('voice-friend-flag'); 
-                const nameEl = document.getElementById('voice-friend-name'); 
-                if(photoEl) photoEl.src = target.photo; 
-                if(flagEl) flagEl.innerText = target.flag; 
-                if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
-                window.voiceFriend = target; 
-                
-                // ИСПРАВЛЕНИЕ: Переключаем базу при ответе на входящий звонок!
-                window.switchChatRoom(target.id);
-                window.switchTab(1); 
-            } 
-        };
-        window.declineCall = function() { window.sndRing.pause(); window.sndRing.currentTime = 0; document.getElementById('incoming-call-modal').classList.remove('active'); db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); };
 
-        window.initSignalListener = function() { db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { const sig = snap.val(); if (!sig) return; if (Date.now() - sig.timestamp < 30000) { if (sig.type === 'call') { window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); } } else { db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove(); } }); };
+window.acceptCall = function() { 
+    window.sndRing.pause(); window.sndRing.currentTime = 0; 
+    document.getElementById('incoming-call-modal').classList.remove('active'); 
+    
+    db.ref('signals/' + window.currentCallerId).push({ type: 'answered' });
+    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    
+    if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+    if (navigator.vibrate) navigator.vibrate(0);
+
+    let target = window.participants.find(p => p.id === window.currentCallerId); 
+    if(target) { 
+        window.currentTargetUser = target; 
+        const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); 
+        if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
+        window.voiceFriend = target; window.switchChatRoom(target.id); window.switchTab(1); 
+    } 
+};
+
+window.declineCall = function() { 
+    window.sndRing.pause(); window.sndRing.currentTime = 0; 
+    document.getElementById('incoming-call-modal').classList.remove('active'); 
+    
+    db.ref('signals/' + window.currentCallerId).push({ type: 'reject', callerName: window.myUsername });
+    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    
+    if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+    if (navigator.vibrate) navigator.vibrate(0);
+};
+
+window.initSignalListener = function() { 
+    db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
+        const sig = snap.val(); if (!sig) return; 
+        
+        if (sig.type === 'call') { 
+            if (Date.now() - sig.timestamp < 30000) {
+                window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); 
+            } else {
+                db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            }
+        } 
+        else if (sig.type === 'reject') {
+            window.showToast("Call Declined", `${sig.callerName} declined the call.`, "", "");
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+        else if (sig.type === 'missed') {
+            window.sndRing.pause(); window.sndRing.currentTime = 0; 
+            document.getElementById('incoming-call-modal').classList.remove('active');
+            window.showToast("Missed Call ❗️", `You missed a call from ${sig.callerName}.`, "", "");
+            if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+            if (navigator.vibrate) navigator.vibrate(0);
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+        else if (sig.type === 'answered') {
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+    }); 
+};
 
         window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
@@ -2437,87 +2520,4 @@ window.switchChatRoom = function(targetId) {
 
             window.switchChatRoom('global');
             if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
-         window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
-        });
-    </script>
-
-    <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
-        <div class="app-modal-content">
-            <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div>
-            <div class="sheet-handle" onclick="window.closeAdminModal()"></div>
-            
-            <h2 class="text-xl font-bold mb-6 text-white text-center mt-2">
-                <i class="fa-solid fa-crown text-[#a29bfe] mr-2"></i> Admin Panel
-            </h2>
-            
-            <div class="flex flex-col gap-3">
-                <label class="block text-[0.65rem] text-[#a29bfe] uppercase mb-1 ml-1 font-bold">Select Target User</label>
-                <div class="bg-[#202c33] rounded-xl border border-[#2a3942] flex items-center overflow-hidden focus-within:border-[#a29bfe] transition h-12 mb-4 relative">
-                    <select id="admin-user-select" class="bg-transparent text-[#e9edef] w-full h-full pl-4 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
-                        </select>
-                    <i class="fa-solid fa-chevron-down text-[#8696a0] absolute right-4 text-[0.6rem] z-0 pointer-events-none"></i>
-                </div>
-                
-                <button class="bg-[#a29bfe] text-[#111b21] rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(162,155,254,0.4)] relative z-20" onclick="window.adminLogin()">
-                    <i class="fa-solid fa-right-to-bracket mr-2"></i> Login as User
-                </button>
-                
-                <button class="bg-red-500 text-white rounded-2xl py-3 font-bold text-sm transition active:scale-95 shadow-[0_0_15px_rgba(239,68,68,0.4)] mt-2 relative z-20" onclick="window.adminDeleteUser(this)">
-                    <i class="fa-solid fa-skull mr-2"></i> Eradicate User
-                </button>
-            </div>
-        </div>
-    </div>
-<script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA SW Registered!', reg.scope))
-                    .catch(err => console.log('PWA SW Failed!', err));
-            });
-        }
-    </script>
-    <div id="qr-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-    <div class="app-modal-content flex flex-col items-center text-center">
-        <div class="close-sheet-btn" onclick="document.getElementById('qr-modal').classList.remove('active')">
-            <i class="fa-solid fa-xmark"></i>
-        </div>
-        
-        <h2 class="text-2xl font-bold text-white mb-2 mt-4 tracking-tight">Hello Friends</h2>
-        <p class="text-[#00a884] text-[10px] font-bold uppercase tracking-[3px] mb-6 text-center">Global Smart Network</p>
-        
-        <div class="bg-white p-5 rounded-[32px] shadow-[0_0_30px_rgba(0,168,132,0.2)] mb-8">
-            <img id="qr-image" src="" alt="QR Code" class="w-52 h-52">
-        </div>
-        
-        <button onclick="window.downloadQR()" class="btn-primary !bg-[#202c33] !text-white border border-[#2a3942] w-full flex items-center justify-center gap-2">
-            <i class="fa-solid fa-download"></i> Save QR Image
-        </button>
-        
-        <p class="text-[#8696a0] text-[10px] mt-6 leading-relaxed">
-            Scan this code to join our global professional community.
-        </p>
-    </div>
-</div>
-    <script>
-    window.showMyQR = function() {
-        const appUrl = "https://hello-friends-p8p3i7.web.app"; 
-        const qrImg = document.getElementById('qr-image');
-        const qrModal = document.getElementById('qr-modal');
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
-        qrModal.classList.add('active');
-    };
-
-    window.downloadQR = function() {
-        const qrImg = document.getElementById('qr-image');
-        if (!qrImg.src) return;
-        const link = document.createElement('a');
-        link.href = qrImg.src;
-        link.download = 'Hello_Friends_QR.png'; 
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-</script>
-</body>
-</html>
+         window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme');
