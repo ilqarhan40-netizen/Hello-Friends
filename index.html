@@ -22,8 +22,17 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
-
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+    });
+    // Запрашиваем разрешение у пользователя
+    OneSignal.Notifications.requestPermission();
+  });
+</script>
     <script>
         const firebaseConfig = { 
             apiKey: "AIzaSyCVFkMsqelcnjjeIwGnAKmn1CFhDGc7kR0", 
@@ -1711,32 +1720,113 @@ window.handleCountryChange = function(sel) {
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
-        window.startInAppCall = function() { if (!window.currentTargetUser) { alert("Please open a private chat with a contact first!"); window.closePhoneChoiceModal(); return; } const target = window.currentTargetUser; window.closePhoneChoiceModal(); db.ref('signals/' + target.id).push({ type: 'call', callerId: window.myProfileInfo.id, callerName: window.myUsername, callerPhoto: window.myProfileInfo.photo, timestamp: firebase.database.ServerValue.TIMESTAMP }); window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); };
+    window.startInAppCall = function() { 
+    if (!window.currentTargetUser) { 
+        alert("Please open a private chat with a contact first!"); 
+        window.closePhoneChoiceModal(); 
+        return; 
+    } 
+    const target = window.currentTargetUser; 
+    window.closePhoneChoiceModal(); 
+    
+    let callRef = db.ref('signals/' + target.id).push();
+    callRef.set({ 
+        type: 'call', 
+        callerId: window.myProfileInfo.id, 
+        callerName: window.myUsername, 
+        callerPhoto: window.myProfileInfo.photo, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    }); 
+    
+    window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); 
+    
+    const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); 
+    if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
+    window.voiceFriend = target; window.switchTab(1); window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); 
+    
+    if (window.callTimeout) clearTimeout(window.callTimeout);
+    window.callTimeout = setTimeout(() => {
+        db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
+        callRef.remove(); 
+        window.showToast("No Answer", `${target.name} is unavailable.`, "", "");
+        window.callTimeout = null;
+    }, 30000);
+};
 
-        window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { window.currentIncomingSignalKey = signalKey; window.currentCallerId = callerId; document.getElementById('incoming-call-name').innerText = callerName; document.getElementById('incoming-call-photo').src = callerPhoto; document.getElementById('incoming-call-modal').classList.add('active'); window.sndRing.play().catch(e=>{}); window.firePush("Incoming Call 📞", `${callerName} is calling you on Hello Friends!`, callerPhoto); };
-   window.acceptCall = function() { 
+window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { 
+    window.currentIncomingSignalKey = signalKey; 
+    window.currentCallerId = callerId; 
+    document.getElementById('incoming-call-name').innerText = callerName; 
+    document.getElementById('incoming-call-photo').src = callerPhoto; 
+    document.getElementById('incoming-call-modal').classList.add('active'); 
+    window.sndRing.play().catch(e=>{}); 
+    window.firePush("Incoming Call 📞", `${callerName} is calling you on Hello Friends!`, callerPhoto);
+    
+    if (navigator.vibrate) {
+        window.vibrateInterval = setInterval(() => { navigator.vibrate([500, 1000, 500]); }, 2000);
+    }
+};
+
+window.acceptCall = function() { 
+    window.sndRing.pause(); window.sndRing.currentTime = 0; 
+    document.getElementById('incoming-call-modal').classList.remove('active'); 
+    
+    db.ref('signals/' + window.currentCallerId).push({ type: 'answered' });
+    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    
+    if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+    if (navigator.vibrate) navigator.vibrate(0);
+
+    let target = window.participants.find(p => p.id === window.currentCallerId); 
+    if(target) { 
+        window.currentTargetUser = target; 
+        const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); 
+        if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
+        window.voiceFriend = target; window.switchChatRoom(target.id); window.switchTab(1); 
+    } 
+};
+
+window.declineCall = function() { 
+    window.sndRing.pause(); window.sndRing.currentTime = 0; 
+    document.getElementById('incoming-call-modal').classList.remove('active'); 
+    
+    db.ref('signals/' + window.currentCallerId).push({ type: 'reject', callerName: window.myUsername });
+    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    
+    if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+    if (navigator.vibrate) navigator.vibrate(0);
+};
+
+window.initSignalListener = function() { 
+    db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
+        const sig = snap.val(); if (!sig) return; 
+        
+        if (sig.type === 'call') { 
+            if (Date.now() - sig.timestamp < 30000) {
+                window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); 
+            } else {
+                db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            }
+        } 
+        else if (sig.type === 'reject') {
+            window.showToast("Call Declined", `${sig.callerName} declined the call.`, "", "");
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+        else if (sig.type === 'missed') {
             window.sndRing.pause(); window.sndRing.currentTime = 0; 
-            document.getElementById('incoming-call-modal').classList.remove('active'); 
-            db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
-            let target = window.participants.find(p => p.id === window.currentCallerId); 
-            if(target) { 
-                window.currentTargetUser = target; 
-                const photoEl = document.getElementById('voice-friend-photo'); 
-                const flagEl = document.getElementById('voice-friend-flag'); 
-                const nameEl = document.getElementById('voice-friend-name'); 
-                if(photoEl) photoEl.src = target.photo; 
-                if(flagEl) flagEl.innerText = target.flag; 
-                if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
-                window.voiceFriend = target; 
-                
-                // ИСПРАВЛЕНИЕ: Переключаем базу при ответе на входящий звонок!
-                window.switchChatRoom(target.id);
-                window.switchTab(1); 
-            } 
-        };
-        window.declineCall = function() { window.sndRing.pause(); window.sndRing.currentTime = 0; document.getElementById('incoming-call-modal').classList.remove('active'); db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); };
-
-        window.initSignalListener = function() { db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { const sig = snap.val(); if (!sig) return; if (Date.now() - sig.timestamp < 30000) { if (sig.type === 'call') { window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); } } else { db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove(); } }); };
+            document.getElementById('incoming-call-modal').classList.remove('active');
+            window.showToast("Missed Call ❗️", `You missed a call from ${sig.callerName}.`, "", "");
+            if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+            if (navigator.vibrate) navigator.vibrate(0);
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+        else if (sig.type === 'answered') {
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+    }); 
+};
 
         window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
