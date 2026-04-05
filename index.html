@@ -297,7 +297,12 @@ firebase.auth().onAuthStateChanged((user) => {
             // ЖЕСТКОЕ ПРИСВОЕНИЕ ID (Убиваем "Гостя" моментально)
             if (window.myProfileInfo) window.myProfileInfo.id = actualUid;
             window.isGuest = false;
-            
+            // Регистрируем юзера в OneSignal для пушей
+if (window.OneSignalDeferred) {
+    window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.login(actualUid);
+    });
+}
             // Система присутствия
             const userStatusRef = db.ref('users/' + actualUid + '/status');
             db.ref('.info/connected').on('value', snap => {
@@ -1935,14 +1940,28 @@ window.initSignalListener = function() {
                 } catch(e) {}
             };
 
-            window.sendPushToUser = function(targetUserId, title, body) {
-                db.ref('users/' + targetUserId).once('value').then(snap => {
-                    let u = snap.val();
-                    if(u && u.fcmToken) {
-                        fetch('https://fcm.googleapis.com/fcm/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'key=AAAAUaPqWp0:APA91bE...' }, body: JSON.stringify({ "to": u.fcmToken, "data": { "title": title, "body": body, "icon": window.myProfileInfo?.photo } }) }).catch(e=>{});
-                    }
-                });
-            };
+      window.sendPushToUser = function(targetUserId, title, body) {
+    const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
+    const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
+
+    const notification = {
+        app_id: ONESIGNAL_APP_ID,
+        include_aliases: { "external_id": [targetUserId] }, 
+        headings: { "en": title, "ru": title, "az": title },
+        contents: { "en": body, "ru": body, "az": body },
+        android_channel_id: "b455502c-7b2a-4318-8422-921c172d1f94",
+        data: { type: "incoming_call" } 
+    };
+
+    fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
+        },
+        body: JSON.stringify(notification)
+    }).catch(e => console.error("OneSignal Error:", e));
+};
 
             let activeUserId = localStorage.getItem('hf_active_user');
             window.isGuest = !activeUserId; 
