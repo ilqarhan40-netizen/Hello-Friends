@@ -1720,7 +1720,7 @@ window.handleCountryChange = function(sel) {
         window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
         window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
-    window.startInAppCall = function() { 
+window.startInAppCall = function() { 
     if (!window.currentTargetUser) { 
         alert("Please open a private chat with a contact first!"); 
         window.closePhoneChoiceModal(); 
@@ -1742,7 +1742,13 @@ window.handleCountryChange = function(sel) {
     
     const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); 
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
-    window.voiceFriend = target; window.switchTab(1); window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); 
+    
+    window.voiceFriend = target; 
+    
+    // 👇 ВОТ ОНА, ФИНАЛЬНАЯ ЗАЩИТА ОТ ВЫКИДЫВАНИЯ
+    if (window.currentIndex !== 1) window.switchTab(1); 
+    
+    window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); 
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
@@ -1782,7 +1788,12 @@ window.acceptCall = function() {
         window.currentTargetUser = target; 
         const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); 
         if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
-        window.voiceFriend = target; window.switchChatRoom(target.id); window.switchTab(1); 
+        
+        window.voiceFriend = target; 
+        window.switchChatRoom(target.id); 
+        
+        // 👇 ВОТ ЗДЕСЬ ИСПРАВЛЕНИЕ: Открываем вкладку, только если мы еще не на ней!
+        if (window.currentIndex !== 1) window.switchTab(1); 
     } 
 };
 
