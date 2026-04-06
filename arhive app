@@ -22,8 +22,17 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
-
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+    });
+    // Запрашиваем разрешение у пользователя
+    OneSignal.Notifications.requestPermission();
+  });
+</script>
     <script>
         const firebaseConfig = { 
             apiKey: "AIzaSyCVFkMsqelcnjjeIwGnAKmn1CFhDGc7kR0", 
@@ -288,7 +297,12 @@ firebase.auth().onAuthStateChanged((user) => {
             // ЖЕСТКОЕ ПРИСВОЕНИЕ ID (Убиваем "Гостя" моментально)
             if (window.myProfileInfo) window.myProfileInfo.id = actualUid;
             window.isGuest = false;
-            
+            // Регистрируем юзера в OneSignal для пушей
+if (window.OneSignalDeferred) {
+    window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.login(actualUid);
+    });
+}
             // Система присутствия
             const userStatusRef = db.ref('users/' + actualUid + '/status');
             db.ref('.info/connected').on('value', snap => {
@@ -1695,48 +1709,142 @@ window.handleCountryChange = function(sel) {
         }
     }
 };
-        window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
+   window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
-        window.smartArchive = function() { const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none'; let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`; archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); };
-        window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { db.ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
-        window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
-        window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
-        window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
+window.smartArchive = function() { const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none'; let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`; archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); };
+window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { db.ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
+window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
+window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
+window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
 
-        window.sendLocationToChat = function() { window.closeAttachModal(); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const lat = position.coords.latitude; const lon = position.coords.longitude; const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`; const mapLink = `https://www.google.com/maps?q=${lat},${lon}`; db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: "📍 Shared Location", isLocation: true, lat: lat, lon: lon, embedLink: embedLink, mapLink: mapLink, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); }, (error) => { alert("Failed to get location. Please allow GPS access."); }, { timeout: 5000 } ); } else { alert("Geolocation is not supported by your browser."); } };
-        window.openLocationModal = function() { window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const lat = position.coords.latitude; const lon = position.coords.longitude; mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; }, (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, { timeout: 5000 } ); } else { mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; } };
+window.sendLocationToChat = function() { window.closeAttachModal(); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const lat = position.coords.latitude; const lon = position.coords.longitude; const embedLink = `https://maps.google.com/maps?q=${lat},${lon}&z=15&output=embed`; const mapLink = `https://www.google.com/maps?q=${lat},${lon}`; db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: "📍 Shared Location", isLocation: true, lat: lat, lon: lon, embedLink: embedLink, mapLink: mapLink, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); }, (error) => { alert("Failed to get location. Please allow GPS access."); }, { timeout: 5000 } ); } else { alert("Geolocation is not supported by your browser."); } };
+window.openLocationModal = function() { window.closeDropdown(); document.getElementById('location-modal').classList.add('active'); const mapContainer = document.getElementById('location-map'); mapContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a884] mb-3"></i><span class="font-sans text-[#8696a0]">Detecting location...</span>'; if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (position) => { const lat = position.coords.latitude; const lon = position.coords.longitude; mapContainer.innerHTML = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://maps.google.com/maps?q=${lat},${lon}&z=14&output=embed" style="border-radius: 12px;"></iframe>`; }, (error) => { mapContainer.innerHTML = '<span class="text-red-500 font-sans">Failed to get location. Please allow GPS access.</span>'; }, { timeout: 5000 } ); } else { mapContainer.innerHTML = '<span class="font-sans text-red-500">Geolocation is not supported by your browser.</span>'; } };
 
-        window.toggleRhombusMenu = function(e) { e.stopPropagation(); const actions = document.getElementById('rhombus-actions'); const btn = document.getElementById('rhombus-btn'); if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } };
-        window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
-        window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
-        window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
+window.toggleRhombusMenu = function(e) { e.stopPropagation(); const actions = document.getElementById('rhombus-actions'); const btn = document.getElementById('rhombus-btn'); if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } };
+window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
+window.openPhoneChoiceModal = function() { window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
+window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
-        window.startInAppCall = function() { if (!window.currentTargetUser) { alert("Please open a private chat with a contact first!"); window.closePhoneChoiceModal(); return; } const target = window.currentTargetUser; window.closePhoneChoiceModal(); db.ref('signals/' + target.id).push({ type: 'call', callerId: window.myProfileInfo.id, callerName: window.myUsername, callerPhoto: window.myProfileInfo.photo, timestamp: firebase.database.ServerValue.TIMESTAMP }); window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; window.voiceFriend = target; window.switchTab(1); window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); };
+window.startInAppCall = function() { 
+    if (!window.currentTargetUser) { 
+        alert("Please open a private chat with a contact first!"); 
+        window.closePhoneChoiceModal(); 
+        return; 
+    } 
+    const target = window.currentTargetUser; 
+    window.closePhoneChoiceModal(); 
+    
+    let callRef = db.ref('signals/' + target.id).push();
+    callRef.set({ 
+        type: 'call', 
+        callerId: window.myProfileInfo.id, 
+        callerName: window.myUsername, 
+        callerPhoto: window.myProfileInfo.photo, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    }); 
+    
+    window.sendPushToUser(target.id, "Incoming Call 📞", `${window.myUsername} is calling you on Hello Friends!`); 
+    
+    const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); 
+    let targetFirstName = target.name ? target.name.split(' ')[0] : 'User';
+    if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = targetFirstName; 
+    
+    window.voiceFriend = target; 
+    if (window.currentIndex !== 1) window.switchTab(1); 
+    window.showToast("Calling...", `Ringing ${targetFirstName}...`, target.photo, ""); 
+    
+    if (window.callTimeout) clearTimeout(window.callTimeout);
+    window.callTimeout = setTimeout(() => {
+        db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
+        callRef.remove(); 
+        
+        // 👇 ФОНОВЫЙ ПУШ О ПРОПУЩЕННОМ!
+        window.sendPushToUser(target.id, "Missed Call ❗️", `You missed a call from ${window.myUsername}`);
+        
+        window.showToast("No Answer", `${targetFirstName} is unavailable.`, "", "");
+        window.callTimeout = null;
+    }, 30000);
+};
 
-        window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { window.currentIncomingSignalKey = signalKey; window.currentCallerId = callerId; document.getElementById('incoming-call-name').innerText = callerName; document.getElementById('incoming-call-photo').src = callerPhoto; document.getElementById('incoming-call-modal').classList.add('active'); window.sndRing.play().catch(e=>{}); window.firePush("Incoming Call 📞", `${callerName} is calling you on Hello Friends!`, callerPhoto); };
-   window.acceptCall = function() { 
+// 👇 ВЕРНУЛАСЬ ФУНКЦИЯ ДЛЯ ВХОДЯЩИХ ЗВОНКОВ 👇
+window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { 
+    window.currentIncomingSignalKey = signalKey; 
+    window.currentCallerId = callerId; 
+    document.getElementById('incoming-call-name').innerText = callerName || 'User'; 
+    document.getElementById('incoming-call-photo').src = callerPhoto || 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff'; 
+    document.getElementById('incoming-call-modal').classList.add('active'); 
+    
+    window.sndRing.play().catch(e => console.log("Sound autoplay blocked by browser")); 
+    window.firePush("Incoming Call 📞", `${callerName || 'User'} is calling you on Hello Friends!`, callerPhoto);
+    
+    if (navigator.vibrate) {
+        window.vibrateInterval = setInterval(() => { navigator.vibrate([500, 1000, 500]); }, 2000);
+    }
+};
+
+window.acceptCall = function() { 
+    window.sndRing.pause(); window.sndRing.currentTime = 0; 
+    document.getElementById('incoming-call-modal').classList.remove('active'); 
+    
+    db.ref('signals/' + window.currentCallerId).push({ type: 'answered' });
+    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    
+    if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+    if (navigator.vibrate) navigator.vibrate(0);
+
+    let target = window.participants.find(p => p.id === window.currentCallerId); 
+    if(target) { 
+        window.currentTargetUser = target; 
+        const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name'); 
+        let targetFirstName = target.name ? target.name.split(' ')[0] : 'User';
+        if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = targetFirstName; 
+        
+        window.voiceFriend = target; 
+        window.switchChatRoom(target.id); 
+        if (window.currentIndex !== 1) window.switchTab(1); 
+    } 
+};
+
+window.declineCall = function() { 
+    window.sndRing.pause(); window.sndRing.currentTime = 0; 
+    document.getElementById('incoming-call-modal').classList.remove('active'); 
+    
+    db.ref('signals/' + window.currentCallerId).push({ type: 'reject', callerName: window.myUsername });
+    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    
+    if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+    if (navigator.vibrate) navigator.vibrate(0);
+};
+window.initSignalListener = function() { 
+    db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
+        const sig = snap.val(); if (!sig) return; 
+        
+        if (sig.type === 'call') { 
+            if (Date.now() - sig.timestamp < 30000) {
+                window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); 
+            } else {
+                db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            }
+        } 
+        else if (sig.type === 'reject') {
+            window.showToast("Call Declined", `${sig.callerName} declined the call.`, "", "");
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+        else if (sig.type === 'missed') {
             window.sndRing.pause(); window.sndRing.currentTime = 0; 
-            document.getElementById('incoming-call-modal').classList.remove('active'); 
-            db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
-            let target = window.participants.find(p => p.id === window.currentCallerId); 
-            if(target) { 
-                window.currentTargetUser = target; 
-                const photoEl = document.getElementById('voice-friend-photo'); 
-                const flagEl = document.getElementById('voice-friend-flag'); 
-                const nameEl = document.getElementById('voice-friend-name'); 
-                if(photoEl) photoEl.src = target.photo; 
-                if(flagEl) flagEl.innerText = target.flag; 
-                if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
-                window.voiceFriend = target; 
-                
-                // ИСПРАВЛЕНИЕ: Переключаем базу при ответе на входящий звонок!
-                window.switchChatRoom(target.id);
-                window.switchTab(1); 
-            } 
-        };
-        window.declineCall = function() { window.sndRing.pause(); window.sndRing.currentTime = 0; document.getElementById('incoming-call-modal').classList.remove('active'); db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); };
-
-        window.initSignalListener = function() { db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { const sig = snap.val(); if (!sig) return; if (Date.now() - sig.timestamp < 30000) { if (sig.type === 'call') { window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); } } else { db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove(); } }); };
+            document.getElementById('incoming-call-modal').classList.remove('active');
+            window.showToast("Missed Call ❗️", `You missed a call from ${sig.callerName}.`, "", "");
+            if (window.vibrateInterval) { clearInterval(window.vibrateInterval); window.vibrateInterval = null; }
+            if (navigator.vibrate) navigator.vibrate(0);
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+        else if (sig.type === 'answered') {
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+    }); 
+};
 
         window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
         window.openEmailModal = function() { window.closeDropdown(); document.getElementById('email-modal').classList.add('active'); };
@@ -1834,14 +1942,28 @@ window.handleCountryChange = function(sel) {
                 } catch(e) {}
             };
 
-            window.sendPushToUser = function(targetUserId, title, body) {
-                db.ref('users/' + targetUserId).once('value').then(snap => {
-                    let u = snap.val();
-                    if(u && u.fcmToken) {
-                        fetch('https://fcm.googleapis.com/fcm/send', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'key=AAAAUaPqWp0:APA91bE...' }, body: JSON.stringify({ "to": u.fcmToken, "data": { "title": title, "body": body, "icon": window.myProfileInfo?.photo } }) }).catch(e=>{});
-                    }
-                });
-            };
+      window.sendPushToUser = function(targetUserId, title, body) {
+    const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
+    const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
+
+    const notification = {
+        app_id: ONESIGNAL_APP_ID,
+        include_aliases: { "external_id": [targetUserId] }, 
+        headings: { "en": title, "ru": title, "az": title },
+        contents: { "en": body, "ru": body, "az": body },
+        android_channel_id: "b455502c-7b2a-4318-8422-921c172d1f94",
+        data: { type: "incoming_call" } 
+    };
+
+    fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
+        },
+        body: JSON.stringify(notification)
+    }).catch(e => console.error("OneSignal Error:", e));
+};
 
             let activeUserId = localStorage.getItem('hf_active_user');
             window.isGuest = !activeUserId; 
@@ -1943,7 +2065,7 @@ window.switchChatRoom = function(targetId) {
                 let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${myBio}</span>` : ""}`; 
                 window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, myPhone); 
             }
-            else { 
+    else { 
                 const targetUser = window.participants.find(p => p.id === targetId); 
                 if(targetUser) { 
                     window.currentTargetUser = targetUser; 
@@ -1959,6 +2081,15 @@ window.switchChatRoom = function(targetId) {
                     let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}${targetLangs}</span>${targetBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${targetBio}</span>` : ""}`; 
                     
                     window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, targetPhone); 
+
+                    // === ПАТЧ: ОБНОВЛЯЕМ ИНТЕРФЕЙС ГОЛОСОВОЙ КОМНАТЫ ===
+                    const vPhoto = document.getElementById('voice-friend-photo');
+                    const vFlag = document.getElementById('voice-friend-flag');
+                    const vName = document.getElementById('voice-friend-name');
+                    if(vPhoto) vPhoto.src = targetUser.photo;
+                    if(vFlag) vFlag.innerText = targetUser.flag;
+                    if(vName) vName.innerText = (targetUser.name || 'User').split(' ')[0];
+                    // ===================================================
                 } 
             }
             
