@@ -627,7 +627,7 @@ if (window.OneSignalDeferred) {
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
-               <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+               <select id="plus-mic-lang" onchange="window.saveMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
                         <option value="auto" selected>🤖 Auto (Profile)</option>
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ru-RU">🇷🇺 Русский</option>
@@ -1056,8 +1056,7 @@ window.signOutGoogle = function() {
             
             return userProfile.langCode || 'en';
         };
-
-     window.startUniversalMic = async function(mode) {
+window.startUniversalMic = async function(mode) {
             window.speechRecognizedText = "";
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             let rec = SpeechRec ? new SpeechRec() : null;
@@ -1068,13 +1067,20 @@ window.signOutGoogle = function() {
             let langSelect = document.getElementById('plus-mic-lang');
             let selectedMicLang = langSelect ? langSelect.value : 'auto';
             
-            // ИЗОЛИРОВАННАЯ ЛОГИКА МИКРОФОНА: Если "Авто", вычисляем язык по профилю
+      // --- УМНАЯ ЛОГИКА МИКРОФОНА И PNG ФЛАГОВ ---
+            let sendLangCode = window.myProfileInfo.langCode || 'en';
+            let sendFlagCode = window.myProfileInfo.flagCode || 'un';
+            let autoLang = 'en-US'; // 1. Английский (дефолт)
+
             if (selectedMicLang === 'auto') {
                 let phone = window.myProfileInfo.phone || ""; 
                 let flag = window.myProfileInfo.flagCode || "un"; 
-                let autoLang = 'en-US'; 
+                
+                // Проверка телефона
                 if (phone.startsWith('+7')) autoLang = 'ru-RU'; 
                 else if (phone.startsWith('+994')) autoLang = 'az-AZ'; 
+                else if (phone.startsWith('+90')) autoLang = 'tr-TR'; 
+                else if (phone.startsWith('+971')) autoLang = 'ar-AE'; 
                 else if (phone.startsWith('+39')) autoLang = 'it-IT'; 
                 else if (phone.startsWith('+49')) autoLang = 'de-DE'; 
                 else if (phone.startsWith('+33')) autoLang = 'fr-FR'; 
@@ -1082,8 +1088,11 @@ window.signOutGoogle = function() {
                 else if (phone.startsWith('+34')) autoLang = 'es-ES'; 
                 else if (phone.startsWith('+86')) autoLang = 'zh-CN'; 
                 else if (phone.startsWith('+351')) autoLang = 'pt-PT'; 
+                // Проверка флага
                 else if (flag === 'ru') autoLang = 'ru-RU'; 
                 else if (flag === 'az') autoLang = 'az-AZ'; 
+                else if (flag === 'tr') autoLang = 'tr-TR'; 
+                else if (flag === 'ae') autoLang = 'ar-AE'; 
                 else if (flag === 'it') autoLang = 'it-IT'; 
                 else if (flag === 'de') autoLang = 'de-DE'; 
                 else if (flag === 'fr') autoLang = 'fr-FR'; 
@@ -1091,11 +1100,16 @@ window.signOutGoogle = function() {
                 else if (flag === 'es') autoLang = 'es-ES'; 
                 else if (flag === 'cn') autoLang = 'zh-CN'; 
                 else if (flag === 'pt') autoLang = 'pt-PT';
+                
                 rec.lang = autoLang;
+                sendLangCode = autoLang.split('-')[0];
             } else {
-                rec.lang = selectedMicLang; // Ручной выбор языка
+                rec.lang = selectedMicLang; // Ручной выбор
+                sendLangCode = selectedMicLang.split('-')[0];
+                // Автоматически подбираем PNG флаг под выбранный язык микрофона
+                const micFlagMap = {'en':'gb', 'ru':'ru', 'az':'az', 'de':'de', 'tr':'tr', 'ar':'ae', 'it':'it', 'es':'es', 'fr':'fr', 'pt':'pt', 'ja':'jp', 'zh':'cn'};
+                sendFlagCode = micFlagMap[sendLangCode] || sendFlagCode;
             }
-            
             window.showToast("Listening...", "Speak into the microphone", "", "");
             
             rec.onresult = async (e) => { 
@@ -1114,10 +1128,26 @@ window.signOutGoogle = function() {
                 let isVoice = window.currentMicInputTarget === 'voice-chat-input';
                 let isConf = window.currentMicInputTarget === 'conf-chat-input';
 
+                // Изолированный пакет данных (только нужные флаги, без старых эмодзи)
+                let payload = { 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: textToShip, 
+                    originalText: window.speechRecognizedText, 
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flagCode: sendFlagCode, // <--- Жесткий PNG флаг микрофона
+                    langCode: sendLangCode, // <--- Язык отправки
+                    isVoiceRoomMsg: isVoice, 
+                    isConfMsg: isConf 
+                };
+
                 if (mode === 'text') {
-                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+                    db.ref(window.currentRoomId).push(payload);
                 } else if (mode === 'ai-audio') {
-                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+                    payload.isAIAudio = true;
+                    db.ref(window.currentRoomId).push(payload);
                 }
             };
             try { rec.start(); } catch(e){}
@@ -1890,7 +1920,7 @@ window.initSignalListener = function() {
             window.applyTranslations = function() { const dict = i18n[window.appLang] || i18n['en']; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if(dict[key]) el.innerText = dict[key]; }); const langSelect = document.getElementById('app-lang-select'); if(langSelect) langSelect.value = window.appLang; };
             window.applyTranslations();
 
-    window.switchTab = function(index) { 
+  window.switchTab = function(index) { 
             const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
             const pages = document.querySelectorAll('.page-content'); 
             const emptyState = document.getElementById('empty-state-screen');
@@ -1930,8 +1960,13 @@ window.initSignalListener = function() {
             
             window.currentIndex = index; 
             if(emptyState) emptyState.style.display = 'none';
-        };
 
+            // --- НЕЗАВИСИМАЯ ПАМЯТЬ МИКРОФОНОВ ---
+            if (index === 0) window.currentMicInputTarget = 'chat-input';
+            else if (index === 1) window.currentMicInputTarget = 'voice-chat-input';
+            else if (index === 2) window.currentMicInputTarget = 'conf-chat-input';
+            if (window.autoSetMicLang) window.autoSetMicLang();
+        };
             window.initFCM = function() {
                 try {
                     const messaging = firebase.messaging();
@@ -2333,70 +2368,153 @@ window.switchChatRoom = function(targetId) {
                     }
                 }
 
-                // ==========================================
+         // ==========================================
                 // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
                 // ==========================================
                 if (data.isVoiceRoomMsg) {
                     let originalText = data.originalText || data.text;
                     let myPersonalLang = localStorage.getItem('hf_personal_lang');
                     if (!myPersonalLang || myPersonalLang === 'auto') {
-                        myPersonalLang = window.myProfileInfo.langCode; 
+                        myPersonalLang = window.myProfileInfo.langCode || 'en'; 
                     }
 
-                    let senderPhoto, senderFlag, senderLang, senderName;
-                    let receiverPhoto, receiverFlag, receiverLang, receiverName;
+                    // Словарь для прописей языков и PNG кодов
+                    const langInfo = {
+                        'en': { fCode: 'gb', name: 'English' },
+                        'ru': { fCode: 'ru', name: 'Русский' },
+                        'az': { fCode: 'az', name: 'Azərbaycanca' },
+                        'de': { fCode: 'de', name: 'Deutsch' },
+                        'tr': { fCode: 'tr', name: 'Türkçe' },
+                        'ar': { fCode: 'ae', name: 'العربية' },
+                        'it': { fCode: 'it', name: 'Italiano' },
+                        'es': { fCode: 'es', name: 'Español' },
+                        'fr': { fCode: 'fr', name: 'Français' },
+                        'pt': { fCode: 'pt', name: 'Português' },
+                        'ja': { fCode: 'jp', name: '日本語' },
+                        'zh': { fCode: 'cn', name: '中文' },
+                        'un': { fCode: 'un', name: 'Global' }
+                    };
+
+                    let myLangData = langInfo[myPersonalLang] || langInfo['en'];
+
+                    let senderPhoto, senderName, senderLang, senderFlagCode, senderLangName;
+                    let receiverPhoto, receiverName, receiverLang, receiverFlagCode, receiverLangName;
 
                     if (isMe) {
                         senderPhoto = window.myProfileInfo.photo;
-                        senderFlag = window.myProfileInfo.flag; 
-                        senderLang = myPersonalLang; 
                         senderName = window.myUsername;
+                        
+                        // СТРОГИЙ ПРИОРИТЕТ МИКРОФОНА: язык и флаг берутся из сообщения
+                        senderLang = data.langCode || myPersonalLang;
+                        let sData = langInfo[senderLang] || langInfo['en'];
+                        senderFlagCode = data.flagCode || sData.fCode;
+                        senderLangName = sData.name;
 
-                        receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U';
-                        receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐';
-                        receiverLang = window.currentTargetUser ? window.currentTargetUser.langCode : 'en';
-                        receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
+                        receiverPhoto = window.currentTargetUser.photo;
+                        receiverName = window.currentTargetUser.name.split(' ')[0];
+                        receiverLang = window.currentTargetUser.langCode || 'en';
+                        let rData = langInfo[receiverLang] || langInfo['en'];
+                        receiverFlagCode = window.currentTargetUser.flagCode || rData.fCode;
+                        receiverLangName = rData.name;
                     } else {
-                        senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U';
-                        senderFlag = data.flag || '🌐';
+                        senderPhoto = data.photo;
+                        senderName = data.name.split(' ')[0];
+                        
+                        // СТРОГИЙ ПРИОРИТЕТ МИКРОФОНА СОБЕСЕДНИКА
                         senderLang = data.langCode || 'en';
-                        senderName = (data.name || 'User').split(' ')[0];
+                        let sData = langInfo[senderLang] || langInfo['en'];
+                        senderFlagCode = data.flagCode || sData.fCode;
+                        senderLangName = sData.name;
 
                         receiverPhoto = window.myProfileInfo.photo;
-                        receiverFlag = window.myProfileInfo.flag; 
-                        receiverLang = myPersonalLang; 
                         receiverName = window.myUsername;
+                        receiverLang = myPersonalLang;
+                        // Получатель — ты (берем твой флаг для перевода)
+                        receiverFlagCode = window.myProfileInfo.flagCode || myLangData.fCode;
+                        receiverLangName = myLangData.name;
                     }
 
                     Promise.all([
                         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${senderLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
                         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${receiverLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
                     ]).then(results => {
+                        let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText;
+                        let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
+
+                        // 1. БЕГУЩАЯ СТРОКА С PNG ФЛАГАМИ
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
-                            
-                            let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText;
-                            let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
-                            
                             vMarquee.innerHTML = `
                                 <div class="flex items-center">
                                     <img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">
                                     <span class="text-white font-bold mr-1">${senderName}:</span>
-                                    <span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> 
+                                    <img src="https://flagcdn.com/w20/${senderFlagCode}.png" class="w-4 h-3 rounded-[2px] mr-1 object-cover shadow-sm">
+                                    <span class="text-[#8696a0] mr-2 text-[0.65rem] uppercase tracking-wider">${senderLangName}</span>
+                                    <span class="text-[#e9edef] mr-2">${senderText}</span> 
+                                    
                                     <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> 
+                                    
                                     <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]">
                                     <span class="text-white font-bold mr-1">${receiverName}:</span>
-                                    <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span>
+                                    <img src="https://flagcdn.com/w20/${receiverFlagCode}.png" class="w-4 h-3 rounded-[2px] mr-1 object-cover shadow-sm">
+                                    <span class="text-[#00a884] mr-2 text-[0.65rem] uppercase tracking-wider opacity-80">${receiverLangName}</span>
+                                    <span class="text-[#00a884] font-bold">${receiverText}</span>
                                 </div>
                             `;
-                            
                             vMarquee.style.animation = 'none'; 
                             void vMarquee.offsetWidth; 
                             vMarquee.style.animation = null;
                         }
+
+                        // 2. ПУЗЫРИ С ПЕРЕВОДОМ И PNG ФЛАГАМИ (ДВУХЭТАЖНЫЕ)
+                        const vBubbles = document.getElementById('voice-bubbles-area');
+                        if (vBubbles) {
+                            const bWrapper = document.createElement('div');
+                            bWrapper.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'}`;
+                            
+                            let bubbleHTML = `<div class="chat-bubble ${isMe ? 'bg-[#005c4b] text-white rounded-br-sm' : 'bg-[#202c33] text-[#e9edef] rounded-bl-sm'} p-3 rounded-2xl max-w-[85%] shadow-md border border-[#2a3942] min-w-[200px]">`;
+                            
+                            let escSender = encodeURIComponent(senderText); 
+                            let escReceiver = encodeURIComponent(receiverText); 
+                            
+                            // ЭТАЖ 1: ОРИГИНАЛ (Использует динамический язык микрофона)
+                            bubbleHTML += `
+                            <div class="flex flex-col mb-1.5">
+                                <div class="flex items-center justify-between gap-4 mb-1">
+                                    <span class="text-[0.65rem] text-[#8696a0] uppercase tracking-wider font-bold flex items-center gap-1.5">
+                                        <img src="https://flagcdn.com/w20/${senderFlagCode}.png" class="w-3.5 h-2.5 rounded-[2px] object-cover shadow-sm">
+                                        ${senderLangName} Original
+                                    </span>
+                                    <i class="fa-solid fa-volume-high text-[#00a884] cursor-pointer hover:text-white transition" onclick="window.playAIVoice('${escSender}', '${senderLang}')" title="Play Original Voice"></i>
+                                </div>
+                                <span class="text-[0.95rem] leading-relaxed">${senderText}</span>
+                            </div>`;
+                            
+                            // Разделитель
+                            bubbleHTML += `<div class="w-full h-[1px] bg-white/10 my-2"></div>`;
+                            
+                            // ЭТАЖ 2: ПЕРЕВОД (Использует язык получателя)
+                            bubbleHTML += `
+                            <div class="flex flex-col mt-1.5">
+                                <div class="flex items-center justify-between gap-4 mb-1">
+                                    <span class="text-[0.65rem] text-[#00a884] uppercase tracking-wider font-bold flex items-center gap-1.5">
+                                        <img src="https://flagcdn.com/w20/${receiverFlagCode}.png" class="w-3.5 h-2.5 rounded-[2px] object-cover shadow-sm">
+                                        ${receiverLangName} Translated
+                                    </span>
+                                    <i class="fa-solid fa-volume-high text-[#00a884] cursor-pointer hover:text-white transition" onclick="window.playAIVoice('${escReceiver}', '${receiverLang}')" title="Play Translated Voice"></i>
+                                </div>
+                                <span class="text-[0.95rem] leading-relaxed font-medium text-white">${receiverText}</span>
+                            </div>`;
+                            
+                            bubbleHTML += `</div>`;
+                            
+                            bWrapper.innerHTML = bubbleHTML;
+                            vBubbles.appendChild(bWrapper);
+                            
+                            setTimeout(() => { vBubbles.scrollTop = vBubbles.scrollHeight; }, 50);
+                        }
                     });
                 }
-
    // ==========================================
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
@@ -2518,17 +2636,22 @@ window.switchChatRoom = function(targetId) {
             
             window.toggleMyCamera = async function(btn) { const videoEl = document.getElementById('my-live-video'); if (window.myVideoStream) { window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); videoEl.classList.remove('mirror-video'); } btn.classList.remove('bg-red-500'); btn.classList.add('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; } else { try { window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.muted = true; videoEl.play(); videoEl.classList.add('mirror-video'); } btn.classList.add('bg-red-500'); btn.classList.remove('bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; } catch(e) { alert("Camera access denied!"); } } };
             window.isMeetMarqueeEnabled = true; window.toggleMeetMarquee = function() { window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); };
-
-         window.autoSetMicLang = function() { 
-            let rMic = document.getElementById('plus-mic-lang'); 
-            if(rMic && !rMic.value) rMic.value = 'auto'; 
+window.saveMicLang = function(val) {
+            let target = window.currentMicInputTarget || 'chat-input';
+            localStorage.setItem('hf_mic_lang_' + target, val);
         };
 
-            window.switchChatRoom('global');
-            if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
-         window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
-        });
-    </script>
+        window.autoSetMicLang = function() { 
+            let target = window.currentMicInputTarget || 'chat-input';
+            let savedLang = localStorage.getItem('hf_mic_lang_' + target) || 'auto';
+            let rMic = document.getElementById('plus-mic-lang'); 
+            if(rMic) rMic.value = savedLang; 
+        };
+
+        window.switchChatRoom('global');
+        if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
+        
+        window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
 
     <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
         <div class="app-modal-content">
