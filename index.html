@@ -2333,64 +2333,38 @@ window.switchChatRoom = function(targetId) {
                     }
                 }
 // ==========================================
-                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА (С PNG ФЛАГАМИ И НАЗВАНИЯМИ)
+                // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
                 // ==========================================
                 if (data.isVoiceRoomMsg) {
                     let originalText = data.originalText || data.text;
                     let myPersonalLang = localStorage.getItem('hf_personal_lang');
                     if (!myPersonalLang || myPersonalLang === 'auto') {
-                        myPersonalLang = window.myProfileInfo.langCode || 'en'; 
+                        myPersonalLang = window.myProfileInfo.langCode; 
                     }
 
-                    // Словарь: код языка -> { код_для_картинки, название_языка }
-                    const langInfo = {
-                        'en': { fCode: 'gb', name: 'English' },
-                        'ru': { fCode: 'ru', name: 'Русский' },
-                        'az': { fCode: 'az', name: 'Azərbaycanca' },
-                        'de': { fCode: 'de', name: 'Deutsch' },
-                        'tr': { fCode: 'tr', name: 'Türkçe' },
-                        'ar': { fCode: 'ae', name: 'العربية' },
-                        'it': { fCode: 'it', name: 'Italiano' },
-                        'es': { fCode: 'es', name: 'Español' },
-                        'fr': { fCode: 'fr', name: 'Français' },
-                        'pt': { fCode: 'pt', name: 'Português' },
-                        'ja': { fCode: 'jp', name: '日本語' },
-                        'zh': { fCode: 'cn', name: '中文' },
-                        'un': { fCode: 'un', name: 'Global' }
-                    };
-
-                    let myLangData = langInfo[myPersonalLang] || langInfo['en'];
-
-                    let senderPhoto, senderName, senderLang, senderFlagCode, senderLangName;
-                    let receiverPhoto, receiverName, receiverLang, receiverFlagCode, receiverLangName;
+                    let senderPhoto, senderFlag, senderLang, senderName;
+                    let receiverPhoto, receiverFlag, receiverLang, receiverName;
 
                     if (isMe) {
                         senderPhoto = window.myProfileInfo.photo;
+                        senderFlag = window.myProfileInfo.flag; 
+                        senderLang = myPersonalLang; 
                         senderName = window.myUsername;
-                        senderLang = data.langCode || myPersonalLang;
-                        let sData = langInfo[senderLang] || langInfo['en'];
-                        senderFlagCode = data.flagCode || sData.fCode;
-                        senderLangName = sData.name;
 
-                        receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U';
-                        receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
-                        receiverLang = window.currentTargetUser ? (window.currentTargetUser.langCode || 'en') : 'en';
-                        let rData = langInfo[receiverLang] || langInfo['en'];
-                        receiverFlagCode = window.currentTargetUser ? (window.currentTargetUser.flagCode || rData.fCode) : rData.fCode;
-                        receiverLangName = rData.name;
+                        receiverPhoto = window.currentTargetUser.photo;
+                        receiverFlag = window.currentTargetUser.flag;
+                        receiverLang = window.currentTargetUser.langCode;
+                        receiverName = window.currentTargetUser.name.split(' ')[0];
                     } else {
-                        senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U';
-                        senderName = (data.name || 'User').split(' ')[0];
-                        senderLang = data.langCode || 'en';
-                        let sData = langInfo[senderLang] || langInfo['en'];
-                        senderFlagCode = data.flagCode || sData.fCode;
-                        senderLangName = sData.name;
+                        senderPhoto = data.photo;
+                        senderFlag = data.flag;
+                        senderLang = data.langCode;
+                        senderName = data.name.split(' ')[0];
 
                         receiverPhoto = window.myProfileInfo.photo;
+                        receiverFlag = window.myProfileInfo.flag; 
+                        receiverLang = myPersonalLang; 
                         receiverName = window.myUsername;
-                        receiverLang = myPersonalLang;
-                        receiverFlagCode = myLangData.fCode;
-                        receiverLangName = myLangData.name;
                     }
 
                     Promise.all([
@@ -2400,27 +2374,18 @@ window.switchChatRoom = function(targetId) {
                         let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText;
                         let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
 
-                        let sName = (senderName === 'User' || !senderName) ? '' : senderName;
-                        let rName = (receiverName === 'User' || !receiverName) ? '' : receiverName;
-
-                        // 1. БЕГУЩАЯ СТРОКА С PNG ФЛАГАМИ
+                        // 1. БЕГУЩАЯ СТРОКА
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
                             vMarquee.innerHTML = `
                                 <div class="flex items-center">
-                                    <img src="${senderPhoto || 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff'}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">
-                                    <span class="text-white font-bold mr-1">${sName ? sName + ':' : ''}</span>
-                                    <img src="https://flagcdn.com/w20/${senderFlagCode}.png" class="w-4 h-3 rounded-[2px] mr-1 object-cover shadow-sm">
-                                    <span class="text-[#8696a0] mr-2 text-[0.65rem] uppercase tracking-wider">${senderLangName}</span>
-                                    <span class="text-[#e9edef] mr-2">${senderText}</span> 
-                                    
+                                    <img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">
+                                    <span class="text-white font-bold mr-1">${senderName}:</span>
+                                    <span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> 
                                     <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> 
-                                    
-                                    <img src="${receiverPhoto || 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff'}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]">
-                                    <span class="text-white font-bold mr-1">${rName ? rName + ':' : ''}</span>
-                                    <img src="https://flagcdn.com/w20/${receiverFlagCode}.png" class="w-4 h-3 rounded-[2px] mr-1 object-cover shadow-sm">
-                                    <span class="text-[#00a884] mr-2 text-[0.65rem] uppercase tracking-wider opacity-80">${receiverLangName}</span>
-                                    <span class="text-[#00a884] font-bold">${receiverText}</span>
+                                    <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]">
+                                    <span class="text-white font-bold mr-1">${receiverName}:</span>
+                                    <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span>
                                 </div>
                             `;
                             vMarquee.style.animation = 'none'; 
@@ -2428,35 +2393,41 @@ window.switchChatRoom = function(targetId) {
                             vMarquee.style.animation = null;
                         }
 
-                        // 2. ПУЗЫРИ С PNG ФЛАГАМИ
+                        // 2. ПУЗЫРИ С ПЕРЕВОДОМ (ДВУХЭТАЖНЫЕ)
                         const vBubbles = document.getElementById('voice-bubbles-area');
                         if (vBubbles) {
                             const bWrapper = document.createElement('div');
                             bWrapper.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'}`;
                             
-                            let bubbleDisplay = isMe ? senderText : receiverText;
-                            let currentLangCode = isMe ? senderLang : receiverLang;
-                            let currentFlagCode = isMe ? senderFlagCode : receiverFlagCode;
-                            let currentLangName = isMe ? senderLangName : receiverLangName;
+                            let bubbleHTML = `<div class="chat-bubble ${isMe ? 'bg-[#005c4b] text-white rounded-br-sm' : 'bg-[#202c33] text-[#e9edef] rounded-bl-sm'} p-3 rounded-2xl max-w-[85%] shadow-md border border-[#2a3942] min-w-[200px]">`;
                             
-                            let bubbleHTML = `<div class="chat-bubble ${isMe ? 'bg-[#005c4b] text-white rounded-br-sm' : 'bg-[#202c33] text-[#e9edef] rounded-bl-sm'} p-3 rounded-2xl max-w-[85%] shadow-md border border-[#2a3942]">`;
+                            let escSender = encodeURIComponent(senderText); 
+                            let escReceiver = encodeURIComponent(receiverText); 
                             
-                            let escText = encodeURIComponent(bubbleDisplay); 
-                            
+                            // ЭТАЖ 1: ОРИГИНАЛ (Язык отправителя)
                             bubbleHTML += `
-                            <div class="ai-audio-player mb-2 bg-black/20 p-2 rounded-xl flex items-center gap-2 cursor-pointer hover:bg-[#00a884]/20 transition border border-white/10" onclick="window.playAIVoice('${escText}', '${currentLangCode}')">
-                                <i class="fa-solid fa-circle-play text-[#00a884] text-lg"></i><span class="text-xs font-bold text-white">Play Voice</span>
+                            <div class="flex flex-col mb-1.5">
+                                <div class="flex items-center justify-between gap-4 mb-1">
+                                    <span class="text-[0.65rem] text-[#8696a0] uppercase tracking-wider font-bold flex items-center gap-1">${senderFlag} Original</span>
+                                    <i class="fa-solid fa-volume-high text-[#00a884] cursor-pointer hover:text-white transition" onclick="window.playAIVoice('${escSender}', '${senderLang}')" title="Play Original Voice"></i>
+                                </div>
+                                <span class="text-[0.95rem] leading-relaxed">${senderText}</span>
                             </div>`;
                             
-                            bubbleHTML += `<span class="text-[0.95rem] leading-relaxed">${bubbleDisplay}</span>`;
+                            // Разделитель
+                            bubbleHTML += `<div class="w-full h-[1px] bg-white/10 my-2"></div>`;
                             
-                            // Подвал пузыря с PNG флагом и прописью
+                            // ЭТАЖ 2: ПЕРЕВОД (Язык получателя)
                             bubbleHTML += `
-                            <div class="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-white/10 ${isMe ? 'justify-end' : 'justify-start'}">
-                                <img src="https://flagcdn.com/w20/${currentFlagCode}.png" class="w-3.5 h-2.5 rounded-[2px] object-cover shadow-sm">
-                                <span class="text-[0.6rem] text-[#8696a0] uppercase tracking-wider font-bold">${currentLangName} Translated</span>
-                            </div>
+                            <div class="flex flex-col mt-1.5">
+                                <div class="flex items-center justify-between gap-4 mb-1">
+                                    <span class="text-[0.65rem] text-[#00a884] uppercase tracking-wider font-bold flex items-center gap-1">${receiverFlag} Translated</span>
+                                    <i class="fa-solid fa-volume-high text-[#00a884] cursor-pointer hover:text-white transition" onclick="window.playAIVoice('${escReceiver}', '${receiverLang}')" title="Play Translated Voice"></i>
+                                </div>
+                                <span class="text-[0.95rem] leading-relaxed font-medium text-white">${receiverText}</span>
                             </div>`;
+                            
+                            bubbleHTML += `</div>`;
                             
                             bWrapper.innerHTML = bubbleHTML;
                             vBubbles.appendChild(bWrapper);
@@ -2465,7 +2436,6 @@ window.switchChatRoom = function(targetId) {
                         }
                     });
                 }
-          
    // ==========================================
                 // БЛОК 3: КОНФЕРЕНЦИЯ (MEET)
                 // ==========================================
