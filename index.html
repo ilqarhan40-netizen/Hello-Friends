@@ -1749,35 +1749,21 @@ window.startInAppCall = function() {
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
     
     window.voiceFriend = target; 
-    
-    // 👇 ВОТ ОНА, ФИНАЛЬНАЯ ЗАЩИТА ОТ ВЫКИДЫВАНИЯ
     if (window.currentIndex !== 1) window.switchTab(1); 
-    
     window.showToast("Calling...", `Ringing ${target.name}...`, target.photo, ""); 
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
         db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
         callRef.remove(); 
+        
+        // 👇 ФОНОВЫЙ ПУШ О ПРОПУЩЕННОМ!
+        window.sendPushToUser(target.id, "Missed Call ❗️", `You missed a call from ${window.myUsername}`);
+        
         window.showToast("No Answer", `${target.name} is unavailable.`, "", "");
         window.callTimeout = null;
     }, 30000);
 };
-
-window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { 
-    window.currentIncomingSignalKey = signalKey; 
-    window.currentCallerId = callerId; 
-    document.getElementById('incoming-call-name').innerText = callerName; 
-    document.getElementById('incoming-call-photo').src = callerPhoto; 
-    document.getElementById('incoming-call-modal').classList.add('active'); 
-    window.sndRing.play().catch(e=>{}); 
-    window.firePush("Incoming Call 📞", `${callerName} is calling you on Hello Friends!`, callerPhoto);
-    
-    if (navigator.vibrate) {
-        window.vibrateInterval = setInterval(() => { navigator.vibrate([500, 1000, 500]); }, 2000);
-    }
-};
-
 window.acceptCall = function() { 
     window.sndRing.pause(); window.sndRing.currentTime = 0; 
     document.getElementById('incoming-call-modal').classList.remove('active'); 
