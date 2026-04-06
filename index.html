@@ -2065,7 +2065,7 @@ window.switchChatRoom = function(targetId) {
                 let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${myBio}</span>` : ""}`; 
                 window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, myPhone); 
             }
-            else { 
+    else { 
                 const targetUser = window.participants.find(p => p.id === targetId); 
                 if(targetUser) { 
                     window.currentTargetUser = targetUser; 
@@ -2081,6 +2081,15 @@ window.switchChatRoom = function(targetId) {
                     let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}${targetLangs}</span>${targetBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${targetBio}</span>` : ""}`; 
                     
                     window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, targetPhone); 
+
+                    // === ПАТЧ: ОБНОВЛЯЕМ ИНТЕРФЕЙС ГОЛОСОВОЙ КОМНАТЫ ===
+                    const vPhoto = document.getElementById('voice-friend-photo');
+                    const vFlag = document.getElementById('voice-friend-flag');
+                    const vName = document.getElementById('voice-friend-name');
+                    if(vPhoto) vPhoto.src = targetUser.photo;
+                    if(vFlag) vFlag.innerText = targetUser.flag;
+                    if(vName) vName.innerText = (targetUser.name || 'User').split(' ')[0];
+                    // ===================================================
                 } 
             }
             
