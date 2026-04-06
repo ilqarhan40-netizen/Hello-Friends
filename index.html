@@ -2100,8 +2100,7 @@ window.switchChatRoom = function(targetId) {
         };
 
             let isGeminiWaiting = false;
-
-            window.sendFirebaseMsg = async function() { 
+window.sendFirebaseMsg = async function() { 
                 let inputId = window.currentMicInputTarget || 'chat-input';
                 const inputField = document.getElementById(inputId);
                 if (!inputField) return;
@@ -2110,43 +2109,46 @@ window.switchChatRoom = function(targetId) {
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
                 inputField.value = ''; 
 
-  let personalLang = localStorage.getItem('hf_personal_lang'); 
+                let isVoice = inputId === 'voice-chat-input';
+                let isConf = inputId === 'conf-chat-input';
+
+                // ==============================================================
+                // ЛОГИКА ОТПРАВКИ: Жестко фиксируем то, что мы отправили
+                // Берем МОЙ язык по умолчанию (из страны/профиля)
+                // ==============================================================
+                let myBaseLang = window.myProfileInfo.langCode || 'en';
+                let myFlag = window.myProfileInfo.flag || '🌐';
+                let myFlagCode = window.myProfileInfo.flagCode || 'un';
+
+                // Мы отправляем ОРИГИНАЛ. Без перевода для себя.
+                let msgData = { 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: rawText, // Для старого чата
+                    originalText: rawText, // Истинный оригинал
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flag: myFlag, 
+                    flagCode: myFlagCode, 
+                    langCode: myBaseLang, // Язык, на котором мы написали/сказали
+                    isVoiceRoomMsg: isVoice, 
+                    isConfMsg: isConf 
+                };
+
+                db.ref(window.currentRoomId).push(msgData);
                 
-                // === БЛОКИРОВКА ЯЗЫКА КЛАВИАТУРЫ (ЗАМОК) ===
-                let myActiveLang = window.myProfileInfo.langCode || 'en';
-                let activeFlag = window.myProfileInfo.flag || '🌐';
-                let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+                const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
+                if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, rawText); }
 
-                if (personalLang && personalLang !== 'auto') {
-                    myActiveLang = personalLang;
-                    const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
-                    if (langMap[personalLang]) {
-                        activeFlagCode = langMap[personalLang][0];
-                        activeFlag = langMap[personalLang][1];
-                    }
-                }
-
-                // 1. ЖЕСТКО переводим то, что ты набрал (на любой раскладке), в твой Активный Язык (Авто или из Панели)
-                let myBaseText = rawText;
-                try { 
-                    const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
-                    const data1 = await res1.json(); 
-                    if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0]; 
-                } catch (e) {}
-
-                // 2. Узнаем язык собеседника (в привате)
-                let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
-                
-                // 3. Переводим уже ЧИСТЫЙ текст для друга (если языки разные)
-                let textToShip = myBaseText; 
-                if (targetSendLang !== myActiveLang) {
-                    try { 
-                        const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`); 
-                        const data2 = await res2.json(); 
-                        if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0]; 
-                    } catch (e) {}
-                }
-
+                if (window.currentRoomId === 'private_ai_bot') { 
+                    isGeminiWaiting = true; 
+                    const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
+                    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) })
+                    .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
+                    .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
+                } 
+            };
                 let isVoice = inputId === 'voice-chat-input';
                 let isConf = inputId === 'conf-chat-input';
 
@@ -2339,63 +2341,32 @@ window.switchChatRoom = function(targetId) {
                     let originalText = data.originalText || data.text;
                     let myPersonalLang = localStorage.getItem('hf_personal_lang');
                     if (!myPersonalLang || myPersonalLang === 'auto') {
-                        myPersonalLang = window.myProfileInfo.langCode || 'en'; 
+                        myPersonalLang = window.myProfileInfo.langCode; 
                     }
 
-                    // Словарь: код языка -> { код_для_картинки, название_языка }
-                    const langInfo = {
-                        'en': { fCode: 'gb', name: 'English' },
-                        'ru': { fCode: 'ru', name: 'Русский' },
-                        'az': { fCode: 'az', name: 'Azərbaycanca' },
-                        'de': { fCode: 'de', name: 'Deutsch' },
-                        'tr': { fCode: 'tr', name: 'Türkçe' },
-                        'ar': { fCode: 'ae', name: 'العربية' },
-                        'it': { fCode: 'it', name: 'Italiano' },
-                        'es': { fCode: 'es', name: 'Español' },
-                        'fr': { fCode: 'fr', name: 'Français' },
-                        'pt': { fCode: 'pt', name: 'Português' },
-                        'ja': { fCode: 'jp', name: '日本語' },
-                        'zh': { fCode: 'cn', name: '中文' },
-                        'un': { fCode: 'un', name: 'Global' }
-                    };
-
-                    let myLangData = langInfo[myPersonalLang] || langInfo['en'];
-
-                    let senderPhoto, senderName, senderLang, senderFlagCode, senderLangName;
-                    let receiverPhoto, receiverName, receiverLang, receiverFlagCode, receiverLangName;
+                    let senderPhoto, senderFlag, senderLang, senderName;
+                    let receiverPhoto, receiverFlag, receiverLang, receiverName;
 
                     if (isMe) {
                         senderPhoto = window.myProfileInfo.photo;
+                        senderFlag = window.myProfileInfo.flag; 
+                        senderLang = myPersonalLang; 
                         senderName = window.myUsername;
-                        
-                        // СТРОГИЙ ПРИОРИТЕТ МИКРОФОНА: игнорируем профиль, слушаем data
-                        senderLang = data.langCode || myPersonalLang;
-                        let sData = langInfo[senderLang] || langInfo['en'];
-                        senderFlagCode = data.flagCode || sData.fCode;
-                        senderLangName = sData.name;
 
                         receiverPhoto = window.currentTargetUser.photo;
+                        receiverFlag = window.currentTargetUser.flag;
+                        receiverLang = window.currentTargetUser.langCode;
                         receiverName = window.currentTargetUser.name.split(' ')[0];
-                        receiverLang = window.currentTargetUser.langCode || 'en';
-                        let rData = langInfo[receiverLang] || langInfo['en'];
-                        receiverFlagCode = window.currentTargetUser.flagCode || rData.fCode;
-                        receiverLangName = rData.name;
                     } else {
                         senderPhoto = data.photo;
+                        senderFlag = data.flag;
+                        senderLang = data.langCode;
                         senderName = data.name.split(' ')[0];
-                        
-                        // СТРОГИЙ ПРИОРИТЕТ МИКРОФОНА ДРУГА
-                        senderLang = data.langCode || 'en';
-                        let sData = langInfo[senderLang] || langInfo['en'];
-                        senderFlagCode = data.flagCode || sData.fCode;
-                        senderLangName = sData.name;
 
                         receiverPhoto = window.myProfileInfo.photo;
+                        receiverFlag = window.myProfileInfo.flag; 
+                        receiverLang = myPersonalLang; 
                         receiverName = window.myUsername;
-                        receiverLang = myPersonalLang;
-                        // Тут получатель - ты со своим дефолтным языком
-                        receiverFlagCode = window.myProfileInfo.flagCode || myLangData.fCode;
-                        receiverLangName = myLangData.name;
                     }
 
                     Promise.all([
@@ -2405,24 +2376,18 @@ window.switchChatRoom = function(targetId) {
                         let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText;
                         let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
 
-                        // 1. БЕГУЩАЯ СТРОКА С PNG ФЛАГАМИ (реагирует на выбор микрофона)
+                        // 1. БЕГУЩАЯ СТРОКА
                         const vMarquee = document.getElementById('voice-info-marquee');
                         if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
                             vMarquee.innerHTML = `
                                 <div class="flex items-center">
                                     <img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">
                                     <span class="text-white font-bold mr-1">${senderName}:</span>
-                                    <img src="https://flagcdn.com/w20/${senderFlagCode}.png" class="w-4 h-3 rounded-[2px] mr-1 object-cover shadow-sm">
-                                    <span class="text-[#8696a0] mr-2 text-[0.65rem] uppercase tracking-wider">${senderLangName}</span>
-                                    <span class="text-[#e9edef] mr-2">${senderText}</span> 
-                                    
+                                    <span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> 
                                     <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> 
-                                    
                                     <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]">
                                     <span class="text-white font-bold mr-1">${receiverName}:</span>
-                                    <img src="https://flagcdn.com/w20/${receiverFlagCode}.png" class="w-4 h-3 rounded-[2px] mr-1 object-cover shadow-sm">
-                                    <span class="text-[#00a884] mr-2 text-[0.65rem] uppercase tracking-wider opacity-80">${receiverLangName}</span>
-                                    <span class="text-[#00a884] font-bold">${receiverText}</span>
+                                    <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span>
                                 </div>
                             `;
                             vMarquee.style.animation = 'none'; 
@@ -2430,7 +2395,7 @@ window.switchChatRoom = function(targetId) {
                             vMarquee.style.animation = null;
                         }
 
-                        // 2. ПУЗЫРИ С ПЕРЕВОДОМ И PNG ФЛАГАМИ (ДВУХЭТАЖНЫЕ)
+                        // 2. ПУЗЫРИ С ПЕРЕВОДОМ (ДВУХЭТАЖНЫЕ)
                         const vBubbles = document.getElementById('voice-bubbles-area');
                         if (vBubbles) {
                             const bWrapper = document.createElement('div');
@@ -2441,14 +2406,11 @@ window.switchChatRoom = function(targetId) {
                             let escSender = encodeURIComponent(senderText); 
                             let escReceiver = encodeURIComponent(receiverText); 
                             
-                            // ЭТАЖ 1: ОРИГИНАЛ (Использует динамический язык микрофона)
+                            // ЭТАЖ 1: ОРИГИНАЛ (Язык отправителя)
                             bubbleHTML += `
                             <div class="flex flex-col mb-1.5">
                                 <div class="flex items-center justify-between gap-4 mb-1">
-                                    <span class="text-[0.65rem] text-[#8696a0] uppercase tracking-wider font-bold flex items-center gap-1.5">
-                                        <img src="https://flagcdn.com/w20/${senderFlagCode}.png" class="w-3.5 h-2.5 rounded-[2px] object-cover shadow-sm">
-                                        ${senderLangName} Original
-                                    </span>
+                                    <span class="text-[0.65rem] text-[#8696a0] uppercase tracking-wider font-bold flex items-center gap-1">${senderFlag} Original</span>
                                     <i class="fa-solid fa-volume-high text-[#00a884] cursor-pointer hover:text-white transition" onclick="window.playAIVoice('${escSender}', '${senderLang}')" title="Play Original Voice"></i>
                                 </div>
                                 <span class="text-[0.95rem] leading-relaxed">${senderText}</span>
@@ -2457,14 +2419,11 @@ window.switchChatRoom = function(targetId) {
                             // Разделитель
                             bubbleHTML += `<div class="w-full h-[1px] bg-white/10 my-2"></div>`;
                             
-                            // ЭТАЖ 2: ПЕРЕВОД (Использует язык получателя)
+                            // ЭТАЖ 2: ПЕРЕВОД (Язык получателя)
                             bubbleHTML += `
                             <div class="flex flex-col mt-1.5">
                                 <div class="flex items-center justify-between gap-4 mb-1">
-                                    <span class="text-[0.65rem] text-[#00a884] uppercase tracking-wider font-bold flex items-center gap-1.5">
-                                        <img src="https://flagcdn.com/w20/${receiverFlagCode}.png" class="w-3.5 h-2.5 rounded-[2px] object-cover shadow-sm">
-                                        ${receiverLangName} Translated
-                                    </span>
+                                    <span class="text-[0.65rem] text-[#00a884] uppercase tracking-wider font-bold flex items-center gap-1">${receiverFlag} Translated</span>
                                     <i class="fa-solid fa-volume-high text-[#00a884] cursor-pointer hover:text-white transition" onclick="window.playAIVoice('${escReceiver}', '${receiverLang}')" title="Play Translated Voice"></i>
                                 </div>
                                 <span class="text-[0.95rem] leading-relaxed font-medium text-white">${receiverText}</span>
