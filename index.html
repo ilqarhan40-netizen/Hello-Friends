@@ -1057,7 +1057,7 @@ window.signOutGoogle = function() {
             return userProfile.langCode || 'en';
         };
 
-     window.startUniversalMic = async function(mode) {
+window.startUniversalMic = async function(mode) {
             window.speechRecognizedText = "";
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             let rec = SpeechRec ? new SpeechRec() : null;
@@ -1068,57 +1068,70 @@ window.signOutGoogle = function() {
             let langSelect = document.getElementById('plus-mic-lang');
             let selectedMicLang = langSelect ? langSelect.value : 'auto';
             
-            // ИЗОЛИРОВАННАЯ ЛОГИКА МИКРОФОНА: Если "Авто", вычисляем язык по профилю
+            // 1. ИЗОЛИРОВАННЫЙ МИКРОФОН: Полный список всех 12 языков!
             if (selectedMicLang === 'auto') {
                 let phone = window.myProfileInfo.phone || ""; 
                 let flag = window.myProfileInfo.flagCode || "un"; 
                 let autoLang = 'en-US'; 
+                
                 if (phone.startsWith('+7')) autoLang = 'ru-RU'; 
                 else if (phone.startsWith('+994')) autoLang = 'az-AZ'; 
                 else if (phone.startsWith('+39')) autoLang = 'it-IT'; 
                 else if (phone.startsWith('+49')) autoLang = 'de-DE'; 
                 else if (phone.startsWith('+33')) autoLang = 'fr-FR'; 
-                else if (phone.startsWith('+81')) autoLang = 'ja-JP'; 
+                else if (phone.startsWith('+81')) autoLang = 'ja-JP';  // Японский
                 else if (phone.startsWith('+34')) autoLang = 'es-ES'; 
-                else if (phone.startsWith('+86')) autoLang = 'zh-CN'; 
+                else if (phone.startsWith('+86')) autoLang = 'zh-CN';  // Китайский
                 else if (phone.startsWith('+351')) autoLang = 'pt-PT'; 
+                else if (phone.startsWith('+90')) autoLang = 'tr-TR';  // Турецкий
+                else if (phone.startsWith('+971')) autoLang = 'ar-AE'; // Арабский
                 else if (flag === 'ru') autoLang = 'ru-RU'; 
                 else if (flag === 'az') autoLang = 'az-AZ'; 
                 else if (flag === 'it') autoLang = 'it-IT'; 
                 else if (flag === 'de') autoLang = 'de-DE'; 
                 else if (flag === 'fr') autoLang = 'fr-FR'; 
-                else if (flag === 'jp') autoLang = 'ja-JP'; 
+                else if (flag === 'jp') autoLang = 'ja-JP';  // Японский
                 else if (flag === 'es') autoLang = 'es-ES'; 
-                else if (flag === 'cn') autoLang = 'zh-CN'; 
+                else if (flag === 'cn') autoLang = 'zh-CN';  // Китайский
                 else if (flag === 'pt') autoLang = 'pt-PT';
+                else if (flag === 'tr') autoLang = 'tr-TR';  // Турецкий
+                else if (flag === 'ae') autoLang = 'ar-AE';  // Арабский
+                
                 rec.lang = autoLang;
             } else {
-                rec.lang = selectedMicLang; // Ручной выбор языка
+                rec.lang = selectedMicLang; // Берет язык из ромбика
             }
             
             window.showToast("Listening...", "Speak into the microphone", "", "");
             
             rec.onresult = async (e) => { 
                 window.speechRecognizedText = e.results[0][0].transcript; 
-                let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
-
-                window.showToast("Translating...", "Processing your voice...", "", "");
-                let textToShip = window.speechRecognizedText;
                 
-                try { 
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
-                    const data = await res.json(); 
-                    if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
-                } catch (err) {}
-
                 let isVoice = window.currentMicInputTarget === 'voice-chat-input';
                 let isConf = window.currentMicInputTarget === 'conf-chat-input';
 
-                if (mode === 'text') {
-                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
-                } else if (mode === 'ai-audio') {
-                    db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+                // 2. ОТПРАВЛЯЕТ ОРИГИНАЛ (Без перевода! Перевод делает получатель в пузырях)
+                let msgData = { 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: window.speechRecognizedText, 
+                    originalText: window.speechRecognizedText, 
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flag: window.myProfileInfo.flag, 
+                    flagCode: window.myProfileInfo.flagCode, 
+                    // Фиксируем код языка (например 'ja', 'zh'), чтобы получатель знал, с чего переводить
+                    langCode: rec.lang.split('-')[0], 
+                    isVoiceRoomMsg: isVoice, 
+                    isConfMsg: isConf 
+                };
+
+                if (mode === 'ai-audio') {
+                    msgData.isAIAudio = true;
                 }
+
+                db.ref(window.currentRoomId).push(msgData);
             };
             try { rec.start(); } catch(e){}
         };
