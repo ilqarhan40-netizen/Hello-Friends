@@ -1101,6 +1101,10 @@ window.getMyActiveLangInfo = function() {
         flagEmoji: flagData[1]
     };
 };
+        window.startUniversalMic = async function(mode) {
+    let rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rec.continuous = false;
+    rec.interimResults = false;
 
     let myActiveInfo = window.getMyActiveLangInfo();
             rec.lang = myActiveInfo.locale;
