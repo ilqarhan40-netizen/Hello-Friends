@@ -1117,10 +1117,6 @@ window.autoSetMicLang = function() {
     let myActiveInfo = window.getMyActiveLangInfo();
             rec.lang = myActiveInfo.locale;
 
-            let langSelect = document.getElementById('plus-mic-lang');
-            if (langSelect && localStorage.getItem('hf_active_mic_lang')) {
-                langSelect.value = localStorage.getItem('hf_active_mic_lang');
-            }
             
             window.showToast("Listening...", "Speak into the microphone", "", "");
             
