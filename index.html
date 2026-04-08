@@ -23,6 +23,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script src="js/language.js"></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function(OneSignal) {
@@ -1348,19 +1349,7 @@ window.signOutGoogle = function() {
 };
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
         
-window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'de', label: '🇩🇪 Deutsch' }, { val: 'tr', label: '🇹🇷 Türkçe' }, { val: 'ar', label: '🇦🇪 العربية' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
 
-        window.openPersonalLangModal = function() {
-            window.closeDropdown(); let current = localStorage.getItem('hf_personal_lang') || 'auto'; let html = '';
-            window.personalLangs.forEach(l => {
-                let isActive = current === l.val; let btnClass = isActive ? 'bg-[#00a884] text-[#111b21] shadow-[0_0_15px_rgba(0,168,132,0.4)]' : 'bg-[#202c33] text-white border border-[#2a3942] hover:bg-[#2a3942]';
-                html += `<button onclick="window.setPersonalLang('${l.val}')" class="w-full py-3 px-4 rounded-xl font-bold text-left transition ${btnClass}">${l.label}${isActive ? '<i class="fa-solid fa-check float-right mt-1 text-lg"></i>' : ''}</button>`;
-            });
-            document.getElementById('personal-lang-list').innerHTML = html; document.getElementById('personal-lang-modal').classList.add('active');
-        };
-
-        window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
-        window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
 // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
   // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
         window.openAvatarModal = function(id, fromSidebar = false) {
@@ -2109,22 +2098,18 @@ window.switchChatRoom = function(targetId) {
                 const rawText = inputField.value.trim(); if (!rawText) return; 
                 if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
                 inputField.value = ''; 
-
-  let personalLang = localStorage.getItem('hf_personal_lang'); 
-                
-                // === БЛОКИРОВКА ЯЗЫКА КЛАВИАТУРЫ (ЗАМОК) ===
-                let myActiveLang = window.myProfileInfo.langCode || 'en';
+                // Используем новую функцию для конкретной комнаты
+                let myActiveLang = window.getCurrentRoomLang(); 
                 let activeFlag = window.myProfileInfo.flag || '🌐';
                 let activeFlagCode = window.myProfileInfo.flagCode || 'un';
 
-                if (personalLang && personalLang !== 'auto') {
-                    myActiveLang = personalLang;
-                    const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
-                    if (langMap[personalLang]) {
-                        activeFlagCode = langMap[personalLang][0];
-                        activeFlag = langMap[personalLang][1];
-                    }
+                // Авто-подбор флага под язык
+                const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
+                if (langMap[myActiveLang]) {
+                    activeFlagCode = langMap[myActiveLang][0];
+                    activeFlag = langMap[myActiveLang][1];
                 }
+
 
                 // 1. ЖЕСТКО переводим то, что ты набрал (на любой раскладке), в твой Активный Язык (Авто или из Панели)
                 let myBaseText = rawText;
