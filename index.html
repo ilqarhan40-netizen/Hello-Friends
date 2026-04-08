@@ -1388,6 +1388,15 @@ window.openPersonalLangModal = function() {
             }
             return roomLang;
         };
+        // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
+    window.openAvatarModal = function(id, fromSidebar = false) {
+        window.closeDropdown(); 
+
+        // Клик на себя -> Языки
+        if (id === 'me' || (window.myProfileInfo && id === window.myProfileInfo.id)) {
+            if (window.openPersonalLangModal) window.openPersonalLangModal();
+            return;
+        }
 
             // БЛОКИРОВКА В ПРИВАТЕ: Если мы в приватном чате и клик НЕ из левой колонки - блокируем меню
             if (!fromSidebar && window.currentRoomId !== 'global') {
