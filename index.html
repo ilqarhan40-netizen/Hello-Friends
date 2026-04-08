@@ -1358,19 +1358,36 @@ window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: '
             });
             document.getElementById('personal-lang-list').innerHTML = html; document.getElementById('personal-lang-modal').classList.add('active');
         };
+window.openPersonalLangModal = function() {
+            window.closeDropdown(); 
+            // Читаем язык именно для текущей комнаты
+            let current = localStorage.getItem('hf_lang_' + window.currentRoomId) || 'auto'; 
+            let html = '';
+            window.personalLangs.forEach(l => {
+                let isActive = current === l.val; let btnClass = isActive ? 'bg-[#00a884] text-[#111b21] shadow-[0_0_15px_rgba(0,168,132,0.4)]' : 'bg-[#202c33] text-white border border-[#2a3942] hover:bg-[#2a3942]';
+                html += `<button onclick="window.setPersonalLang('${l.val}')" class="w-full py-3 px-4 rounded-xl font-bold text-left transition ${btnClass}">${l.label}${isActive ? '<i class="fa-solid fa-check float-right mt-1 text-lg"></i>' : ''}</button>`;
+            });
+            document.getElementById('personal-lang-list').innerHTML = html; document.getElementById('personal-lang-modal').classList.add('active');
+        };
 
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
-        window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
-// ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
-  // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
-        window.openAvatarModal = function(id, fromSidebar = false) {
-            window.closeDropdown(); 
-
-            // Клик на себя -> Языки
-            if (id === 'me' || (window.myProfileInfo && id === window.myProfileInfo.id)) {
-                if (window.openPersonalLangModal) window.openPersonalLangModal();
-                return;
+        
+        window.setPersonalLang = function(val) { 
+            // Сохраняем язык с привязкой к ID комнаты
+            localStorage.setItem('hf_lang_' + window.currentRoomId, val); 
+            window.closePersonalLangModal(); 
+            let labelObj = window.personalLangs.find(l => l.val === val); 
+            window.showToast('Language Changed', 'Room: ' + window.currentRoomId + '\nSet to: ' + (labelObj ? labelObj.label : val), '', ''); 
+        };
+        
+        // Вспомогательная функция для безопасного получения текущего языка комнаты
+        window.getCurrentRoomLang = function() {
+            let roomLang = localStorage.getItem('hf_lang_' + window.currentRoomId);
+            if (!roomLang || roomLang === 'auto') {
+                return window.getSmartLang(window.myProfileInfo);
             }
+            return roomLang;
+        };
 
             // БЛОКИРОВКА В ПРИВАТЕ: Если мы в приватном чате и клик НЕ из левой колонки - блокируем меню
             if (!fromSidebar && window.currentRoomId !== 'global') {
@@ -1667,10 +1684,11 @@ window.saveProfileData = function() {
     window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
     window.myUsername = nameVal.split(' ')[0];
     
-    // Сбрасываем ручной выбор языка, чтобы микрофон и чат сразу подхватили страну из профиля
-    localStorage.setItem('hf_personal_lang', 'auto');
-    if (window.autoSetMicLang) window.autoSetMicLang();
-    
+  // Сбрасываем ручной выбор языка для всех комнат, чтобы они подхватили новую страну из профиля
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('hf_lang_')) localStorage.removeItem(key);
+        });
+        if (window.autoSetMicLang) window.autoSetMicLang();
     try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
 
     const btn = document.querySelector('#edit-profile-modal .btn-primary');
@@ -2101,29 +2119,18 @@ window.switchChatRoom = function(targetId) {
 
             let isGeminiWaiting = false;
 
-            window.sendFirebaseMsg = async function() { 
-                let inputId = window.currentMicInputTarget || 'chat-input';
-                const inputField = document.getElementById(inputId);
-                if (!inputField) return;
-                
-                const rawText = inputField.value.trim(); if (!rawText) return; 
-                if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
-                inputField.value = ''; 
-
-  let personalLang = localStorage.getItem('hf_personal_lang'); 
+    // Используем новую функцию для конкретной комнаты
+                let personalLang = window.getCurrentRoomLang(); 
                 
                 // === БЛОКИРОВКА ЯЗЫКА КЛАВИАТУРЫ (ЗАМОК) ===
-                let myActiveLang = window.myProfileInfo.langCode || 'en';
+                let myActiveLang = personalLang;
                 let activeFlag = window.myProfileInfo.flag || '🌐';
                 let activeFlagCode = window.myProfileInfo.flagCode || 'un';
 
-                if (personalLang && personalLang !== 'auto') {
-                    myActiveLang = personalLang;
-                    const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
-                    if (langMap[personalLang]) {
-                        activeFlagCode = langMap[personalLang][0];
-                        activeFlag = langMap[personalLang][1];
-                    }
+                const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
+                if (langMap[personalLang]) {
+                    activeFlagCode = langMap[personalLang][0];
+                    activeFlag = langMap[personalLang][1];
                 }
 
                 // 1. ЖЕСТКО переводим то, что ты набрал (на любой раскладке), в твой Активный Язык (Авто или из Панели)
@@ -2206,8 +2213,7 @@ window.switchChatRoom = function(targetId) {
 
                 // === УМНАЯ ЛОГИКА ДВОЙНЫХ ПУЗЫРЕЙ (РУЧНОЙ ТЕКСТ + ГОЛОС) ===
                 if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
-                    let myPref = localStorage.getItem('hf_personal_lang');
-                    let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
+                 let myReadLang = window.getCurrentRoomLang();
                     let senderLang = data.langCode || 'en'; // Язык, с которого было отправлено
                     
                     let doubleLangHTML = `
@@ -2235,8 +2241,7 @@ window.switchChatRoom = function(targetId) {
                 
         if (data.isAIAudio) {
                     // ПРИОРИТЕТ: Настройка аватара > Префикс телефона
-                    let myManualLang = localStorage.getItem('hf_personal_lang');
-                    let myCurrentLang = (myManualLang && myManualLang !== 'auto') ? myManualLang : window.getSmartLang(window.myProfileInfo);
+                 let myCurrentLang = window.getCurrentRoomLang();
 
                     if (isMe && data.originalText) {
                         // Для отправителя: кодируем оригинал
@@ -2278,9 +2283,7 @@ window.switchChatRoom = function(targetId) {
                 // ==========================================
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
                     let targetUsers = []; 
-                    let myPref = localStorage.getItem('hf_personal_lang');
-                    // УМНАЯ ЛОГИКА: Вычисляем язык чтения по моему флагу/телефону
-                    let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
+                let myReadLang = window.getCurrentRoomLang();
                     
                     if (window.currentRoomId === 'global' && !isAI) { 
                         window.participants.filter(part => part.id !== 'ai').forEach(member => { 
@@ -2336,13 +2339,7 @@ window.switchChatRoom = function(targetId) {
                 // ==========================================
                 // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
                 // ==========================================
-                if (data.isVoiceRoomMsg) {
-                    let originalText = data.originalText || data.text;
-                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
-                    if (!myPersonalLang || myPersonalLang === 'auto') {
-                        myPersonalLang = window.myProfileInfo.langCode; 
-                    }
-
+                    let myPersonalLang = window.getCurrentRoomLang();
                     let senderPhoto, senderFlag, senderLang, senderName;
                     let receiverPhoto, receiverFlag, receiverLang, receiverName;
 
@@ -2457,9 +2454,7 @@ window.switchChatRoom = function(targetId) {
      window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
                 
-                let myLang = localStorage.getItem('hf_personal_lang');
-                if (!myLang || myLang === 'auto') myLang = window.myProfileInfo.langCode || 'en';
-
+             let myLang = window.getCurrentRoomLang();
                 let confHtml = `
                 <div class="video-frame main" id="my-video-container">
                     <video id="my-live-video" class="mirror-video cursor-pointer hover:opacity-90 transition" onclick="window.openPersonalLangModal()" playsinline autoplay muted></video>
