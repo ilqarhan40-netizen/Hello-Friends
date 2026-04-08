@@ -1350,12 +1350,8 @@ window.signOutGoogle = function() {
         
 window.personalLangs = [ { val: 'auto', label: '🤖 Auto (Profile)' }, { val: 'en', label: '🇬🇧 English' }, { val: 'ru', label: '🇷🇺 Русский' }, { val: 'az', label: '🇦🇿 Azərbaycanca' }, { val: 'de', label: '🇩🇪 Deutsch' }, { val: 'tr', label: '🇹🇷 Türkçe' }, { val: 'ar', label: '🇦🇪 العربية' }, { val: 'it', label: '🇮🇹 Italiano' }, { val: 'es', label: '🇪🇸 Español' }, { val: 'fr', label: '🇫🇷 Français' }, { val: 'pt', label: '🇵🇹 Português' }, { val: 'ja', label: '🇯🇵 日本語' }, { val: 'zh', label: '🇨🇳 中文' } ];
 
-     
-window.openPersonalLangModal = function() {
-            window.closeDropdown(); 
-            // Читаем язык именно для текущей комнаты
-            let current = localStorage.getItem('hf_lang_' + window.currentRoomId) || 'auto'; 
-            let html = '';
+        window.openPersonalLangModal = function() {
+            window.closeDropdown(); let current = localStorage.getItem('hf_personal_lang') || 'auto'; let html = '';
             window.personalLangs.forEach(l => {
                 let isActive = current === l.val; let btnClass = isActive ? 'bg-[#00a884] text-[#111b21] shadow-[0_0_15px_rgba(0,168,132,0.4)]' : 'bg-[#202c33] text-white border border-[#2a3942] hover:bg-[#2a3942]';
                 html += `<button onclick="window.setPersonalLang('${l.val}')" class="w-full py-3 px-4 rounded-xl font-bold text-left transition ${btnClass}">${l.label}${isActive ? '<i class="fa-solid fa-check float-right mt-1 text-lg"></i>' : ''}</button>`;
@@ -1364,32 +1360,17 @@ window.openPersonalLangModal = function() {
         };
 
         window.closePersonalLangModal = function() { document.getElementById('personal-lang-modal').classList.remove('active'); };
-        
-        window.setPersonalLang = function(val) { 
-            // Сохраняем язык с привязкой к ID комнаты
-            localStorage.setItem('hf_lang_' + window.currentRoomId, val); 
-            window.closePersonalLangModal(); 
-            let labelObj = window.personalLangs.find(l => l.val === val); 
-            window.showToast('Language Changed', 'Room: ' + window.currentRoomId + '\nSet to: ' + (labelObj ? labelObj.label : val), '', ''); 
-        };
-        
-        // Вспомогательная функция для безопасного получения текущего языка комнаты
-        window.getCurrentRoomLang = function() {
-            let roomLang = localStorage.getItem('hf_lang_' + window.currentRoomId);
-            if (!roomLang || roomLang === 'auto') {
-                return window.getSmartLang(window.myProfileInfo);
-            }
-            return roomLang;
-        };
-        // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
-    window.openAvatarModal = function(id, fromSidebar = false) {
-        window.closeDropdown(); 
+        window.setPersonalLang = function(val) { localStorage.setItem('hf_personal_lang', val); window.closePersonalLangModal(); let labelObj = window.personalLangs.find(l => l.val === val); window.showToast('Language Changed', 'Set to: ' + (labelObj ? labelObj.label : val), '', ''); };
+// ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
+  // ОТКРЫТИЕ ГЛАВНОЙ КАРТОЧКИ (Берет данные из Профиля)
+        window.openAvatarModal = function(id, fromSidebar = false) {
+            window.closeDropdown(); 
 
-        // Клик на себя -> Языки
-        if (id === 'me' || (window.myProfileInfo && id === window.myProfileInfo.id)) {
-            if (window.openPersonalLangModal) window.openPersonalLangModal();
-            return;
-        }
+            // Клик на себя -> Языки
+            if (id === 'me' || (window.myProfileInfo && id === window.myProfileInfo.id)) {
+                if (window.openPersonalLangModal) window.openPersonalLangModal();
+                return;
+            }
 
             // БЛОКИРОВКА В ПРИВАТЕ: Если мы в приватном чате и клик НЕ из левой колонки - блокируем меню
             if (!fromSidebar && window.currentRoomId !== 'global') {
@@ -1686,11 +1667,10 @@ window.saveProfileData = function() {
     window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
     window.myUsername = nameVal.split(' ')[0];
     
-  // Сбрасываем ручной выбор языка для всех комнат, чтобы они подхватили новую страну из профиля
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('hf_lang_')) localStorage.removeItem(key);
-        });
-        if (window.autoSetMicLang) window.autoSetMicLang();
+    // Сбрасываем ручной выбор языка, чтобы микрофон и чат сразу подхватили страну из профиля
+    localStorage.setItem('hf_personal_lang', 'auto');
+    if (window.autoSetMicLang) window.autoSetMicLang();
+    
     try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
 
     const btn = document.querySelector('#edit-profile-modal .btn-primary');
@@ -2119,87 +2099,85 @@ window.switchChatRoom = function(targetId) {
             window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
         };
 
-let isGeminiWaiting = false;
+            let isGeminiWaiting = false;
 
-window.sendFirebaseMsg = async function() {
-    if (isGeminiWaiting) return;
-    
-    let inputId = window.currentMicInputTarget || 'chat-input';
-    let inputEl = document.getElementById(inputId);
-    if (!inputEl) return;
-    
-    let rawText = inputEl.value.trim();
-    if (rawText === '') return;
-    
-    // Очищаем поле ввода сразу для отзывчивости интерфейса
-    inputEl.value = '';
-    if(window.closeEmojiPicker) window.closeEmojiPicker();
+            window.sendFirebaseMsg = async function() { 
+                let inputId = window.currentMicInputTarget || 'chat-input';
+                const inputField = document.getElementById(inputId);
+                if (!inputField) return;
+                
+                const rawText = inputField.value.trim(); if (!rawText) return; 
+                if (window.currentRoomId === 'private_ai_bot' && isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
+                inputField.value = ''; 
 
-    // Используем новую функцию для конкретной комнаты
-    let personalLang = window.getCurrentRoomLang(); 
-    
-    // === БЛОКИРОВКА ЯЗЫКА КЛАВИАТУРЫ (ЗАМОК) ===
-    let myActiveLang = personalLang;
-    let activeFlag = window.myProfileInfo.flag || '🌐';
-    let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+  let personalLang = localStorage.getItem('hf_personal_lang'); 
+                
+                // === БЛОКИРОВКА ЯЗЫКА КЛАВИАТУРЫ (ЗАМОК) ===
+                let myActiveLang = window.myProfileInfo.langCode || 'en';
+                let activeFlag = window.myProfileInfo.flag || '🌐';
+                let activeFlagCode = window.myProfileInfo.flagCode || 'un';
 
-    const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
-    if (langMap[personalLang]) {
-        activeFlagCode = langMap[personalLang][0];
-        activeFlag = langMap[personalLang][1];
-    }
+                if (personalLang && personalLang !== 'auto') {
+                    myActiveLang = personalLang;
+                    const langMap = {'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳']};
+                    if (langMap[personalLang]) {
+                        activeFlagCode = langMap[personalLang][0];
+                        activeFlag = langMap[personalLang][1];
+                    }
+                }
 
-    // 1. ЖЕСТКО переводим то, что ты набрал (на любой раскладке), в твой Активный Язык (Авто или из Панели)
-    let myBaseText = rawText;
-    try { 
-        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
-        const data1 = await res1.json(); 
-        if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0]; 
-    } catch (e) {}
+                // 1. ЖЕСТКО переводим то, что ты набрал (на любой раскладке), в твой Активный Язык (Авто или из Панели)
+                let myBaseText = rawText;
+                try { 
+                    const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`); 
+                    const data1 = await res1.json(); 
+                    if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0]; 
+                } catch (e) {}
 
-    // 2. Узнаем язык собеседника (в привате)
-    let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
-    
-    // 3. Переводим уже ЧИСТЫЙ текст для друга (если языки разные)
-    let textToShip = myBaseText; 
-    if (targetSendLang !== myActiveLang) {
-        try { 
-            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`); 
-            const data2 = await res2.json(); 
-            if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0]; 
-        } catch (e) {}
-    }
+                // 2. Узнаем язык собеседника (в привате)
+                let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
+                
+                // 3. Переводим уже ЧИСТЫЙ текст для друга (если языки разные)
+                let textToShip = myBaseText; 
+                if (targetSendLang !== myActiveLang) {
+                    try { 
+                        const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`); 
+                        const data2 = await res2.json(); 
+                        if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0]; 
+                    } catch (e) {}
+                }
 
-    let isVoice = inputId === 'voice-chat-input';
-    let isConf = inputId === 'conf-chat-input';
+                let isVoice = inputId === 'voice-chat-input';
+                let isConf = inputId === 'conf-chat-input';
 
-    // 4. Отправляем в базу с подмененным оригиналом и флагами!
-    db.ref(window.currentRoomId).push({ 
-        userId: window.myProfileInfo.id, 
-        name: window.myUsername, 
-        text: textToShip, 
-        originalText: myBaseText, 
-        sessionId: window.mySessionId, 
-        timestamp: firebase.database.ServerValue.TIMESTAMP, 
-        photo: window.myProfileInfo.photo, 
-        flag: activeFlag, 
-        flagCode: activeFlagCode, 
-        langCode: myActiveLang, 
-        isVoiceRoomMsg: isVoice, 
-        isConfMsg: isConf 
-    });
-    
-    const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
-    if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
+                // 4. Отправляем в базу с подмененным оригиналом и флагами!
+                db.ref(window.currentRoomId).push({ 
+                    userId: window.myProfileInfo.id, 
+                    name: window.myUsername, 
+                    text: textToShip, 
+                    originalText: myBaseText, // <--- МАГИЯ ЗДЕСЬ! Физическая клавиатура забыта.
+                    sessionId: window.mySessionId, 
+                    timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                    photo: window.myProfileInfo.photo, 
+                    flag: activeFlag, 
+                    flagCode: activeFlagCode, 
+                    langCode: myActiveLang, 
+                    isVoiceRoomMsg: isVoice, 
+                    isConfMsg: isConf 
+                });
+                
+                const chatMsgs = document.getElementById('chat-messages'); if (chatMsgs) { setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); } 
+                if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
-    if (window.currentRoomId === 'private_ai_bot') { 
-        isGeminiWaiting = true; 
-        const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
-        fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) })
-        .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
-        .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
-    } 
-};
+                if (window.currentRoomId === 'private_ai_bot') { 
+                    isGeminiWaiting = true; 
+                    const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
+                    fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) })
+                    .then(res => res.json()).then(data => { let replyText = data.candidates[0].content.parts[0].text; db.ref(window.currentRoomId).push({ name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' }); })
+                    .finally(() => { setTimeout(() => { isGeminiWaiting = false; }, 2000); });
+                } 
+            };
+
             document.getElementById('chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); } });
             document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); } });
@@ -2228,7 +2206,8 @@ window.sendFirebaseMsg = async function() {
 
                 // === УМНАЯ ЛОГИКА ДВОЙНЫХ ПУЗЫРЕЙ (РУЧНОЙ ТЕКСТ + ГОЛОС) ===
                 if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
-                 let myReadLang = window.getCurrentRoomLang();
+                    let myPref = localStorage.getItem('hf_personal_lang');
+                    let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
                     let senderLang = data.langCode || 'en'; // Язык, с которого было отправлено
                     
                     let doubleLangHTML = `
@@ -2256,7 +2235,8 @@ window.sendFirebaseMsg = async function() {
                 
         if (data.isAIAudio) {
                     // ПРИОРИТЕТ: Настройка аватара > Префикс телефона
-                 let myCurrentLang = window.getCurrentRoomLang();
+                    let myManualLang = localStorage.getItem('hf_personal_lang');
+                    let myCurrentLang = (myManualLang && myManualLang !== 'auto') ? myManualLang : window.getSmartLang(window.myProfileInfo);
 
                     if (isMe && data.originalText) {
                         // Для отправителя: кодируем оригинал
@@ -2298,7 +2278,9 @@ window.sendFirebaseMsg = async function() {
                 // ==========================================
                 if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
                     let targetUsers = []; 
-                let myReadLang = window.getCurrentRoomLang();
+                    let myPref = localStorage.getItem('hf_personal_lang');
+                    // УМНАЯ ЛОГИКА: Вычисляем язык чтения по моему флагу/телефону
+                    let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
                     
                     if (window.currentRoomId === 'global' && !isAI) { 
                         window.participants.filter(part => part.id !== 'ai').forEach(member => { 
@@ -2354,7 +2336,13 @@ window.sendFirebaseMsg = async function() {
                 // ==========================================
                 // БЛОК 2: ГОЛОСОВАЯ КОМНАТА
                 // ==========================================
-                    let myPersonalLang = window.getCurrentRoomLang();
+                if (data.isVoiceRoomMsg) {
+                    let originalText = data.originalText || data.text;
+                    let myPersonalLang = localStorage.getItem('hf_personal_lang');
+                    if (!myPersonalLang || myPersonalLang === 'auto') {
+                        myPersonalLang = window.myProfileInfo.langCode; 
+                    }
+
                     let senderPhoto, senderFlag, senderLang, senderName;
                     let receiverPhoto, receiverFlag, receiverLang, receiverName;
 
@@ -2469,7 +2457,9 @@ window.sendFirebaseMsg = async function() {
      window.initConference = function() {
                 const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
                 
-             let myLang = window.getCurrentRoomLang();
+                let myLang = localStorage.getItem('hf_personal_lang');
+                if (!myLang || myLang === 'auto') myLang = window.myProfileInfo.langCode || 'en';
+
                 let confHtml = `
                 <div class="video-frame main" id="my-video-container">
                     <video id="my-live-video" class="mirror-video cursor-pointer hover:opacity-90 transition" onclick="window.openPersonalLangModal()" playsinline autoplay muted></video>
