@@ -2122,7 +2122,9 @@ window.switchChatRoom = function(targetId) {
             const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
             window.renderSidebar(); 
             window.activeChatListener = db.ref(window.currentRoomId).on("child_added", handleNewMessage);
+            if (window.autoSetMicLang) window.autoSetMicLang();
         };
+            
 
             let isGeminiWaiting = false;
 
