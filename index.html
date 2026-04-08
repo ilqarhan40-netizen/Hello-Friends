@@ -1064,18 +1064,17 @@ window.getSmartLang = function(userProfile) {
 };
 
 window.changeMicLanguage = function(val) {
-    // Сохраняем локально, чтобы селект не сбрасывался
-    localStorage.setItem('hf_active_mic_lang', val);
+    let room = window.currentRoomId || 'global';
+    localStorage.setItem('mic_lang_' + room, val);
     
-    // Отправляем в Firebase, чтобы собеседник знал, на какой язык вам переводить аудио и текст!
-    db.ref('users/' + window.myProfileInfo.id).update({ micLang: val });
-    window.myProfileInfo.micLang = val;
-    
-    window.showToast('Mic Core', 'Voice system language updated', '', '');
+    window.showToast('Mic Core', 'Voice language updated for this room', '', '');
     window.closeAllMenus();
 };
+
 window.getMyActiveLangInfo = function() {
-    let saved = localStorage.getItem('hf_active_mic_lang') || 'auto';
+    let room = window.currentRoomId || 'global';
+    let saved = localStorage.getItem('mic_lang_' + room) || 'auto';
+    
     let baseShort = window.getSmartLang(window.myProfileInfo);
     const mapShortToLocale = {'en':'en-US', 'ru':'ru-RU', 'az':'az-AZ', 'de':'de-DE', 'tr':'tr-TR', 'ar':'ar-AE', 'it':'it-IT', 'es':'es-ES', 'fr':'fr-FR', 'pt':'pt-PT', 'ja':'ja-JP', 'zh':'zh-CN'};
     
@@ -1100,6 +1099,15 @@ window.getMyActiveLangInfo = function() {
         flagCode: flagData[0],
         flagEmoji: flagData[1]
     };
+};
+
+window.autoSetMicLang = function() { 
+    let rMic = document.getElementById('plus-mic-lang'); 
+    if(rMic) {
+        let room = window.currentRoomId || 'global';
+        let saved = localStorage.getItem('mic_lang_' + room);
+        rMic.value = saved ? saved : 'auto'; 
+    }
 };
         window.startUniversalMic = async function(mode) {
     let rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
