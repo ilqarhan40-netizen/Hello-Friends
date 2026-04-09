@@ -2280,7 +2280,11 @@ window.switchChatRoom = function(targetId) {
         link.click();
         document.body.removeChild(link);
     };
-        if (document.getElementById('conference-grid')) window.initConference();
+       setTimeout(function() {
+        if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
+            window.initConference();
+        }
+    }, 1500);
 </script>
 </body>
 </html>
