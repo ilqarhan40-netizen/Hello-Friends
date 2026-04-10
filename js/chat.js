@@ -152,7 +152,7 @@ window.sendFirebaseMsg = async function() {
 window.handleNewMessage = async function(snapshot) {
     const data = snapshot.val(); if(!data) return; const chatMessages = document.getElementById('chat-messages');
 
-    // 🔥 ФИШКА 1: Очищаем старые переводы при новом сообщении ТОЛЬКО в Глобальном чате
+    // ОЧИСТКА: Скрываем старые переводы при появлении нового сообщения в Глобальном чате
     if (window.currentRoomId === 'global') {
         document.querySelectorAll('.auto-translate-group').forEach(el => {
             el.style.display = 'none';
@@ -239,7 +239,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
     
- if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
+    if (!data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let myPref = localStorage.getItem('hf_personal_lang');
         let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
@@ -269,17 +269,16 @@ window.handleNewMessage = async function(snapshot) {
 
         if (targetUsers.length > 0) {
             try {
-                // ВОЗВРАЩЕН ОРИГИНАЛ: sl=auto (чтобы Гугл сам безотказно определял язык)
+                // ЛОГИКА АВТОМАТИЧЕСКОГО ОПРЕДЕЛЕНИЯ (sl=auto)
                 const fetchPromises = targetUsers.map(u => fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.text)}`).then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.text}` })) );
                 const translationsRes = await Promise.all(fetchPromises); 
                 
                 const transContainer = document.createElement('div'); 
-                // ДОБАВЛЕН ТОЛЬКО КЛАСС: auto-translate-group
                 transContainer.className = `auto-translate-group flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`; 
                 let marqueeTextStr = ''; 
                 
+                // ОТРИСОВКА ВСЕХ ПЕРЕВОДОВ 
                 translationsRes.forEach(t => { 
-                    // ВОЗВРАЩЕН ОРИГИНАЛ: Рисуем пузыри всегда, без дурацких проверок
                     transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${isMe ? 'flex-row-reverse' : 'flex-row'}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`; 
                     marqueeTextStr += `${t.user.flag} ${t.text}        `; 
                 }); 
@@ -288,7 +287,7 @@ window.handleNewMessage = async function(snapshot) {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 
                 const mText = document.getElementById('chat-info-marquee'); 
-                if (window.isMarqueeEnabled !== false && mText && marqueeTextStr !== '') { 
+                if (window.isMarqueeEnabled !== false && mText) { 
                     mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
                     mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null; 
                 } 
