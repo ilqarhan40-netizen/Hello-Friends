@@ -142,6 +142,7 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
+    // ИСПРАВЛЕННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА (Чистая логика)
     let myPref = localStorage.getItem('hf_personal_lang');
     let myActiveLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
     let activeFlag = window.myProfileInfo.flag || '🌐';
@@ -170,7 +171,7 @@ window.sendFirebaseMsg = async function() {
     let textToShip = myBaseText;
     if (targetSendLang !== myActiveLang && window.currentRoomId !== 'global') {
         try {
-            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`);
+            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang}&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`);
             const data2 = await res2.json();
             if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
         } catch (e) {}
@@ -250,12 +251,7 @@ window.handleNewMessage = async function(snapshot) {
     let senderDisplayName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
 
     if (!isMe && !isHistory && !isAI) {
-        if (data.isTransfer) { 
-            window.sndCash.play().catch(e=>{}); 
-        } else { 
-            window.sndMsg.play().catch(e=>{}); 
-        }
-        
+        if (data.isTransfer) { window.sndCash.play().catch(e=>{}); } else { window.sndMsg.play().catch(e=>{}); }
         let textPreview = data.text; 
         if(data.isAIAudio) textPreview = "🤖 AI Voice Message"; 
         if(data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo"; 
@@ -278,14 +274,16 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = data.text;
     let bubbleClasses = `chat-bubble`;
 
+    // ИСПРАВЛЕННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА
     let myPref = localStorage.getItem('hf_personal_lang');
     let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
-    let senderLang = data.langCode || 'en';
+    let senderLang = data.langCode || 'auto'; 
 
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
-        if (!isMe && !isAI && senderLang !== myReadLang) {
+        if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
             try {
-                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.originalText)}`);
+                // ЖЕСТКО ЗАДАЕМ ЯЗЫК ОТПРАВИТЕЛЯ ВМЕСТО sl=auto
+                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.originalText)}`);
                 const resData = await res.json();
                 let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : data.originalText;
 
@@ -358,16 +356,16 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    if (isMe && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
+    if (isMe && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         if (window.currentRoomId === 'global') {
             let targetUsers = [];
             let processedLangs = new Set();
 
             window.participants.filter(part => part.id !== 'ai').forEach(member => {
                 let memberLang = window.getSmartLang(member);
-                if (member.id !== window.myProfileInfo.id && memberLang && memberLang !== 'un' && memberLang !== myReadLang) {
-                    if (!processedLangs.has(memberLang)) {
-                        processedLangs.add(memberLang);
+                if (member.id !== window.myProfileInfo.id && memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== myReadLang.substring(0,2)) {
+                    if (!processedLangs.has(memberLang.substring(0,2))) {
+                        processedLangs.add(memberLang.substring(0,2));
                         targetUsers.push({ code: memberLang, flag: member.flag, photo: member.photo });
                     }
                 }
@@ -375,8 +373,9 @@ window.handleNewMessage = async function(snapshot) {
 
             if (targetUsers.length > 0) {
                 try {
+                    // ЖЕСТКО ЗАДАЕМ ЯЗЫК ОТПРАВИТЕЛЯ ВМЕСТО sl=auto
                     const fetchPromises = targetUsers.map(u => 
-                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${data.langCode || 'auto'}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
                         .then(res => res.json())
                         .then(resData => ({ user: u, text: resData[0][0][0] }))
                         .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
@@ -425,8 +424,8 @@ window.handleNewMessage = async function(snapshot) {
         }
 
         Promise.all([
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${senderLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${receiverLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${senderLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${receiverLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
         ]).then(results => {
             const vMarquee = document.getElementById('voice-info-marquee');
             if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
@@ -464,7 +463,7 @@ window.handleNewMessage = async function(snapshot) {
             let targetLang = listenerMarquee.getAttribute('data-lang') || 'en';
             let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
 
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${data.langCode || 'auto'}&tl=${targetLang}&dt=t&q=${encodeURIComponent(originalText)}`)
                 .then(r => r.json()).then(resData => {
                     let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
                     listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
