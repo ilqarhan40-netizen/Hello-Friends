@@ -169,16 +169,22 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-    // 2. ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ОТПРАВКИ
+   // === 1. ЖЕСТКОЕ ЧТЕНИЕ ЯЗЫКА ИЗ ПАНЕЛИ АВАТАРА (ДЛЯ ОТПРАВКИ) ===
     let myActiveLang = window.getSmartLang(window.myProfileInfo);
-    let myPref = localStorage.getItem('hf_personal_lang');
-    if (myPref && myPref !== 'auto') {
-        myActiveLang = myPref; // Ручная панель важнее автоопределения
+    let manualPref = localStorage.getItem('hf_personal_lang');
+    
+    // Если в панели выбран язык (не auto) - он перебивает всё!
+    if (manualPref && manualPref !== 'auto') {
+        myActiveLang = manualPref;
+    } else if (typeof window.getCurrentRoomLang === 'function') {
+        let roomLang = window.getCurrentRoomLang();
+        if (roomLang && roomLang !== 'auto') myActiveLang = roomLang;
     }
 
     let activeFlag = window.myProfileInfo.flag || '🌐';
     let activeFlagCode = window.myProfileInfo.flagCode || 'un';
 
+    // Принудительно меняем флаг на тот, который ты выбрал в панели
     const langMap = {
         'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 
         'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 
@@ -307,14 +313,19 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ЧТЕНИЯ ВХОДЯЩИХ
+// === 2. ЖЕСТКОЕ ЧТЕНИЕ ЯЗЫКА ИЗ ПАНЕЛИ АВАТАРА (ДЛЯ ЧТЕНИЯ ВХОДЯЩИХ) ===
     let myReadLang = window.getSmartLang(window.myProfileInfo);
     let readPref = localStorage.getItem('hf_personal_lang');
+    
     if (readPref && readPref !== 'auto') {
         myReadLang = readPref;
+    } else if (typeof window.getCurrentRoomLang === 'function') {
+        let roomReadLang = window.getCurrentRoomLang();
+        if (roomReadLang && roomReadLang !== 'auto') myReadLang = roomReadLang;
     }
     
     let senderLang = data.langCode || 'auto'; 
+    // ======================================================================
 
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
