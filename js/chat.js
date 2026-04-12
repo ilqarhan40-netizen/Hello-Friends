@@ -1,12 +1,10 @@
 window.getSmartLang = function(userProfile) {
     if (!userProfile) return 'en'; 
     
-    // 1. САМОЕ ВАЖНОЕ: Если язык записан в профиле (выбран руками) - берем его!
     if (userProfile.langCode && userProfile.langCode !== 'auto' && userProfile.langCode !== 'un') {
         return userProfile.langCode;
     }
 
-    // 2. Если руками ничего не выбрано, смотрим на телефон
     let phone = userProfile.phone || "";
     if (phone.startsWith('+7')) return 'ru';
     if (phone.startsWith('+994')) return 'az';
@@ -20,7 +18,6 @@ window.getSmartLang = function(userProfile) {
     if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
     if (phone.startsWith('+971')) return 'ar';
 
-    // 3. Запасной вариант по флагу
     let flag = userProfile.flagCode || "un";
     const flagToLang = {
         'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
@@ -175,7 +172,6 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-    // === ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ОТПРАВКИ ===
     let myActiveLang = 'auto';
 
     if (typeof window.getCurrentRoomLang === 'function' && window.getCurrentRoomLang() && window.getCurrentRoomLang() !== 'auto') {
@@ -199,7 +195,6 @@ window.sendFirebaseMsg = async function() {
         activeFlagCode = langMap[myActiveLang][0]; 
         activeFlag = langMap[myActiveLang][1]; 
     }
-    // ===============================================
 
     let myBaseText = rawText;
     try {
@@ -279,7 +274,6 @@ window.handleNewMessage = async function(snapshot) {
     
     const chatMessages = document.getElementById('chat-messages');
 
-    // ОЧИСТКА: Удаляем веера у СТАРЫХ сообщений во всем чате, когда пришло новое
     if (window.currentRoomId === 'global') {
         document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
     }
@@ -312,14 +306,12 @@ window.handleNewMessage = async function(snapshot) {
     const msgWrapper = document.createElement('div'); 
     msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
-    // КЛИК ПО АВАТАРУ
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
     let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
 
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // === ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ЧТЕНИЯ ВХОДЯЩИХ ===
     let myReadLang = 'auto';
 
     if (typeof window.getCurrentRoomLang === 'function' && window.getCurrentRoomLang() && window.getCurrentRoomLang() !== 'auto') {
@@ -331,7 +323,6 @@ window.handleNewMessage = async function(snapshot) {
     }
     
     let senderLang = data.langCode || 'auto'; 
-    // ======================================================
 
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
@@ -408,7 +399,6 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    // ГЕНЕРАЦИЯ ВЕЕРА ДЛЯ ВСЕХ УЧАСТНИКОВ В ГЛОБАЛЬНОМ ЧАТЕ
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = [];
         let processedLangs = new Set();
@@ -602,21 +592,6 @@ window.insertEmoji = function(emoji) {
         } 
     } 
 };
-
-// ПЕРЕЗАГРУЗКА ЧАТА ПРИ СМЕНЕ ЯЗЫКА В ПАНЕЛИ
-if (!window.chatLangHooked) {
-    const origClose = window.closePersonalLangModal;
-    window.closePersonalLangModal = function() {
-        if (origClose) origClose();
-        if (window.currentRoomId) {
-            const chatMessages = document.getElementById('chat-messages'); 
-            if (chatMessages) chatMessages.innerHTML = '';
-            if (window.activeChatListener) firebase.database().ref(window.currentRoomId).off("child_added", window.activeChatListener);
-            window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
-        }
-    };
-    window.chatLangHooked = true;
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('chat-input')?.addEventListener('keypress', e => { 
