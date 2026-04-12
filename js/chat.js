@@ -142,12 +142,8 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-    // ЧИСТАЯ, БРОНЕБОЙНАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА ОТПРАВИТЕЛЯ
-    let myActiveLang = window.getSmartLang(window.myProfileInfo);
-    let myPref = localStorage.getItem('hf_personal_lang');
-    if (myPref && myPref !== 'auto') {
-        myActiveLang = myPref;
-    }
+    // ЖЕСТКАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА (Приоритет ручной панели)
+    let myActiveLang = typeof window.getCurrentRoomLang === 'function' ? window.getCurrentRoomLang() : ((localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') ? localStorage.getItem('hf_personal_lang') : window.getSmartLang(window.myProfileInfo));
 
     let activeFlag = window.myProfileInfo.flag || '🌐';
     let activeFlagCode = window.myProfileInfo.flagCode || 'un';
@@ -170,10 +166,7 @@ window.sendFirebaseMsg = async function() {
         if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
     } catch (e) {}
 
-    let targetSendLang = myActiveLang;
-    if (window.currentTargetUser) {
-        targetSendLang = window.getSmartLang(window.currentTargetUser);
-    }
+    let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
 
     let textToShip = myBaseText;
     if (targetSendLang !== myActiveLang && window.currentRoomId !== 'global') {
@@ -244,8 +237,9 @@ window.handleNewMessage = async function(snapshot) {
     
     const chatMessages = document.getElementById('chat-messages');
 
+    // ОЧИСТКА ВЕЕРА У ВСЕХ: Если это глобальный чат, удаляем старый веер при новом сообщении
     if (window.currentRoomId === 'global') {
-        document.querySelectorAll('.sender-translate-fan').forEach(el => { el.style.display = 'none'; });
+        document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
     }
 
     const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id;
@@ -278,47 +272,42 @@ window.handleNewMessage = async function(snapshot) {
 
     let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
 
-    let bubbleContent = data.text;
+    let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // ЧИСТАЯ, БРОНЕБОЙНАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА ЧТЕНИЯ
-    let myReadLang = window.getSmartLang(window.myProfileInfo);
-    let readPref = localStorage.getItem('hf_personal_lang');
-    if (readPref && readPref !== 'auto') {
-        myReadLang = readPref;
-    }
-    
+    // ЖЕСТКАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА (Приоритет ручной панели)
+    let myReadLang = typeof window.getCurrentRoomLang === 'function' ? window.getCurrentRoomLang() : ((localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') ? localStorage.getItem('hf_personal_lang') : window.getSmartLang(window.myProfileInfo));
     let senderLang = data.langCode || 'auto'; 
 
+    // ИНЛАЙН ПЕРЕВОД (Только для ПРИВАТНОГО ЧАТА или ИСТОРИИ)
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
-        if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
-            try {
-                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.originalText)}`);
-                const resData = await res.json();
-                let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : data.originalText;
+        if (window.currentRoomId !== 'global' || isHistory) {
+            if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
+                try {
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.originalText)}`);
+                    const resData = await res.json();
+                    let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : data.originalText;
 
+                    bubbleContent = `
+                        <div class="text-[#e9edef]">${data.originalText}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${translatedText}</div>
+                    `;
+                } catch(e) {
+                    bubbleContent = data.originalText;
+                }
+            }
+            else if (isMe && data.originalText !== data.text) {
                 bubbleContent = `
                     <div class="text-[#e9edef]">${data.originalText}</div>
-                    <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${translatedText}</div>
+                    <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>
                 `;
-            } catch(e) {
-                bubbleContent = data.originalText;
             }
-        }
-        else if (isMe && data.originalText !== data.text) {
-            bubbleContent = `
-                <div class="text-[#e9edef]">${data.originalText}</div>
-                <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>
-            `;
-        } else {
-            bubbleContent = data.originalText;
         }
     }
 
     if (data.isAIAudio) {
-        let myCurrentLang = window.getSmartLang(window.myProfileInfo);
-        let audioPref = localStorage.getItem('hf_personal_lang');
-        if (audioPref && audioPref !== 'auto') myCurrentLang = audioPref;
+        let myManualLang = localStorage.getItem('hf_personal_lang');
+        let myCurrentLang = (myManualLang && myManualLang !== 'auto') ? myManualLang : window.getSmartLang(window.myProfileInfo);
 
         if (isMe && data.originalText) {
             let escText = encodeURIComponent(data.originalText);
@@ -367,59 +356,58 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    if (isMe && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        if (window.currentRoomId === 'global') {
-            let targetUsers = [];
-            let processedLangs = new Set();
+    // ГЕНЕРАЦИЯ ВЕЕРА ДЛЯ ВСЕХ УЧАСТНИКОВ В ГЛОБАЛЬНОМ ЧАТЕ (Свежие сообщения)
+    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
+        let targetUsers = [];
+        let processedLangs = new Set();
 
-            window.participants.filter(part => part.id !== 'ai').forEach(member => {
-                let memberLang = window.getSmartLang(member);
-                if (member.id !== window.myProfileInfo.id && memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== myReadLang.substring(0,2)) {
-                    if (!processedLangs.has(memberLang.substring(0,2))) {
-                        processedLangs.add(memberLang.substring(0,2));
-                        targetUsers.push({ code: memberLang, flag: member.flag, photo: member.photo });
-                    }
+        window.participants.filter(part => part.id !== 'ai').forEach(member => {
+            let memberLang = window.getSmartLang(member);
+            if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
+                if (!processedLangs.has(memberLang.substring(0,2))) {
+                    processedLangs.add(memberLang.substring(0,2));
+                    targetUsers.push({ code: memberLang, flag: member.flag, photo: member.photo });
                 }
-            });
-
-            if (targetUsers.length > 0) {
-                try {
-                    const fetchPromises = targetUsers.map(u => 
-                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${data.langCode || 'auto'}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                        .then(res => res.json())
-                        .then(resData => ({ user: u, text: resData[0][0][0] }))
-                        .catch(e => ({ user: u, text: `[${(u.code||'').toUpperCase()}] ${data.originalText || data.text}` })) 
-                    );
-                    const translationsRes = await Promise.all(fetchPromises);
-
-                    const transContainer = document.createElement('div');
-                    transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full items-end pr-2`;
-                    let marqueeTextStr = '';
-
-                    translationsRes.forEach(t => {
-                        transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] flex-row-reverse"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl rounded-tr-sm px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`;
-                        marqueeTextStr += `${t.user.flag} ${t.text}        `;
-                    });
-
-                    messageGroup.appendChild(transContainer);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                    const mText = document.getElementById('chat-info-marquee');
-                    if (window.isMarqueeEnabled !== false && mText) {
-                        mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
-                        mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
-                    }
-                } catch (e) {}
             }
+        });
+
+        if (targetUsers.length > 0) {
+            try {
+                const fetchPromises = targetUsers.map(u => 
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                    .then(res => res.json())
+                    .then(resData => ({ user: u, text: resData[0][0][0] }))
+                    .catch(e => ({ user: u, text: data.originalText || data.text })) 
+                );
+                const translationsRes = await Promise.all(fetchPromises);
+
+                const transContainer = document.createElement('div');
+                transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
+                let marqueeTextStr = '';
+
+                translationsRes.forEach(t => {
+                    const rowClass = isMe ? 'flex-row-reverse' : 'flex-row';
+                    const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
+                    transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`;
+                    marqueeTextStr += `${t.user.flag} ${t.text}        `;
+                });
+
+                messageGroup.appendChild(transContainer);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                const mText = document.getElementById('chat-info-marquee');
+                if (window.isMarqueeEnabled !== false && mText) {
+                    mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
+                    mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
+                }
+            } catch (e) {}
         }
     }
 
     if (data.isVoiceRoomMsg) {
         let originalText = data.originalText || data.text;
-        
-        let myPersonalLang = window.getSmartLang(window.myProfileInfo);
-        let vPref = localStorage.getItem('hf_personal_lang');
-        if (vPref && vPref !== 'auto') myPersonalLang = vPref;
+        let myPersonalLang = localStorage.getItem('hf_personal_lang');
+        if (!myPersonalLang || myPersonalLang === 'auto') { myPersonalLang = window.myProfileInfo.langCode; }
 
         let senderPhoto, senderFlag, senderLang, senderName;
         let receiverPhoto, receiverFlag, receiverLang, receiverName;
