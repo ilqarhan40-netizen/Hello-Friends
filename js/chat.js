@@ -142,9 +142,13 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-    // ИСПРАВЛЕННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА (Чистая логика)
+    // ЧИСТАЯ, БРОНЕБОЙНАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА ОТПРАВИТЕЛЯ
+    let myActiveLang = window.getSmartLang(window.myProfileInfo);
     let myPref = localStorage.getItem('hf_personal_lang');
-    let myActiveLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
+    if (myPref && myPref !== 'auto') {
+        myActiveLang = myPref;
+    }
+
     let activeFlag = window.myProfileInfo.flag || '🌐';
     let activeFlagCode = window.myProfileInfo.flagCode || 'un';
 
@@ -166,7 +170,10 @@ window.sendFirebaseMsg = async function() {
         if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
     } catch (e) {}
 
-    let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
+    let targetSendLang = myActiveLang;
+    if (window.currentTargetUser) {
+        targetSendLang = window.getSmartLang(window.currentTargetUser);
+    }
 
     let textToShip = myBaseText;
     if (targetSendLang !== myActiveLang && window.currentRoomId !== 'global') {
@@ -274,22 +281,25 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // ИСПРАВЛЕННЫЙ ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА
-    let myPref = localStorage.getItem('hf_personal_lang');
-    let myReadLang = (myPref && myPref !== 'auto') ? myPref : window.getSmartLang(window.myProfileInfo);
+    // ЧИСТАЯ, БРОНЕБОЙНАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА ЧТЕНИЯ
+    let myReadLang = window.getSmartLang(window.myProfileInfo);
+    let readPref = localStorage.getItem('hf_personal_lang');
+    if (readPref && readPref !== 'auto') {
+        myReadLang = readPref;
+    }
+    
     let senderLang = data.langCode || 'auto'; 
 
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
             try {
-                // ЖЕСТКО ЗАДАЕМ ЯЗЫК ОТПРАВИТЕЛЯ ВМЕСТО sl=auto
                 const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${myReadLang}&dt=t&q=${encodeURIComponent(data.originalText)}`);
                 const resData = await res.json();
                 let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : data.originalText;
 
                 bubbleContent = `
                     <div class="text-[#e9edef]">${data.originalText}</div>
-                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${translatedText}</div>
+                    <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${translatedText}</div>
                 `;
             } catch(e) {
                 bubbleContent = data.originalText;
@@ -298,7 +308,7 @@ window.handleNewMessage = async function(snapshot) {
         else if (isMe && data.originalText !== data.text) {
             bubbleContent = `
                 <div class="text-[#e9edef]">${data.originalText}</div>
-                <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>
+                <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>
             `;
         } else {
             bubbleContent = data.originalText;
@@ -306,8 +316,9 @@ window.handleNewMessage = async function(snapshot) {
     }
 
     if (data.isAIAudio) {
-        let myManualLang = localStorage.getItem('hf_personal_lang');
-        let myCurrentLang = (myManualLang && myManualLang !== 'auto') ? myManualLang : window.getSmartLang(window.myProfileInfo);
+        let myCurrentLang = window.getSmartLang(window.myProfileInfo);
+        let audioPref = localStorage.getItem('hf_personal_lang');
+        if (audioPref && audioPref !== 'auto') myCurrentLang = audioPref;
 
         if (isMe && data.originalText) {
             let escText = encodeURIComponent(data.originalText);
@@ -373,7 +384,6 @@ window.handleNewMessage = async function(snapshot) {
 
             if (targetUsers.length > 0) {
                 try {
-                    // ЖЕСТКО ЗАДАЕМ ЯЗЫК ОТПРАВИТЕЛЯ ВМЕСТО sl=auto
                     const fetchPromises = targetUsers.map(u => 
                         fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${data.langCode || 'auto'}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
                         .then(res => res.json())
@@ -406,8 +416,10 @@ window.handleNewMessage = async function(snapshot) {
 
     if (data.isVoiceRoomMsg) {
         let originalText = data.originalText || data.text;
-        let myPersonalLang = localStorage.getItem('hf_personal_lang');
-        if (!myPersonalLang || myPersonalLang === 'auto') { myPersonalLang = window.myProfileInfo.langCode; }
+        
+        let myPersonalLang = window.getSmartLang(window.myProfileInfo);
+        let vPref = localStorage.getItem('hf_personal_lang');
+        if (vPref && vPref !== 'auto') myPersonalLang = vPref;
 
         let senderPhoto, senderFlag, senderLang, senderName;
         let receiverPhoto, receiverFlag, receiverLang, receiverName;
