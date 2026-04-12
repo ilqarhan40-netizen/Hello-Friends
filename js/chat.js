@@ -28,6 +28,13 @@ window.getSmartLang = function(userProfile) {
     return 'en';
 };
 
+// НОВЫЙ ПОМОЩНИК: Получает язык строго для текущей комнаты
+window.getRoomLangPref = function() {
+    if (!window.currentRoomId) return null;
+    let pref = localStorage.getItem('hf_lang_' + window.currentRoomId);
+    return (pref && pref !== 'auto') ? pref : null;
+};
+
 window.renderSidebar = function() {
     const chatSidebar = document.getElementById('chat-sidebar'); 
     if (!chatSidebar) return;
@@ -172,15 +179,8 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-    let myActiveLang = 'auto';
-
-    if (typeof window.getCurrentRoomLang === 'function' && window.getCurrentRoomLang() && window.getCurrentRoomLang() !== 'auto') {
-        myActiveLang = window.getCurrentRoomLang();
-    } else if (localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') {
-        myActiveLang = localStorage.getItem('hf_personal_lang');
-    } else {
-        myActiveLang = window.getSmartLang(window.myProfileInfo);
-    }
+    // ИЕРАРХИЯ ОТПРАВКИ: Сначала смотрим язык КОМНАТЫ, затем умный профиль
+    let myActiveLang = window.getRoomLangPref() || window.getSmartLang(window.myProfileInfo);
 
     let activeFlag = window.myProfileInfo.flag || '🌐';
     let activeFlagCode = window.myProfileInfo.flagCode || 'un';
@@ -274,6 +274,7 @@ window.handleNewMessage = async function(snapshot) {
     
     const chatMessages = document.getElementById('chat-messages');
 
+    // ОЧИСТКА ВЕЕРА В ГЛОБАЛЬНОМ ЧАТЕ
     if (window.currentRoomId === 'global') {
         document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
     }
@@ -312,18 +313,11 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    let myReadLang = 'auto';
-
-    if (typeof window.getCurrentRoomLang === 'function' && window.getCurrentRoomLang() && window.getCurrentRoomLang() !== 'auto') {
-        myReadLang = window.getCurrentRoomLang();
-    } else if (localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') {
-        myReadLang = localStorage.getItem('hf_personal_lang');
-    } else {
-        myReadLang = window.getSmartLang(window.myProfileInfo);
-    }
-    
+    // ИЕРАРХИЯ ЧТЕНИЯ: Строго из памяти текущей КОМНАТЫ
+    let myReadLang = window.getRoomLangPref() || window.getSmartLang(window.myProfileInfo);
     let senderLang = data.langCode || 'auto'; 
 
+    // ИНЛАЙН ПЕРЕВОД: Отключен для новых сообщений в Глобальном чате
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
             if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
@@ -399,14 +393,17 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
+    // ВЕЕР ДЛЯ ВСЕХ УЧАСТНИКОВ В ГЛОБАЛЬНОМ ЧАТЕ
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = [];
         let processedLangs = new Set();
 
         let myFanFlag = window.myProfileInfo.flag || '🌐';
         const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-        if (myReadLang && myReadLang !== 'auto' && revLangMap[myReadLang.substring(0,2)]) {
-            myFanFlag = revLangMap[myReadLang.substring(0,2)];
+        
+        let manualLang = window.getRoomLangPref();
+        if (manualLang && revLangMap[manualLang.substring(0,2)]) {
+            myFanFlag = revLangMap[manualLang.substring(0,2)];
         }
 
         if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
@@ -459,9 +456,7 @@ window.handleNewMessage = async function(snapshot) {
 
     if (data.isVoiceRoomMsg) {
         let originalText = data.originalText || data.text;
-        let myPersonalLang = window.getSmartLang(window.myProfileInfo);
-        let vPref = localStorage.getItem('hf_personal_lang');
-        if (vPref && vPref !== 'auto') myPersonalLang = vPref;
+        let myPersonalLang = window.getRoomLangPref() || window.getSmartLang(window.myProfileInfo);
 
         let senderPhoto, senderFlag, senderLang, senderName;
         let receiverPhoto, receiverFlag, receiverLang, receiverName;
