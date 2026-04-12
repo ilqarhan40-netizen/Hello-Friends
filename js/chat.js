@@ -1,9 +1,13 @@
-// 1. БРОНЕБОЙНОЕ УМНОЕ АВТООПРЕДЕЛЕНИЕ (Вшито прямо в чат)
 window.getSmartLang = function(userProfile) {
     if (!userProfile) return 'en'; 
-    let phone = userProfile.phone || "";
-    let flag = userProfile.flagCode || "un";
     
+    // 1. САМОЕ ВАЖНОЕ: Если язык записан в профиле (выбран руками) - берем его!
+    if (userProfile.langCode && userProfile.langCode !== 'auto' && userProfile.langCode !== 'un') {
+        return userProfile.langCode;
+    }
+
+    // 2. Если руками ничего не выбрано, смотрим на телефон
+    let phone = userProfile.phone || "";
     if (phone.startsWith('+7')) return 'ru';
     if (phone.startsWith('+994')) return 'az';
     if (phone.startsWith('+39')) return 'it';
@@ -16,13 +20,15 @@ window.getSmartLang = function(userProfile) {
     if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
     if (phone.startsWith('+971')) return 'ar';
 
+    // 3. Запасной вариант по флагу
+    let flag = userProfile.flagCode || "un";
     const flagToLang = {
         'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
         'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
     };
     if (flagToLang[flag]) return flagToLang[flag];
     
-    return userProfile.langCode || 'en';
+    return 'en';
 };
 
 window.renderSidebar = function() {
@@ -169,22 +175,20 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-   // === 1. ЖЕСТКОЕ ЧТЕНИЕ ЯЗЫКА ИЗ ПАНЕЛИ АВАТАРА (ДЛЯ ОТПРАВКИ) ===
-    let myActiveLang = window.getSmartLang(window.myProfileInfo);
-    let manualPref = localStorage.getItem('hf_personal_lang');
-    
-    // Если в панели выбран язык (не auto) - он перебивает всё!
-    if (manualPref && manualPref !== 'auto') {
-        myActiveLang = manualPref;
-    } else if (typeof window.getCurrentRoomLang === 'function') {
-        let roomLang = window.getCurrentRoomLang();
-        if (roomLang && roomLang !== 'auto') myActiveLang = roomLang;
+    // === ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ОТПРАВКИ ===
+    let myActiveLang = 'auto';
+
+    if (typeof window.getCurrentRoomLang === 'function' && window.getCurrentRoomLang() && window.getCurrentRoomLang() !== 'auto') {
+        myActiveLang = window.getCurrentRoomLang();
+    } else if (localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') {
+        myActiveLang = localStorage.getItem('hf_personal_lang');
+    } else {
+        myActiveLang = window.getSmartLang(window.myProfileInfo);
     }
 
     let activeFlag = window.myProfileInfo.flag || '🌐';
     let activeFlagCode = window.myProfileInfo.flagCode || 'un';
 
-    // Принудительно меняем флаг на тот, который ты выбрал в панели
     const langMap = {
         'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 
         'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 
@@ -195,6 +199,7 @@ window.sendFirebaseMsg = async function() {
         activeFlagCode = langMap[myActiveLang][0]; 
         activeFlag = langMap[myActiveLang][1]; 
     }
+    // ===============================================
 
     let myBaseText = rawText;
     try {
@@ -274,6 +279,7 @@ window.handleNewMessage = async function(snapshot) {
     
     const chatMessages = document.getElementById('chat-messages');
 
+    // ОЧИСТКА: Удаляем веера у СТАРЫХ сообщений во всем чате, когда пришло новое
     if (window.currentRoomId === 'global') {
         document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
     }
@@ -306,26 +312,26 @@ window.handleNewMessage = async function(snapshot) {
     const msgWrapper = document.createElement('div'); 
     msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
-    // 3. ПРАВИЛЬНЫЙ КЛИК ПО АВАТАРУ: Свой аватар = панель языков, Чужой аватар = профиль юзера
+    // КЛИК ПО АВАТАРУ
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
     let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
 
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-// === 2. ЖЕСТКОЕ ЧТЕНИЕ ЯЗЫКА ИЗ ПАНЕЛИ АВАТАРА (ДЛЯ ЧТЕНИЯ ВХОДЯЩИХ) ===
-    let myReadLang = window.getSmartLang(window.myProfileInfo);
-    let readPref = localStorage.getItem('hf_personal_lang');
-    
-    if (readPref && readPref !== 'auto') {
-        myReadLang = readPref;
-    } else if (typeof window.getCurrentRoomLang === 'function') {
-        let roomReadLang = window.getCurrentRoomLang();
-        if (roomReadLang && roomReadLang !== 'auto') myReadLang = roomReadLang;
+    // === ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ЧТЕНИЯ ВХОДЯЩИХ ===
+    let myReadLang = 'auto';
+
+    if (typeof window.getCurrentRoomLang === 'function' && window.getCurrentRoomLang() && window.getCurrentRoomLang() !== 'auto') {
+        myReadLang = window.getCurrentRoomLang();
+    } else if (localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') {
+        myReadLang = localStorage.getItem('hf_personal_lang');
+    } else {
+        myReadLang = window.getSmartLang(window.myProfileInfo);
     }
     
     let senderLang = data.langCode || 'auto'; 
-    // ======================================================================
+    // ======================================================
 
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
@@ -353,9 +359,7 @@ window.handleNewMessage = async function(snapshot) {
     }
 
     if (data.isAIAudio) {
-        let myCurrentLang = window.getSmartLang(window.myProfileInfo);
-        let audioPref = localStorage.getItem('hf_personal_lang');
-        if (audioPref && audioPref !== 'auto') myCurrentLang = audioPref;
+        let myCurrentLang = myReadLang;
 
         if (isMe && data.originalText) {
             let escText = encodeURIComponent(data.originalText);
@@ -404,9 +408,21 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
+    // ГЕНЕРАЦИЯ ВЕЕРА ДЛЯ ВСЕХ УЧАСТНИКОВ В ГЛОБАЛЬНОМ ЧАТЕ
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = [];
         let processedLangs = new Set();
+
+        let myFanFlag = window.myProfileInfo.flag || '🌐';
+        const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+        if (myReadLang && myReadLang !== 'auto' && revLangMap[myReadLang.substring(0,2)]) {
+            myFanFlag = revLangMap[myReadLang.substring(0,2)];
+        }
+
+        if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
+            processedLangs.add(myReadLang.substring(0,2));
+            targetUsers.push({ code: myReadLang, flag: myFanFlag, photo: window.myProfileInfo.photo });
+        }
 
         window.participants.filter(part => part.id !== 'ai').forEach(member => {
             let memberLang = window.getSmartLang(member);
@@ -447,7 +463,7 @@ window.handleNewMessage = async function(snapshot) {
                     mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
                     mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
                 }
-            } catch (e) { console.error("Global Fan Error", e); }
+            } catch (e) {}
         }
     }
 
@@ -587,7 +603,7 @@ window.insertEmoji = function(emoji) {
     } 
 };
 
-// 4. ПЕРЕЗАГРУЗКА ЧАТА ПРИ СМЕНЕ ЯЗЫКА В ПАНЕЛИ АВАТАРА
+// ПЕРЕЗАГРУЗКА ЧАТА ПРИ СМЕНЕ ЯЗЫКА В ПАНЕЛИ
 if (!window.chatLangHooked) {
     const origClose = window.closePersonalLangModal;
     window.closePersonalLangModal = function() {
