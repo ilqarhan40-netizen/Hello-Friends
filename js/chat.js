@@ -1,3 +1,30 @@
+// 1. БРОНЕБОЙНОЕ УМНОЕ АВТООПРЕДЕЛЕНИЕ (Вшито прямо в чат)
+window.getSmartLang = function(userProfile) {
+    if (!userProfile) return 'en'; 
+    let phone = userProfile.phone || "";
+    let flag = userProfile.flagCode || "un";
+    
+    if (phone.startsWith('+7')) return 'ru';
+    if (phone.startsWith('+994')) return 'az';
+    if (phone.startsWith('+39')) return 'it';
+    if (phone.startsWith('+49')) return 'de';
+    if (phone.startsWith('+33')) return 'fr';
+    if (phone.startsWith('+81')) return 'ja';
+    if (phone.startsWith('+34')) return 'es';
+    if (phone.startsWith('+86')) return 'zh';
+    if (phone.startsWith('+351')) return 'pt';
+    if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
+    if (phone.startsWith('+971')) return 'ar';
+
+    const flagToLang = {
+        'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
+        'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
+    };
+    if (flagToLang[flag]) return flagToLang[flag];
+    
+    return userProfile.langCode || 'en';
+};
+
 window.renderSidebar = function() {
     const chatSidebar = document.getElementById('chat-sidebar'); 
     if (!chatSidebar) return;
@@ -142,8 +169,12 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-    // ЖЕСТКАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА (Приоритет ручной панели)
-    let myActiveLang = typeof window.getCurrentRoomLang === 'function' ? window.getCurrentRoomLang() : ((localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') ? localStorage.getItem('hf_personal_lang') : window.getSmartLang(window.myProfileInfo));
+    // 2. ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ОТПРАВКИ
+    let myActiveLang = window.getSmartLang(window.myProfileInfo);
+    let myPref = localStorage.getItem('hf_personal_lang');
+    if (myPref && myPref !== 'auto') {
+        myActiveLang = myPref; // Ручная панель важнее автоопределения
+    }
 
     let activeFlag = window.myProfileInfo.flag || '🌐';
     let activeFlagCode = window.myProfileInfo.flagCode || 'un';
@@ -237,7 +268,6 @@ window.handleNewMessage = async function(snapshot) {
     
     const chatMessages = document.getElementById('chat-messages');
 
-    // ОЧИСТКА ВЕЕРА У ВСЕХ: Если это глобальный чат, удаляем старый веер при новом сообщении
     if (window.currentRoomId === 'global') {
         document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
     }
@@ -270,16 +300,22 @@ window.handleNewMessage = async function(snapshot) {
     const msgWrapper = document.createElement('div'); 
     msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
-    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
+    // 3. ПРАВИЛЬНЫЙ КЛИК ПО АВАТАРУ: Свой аватар = панель языков, Чужой аватар = профиль юзера
+    let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
+    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
 
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // ЖЕСТКАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ЯЗЫКА (Приоритет ручной панели)
-    let myReadLang = typeof window.getCurrentRoomLang === 'function' ? window.getCurrentRoomLang() : ((localStorage.getItem('hf_personal_lang') && localStorage.getItem('hf_personal_lang') !== 'auto') ? localStorage.getItem('hf_personal_lang') : window.getSmartLang(window.myProfileInfo));
+    // ИЕРАРХИЯ ОПРЕДЕЛЕНИЯ ЯЗЫКА ДЛЯ ЧТЕНИЯ ВХОДЯЩИХ
+    let myReadLang = window.getSmartLang(window.myProfileInfo);
+    let readPref = localStorage.getItem('hf_personal_lang');
+    if (readPref && readPref !== 'auto') {
+        myReadLang = readPref;
+    }
+    
     let senderLang = data.langCode || 'auto'; 
 
-    // ИНЛАЙН ПЕРЕВОД (Только для ПРИВАТНОГО ЧАТА или ИСТОРИИ)
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
             if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
@@ -290,7 +326,7 @@ window.handleNewMessage = async function(snapshot) {
 
                     bubbleContent = `
                         <div class="text-[#e9edef]">${data.originalText}</div>
-                        <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${translatedText}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${translatedText}</div>
                     `;
                 } catch(e) {
                     bubbleContent = data.originalText;
@@ -299,15 +335,16 @@ window.handleNewMessage = async function(snapshot) {
             else if (isMe && data.originalText !== data.text) {
                 bubbleContent = `
                     <div class="text-[#e9edef]">${data.originalText}</div>
-                    <div class="mt-1 pt-1 border-t border-white/20 text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>
+                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>
                 `;
             }
         }
     }
 
     if (data.isAIAudio) {
-        let myManualLang = localStorage.getItem('hf_personal_lang');
-        let myCurrentLang = (myManualLang && myManualLang !== 'auto') ? myManualLang : window.getSmartLang(window.myProfileInfo);
+        let myCurrentLang = window.getSmartLang(window.myProfileInfo);
+        let audioPref = localStorage.getItem('hf_personal_lang');
+        if (audioPref && audioPref !== 'auto') myCurrentLang = audioPref;
 
         if (isMe && data.originalText) {
             let escText = encodeURIComponent(data.originalText);
@@ -356,7 +393,6 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    // ГЕНЕРАЦИЯ ВЕЕРА ДЛЯ ВСЕХ УЧАСТНИКОВ В ГЛОБАЛЬНОМ ЧАТЕ (Свежие сообщения)
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = [];
         let processedLangs = new Set();
@@ -400,14 +436,15 @@ window.handleNewMessage = async function(snapshot) {
                     mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
                     mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
                 }
-            } catch (e) {}
+            } catch (e) { console.error("Global Fan Error", e); }
         }
     }
 
     if (data.isVoiceRoomMsg) {
         let originalText = data.originalText || data.text;
-        let myPersonalLang = localStorage.getItem('hf_personal_lang');
-        if (!myPersonalLang || myPersonalLang === 'auto') { myPersonalLang = window.myProfileInfo.langCode; }
+        let myPersonalLang = window.getSmartLang(window.myProfileInfo);
+        let vPref = localStorage.getItem('hf_personal_lang');
+        if (vPref && vPref !== 'auto') myPersonalLang = vPref;
 
         let senderPhoto, senderFlag, senderLang, senderName;
         let receiverPhoto, receiverFlag, receiverLang, receiverName;
@@ -538,6 +575,21 @@ window.insertEmoji = function(emoji) {
         } 
     } 
 };
+
+// 4. ПЕРЕЗАГРУЗКА ЧАТА ПРИ СМЕНЕ ЯЗЫКА В ПАНЕЛИ АВАТАРА
+if (!window.chatLangHooked) {
+    const origClose = window.closePersonalLangModal;
+    window.closePersonalLangModal = function() {
+        if (origClose) origClose();
+        if (window.currentRoomId) {
+            const chatMessages = document.getElementById('chat-messages'); 
+            if (chatMessages) chatMessages.innerHTML = '';
+            if (window.activeChatListener) firebase.database().ref(window.currentRoomId).off("child_added", window.activeChatListener);
+            window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
+        }
+    };
+    window.chatLangHooked = true;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('chat-input')?.addEventListener('keypress', e => { 
