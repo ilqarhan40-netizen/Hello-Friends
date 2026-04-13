@@ -1,33 +1,3 @@
-// === 1. ПЕРЕХВАТЧИК ПАМЯТИ (ИЗОЛЯЦИЯ КОМНАТ) ===
-if (!window.localStorageHijacked) {
-    const origSet = localStorage.setItem;
-    const origGet = localStorage.getItem;
-    const origRem = localStorage.removeItem;
-
-    localStorage.setItem = function(key, value) {
-        if (key === 'hf_personal_lang' && window.currentRoomId) {
-            origSet.call(this, 'hf_lang_' + window.currentRoomId, value);
-        }
-        origSet.call(this, key, value); 
-    };
-
-    localStorage.getItem = function(key) {
-        if (key === 'hf_personal_lang' && window.currentRoomId) {
-            let roomVal = origGet.call(this, 'hf_lang_' + window.currentRoomId);
-            return roomVal ? roomVal : 'auto'; 
-        }
-        return origGet.call(this, key);
-    };
-
-    localStorage.removeItem = function(key) {
-        if (key === 'hf_personal_lang' && window.currentRoomId) {
-            origRem.call(this, 'hf_lang_' + window.currentRoomId);
-        }
-        origRem.call(this, key);
-    };
-    window.localStorageHijacked = true;
-}
-
 window.getSmartLang = function(userProfile) {
     if (!userProfile) return 'en'; 
     
@@ -58,11 +28,11 @@ window.getSmartLang = function(userProfile) {
     return 'en';
 };
 
-// Получает язык строго для текущей комнаты
-window.getRoomLangPref = function() {
-    if (!window.currentRoomId) return null;
-    let pref = localStorage.getItem('hf_lang_' + window.currentRoomId);
-    return (pref && pref !== 'auto') ? pref : null;
+// === 1. ЕДИНАЯ ФУНКЦИЯ ЧТЕНИЯ ЯЗЫКА ДЛЯ ТЕКУЩЕЙ КОМНАТЫ ===
+window.getActiveRoomLang = function() {
+    let roomPref = localStorage.getItem('room_lang_' + window.currentRoomId);
+    if (roomPref && roomPref !== 'auto') return roomPref;
+    return window.getSmartLang(window.myProfileInfo);
 };
 
 window.renderSidebar = function() {
@@ -209,8 +179,8 @@ window.sendFirebaseMsg = async function() {
     
     inputField.value = '';
 
-    // Чтение языка для отправки (изолированно для комнаты)
-    let myActiveLang = window.getRoomLangPref() || window.getSmartLang(window.myProfileInfo);
+    // ИСПОЛЬЗУЕМ ИЗОЛИРОВАННЫЙ ЯЗЫК КОМНАТЫ
+    let myActiveLang = window.getActiveRoomLang();
 
     let activeFlag = window.myProfileInfo.flag || '🌐';
     let activeFlagCode = window.myProfileInfo.flagCode || 'un';
@@ -304,7 +274,7 @@ window.handleNewMessage = async function(snapshot) {
     
     const chatMessages = document.getElementById('chat-messages');
 
-    // ОЧИСТКА ВЕЕРА В ГЛОБАЛЬНОМ ЧАТЕ (удаляем старые флаги при новом сообщении)
+    // ОЧИСТКА СТАРЫХ ВЕЕРОВ ПРИ НОВОМ СООБЩЕНИИ
     if (window.currentRoomId === 'global') {
         document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
     }
@@ -343,11 +313,11 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // Чтение языка для входящих (изолированно для комнаты)
-    let myReadLang = window.getRoomLangPref() || window.getSmartLang(window.myProfileInfo);
+    // ИСПОЛЬЗУЕМ ИЗОЛИРОВАННЫЙ ЯЗЫК КОМНАТЫ
+    let myReadLang = window.getActiveRoomLang();
     let senderLang = data.langCode || 'auto'; 
 
-    // ИНЛАЙН ПЕРЕВОД (Отключен для новых сообщений в Глобальном чате)
+    // ИНЛАЙН ПЕРЕВОД (Отключен для свежих сообщений Глобального чата)
     if (data.originalText && !data.isAIAudio && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
             if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
@@ -431,7 +401,7 @@ window.handleNewMessage = async function(snapshot) {
         let myFanFlag = window.myProfileInfo.flag || '🌐';
         const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
         
-        let manualLang = window.getRoomLangPref();
+        let manualLang = window.getActiveRoomLang();
         if (manualLang && revLangMap[manualLang.substring(0,2)]) {
             myFanFlag = revLangMap[manualLang.substring(0,2)];
         }
@@ -484,10 +454,11 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    // ИЗОЛИРОВАННАЯ ГОЛОСОВАЯ КОМНАТА
     if (data.isVoiceRoomMsg) {
         let originalText = data.originalText || data.text;
-        let myPersonalLang = window.getRoomLangPref() || window.getSmartLang(window.myProfileInfo);
+        
+        // ИСПОЛЬЗУЕМ ИЗОЛИРОВАННЫЙ ЯЗЫК КОМНАТЫ
+        let myPersonalLang = window.getActiveRoomLang();
 
         let senderPhoto, senderFlag, senderLang, senderName;
         let receiverPhoto, receiverFlag, receiverLang, receiverName;
@@ -640,74 +611,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// =====================================================================
-// ПОЛНЫЙ ПЕРЕХВАТ ПАНЕЛИ ЯЗЫКОВ (АВТОНОМНАЯ ИЗОЛЯЦИЯ КОМНАТ)
-// =====================================================================
+// === 2. ПОЛНЫЙ ПЕРЕХВАТ И ПРИВЯЗКА ПАНЕЛИ ЯЗЫКОВ К КОМНАТАМ ===
 
 window.openPersonalLangModal = function() {
     if (window.closeDropdown) window.closeDropdown();
-    
     const listContainer = document.getElementById('personal-lang-list');
     if (!listContainer) return;
 
-    // Узнаем язык ТОЛЬКО для текущей комнаты
-    let currentRoomLang = window.getRoomLangPref() || 'auto';
+    let currentPref = localStorage.getItem('room_lang_' + window.currentRoomId) || 'auto';
 
     const langs = [
-        {code: 'auto', name: '🤖 Auto (from Profile)', flag: ''},
-        {code: 'en', name: 'English', flag: '🇬🇧'},
-        {code: 'ru', name: 'Русский', flag: '🇷🇺'},
-        {code: 'az', name: 'Azərbaycanca', flag: '🇦🇿'},
-        {code: 'de', name: 'Deutsch', flag: '🇩🇪'},
-        {code: 'tr', name: 'Türkçe', flag: '🇹🇷'},
-        {code: 'ar', name: 'العربية', flag: '🇦🇪'},
-        {code: 'it', name: 'Italiano', flag: '🇮🇹'},
-        {code: 'es', name: 'Español', flag: '🇪🇸'},
-        {code: 'fr', name: 'Français', flag: '🇫🇷'},
-        {code: 'pt', name: 'Português', flag: '🇵🇹'},
-        {code: 'ja', name: '日本語', flag: '🇯🇵'},
-        {code: 'zh', name: '中文', flag: '🇨🇳'}
+        {code: 'auto', name: '🤖 Auto (Profile)', flag: '🌐'},
+        {code: 'en', name: 'English', flag: '🇬🇧'}, {code: 'ru', name: 'Русский', flag: '🇷🇺'},
+        {code: 'az', name: 'Azərbaycanca', flag: '🇦🇿'}, {code: 'de', name: 'Deutsch', flag: '🇩🇪'},
+        {code: 'tr', name: 'Türkçe', flag: '🇹🇷'}, {code: 'ar', name: 'العربية', flag: '🇦🇪'},
+        {code: 'it', name: 'Italiano', flag: '🇮🇹'}, {code: 'es', name: 'Español', flag: '🇪🇸'},
+        {code: 'fr', name: 'Français', flag: '🇫🇷'}, {code: 'pt', name: 'Português', flag: '🇵🇹'},
+        {code: 'ja', name: '日本語', flag: '🇯🇵'}, {code: 'zh', name: '中文', flag: '🇨🇳'}
     ];
 
     let html = '';
     langs.forEach(l => {
-        // Подсвечиваем язык, выбранный именно в ЭТОЙ комнате
-        let isActive = currentRoomLang === l.code ? 'border-[#00a884] bg-[#202c33]' : 'border-[#2a3942] bg-[#111b21]';
-        let checkmark = currentRoomLang === l.code ? '<i class="fa-solid fa-circle-check text-[#00a884]"></i>' : '';
-        
-        html += `
-        <div onclick="window.setRoomPersonalLang('${l.code}')" class="flex justify-between items-center p-3 rounded-xl border ${isActive} cursor-pointer hover:border-[#00a884] transition shadow-sm mb-2">
-            <div class="flex items-center gap-3">
-                <span class="text-xl">${l.flag}</span>
-                <span class="text-white font-bold text-[0.9rem]">${l.name}</span>
-            </div>
-            ${checkmark}
+        let isActive = (currentPref === l.code) ? 'border-[#00a884] bg-[#202c33]' : 'border-[#2a3942] bg-[#111b21]';
+        html += `<div onclick="window.saveRoomLang('${l.code}')" class="flex items-center p-3 rounded-xl border ${isActive} cursor-pointer mb-2 transition hover:border-[#00a884]">
+            <span class="text-white font-bold text-[0.9rem] flex gap-3 items-center"><span class="text-xl">${l.flag}</span> ${l.name}</span>
         </div>`;
     });
-    
     listContainer.innerHTML = html;
-    
-    const modal = document.getElementById('personal-lang-modal');
-    if (modal) modal.classList.add('active');
+    document.getElementById('personal-lang-modal').classList.add('active');
 };
 
-window.setRoomPersonalLang = function(langCode) {
+window.saveRoomLang = function(langCode) {
     if (!window.currentRoomId) return;
     
-    // Сохраняем язык СТРОГО в ячейку текущей комнаты
     if (langCode === 'auto') {
-        localStorage.removeItem('hf_lang_' + window.currentRoomId);
+        localStorage.removeItem('room_lang_' + window.currentRoomId);
     } else {
-        localStorage.setItem('hf_lang_' + window.currentRoomId, langCode);
+        localStorage.setItem('room_lang_' + window.currentRoomId, langCode);
     }
     
-    // Закрываем модальное окно (без перезагрузки экрана!)
-    const modal = document.getElementById('personal-lang-modal');
-    if (modal) modal.classList.remove('active');
-    
-    if (window.showToast) {
-        window.showToast("Language Set", "New messages will be translated to this language.", "", "");
-    }
+    document.getElementById('personal-lang-modal').classList.remove('active');
+    if (window.showToast) window.showToast("Language Saved", "Applied only to this room.", "", "");
 };
 
 window.closePersonalLangModal = function() {
