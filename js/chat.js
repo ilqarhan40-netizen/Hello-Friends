@@ -584,3 +584,42 @@ window.startUniversalMic = async function(mode) {
     };
     try { rec.start(); } catch(e){}
 };
+// === АВТОПОДСТАНОВКА КОДА И ФЛАГА ДЛЯ CV ===
+window.handleCVCountryChange = function(sel) {
+    const flagCode = sel.value; 
+    const opt = sel.options[sel.selectedIndex];
+    const countryName = opt ? opt.getAttribute('data-name') : null;
+
+    // 1. Меняем картинку флага слева от выпадающего списка
+    const flagImg = document.getElementById('cv-edit-flag-icon');
+    if (flagImg) {
+        flagImg.src = flagCode === 'un' ? 'https://flagcdn.com/w40/un.png' : `https://flagcdn.com/w40/${flagCode}.png`;
+    }
+
+    // 2. Подставляем код телефона
+    const phoneInput = document.getElementById('cv-edit-phone');
+    if (!phoneInput || !countryName) return;
+
+    // Глобальная база кодов
+    const countryCodes = {
+        "Afghanistan": "+93", "Albania": "+355", "Algeria": "+213", "Andorra": "+376", "Angola": "+244", 
+        "Argentina": "+54", "Armenia": "+374", "Australia": "+61", "Austria": "+43", "Azerbaijan": "+994", 
+        "Bahamas": "+1", "Bahrain": "+973", "Bangladesh": "+880", "Belarus": "+375", "Belgium": "+32", 
+        "Brazil": "+55", "Bulgaria": "+359", "Canada": "+1", "China": "+86", "Croatia": "+385", 
+        "Cyprus": "+357", "Czech Republic": "+420", "Denmark": "+45", "Egypt": "+20", "Estonia": "+372", 
+        "Finland": "+358", "France": "+33", "Georgia": "+995", "Germany": "+49", "Greece": "+30", 
+        "Hungary": "+36", "India": "+91", "Indonesia": "+62", "Iran": "+98", "Iraq": "+964", 
+        "Ireland": "+353", "Israel": "+972", "Italy": "+39", "Japan": "+81", "Kazakhstan": "+7", 
+        "Kuwait": "+965", "Latvia": "+371", "Lithuania": "+370", "Malaysia": "+60", "Mexico": "+52", 
+        "Moldova": "+373", "Netherlands": "+31", "New Zealand": "+64", "Norway": "+47", "Pakistan": "+92", 
+        "Poland": "+48", "Portugal": "+351", "Qatar": "+974", "Romania": "+40", "Russia": "+7", 
+        "Saudi Arabia": "+966", "Serbia": "+381", "Singapore": "+65", "Slovakia": "+421", "South Africa": "+27", 
+        "South Korea": "+82", "Spain": "+34", "Sweden": "+46", "Switzerland": "+41", "Turkey": "+90", 
+        "UAE": "+971", "Ukraine": "+380", "United Kingdom": "+44", "United States": "+1", "Uzbekistan": "+998"
+    };
+
+    if (countryCodes[countryName]) {
+        phoneInput.value = countryCodes[countryName] + " ";
+        setTimeout(() => phoneInput.focus(), 50); 
+    }
+};
