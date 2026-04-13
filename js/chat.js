@@ -459,3 +459,128 @@ window.saveSpecificLang = function(langCode, targetKey) {
 window.closePersonalLangModal = function() {
     document.getElementById('personal-lang-modal')?.classList.remove('active');
 };
+// =====================================================================
+// АВТОНОМНАЯ ИЗОЛЯЦИЯ ЯЗЫКОВ МИКРОФОНА ДЛЯ КАЖДОЙ КОМНАТЫ
+// =====================================================================
+
+window.getMicLangKey = function() {
+    let isVoice = window.currentIndex === 1;
+    let isConf = window.currentIndex === 2;
+    if (isVoice) return 'hf_mic_lang_tab_voice';
+    if (isConf) return 'hf_mic_lang_tab_meet';
+    return 'hf_mic_lang_chat_' + (window.currentRoomId || 'global');
+};
+
+window.saveRoomMicLang = function(val) {
+    let key = window.getMicLangKey();
+    if (val === 'auto' || !val) {
+        localStorage.removeItem(key);
+    } else {
+        localStorage.setItem(key, val);
+    }
+    if (window.showToast) window.showToast("Mic Language", "Saved strictly for this room", "", "");
+};
+
+window.syncMicLangUI = function() {
+    let key = window.getMicLangKey();
+    let saved = localStorage.getItem(key) || 'auto';
+    let sel = document.getElementById('plus-mic-lang');
+    if (sel) {
+        sel.value = saved;
+    }
+};
+
+// Привязываем сохранение к списку в ромбике
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        let micSel = document.getElementById('plus-mic-lang');
+        if (micSel) {
+            micSel.addEventListener('change', function() {
+                window.saveRoomMicLang(this.value);
+            });
+        }
+    }, 1000);
+});
+
+// Перехватываем смену комнат, чтобы ползунок микрофона сам перескакивал
+if (!window.micSyncHooked) {
+    const origSwitchTabMic = window.switchTab;
+    window.switchTab = function(index) {
+        if (origSwitchTabMic) origSwitchTabMic(index);
+        setTimeout(window.syncMicLangUI, 100);
+    };
+    const origSwitchChatMic = window.switchChatRoom;
+    window.switchChatRoom = function(targetId) {
+        if (origSwitchChatMic) origSwitchChatMic(targetId);
+        setTimeout(window.syncMicLangUI, 100);
+    };
+    window.micSyncHooked = true;
+}
+
+// Заглушка, чтобы не выдавало ошибку из старого кода
+window.autoSetMicLang = function() { window.syncMicLangUI(); };
+
+// Обновленный микрофон, который берет язык СТРОГО из памяти текущей комнаты
+window.startUniversalMic = async function(mode) {
+    window.speechRecognizedText = "";
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let rec = SpeechRec ? new SpeechRec() : null;
+    if (!rec) return alert("Browser does not support Speech Recognition.");
+    
+    rec.continuous = false; rec.interimResults = false;
+    
+    let selectedMicLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
+    
+    if (selectedMicLang === 'auto') {
+        let phone = window.myProfileInfo.phone || ""; 
+        let flag = window.myProfileInfo.flagCode || "un"; 
+        let autoLang = 'en-US'; 
+        if (phone.startsWith('+7')) autoLang = 'ru-RU'; 
+        else if (phone.startsWith('+994')) autoLang = 'az-AZ'; 
+        else if (phone.startsWith('+39')) autoLang = 'it-IT'; 
+        else if (phone.startsWith('+49')) autoLang = 'de-DE'; 
+        else if (phone.startsWith('+33')) autoLang = 'fr-FR'; 
+        else if (phone.startsWith('+81')) autoLang = 'ja-JP'; 
+        else if (phone.startsWith('+34')) autoLang = 'es-ES'; 
+        else if (phone.startsWith('+86')) autoLang = 'zh-CN'; 
+        else if (phone.startsWith('+351')) autoLang = 'pt-PT'; 
+        else if (flag === 'ru') autoLang = 'ru-RU'; 
+        else if (flag === 'az') autoLang = 'az-AZ'; 
+        else if (flag === 'it') autoLang = 'it-IT'; 
+        else if (flag === 'de') autoLang = 'de-DE'; 
+        else if (flag === 'fr') autoLang = 'fr-FR'; 
+        else if (flag === 'jp') autoLang = 'ja-JP'; 
+        else if (flag === 'es') autoLang = 'es-ES'; 
+        else if (flag === 'cn') autoLang = 'zh-CN'; 
+        else if (flag === 'pt') autoLang = 'pt-PT';
+        rec.lang = autoLang;
+    } else {
+        rec.lang = selectedMicLang;
+    }
+    
+    window.showToast("Listening...", "Speak into the microphone", "", "");
+    
+    rec.onresult = async (e) => { 
+        window.speechRecognizedText = e.results[0][0].transcript; 
+        let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
+
+        window.showToast("Translating...", "Processing your voice...", "", "");
+        let textToShip = window.speechRecognizedText;
+        
+        try { 
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
+            const data = await res.json(); 
+            if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
+        } catch (err) {}
+
+        let isVoice = window.currentMicInputTarget === 'voice-chat-input';
+        let isConf = window.currentMicInputTarget === 'conf-chat-input';
+
+        if (mode === 'text') {
+            firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+        } else if (mode === 'ai-audio') {
+            firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+        }
+    };
+    try { rec.start(); } catch(e){}
+};
