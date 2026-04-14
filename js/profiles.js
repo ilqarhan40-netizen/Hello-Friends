@@ -280,63 +280,58 @@ window.openViewCVModal = function(id) {
     let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
     if (!p) return;
 
+    // 1. ИЗОБРАЖЕНИЕ (С железной подгрузкой, как было в твоей изначальной форме!)
+    let defaultPhoto = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff';
+    let photoEl = document.getElementById('cv-view-img');
+    if (photoEl) photoEl.src = p.photo ? p.photo : defaultPhoto;
+
+    // 2. ИМЯ И ПРОФЕССИЯ В ОДНУ СТРОКУ
     let nameEl = document.getElementById('cv-view-name');
     let profEl = document.getElementById('cv-view-prof');
 
-    if (nameEl) nameEl.innerText = (p.name||'User').split(' ')[0]; 
-    if (profEl) profEl.innerText = p.cvProfession || p.profession || '—';
-
-    let displayPhone = p.cvPhone || '—';
-    let displayEmail = p.cvEmail || '—';
-    let displayLoc = p.cvCountryName || 'Global';
-    let displayFlag = p.cvCountryCode || 'un';
-
-    // 1. ИМЯ И ПРОФЕССИЯ В ОДИН РЯД (С ЗАЩИТОЙ ОТ НАЕЗДА ДРУГ НА ДРУГА)
-    if(nameEl && profEl) {
-        let wrapper = document.getElementById('cv-name-prof-wrapper');
-        if(!wrapper) {
-            wrapper = document.createElement('div');
-            wrapper.id = 'cv-name-prof-wrapper';
-            // flex-wrap и gap-2 гарантируют, что тексты будут на безопасном расстоянии
-            wrapper.className = 'flex items-baseline gap-2 flex-wrap w-full'; 
-            nameEl.parentNode.insertBefore(wrapper, nameEl);
-            wrapper.appendChild(nameEl);
-            wrapper.appendChild(profEl);
-        }
-        nameEl.style.display = 'block';
-        profEl.style.display = 'block';
+    if (nameEl) {
+        nameEl.innerText = (p.name||'User').split(' ')[0]; 
+        nameEl.style.display = 'inline-block';
+        nameEl.style.marginRight = '8px';
+    }
+    if (profEl) {
+        profEl.innerText = p.cvProfession || p.profession || '—';
+        profEl.style.display = 'inline-block';
     }
 
-    // 2. ЛОКАЦИЯ СТРОГО ПОД НИМИ
+    let displayPhone = p.cvPhone || p.phone || '—';
+    let displayEmail = p.cvEmail || p.email || '—';
+    let displayLoc = p.cvCountryName || p.country || 'Global';
+    let displayFlag = p.cvCountryCode || p.flagCode || 'un';
+
+    // 3. ЛОКАЦИЯ ПОД ИМЕНЕМ И ПРОФЕССИЕЙ
     let oldLoc = document.getElementById('cv-dynamic-loc');
     if(oldLoc) oldLoc.remove();
-
-    let wrapper = document.getElementById('cv-name-prof-wrapper');
-    if(wrapper && wrapper.parentNode) {
+    
+    if (profEl && profEl.parentNode) {
         let locHtml = document.createElement('div');
         locHtml.id = 'cv-dynamic-loc';
-        // mt-1.5 дает отступ сверху от имени/профессии
         locHtml.className = 'flex items-center gap-1.5 mt-1.5 bg-[#202c33] border border-[#2a3942] rounded-full px-2.5 py-0.5 w-max shadow-sm';
         locHtml.innerHTML = `<i class="fa-solid fa-location-dot text-red-400 text-[0.65rem]"></i><img src="https://flagcdn.com/w20/${displayFlag}.png" class="w-3.5 rounded-sm object-cover"><span class="text-[#e9edef] text-[0.65rem] font-bold">${displayLoc}</span>`;
-        wrapper.parentNode.insertBefore(locHtml, wrapper.nextSibling);
+        profEl.parentNode.appendChild(locHtml);
     }
 
-    // 3. КЛИКАБЕЛЬНЫЕ ТЕЛЕФОН И ПОЧТА
-    let phoneClickHtml = displayPhone === '—' 
-        ? `<span class="text-white text-[0.75rem] font-mono truncate">${displayPhone}</span>` 
+    // 4. ТЕЛЕФОН И ПОЧТА (Интерактивные)
+    let phoneAction = displayPhone === '—' 
+        ? `<span class="text-white text-[0.7rem] font-mono truncate">${displayPhone}</span>` 
         : (id === 'me' 
-            ? `<span class="text-white text-[0.75rem] font-mono truncate">${displayPhone}</span>`
-            : `<span class="text-[#00a884] text-[0.75rem] font-mono font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); document.getElementById('phone-choice-modal').classList.add('active');"><i class="fa-solid fa-phone-volume mr-1"></i>${displayPhone}</span>`
+            ? `<span class="text-white text-[0.7rem] font-mono truncate">${displayPhone}</span>`
+            : `<span class="text-[#00a884] text-[0.75rem] font-mono font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); if(document.getElementById('phone-choice-modal')) document.getElementById('phone-choice-modal').classList.add('active');"><i class="fa-solid fa-phone-volume mr-1"></i>${displayPhone}</span>`
         );
 
-    let emailClickHtml = displayEmail === '—'
+    let emailAction = displayEmail === '—'
         ? `<span class="text-white text-[0.7rem] truncate">${displayEmail}</span>`
         : (id === 'me'
             ? `<span class="text-white text-[0.7rem] truncate">${displayEmail}</span>`
             : `<span class="text-[#34b7f1] text-[0.7rem] font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); if(window.openDirectEmail) window.openDirectEmail('${displayEmail}'); else window.location.href='mailto:${displayEmail}';">${displayEmail}</span>`
         );
-    
-    // ВЕРСТКА: КОНТАКТЫ (Два блока) + ЯЗЫКИ (В одну строку)
+
+    // 5. ВЕРСТКА CV КОНТЕНТА
     let cvContent = `
     <div class="grid grid-cols-2 gap-3 mb-3 mt-2">
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
@@ -344,24 +339,24 @@ window.openViewCVModal = function(id) {
                 <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem]"></i></div>
                 <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_phone">Business Phone</span>
             </div>
-            ${phoneClickHtml}
+            ${phoneAction}
         </div>
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
             <div class="flex items-center gap-2 mb-1.5">
                 <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
                 <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Business Email</span>
             </div>
-            ${emailClickHtml}
+            ${emailAction}
         </div>
     </div>
     
     <div class="grid grid-cols-2 gap-3 mb-3">
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden">
-            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="languages_spoken">Languages</span>
-            <span class="text-white text-sm font-bold truncate whitespace-nowrap block w-full">${p.cvLanguages || '—'}</span>
+            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="languages_spoken">Languages</span>
+            <span class="text-white text-sm font-bold truncate whitespace-nowrap block w-full">${p.cvLanguages || p.profileLangs || '—'}</span>
         </div>
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden">
-            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="core_skills">Core Skills</span>
+            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="core_skills">Core Skills</span>
             <span class="text-white text-sm font-bold truncate">${p.cvSkills || '—'}</span>
         </div>
     </div>`;
@@ -390,8 +385,8 @@ window.openViewCVModal = function(id) {
             <i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span>
         </button>`;
     } else {
-        let smsAction = p.cvPhone ? `window.location.href='sms:${p.cvPhone.replace(/\\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
-        let mailAction = p.cvEmail ? `if(window.openDirectEmail) window.openDirectEmail('${p.cvEmail}'); else window.location.href='mailto:${p.cvEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
+        let smsAction = displayPhone !== '—' ? `window.location.href='sms:${displayPhone.replace(/\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
+        let mailAction = displayEmail !== '—' ? `if(window.openDirectEmail) window.openDirectEmail('${displayEmail}'); else window.location.href='mailto:${displayEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
 
         actionButtons.innerHTML = `
         <div class="flex w-full gap-3 mt-4">
