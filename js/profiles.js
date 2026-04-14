@@ -274,29 +274,46 @@ window.openAvatarModal = function(id, fromSidebar = false) {
 };
 
 window.closeViewCVModal = function() { document.getElementById('view-cv-modal').classList.remove('active'); };
-
 window.openViewCVModal = function(id) {
     if(window.closeDropdown) window.closeDropdown(); 
     let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
     if (!p) return;
 
-    // 1. ИЗОБРАЖЕНИЕ (С железной подгрузкой, как было в твоей изначальной форме!)
+    // 1. ФОТО (AI или Обычное)
     let defaultPhoto = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff';
     let photoEl = document.getElementById('cv-view-img');
     if (photoEl) photoEl.src = p.photo ? p.photo : defaultPhoto;
 
-    // 2. ИМЯ И ПРОФЕССИЯ В ОДНУ СТРОКУ
+    // 2. ИМЯ И ПРОФЕССИЯ В ОДНУ СТРОКУ (С ЗАЩИТОЙ ОТ НАЕЗДА)
     let nameEl = document.getElementById('cv-view-name');
     let profEl = document.getElementById('cv-view-prof');
 
-    if (nameEl) {
-        nameEl.innerText = (p.name||'User').split(' ')[0]; 
-        nameEl.style.display = 'inline-block';
-        nameEl.style.marginRight = '8px';
-    }
-    if (profEl) {
+    if (nameEl && profEl) {
+        let parent = nameEl.parentNode;
+        let wrapper = document.getElementById('cv-header-main-box');
+        
+        if(!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.id = 'cv-header-main-box';
+            wrapper.className = 'flex flex-col gap-1.5 w-full overflow-hidden'; 
+            parent.insertBefore(wrapper, nameEl);
+            
+            // Строка 1: Имя и Профессия рядом
+            let row1 = document.createElement('div');
+            // gap-3 создает четкое расстояние, flex-nowrap запрещает наезд
+            row1.className = 'flex items-center gap-3 flex-nowrap w-full';
+            row1.appendChild(nameEl);
+            row1.appendChild(profEl);
+            wrapper.appendChild(row1);
+        }
+        
+        // Стили текста, чтобы не ломались
+        nameEl.innerText = (p.name||'User').split(' ')[0];
+        nameEl.className = 'text-white font-bold text-lg whitespace-nowrap shrink-0'; 
+        
         profEl.innerText = p.cvProfession || p.profession || '—';
-        profEl.style.display = 'inline-block';
+        // truncate защищает от длинных слов
+        profEl.className = 'text-[#8696a0] text-xs font-medium truncate italic opacity-90';
     }
 
     let displayPhone = p.cvPhone || p.phone || '—';
@@ -304,110 +321,52 @@ window.openViewCVModal = function(id) {
     let displayLoc = p.cvCountryName || p.country || 'Global';
     let displayFlag = p.cvCountryCode || p.flagCode || 'un';
 
-    // 3. ЛОКАЦИЯ ПОД ИМЕНЕМ И ПРОФЕССИЕЙ
+    // 3. ЛОКАЦИЯ — СТРОГО ПОД НИМИ (ВТОРАЯ СТРОКА)
     let oldLoc = document.getElementById('cv-dynamic-loc');
     if(oldLoc) oldLoc.remove();
     
-    if (profEl && profEl.parentNode) {
+    let mainWrapper = document.getElementById('cv-header-main-box');
+    if (mainWrapper) {
         let locHtml = document.createElement('div');
         locHtml.id = 'cv-dynamic-loc';
-        locHtml.className = 'flex items-center gap-1.5 mt-1.5 bg-[#202c33] border border-[#2a3942] rounded-full px-2.5 py-0.5 w-max shadow-sm';
-        locHtml.innerHTML = `<i class="fa-solid fa-location-dot text-red-400 text-[0.65rem]"></i><img src="https://flagcdn.com/w20/${displayFlag}.png" class="w-3.5 rounded-sm object-cover"><span class="text-[#e9edef] text-[0.65rem] font-bold">${displayLoc}</span>`;
-        profEl.parentNode.appendChild(locHtml);
+        locHtml.className = 'flex items-center gap-1.5 bg-[#202c33] border border-[#2a3942] rounded-full px-2.5 py-0.5 w-max shadow-sm mt-0.5';
+        locHtml.innerHTML = `<i class="fa-solid fa-location-dot text-red-400 text-[0.6rem]"></i><img src="https://flagcdn.com/w20/${displayFlag}.png" class="w-3.5 rounded-sm object-cover"><span class="text-[#e9edef] text-[0.65rem] font-bold">${displayLoc}</span>`;
+        mainWrapper.appendChild(locHtml);
     }
 
-    // 4. ТЕЛЕФОН И ПОЧТА (Интерактивные)
-    let phoneAction = displayPhone === '—' 
-        ? `<span class="text-white text-[0.7rem] font-mono truncate">${displayPhone}</span>` 
-        : (id === 'me' 
-            ? `<span class="text-white text-[0.7rem] font-mono truncate">${displayPhone}</span>`
-            : `<span class="text-[#00a884] text-[0.75rem] font-mono font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); if(document.getElementById('phone-choice-modal')) document.getElementById('phone-choice-modal').classList.add('active');"><i class="fa-solid fa-phone-volume mr-1"></i>${displayPhone}</span>`
-        );
+    // 4. КОНТАКТЫ (ДВА БЛОКА) И ЯЗЫКИ
+    let phoneAction = (id !== 'me' && displayPhone !== '—') 
+        ? `<span class="text-[#00a884] text-[0.75rem] font-mono font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); if(document.getElementById('phone-choice-modal')) document.getElementById('phone-choice-modal').classList.add('active');"><i class="fa-solid fa-phone-volume mr-1"></i>${displayPhone}</span>`
+        : `<span class="text-white text-[0.75rem] font-mono truncate">${displayPhone}</span>`;
 
-    let emailAction = displayEmail === '—'
-        ? `<span class="text-white text-[0.7rem] truncate">${displayEmail}</span>`
-        : (id === 'me'
-            ? `<span class="text-white text-[0.7rem] truncate">${displayEmail}</span>`
-            : `<span class="text-[#34b7f1] text-[0.7rem] font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); if(window.openDirectEmail) window.openDirectEmail('${displayEmail}'); else window.location.href='mailto:${displayEmail}';">${displayEmail}</span>`
-        );
-
-    // 5. ВЕРСТКА CV КОНТЕНТА
     let cvContent = `
     <div class="grid grid-cols-2 gap-3 mb-3 mt-2">
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
             <div class="flex items-center gap-2 mb-1.5">
                 <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem]"></i></div>
-                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_phone">Business Phone</span>
+                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate">Phone</span>
             </div>
             ${phoneAction}
         </div>
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
             <div class="flex items-center gap-2 mb-1.5">
                 <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
-                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Business Email</span>
+                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate">Email</span>
             </div>
-            ${emailAction}
+            <span class="text-white text-[0.7rem] truncate">${displayEmail}</span>
         </div>
     </div>
-    
-    <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden">
-            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="languages_spoken">Languages</span>
-            <span class="text-white text-sm font-bold truncate whitespace-nowrap block w-full">${p.cvLanguages || p.profileLangs || '—'}</span>
-        </div>
-        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden">
-            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="core_skills">Core Skills</span>
-            <span class="text-white text-sm font-bold truncate">${p.cvSkills || '—'}</span>
-        </div>
+    <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] mb-3 overflow-hidden">
+        <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1 block">Languages</span>
+        <span class="text-white text-sm font-bold whitespace-nowrap block truncate">${p.cvLanguages || p.profileLangs || '—'}</span>
     </div>`;
 
-    if(p.cvExperience) {
-        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="work_exp">Work Experience</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvExperience}</p></div>`;
-    }
-    if(p.cvEducation) {
-        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="education">Education</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvEducation}</p></div>`;
-    }
-    if(p.cvDesc) {
-        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#a29bfe] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="about_cv">About Me (CV)</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvDesc}</p></div>`;
-    }
-    
-    if(!p.cvLanguages && !p.cvSkills && !p.cvExperience && !p.cvEducation && !p.cvDesc && !p.cvPhone && !p.cvEmail) {
-        cvContent = `<p class="text-center text-[#8696a0] mt-4 text-sm" data-i18n="cv_empty">This user hasn't filled out their CV yet.</p>`;
-    }
+    if(p.cvExperience) cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-1">Work Experience</span><p class="text-[0.8rem] text-[#e9edef] whitespace-pre-wrap">${p.cvExperience}</p></div>`;
     
     document.getElementById('cv-view-content').innerHTML = cvContent;
-
-    const actionButtons = document.getElementById('cv-action-buttons');
-    if (id === 'me') {
-        actionButtons.innerHTML = `
-        <button onclick="window.closeViewCVModal(); window.openEditCV();" 
-                class="w-full py-3.5 rounded-2xl bg-[#a29bfe] text-[#111b21] font-bold text-[0.85rem] flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition mt-2">
-            <i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span>
-        </button>`;
-    } else {
-        let smsAction = displayPhone !== '—' ? `window.location.href='sms:${displayPhone.replace(/\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
-        let mailAction = displayEmail !== '—' ? `if(window.openDirectEmail) window.openDirectEmail('${displayEmail}'); else window.location.href='mailto:${displayEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
-
-        actionButtons.innerHTML = `
-        <div class="flex w-full gap-3 mt-4">
-            <button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" 
-                    class="flex-1 py-3.5 rounded-2xl bg-[#00a884] text-[#111b21] font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
-                <i class="fa-solid fa-comment text-xl"></i> <span data-i18n="chat">CHAT</span>
-            </button>
-            <button onclick="window.closeViewCVModal(); ${smsAction}" 
-                    class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
-                <i class="fa-solid fa-comment-sms text-[#34b7f1] text-xl"></i> <span data-i18n="sms">SMS</span>
-            </button>
-            <button onclick="window.closeViewCVModal(); ${mailAction}" 
-                    class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
-                <i class="fa-solid fa-envelope text-[#ea4335] text-xl"></i> <span data-i18n="email">EMAIL</span>
-            </button>
-        </div>`;
-    }
-    
-    if (window.applyTranslations) window.applyTranslations();
     document.getElementById('view-cv-modal').classList.add('active');
 };
+
 // --- ОТРИСОВКА ВКЛАДКИ "GLOBAL TALENTS" ---
 window.renderProfessionList = function() { 
     const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
