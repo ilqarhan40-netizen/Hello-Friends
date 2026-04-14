@@ -26,6 +26,7 @@ window.openMyProfile = function() {
         if (bioInput) bioInput.value = p.profileBio || ''; 
     } 
     
+    if (window.applyTranslations) window.applyTranslations();
     document.getElementById('edit-profile-modal').classList.add('active'); 
 };
 
@@ -100,7 +101,8 @@ window.saveProfileData = function() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
     db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
-        btn.innerHTML = 'Save Profile';
+        btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
+        if(window.applyTranslations) window.applyTranslations();
         document.getElementById('edit-profile-modal').classList.remove('active'); 
         if(window.showToast) window.showToast("Success", "Profile updated and synced!", updatedP.photo, "");
 
@@ -112,12 +114,13 @@ window.saveProfileData = function() {
         if(myVoiceName) myVoiceName.innerText = window.myUsername;
         
     }).catch(err => {
-        btn.innerHTML = 'Save Profile'; 
+        btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>'; 
+        if(window.applyTranslations) window.applyTranslations();
         alert("Sync Error: " + err.message);
     });
 };
 
-// --- МОЕ CV (Резюме) ---
+// --- МОЕ CV (Резюме - Строгая Изоляция) ---
 window.handleCVCountryChange = function(sel, isAutoLoad = false) {
     const flagCode = sel.value;
     const flagImg = document.getElementById('cv-edit-flag-icon');
@@ -135,6 +138,7 @@ window.handleCVCountryChange = function(sel, isAutoLoad = false) {
 };
 
 window.openEditCV = function() {
+    if (window.closeDropdown) window.closeDropdown();
     const cvSelect = document.getElementById('cv-edit-country-select');
     const mainSelect = document.getElementById('edit-country-select');
 
@@ -143,19 +147,23 @@ window.openEditCV = function() {
     }
 
     const p = window.myProfileInfo;
-    document.getElementById('cv-edit-prof').value = p.profession || '';
-    document.getElementById('cv-edit-langs').value = p.languages || '';
-    document.getElementById('cv-edit-skills').value = p.skills || '';
-    document.getElementById('cv-edit-exp').value = p.experience || '';
-    document.getElementById('cv-edit-edu').value = p.education || '';
-    document.getElementById('cv-edit-bio').value = p.desc || '';
+    
+    // СТРОГАЯ ИЗОЛЯЦИЯ: Только ключи cv...
+    document.getElementById('cv-edit-prof').value = p.cvProfession || '';
+    document.getElementById('cv-edit-langs').value = p.cvLanguages || '';
+    document.getElementById('cv-edit-skills').value = p.cvSkills || '';
+    document.getElementById('cv-edit-exp').value = p.cvExperience || '';
+    document.getElementById('cv-edit-edu').value = p.cvEducation || '';
+    document.getElementById('cv-edit-bio').value = p.cvDesc || '';
     document.getElementById('cv-edit-phone').value = p.cvPhone || '';
     document.getElementById('cv-edit-email').value = p.cvEmail || '';
 
     if(cvSelect) {
-        cvSelect.value = p.cvFlagCode || p.flagCode || 'un';
+        cvSelect.value = p.cvCountryCode || 'un';
         window.handleCVCountryChange(cvSelect, true);
     }
+    
+    if (window.applyTranslations) window.applyTranslations();
     document.getElementById('edit-cv-modal').classList.add('active');
 };
 
@@ -163,24 +171,36 @@ window.closeEditCV = function() { document.getElementById('edit-cv-modal').class
 
 window.saveCVData = function() {
     const sel = document.getElementById('cv-edit-country-select');
+    const selectedOpt = sel ? sel.options[sel.selectedIndex] : null;
+    
     const cvData = {
-        profession: document.getElementById('cv-edit-prof').value.trim(),
-        languages: document.getElementById('cv-edit-langs').value.trim(),
-        skills: document.getElementById('cv-edit-skills').value.trim(),
-        experience: document.getElementById('cv-edit-exp').value.trim(),
-        education: document.getElementById('cv-edit-edu').value.trim(),
-        desc: document.getElementById('cv-edit-bio').value.trim(),
+        cvProfession: document.getElementById('cv-edit-prof').value.trim(),
+        cvLanguages: document.getElementById('cv-edit-langs').value.trim(),
+        cvSkills: document.getElementById('cv-edit-skills').value.trim(),
+        cvExperience: document.getElementById('cv-edit-exp').value.trim(),
+        cvEducation: document.getElementById('cv-edit-edu').value.trim(),
+        cvDesc: document.getElementById('cv-edit-bio').value.trim(),
         cvPhone: document.getElementById('cv-edit-phone').value.trim(),
         cvEmail: document.getElementById('cv-edit-email').value.trim(),
-        cvFlagCode: sel ? sel.value : 'un',
-        cvCountry: sel ? (sel.options[sel.selectedIndex]?.getAttribute('data-name') || 'Global') : 'Global'
+        cvCountryCode: sel ? sel.value : 'un',
+        cvCountryName: selectedOpt ? (selectedOpt.getAttribute('data-name') || 'Global') : 'Global'
     };
+    
+    const btn = document.querySelector('#edit-cv-modal .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+    
     window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
     try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
+    
     db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
+        btn.innerHTML = '<span data-i18n="save_cv">Save CV</span>';
         window.closeEditCV();
         if(window.renderProfessionList) window.renderProfessionList();
-        setTimeout(() => { window.openViewCVModal('me'); }, 150);
+        if(window.showToast) window.showToast("CV Updated", "Your business profile is synced.", "", "");
+    }).catch(err => {
+        btn.innerHTML = '<span data-i18n="save_cv">Save CV</span>';
+        alert("Error: " + err.message);
     });
 };
 
@@ -227,28 +247,29 @@ window.openAvatarModal = function(id, fromSidebar = false) {
             actionButtons.innerHTML = `
             <div class="grid grid-cols-2 gap-2 w-full mt-1">
                 <button onclick="window.closeAvatarModal(); window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                    <i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat
+                    <i class="fa-solid fa-lock text-[#00a884] text-lg"></i> <span data-i18n="private_chat">Private Chat</span>
                 </button>
                 
                 <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(1); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                    <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg
+                    <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> <span data-i18n="voice_msg">Voice Msg</span>
                 </button>
                 
                 <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchChatRoom('${p.id}'); if(window.startInAppCall) window.startInAppCall();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                    <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
+                    <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> <span data-i18n="app_audio">App Audio</span>
                 </button>
                 
                 <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                    <i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video
+                    <i class="fa-solid fa-video text-pink-400 text-lg"></i> <span data-i18n="app_video">App Video</span>
                 </button>
                 
                 <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                    <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call
+                    <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> <span data-i18n="phone_call">Phone Call</span>
                 </button>
             </div>`;
             actionButtons.style.display = 'block'; 
         }
     }
+    if (window.applyTranslations) window.applyTranslations();
     document.getElementById('avatar-modal').classList.add('active');
 };
 
@@ -261,36 +282,66 @@ window.openViewCVModal = function(id) {
 
     document.getElementById('cv-view-img').src = p.photo; 
     document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0]; 
-    document.getElementById('cv-view-prof').innerText = p.profession || 'Profession not listed';
+    document.getElementById('cv-view-prof').innerText = p.cvProfession || '—';
 
-    let cvContent = '';
-    let blockLangs = p.languages || '—';
-    let blockSkills = p.skills || '—';
+    let displayPhone = p.cvPhone || '—';
+    let displayEmail = p.cvEmail || '—';
+    let displayLoc = p.cvCountryName || '—';
+    let displayFlag = p.cvCountryCode || 'un';
     
-    cvContent += `
-    <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
-            <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Languages</span>
-            <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockLangs}</span>
+    let cvContent = `
+    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3 flex flex-col gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#111b21] text-[#00a884] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-phone"></i></div>
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_phone">Business Phone</span>
+                <span class="text-white text-sm font-mono truncate">${displayPhone}</span>
+            </div>
         </div>
-        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942]">
-            <span class="text-[0.65rem] text-[#8696a0] block uppercase mb-1">Core Skills</span>
-            <span class="font-bold text-white text-sm whitespace-pre-wrap">${blockSkills}</span>
+        <div class="w-full h-[1px] bg-[#2a3942]"></div>
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#111b21] text-blue-400 flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-envelope"></i></div>
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_email">Business Email</span>
+                <span class="text-white text-sm truncate">${displayEmail}</span>
+            </div>
+        </div>
+        <div class="w-full h-[1px] bg-[#2a3942]"></div>
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#111b21] text-red-400 flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-location-dot"></i></div>
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_location">Business Location</span>
+                <span class="text-white text-sm truncate">
+                    ${p.cvCountryCode ? `<img src="https://flagcdn.com/w20/${p.cvCountryCode}.png" class="inline-block mr-1 mb-0.5 w-4">` : ''} 
+                    ${displayLoc}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col">
+            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="languages_spoken">Languages</span>
+            <span class="text-white text-sm font-bold">${p.cvLanguages || '—'}</span>
+        </div>
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col">
+            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="core_skills">Core Skills</span>
+            <span class="text-white text-sm font-bold">${p.cvSkills || '—'}</span>
         </div>
     </div>`;
 
-    if(p.experience) {
-        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2">Work Experience</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.experience}</p></div>`;
+    if(p.cvExperience) {
+        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="work_exp">Work Experience</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvExperience}</p></div>`;
     }
-    if(p.education) {
-        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2">Education</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.education}</p></div>`;
+    if(p.cvEducation) {
+        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="education">Education</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvEducation}</p></div>`;
     }
-    if(p.desc) {
-        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#a29bfe] text-[0.7rem] font-bold uppercase block mb-2">About Me (CV)</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.desc}</p></div>`;
+    if(p.cvDesc) {
+        cvContent += `<div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3"><span class="text-[#a29bfe] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="about_cv">About Me (CV)</span><p class="leading-relaxed text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvDesc}</p></div>`;
     }
     
-    if(!p.languages && !p.skills && !p.experience && !p.education && !p.desc) {
-        cvContent = `<p class="text-center text-[#8696a0] mt-4 text-sm">This user hasn't filled out their CV yet.</p>`;
+    if(!p.cvLanguages && !p.cvSkills && !p.cvExperience && !p.cvEducation && !p.cvDesc && !p.cvPhone && !p.cvEmail) {
+        cvContent = `<p class="text-center text-[#8696a0] mt-4 text-sm" data-i18n="cv_empty">This user hasn't filled out their CV yet.</p>`;
     }
     
     document.getElementById('cv-view-content').innerHTML = cvContent;
@@ -300,27 +351,31 @@ window.openViewCVModal = function(id) {
         actionButtons.innerHTML = `
         <button onclick="window.closeViewCVModal(); window.openEditCV();" 
                 class="w-full py-3.5 rounded-2xl bg-[#a29bfe] text-[#111b21] font-bold text-[0.85rem] flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition mt-2">
-            <i class="fa-solid fa-file-signature text-lg"></i> Edit My CV
+            <i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span>
         </button>`;
     } else {
-        let callT = p.cvPhone || p.phone || '';
-        let mailT = p.cvEmail || p.email || '';
+        // СТРОГАЯ ИЗОЛЯЦИЯ: Только CV-контакты. Если нет - отказ.
+        let smsAction = p.cvPhone ? `window.location.href='sms:${p.cvPhone.replace(/\\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
+        let mailAction = p.cvEmail ? `if(window.openDirectEmail) window.openDirectEmail('${p.cvEmail}'); else window.location.href='mailto:${p.cvEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
+
         actionButtons.innerHTML = `
         <div class="flex w-full gap-3 mt-4">
             <button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" 
                     class="flex-1 py-3.5 rounded-2xl bg-[#00a884] text-[#111b21] font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
-                <i class="fa-solid fa-comment text-xl"></i> CHAT
+                <i class="fa-solid fa-comment text-xl"></i> <span data-i18n="chat">CHAT</span>
             </button>
-            <button onclick="window.closeViewCVModal(); window.location.href='sms:${callT.replace(/\s+/g, '')}';" 
+            <button onclick="window.closeViewCVModal(); ${smsAction}" 
                     class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
-                <i class="fa-solid fa-comment-sms text-[#34b7f1] text-xl"></i> SMS
+                <i class="fa-solid fa-comment-sms text-[#34b7f1] text-xl"></i> <span data-i18n="sms">SMS</span>
             </button>
-            <button onclick="window.closeViewCVModal(); if(window.openDirectEmail) window.openDirectEmail('${mailT}');" 
+            <button onclick="window.closeViewCVModal(); ${mailAction}" 
                     class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
-                <i class="fa-solid fa-envelope text-[#ea4335] text-xl"></i> EMAIL
+                <i class="fa-solid fa-envelope text-[#ea4335] text-xl"></i> <span data-i18n="email">EMAIL</span>
             </button>
         </div>`;
     }
+    
+    if (window.applyTranslations) window.applyTranslations();
     document.getElementById('view-cv-modal').classList.add('active');
 };
 
@@ -330,14 +385,21 @@ window.renderProfessionList = function() {
     const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; 
     const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); 
     let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
+    
+    let dict = (typeof i18n !== 'undefined' && window.appLang) ? (i18n[window.appLang] || i18n['en']) : {};
+
     validUsers.forEach((p) => { 
         let isMe = p.id === window.myProfileInfo.id; 
         let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
         let cvClick = isMe ? `window.openViewCVModal('me')` : `window.openViewCVModal('${p.id}')`; 
-        let btnText = isMe ? `View My CV` : `View CV`; 
+        
+        let btnText = isMe ? (dict['edit_my_cv'] || 'Edit My CV') : (dict['view_cv'] || 'View CV'); 
+        
         let nameTxt = (p.name||'User').split(' ')[0]; 
         let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
-        cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.profession||'User'}</p><button onclick="${cvClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button></div>`; 
+        cardsHTML += `<div class="bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-md relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div><img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2" onclick="${avatarClick}" style="cursor:pointer;"><h3 class="text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3><p class="text-[#8696a0] text-xs text-center mb-3"><span>${p.flag}</span> ${p.cvProfession || p.profession || 'User'}</p><button onclick="${cvClick}" class="w-full mt-auto bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-[#2a3942] hover:bg-[#00a884] hover:text-[#111b21] transition shadow-sm">${btnText}</button></div>`; 
     }); 
     profContainer.innerHTML = cardsHTML + `</div>`; 
+    
+    if(window.applyTranslations) window.applyTranslations();
 };
