@@ -584,42 +584,149 @@ window.startUniversalMic = async function(mode) {
     };
     try { rec.start(); } catch(e){}
 };
-// === АВТОПОДСТАНОВКА КОДА И ФЛАГА ДЛЯ CV ===
-window.handleCVCountryChange = function(sel) {
-    const flagCode = sel.value; 
-    const opt = sel.options[sel.selectedIndex];
-    const countryName = opt ? opt.getAttribute('data-name') : null;
+// 1. ОТКРЫТИЕ ФОРМЫ (СТРОГО ТОЛЬКО CV-ДАННЫЕ)
+window.openEditCV = function() {
+    if (window.closeDropdown) window.closeDropdown();
+    const p = window.myProfileInfo;
 
-    // 1. Меняем картинку флага слева от выпадающего списка
-    const flagImg = document.getElementById('cv-edit-flag-icon');
-    if (flagImg) {
-        flagImg.src = flagCode === 'un' ? 'https://flagcdn.com/w40/un.png' : `https://flagcdn.com/w40/${flagCode}.png`;
+    // Никаких подсказок из профиля. Только то, что сохранено для CV.
+    document.getElementById('cv-edit-prof').value = p.cvProfession || '';
+    document.getElementById('cv-edit-langs').value = p.cvLanguages || '';
+    document.getElementById('cv-edit-phone').value = p.cvPhone || '';
+    document.getElementById('cv-edit-email').value = p.cvEmail || '';
+
+    const cvCountry = document.getElementById('cv-edit-country-select');
+    if (cvCountry) {
+        cvCountry.value = p.cvCountryCode || 'un';
+        const cvFlagImg = document.getElementById('cv-edit-flag-icon');
+        if (cvFlagImg) {
+            cvFlagImg.src = cvCountry.value === 'un' ? 'https://flagcdn.com/w40/un.png' : `https://flagcdn.com/w40/${cvCountry.value}.png`;
+        }
     }
 
-    // 2. Подставляем код телефона
-    const phoneInput = document.getElementById('cv-edit-phone');
-    if (!phoneInput || !countryName) return;
+    document.getElementById('cv-edit-skills').value = p.cvSkills || '';
+    document.getElementById('cv-edit-exp').value = p.cvExperience || '';
+    document.getElementById('cv-edit-edu').value = p.cvEducation || '';
+    document.getElementById('cv-edit-bio').value = p.cvDesc || '';
 
-    // Глобальная база кодов
-    const countryCodes = {
-        "Afghanistan": "+93", "Albania": "+355", "Algeria": "+213", "Andorra": "+376", "Angola": "+244", 
-        "Argentina": "+54", "Armenia": "+374", "Australia": "+61", "Austria": "+43", "Azerbaijan": "+994", 
-        "Bahamas": "+1", "Bahrain": "+973", "Bangladesh": "+880", "Belarus": "+375", "Belgium": "+32", 
-        "Brazil": "+55", "Bulgaria": "+359", "Canada": "+1", "China": "+86", "Croatia": "+385", 
-        "Cyprus": "+357", "Czech Republic": "+420", "Denmark": "+45", "Egypt": "+20", "Estonia": "+372", 
-        "Finland": "+358", "France": "+33", "Georgia": "+995", "Germany": "+49", "Greece": "+30", 
-        "Hungary": "+36", "India": "+91", "Indonesia": "+62", "Iran": "+98", "Iraq": "+964", 
-        "Ireland": "+353", "Israel": "+972", "Italy": "+39", "Japan": "+81", "Kazakhstan": "+7", 
-        "Kuwait": "+965", "Latvia": "+371", "Lithuania": "+370", "Malaysia": "+60", "Mexico": "+52", 
-        "Moldova": "+373", "Netherlands": "+31", "New Zealand": "+64", "Norway": "+47", "Pakistan": "+92", 
-        "Poland": "+48", "Portugal": "+351", "Qatar": "+974", "Romania": "+40", "Russia": "+7", 
-        "Saudi Arabia": "+966", "Serbia": "+381", "Singapore": "+65", "Slovakia": "+421", "South Africa": "+27", 
-        "South Korea": "+82", "Spain": "+34", "Sweden": "+46", "Switzerland": "+41", "Turkey": "+90", 
-        "UAE": "+971", "Ukraine": "+380", "United Kingdom": "+44", "United States": "+1", "Uzbekistan": "+998"
+    if (window.applyTranslations) window.applyTranslations();
+    document.getElementById('edit-cv-modal').classList.add('active');
+};
+
+// 2. СОХРАНЕНИЕ В БАЗУ (Только CV ключи)
+window.saveCVData = function() {
+    const countrySel = document.getElementById('cv-edit-country-select');
+    const selectedOpt = countrySel.options[countrySel.selectedIndex];
+
+    const autonomousCVData = {
+        cvProfession: document.getElementById('cv-edit-prof').value.trim(),
+        cvLanguages: document.getElementById('cv-edit-langs').value.trim(),
+        cvCountryCode: countrySel.value,
+        cvCountryName: selectedOpt ? selectedOpt.getAttribute('data-name') : 'Global',
+        cvPhone: document.getElementById('cv-edit-phone').value.trim(),
+        cvEmail: document.getElementById('cv-edit-email').value.trim(),
+        cvSkills: document.getElementById('cv-edit-skills').value.trim(),
+        cvExperience: document.getElementById('cv-edit-exp').value.trim(),
+        cvEducation: document.getElementById('cv-edit-edu').value.trim(),
+        cvDesc: document.getElementById('cv-edit-bio').value.trim()
     };
 
-    if (countryCodes[countryName]) {
-        phoneInput.value = countryCodes[countryName] + " ";
-        setTimeout(() => phoneInput.focus(), 50); 
+    const btn = document.querySelector('#edit-cv-modal .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+    firebase.database().ref('users/' + window.myProfileInfo.id).update(autonomousCVData).then(() => {
+        btn.innerHTML = originalText;
+        window.myProfileInfo = { ...window.myProfileInfo, ...autonomousCVData };
+        document.getElementById('edit-cv-modal').classList.remove('active');
+        if (window.renderProfessionList) window.renderProfessionList();
+    }).catch(err => {
+        btn.innerHTML = originalText;
+        alert("Error: " + err.message);
+    });
+};
+
+// 3. ПРОСМОТР CV (Показываем только то, что в CV)
+window.openViewCVModal = function(id) {
+    if (window.closeDropdown) window.closeDropdown();
+    let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
+    if (!p) return;
+
+    document.getElementById('cv-view-img').src = p.photo; 
+    document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0]; 
+    document.getElementById('cv-view-prof').innerText = p.cvProfession || '—';
+
+    let displayPhone = p.cvPhone || '—';
+    let displayEmail = p.cvEmail || '—';
+    let displayLoc = p.cvCountryName || '—';
+    let displayFlag = p.cvCountryCode || 'un';
+
+    let cvContent = `
+    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3 flex flex-col gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#111b21] text-[#00a884] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-phone"></i></div>
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_phone">Business Phone</span>
+                <span class="text-white text-sm font-mono truncate">${displayPhone}</span>
+            </div>
+        </div>
+        <div class="w-full h-[1px] bg-[#2a3942]"></div>
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#111b21] text-blue-400 flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-envelope"></i></div>
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_email">Business Email</span>
+                <span class="text-white text-sm truncate">${displayEmail}</span>
+            </div>
+        </div>
+        <div class="w-full h-[1px] bg-[#2a3942]"></div>
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#111b21] text-red-400 flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-location-dot"></i></div>
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_location">Location</span>
+                <span class="text-white text-sm truncate"><img src="https://flagcdn.com/w20/${displayFlag}.png" class="inline-block mr-1 mb-0.5 w-4"> ${displayLoc}</span>
+            </div>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col">
+            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="languages_spoken">Languages</span>
+            <span class="text-white text-sm font-bold">${p.cvLanguages || '—'}</span>
+        </div>
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col">
+            <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="core_skills">Core Skills</span>
+            <span class="text-white text-sm font-bold">${p.cvSkills || '—'}</span>
+        </div>
+    </div>
+    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3">
+        <span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="work_exp">Work Experience</span>
+        <p class="text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvExperience || '—'}</p>
+    </div>
+    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3">
+        <span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="education">Education</span>
+        <p class="text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvEducation || '—'}</p>
+    </div>
+    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3">
+        <span class="text-[#a29bfe] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="about_cv">About Me</span>
+        <p class="text-[0.85rem] text-[#e9edef] whitespace-pre-wrap">${p.cvDesc || '—'}</p>
+    </div>`;
+
+    document.getElementById('cv-view-content').innerHTML = cvContent;
+
+    const actionButtons = document.getElementById('cv-action-buttons');
+    if (id === 'me') {
+        actionButtons.innerHTML = `<button onclick="window.closeViewCVModal(); window.openEditCV();" class="w-full py-3.5 rounded-2xl bg-[#a29bfe] text-[#111b21] font-bold text-[0.85rem] flex items-center justify-center gap-2 mt-2"><i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span></button>`;
+    } else {
+        let smsAction = p.cvPhone ? `window.location.href='sms:${p.cvPhone.replace(/\s+/g, '')}'` : "alert('No CV phone provided');";
+        let mailAction = p.cvEmail ? `window.openDirectEmail('${p.cvEmail}')` : "alert('No CV email provided');";
+
+        actionButtons.innerHTML = `
+        <div class="flex w-full gap-3 mt-4">
+            <button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" class="flex-1 py-3.5 rounded-2xl bg-[#00a884] text-[#111b21] font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5"><i class="fa-solid fa-comment text-xl"></i> CHAT</button>
+            <button onclick="window.closeViewCVModal(); ${smsAction}" class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5"><i class="fa-solid fa-comment-sms text-[#34b7f1] text-xl"></i> SMS</button>
+            <button onclick="window.closeViewCVModal(); ${mailAction}" class="flex-1 py-3.5 rounded-2xl bg-[#202c33] border border-[#2a3942] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5"><i class="fa-solid fa-envelope text-[#ea4335] text-xl"></i> EMAIL</button>
+        </div>`;
     }
+    
+    if (window.applyTranslations) window.applyTranslations();
+    document.getElementById('view-cv-modal').classList.add('active');
 };
