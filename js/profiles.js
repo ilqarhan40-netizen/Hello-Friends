@@ -280,49 +280,89 @@ window.openViewCVModal = function(id) {
     let p = id === 'me' ? window.myProfileInfo : window.participants.find(part => part.id === id); 
     if (!p) return;
 
-    document.getElementById('cv-view-img').src = p.photo; 
-    document.getElementById('cv-view-name').innerText = (p.name||'User').split(' ')[0]; 
-    document.getElementById('cv-view-prof').innerText = p.cvProfession || '—';
+    let nameEl = document.getElementById('cv-view-name');
+    let profEl = document.getElementById('cv-view-prof');
+
+    if (nameEl) nameEl.innerText = (p.name||'User').split(' ')[0]; 
+    if (profEl) profEl.innerText = p.cvProfession || p.profession || '—';
 
     let displayPhone = p.cvPhone || '—';
     let displayEmail = p.cvEmail || '—';
     let displayLoc = p.cvCountryName || 'Global';
     let displayFlag = p.cvCountryCode || 'un';
-    
-    let cvContent = `
-    <div class="flex justify-center mb-4 mt-1">
-        <div class="bg-[#202c33] border border-[#2a3942] rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm">
-            <i class="fa-solid fa-location-dot text-red-400 text-[0.7rem]"></i>
-            <img src="https://flagcdn.com/w20/${displayFlag}.png" class="w-4 rounded-sm object-cover">
-            <span class="text-white text-[0.75rem] font-bold">${displayLoc}</span>
-        </div>
-    </div>
 
-    <div class="grid grid-cols-2 gap-3 mb-3">
+    // 1. ИМЯ И ПРОФЕССИЯ В ОДИН РЯД (С ЗАЩИТОЙ ОТ НАЕЗДА ДРУГ НА ДРУГА)
+    if(nameEl && profEl) {
+        let wrapper = document.getElementById('cv-name-prof-wrapper');
+        if(!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.id = 'cv-name-prof-wrapper';
+            // flex-wrap и gap-2 гарантируют, что тексты будут на безопасном расстоянии
+            wrapper.className = 'flex items-baseline gap-2 flex-wrap w-full'; 
+            nameEl.parentNode.insertBefore(wrapper, nameEl);
+            wrapper.appendChild(nameEl);
+            wrapper.appendChild(profEl);
+        }
+        nameEl.style.display = 'block';
+        profEl.style.display = 'block';
+    }
+
+    // 2. ЛОКАЦИЯ СТРОГО ПОД НИМИ
+    let oldLoc = document.getElementById('cv-dynamic-loc');
+    if(oldLoc) oldLoc.remove();
+
+    let wrapper = document.getElementById('cv-name-prof-wrapper');
+    if(wrapper && wrapper.parentNode) {
+        let locHtml = document.createElement('div');
+        locHtml.id = 'cv-dynamic-loc';
+        // mt-1.5 дает отступ сверху от имени/профессии
+        locHtml.className = 'flex items-center gap-1.5 mt-1.5 bg-[#202c33] border border-[#2a3942] rounded-full px-2.5 py-0.5 w-max shadow-sm';
+        locHtml.innerHTML = `<i class="fa-solid fa-location-dot text-red-400 text-[0.65rem]"></i><img src="https://flagcdn.com/w20/${displayFlag}.png" class="w-3.5 rounded-sm object-cover"><span class="text-[#e9edef] text-[0.65rem] font-bold">${displayLoc}</span>`;
+        wrapper.parentNode.insertBefore(locHtml, wrapper.nextSibling);
+    }
+
+    // 3. КЛИКАБЕЛЬНЫЕ ТЕЛЕФОН И ПОЧТА
+    let phoneClickHtml = displayPhone === '—' 
+        ? `<span class="text-white text-[0.75rem] font-mono truncate">${displayPhone}</span>` 
+        : (id === 'me' 
+            ? `<span class="text-white text-[0.75rem] font-mono truncate">${displayPhone}</span>`
+            : `<span class="text-[#00a884] text-[0.75rem] font-mono font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); document.getElementById('phone-choice-modal').classList.add('active');"><i class="fa-solid fa-phone-volume mr-1"></i>${displayPhone}</span>`
+        );
+
+    let emailClickHtml = displayEmail === '—'
+        ? `<span class="text-white text-[0.7rem] truncate">${displayEmail}</span>`
+        : (id === 'me'
+            ? `<span class="text-white text-[0.7rem] truncate">${displayEmail}</span>`
+            : `<span class="text-[#34b7f1] text-[0.7rem] font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); if(window.openDirectEmail) window.openDirectEmail('${displayEmail}'); else window.location.href='mailto:${displayEmail}';">${displayEmail}</span>`
+        );
+    
+    // ВЕРСТКА: КОНТАКТЫ (Два блока) + ЯЗЫКИ (В одну строку)
+    let cvContent = `
+    <div class="grid grid-cols-2 gap-3 mb-3 mt-2">
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
             <div class="flex items-center gap-2 mb-1.5">
                 <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem]"></i></div>
-                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_phone">Phone</span>
+                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_phone">Business Phone</span>
             </div>
-            <span class="text-white text-[0.7rem] font-mono truncate">${displayPhone}</span>
+            ${phoneClickHtml}
         </div>
         <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
             <div class="flex items-center gap-2 mb-1.5">
                 <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
-                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Email</span>
+                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Business Email</span>
             </div>
-            <span class="text-white text-[0.7rem] truncate">${displayEmail}</span>
+            ${emailClickHtml}
         </div>
     </div>
     
     <div class="grid grid-cols-2 gap-3 mb-3">
-        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col">
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden">
             <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="languages_spoken">Languages</span>
-            <span class="text-white text-sm font-bold">${p.cvLanguages || '—'}</span>
+            <span class="text-white text-sm font-bold truncate whitespace-nowrap block w-full">${p.cvLanguages || '—'}</span>
         </div>
-        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col">
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden">
             <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold mb-1" data-i18n="core_skills">Core Skills</span>
-            <span class="text-white text-sm font-bold">${p.cvSkills || '—'}</span>
+            <span class="text-white text-sm font-bold truncate">${p.cvSkills || '—'}</span>
         </div>
     </div>`;
 
@@ -350,7 +390,7 @@ window.openViewCVModal = function(id) {
             <i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span>
         </button>`;
     } else {
-        let smsAction = p.cvPhone ? `window.location.href='sms:${p.cvPhone.replace(/\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
+        let smsAction = p.cvPhone ? `window.location.href='sms:${p.cvPhone.replace(/\\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
         let mailAction = p.cvEmail ? `if(window.openDirectEmail) window.openDirectEmail('${p.cvEmail}'); else window.location.href='mailto:${p.cvEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
 
         actionButtons.innerHTML = `
@@ -373,7 +413,6 @@ window.openViewCVModal = function(id) {
     if (window.applyTranslations) window.applyTranslations();
     document.getElementById('view-cv-modal').classList.add('active');
 };
-
 // --- ОТРИСОВКА ВКЛАДКИ "GLOBAL TALENTS" ---
 window.renderProfessionList = function() { 
     const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
