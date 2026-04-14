@@ -286,36 +286,32 @@ window.openViewCVModal = function(id) {
 
     let displayPhone = p.cvPhone || '—';
     let displayEmail = p.cvEmail || '—';
-    let displayLoc = p.cvCountryName || '—';
+    let displayLoc = p.cvCountryName || 'Global';
     let displayFlag = p.cvCountryCode || 'un';
     
     let cvContent = `
-    <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] mb-3 flex flex-col gap-3 shadow-sm">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-[#111b21] text-[#00a884] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-phone"></i></div>
-            <div class="flex flex-col overflow-hidden">
-                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_phone">Business Phone</span>
-                <span class="text-white text-sm font-mono truncate">${displayPhone}</span>
-            </div>
+    <div class="flex justify-center mb-4 mt-1">
+        <div class="bg-[#202c33] border border-[#2a3942] rounded-full px-4 py-1.5 flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-location-dot text-red-400 text-[0.7rem]"></i>
+            <img src="https://flagcdn.com/w20/${displayFlag}.png" class="w-4 rounded-sm object-cover">
+            <span class="text-white text-[0.75rem] font-bold">${displayLoc}</span>
         </div>
-        <div class="w-full h-[1px] bg-[#2a3942]"></div>
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-[#111b21] text-blue-400 flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-envelope"></i></div>
-            <div class="flex flex-col overflow-hidden">
-                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_email">Business Email</span>
-                <span class="text-white text-sm truncate">${displayEmail}</span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
+            <div class="flex items-center gap-2 mb-1.5">
+                <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem]"></i></div>
+                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_phone">Phone</span>
             </div>
+            <span class="text-white text-[0.7rem] font-mono truncate">${displayPhone}</span>
         </div>
-        <div class="w-full h-[1px] bg-[#2a3942]"></div>
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-[#111b21] text-red-400 flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-location-dot"></i></div>
-            <div class="flex flex-col overflow-hidden">
-                <span class="text-[0.65rem] text-[#8696a0] uppercase font-bold" data-i18n="business_location">Business Location</span>
-                <span class="text-white text-sm truncate">
-                    ${p.cvCountryCode ? `<img src="https://flagcdn.com/w20/${p.cvCountryCode}.png" class="inline-block mr-1 mb-0.5 w-4">` : ''} 
-                    ${displayLoc}
-                </span>
+        <div class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
+            <div class="flex items-center gap-2 mb-1.5">
+                <div class="w-6 h-6 rounded-full bg-[#111b21] flex items-center justify-center shrink-0 border border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
+                <span class="text-[0.6rem] text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Email</span>
             </div>
+            <span class="text-white text-[0.7rem] truncate">${displayEmail}</span>
         </div>
     </div>
     
@@ -354,8 +350,7 @@ window.openViewCVModal = function(id) {
             <i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span>
         </button>`;
     } else {
-        // СТРОГАЯ ИЗОЛЯЦИЯ: Только CV-контакты. Если нет - отказ.
-        let smsAction = p.cvPhone ? `window.location.href='sms:${p.cvPhone.replace(/\\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
+        let smsAction = p.cvPhone ? `window.location.href='sms:${p.cvPhone.replace(/\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
         let mailAction = p.cvEmail ? `if(window.openDirectEmail) window.openDirectEmail('${p.cvEmail}'); else window.location.href='mailto:${p.cvEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
 
         actionButtons.innerHTML = `
