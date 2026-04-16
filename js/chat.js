@@ -1,3 +1,84 @@
+// ==========================================
+// ГЛОБАЛЬНАЯ СИНХРОНИЗАЦИЯ ЯЗЫКА С ПРОФИЛЕМ (АВТООПРЕДЕЛЕНИЕ)
+// ==========================================
+
+window.changeAppLanguage = function(langCode) { 
+    localStorage.setItem('hf_app_lang', langCode); 
+    
+    if (langCode === 'auto') {
+        let smartLang = 'en'; // По умолчанию
+        
+        // Включаем умное автоопределение по ПРОФИЛЮ
+        if (window.myProfileInfo && (window.myProfileInfo.phone || window.myProfileInfo.flagCode)) {
+            let phone = window.myProfileInfo.phone || "";
+            let flag = window.myProfileInfo.flagCode || "un";
+            
+            // 1. Наивысший приоритет: ПРЕФИКС ТЕЛЕФОНА
+            if (phone.startsWith('+7')) smartLang = 'ru';
+            else if (phone.startsWith('+994')) smartLang = 'az';
+            else if (phone.startsWith('+39')) smartLang = 'it';
+            else if (phone.startsWith('+49')) smartLang = 'de';
+            else if (phone.startsWith('+33')) smartLang = 'fr';
+            else if (phone.startsWith('+81')) smartLang = 'ja';
+            else if (phone.startsWith('+34')) smartLang = 'es';
+            else if (phone.startsWith('+86')) smartLang = 'zh';
+            else if (phone.startsWith('+351')) smartLang = 'pt';
+            else if (phone.startsWith('+1') || phone.startsWith('+44')) smartLang = 'en';
+            else if (phone.startsWith('+971')) smartLang = 'ar';
+            // 2. Если префикс неизвестен — смотрим на ФЛАГ
+            else {
+                const flagToLang = {
+                    'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
+                    'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
+                };
+                if (flagToLang[flag]) smartLang = flagToLang[flag];
+            }
+        } else {
+            // Если это пустой гость без профиля — смотрим на язык его браузера
+            smartLang = navigator.language.slice(0, 2);
+        }
+        
+        // Применяем найденный язык ко всей экосистеме
+        window.appLang = (typeof i18n !== 'undefined' && i18n[smartLang]) ? smartLang : 'en';
+    } else {
+        // Если юзер жестко выбрал язык вручную (не Auto)
+        window.appLang = langCode; 
+    }
+    
+    // Обновляем все тексты на экране
+    if (typeof window.applyTranslations === 'function') window.applyTranslations(); 
+    if (typeof window.closeDropdown === 'function') window.closeDropdown(); 
+    
+    // Меняем галочку в меню
+    const langSelect = document.getElementById('app-lang-select'); 
+    if (langSelect) langSelect.value = langCode;
+};
+
+// Перехватываем сохранение профиля (чтобы язык менялся на лету при регистрации)
+if (!window.profileLangHooked) {
+    const originalSaveProfile = window.saveProfileData;
+    window.saveProfileData = function() {
+        if (originalSaveProfile) originalSaveProfile();
+        
+        // Как только юзер нажал "Сохранить профиль", заставляем систему перепроверить номер и флаг
+        let currentAppSetting = localStorage.getItem('hf_app_lang') || 'auto';
+        if (currentAppSetting === 'auto') {
+            setTimeout(() => { window.changeAppLanguage('auto'); }, 300);
+        }
+    };
+    window.profileLangHooked = true;
+}
+
+// Принудительный старт умного определения при загрузке приложения
+setTimeout(() => {
+    let savedAppLang = localStorage.getItem('hf_app_lang') || 'auto';
+    window.changeAppLanguage(savedAppLang);
+}, 1500);
+
+// ==========================================
+// ЛОГИКА МАРШРУТИЗАЦИИ ПЕРЕВОДОВ И ЧАТА
+// ==========================================
+
 window.getSmartLang = function(userProfile) {
     if (!userProfile) return 'en'; 
     if (userProfile.langCode && userProfile.langCode !== 'auto' && userProfile.langCode !== 'un') {
@@ -395,6 +476,139 @@ window.handleNewMessage = async function(snapshot) {
     }
 };
 
+// ==========================================
+// МЕНЮ ФАЙЛОВ АРХИВА, ТРЕШ И ЭМОДЗИ
+// ==========================================
+
+window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    let itemContent = "Текст файла";
+    if (itemType === 'email' && window.mailArchiveDB) {
+        let mail = window.mailArchiveDB.find(m => m.id === itemId);
+        if (mail) itemContent = mail.text || mail.body || "";
+    }
+    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
+    
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    
+    if (!modal || !contentBox) {
+        alert("ОШИБКА: HTML-блок меню не найден! Проверь index.html на наличие <div id='archive-action-modal'>");
+        return;
+    }
+    
+    document.getElementById('action-modal-title').innerText = itemTitle || "Действие с файлом";
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => { if(contentBox) contentBox.classList.remove('translate-y-full'); }, 10);
+};
+
+window.closeArchiveActionMenu = function() {
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    if(contentBox) contentBox.classList.add('translate-y-full');
+    setTimeout(() => {
+        if(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        window.currentArchiveItem = null;
+    }, 300);
+};
+
+window.archiveAction = function(actionType) {
+    if (!window.currentArchiveItem) return;
+    const { id, title, content } = window.currentArchiveItem;
+
+    if (actionType === 'delete') {
+        if (window.mailArchiveDB) {
+            window.mailArchiveDB = window.mailArchiveDB.filter(item => item.id !== id);
+            if(document.getElementById('email-list-view') && !document.getElementById('email-list-view').classList.contains('hidden')) {
+                window.renderEmailArchive(); 
+            }
+        }
+        const domItem = document.getElementById(id);
+        if (domItem) domItem.remove();
+        if (window.showToast) window.showToast("Удалено", "Файл стерт из базы", "", "");
+    } else if (actionType === 'copy') {
+        navigator.clipboard.writeText(content).then(() => {
+            if (window.showToast) window.showToast("Скопировано", "Текст сохранен в буфер", "", "");
+        }).catch(() => {
+            if (window.showToast) window.showToast("Скопировано", "Готово", "", "");
+        });
+    } else if (actionType === 'save') {
+        if (window.showToast) window.showToast("Сохранено", "Успешно загружено", "", "");
+    }
+    window.closeArchiveActionMenu();
+};
+
+window.smartArchive = function() {
+    const archiveList = document.getElementById('archive-list'); 
+    const emptyMsg = document.getElementById('empty-archive'); 
+    if(emptyMsg) emptyMsg.style.display = 'none';
+    
+    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
+    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
+    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
+    
+    let date = new Date().toLocaleDateString(); 
+    let uniqueId = 'archive_item_' + Date.now();
+    
+    let archiveItem = document.createElement('div'); 
+    archiveItem.id = uniqueId;
+    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
+    
+    archiveItem.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div>
+            <div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div>
+        </div>
+        <button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'backup')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 ml-2 relative z-[100]">
+            <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
+        </button>
+    `;
+    
+    archiveList.prepend(archiveItem); 
+    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
+    window.closeTrashModal(); 
+    window.switchTab(5);
+};
+
+window.smartClear = function() {
+    if(confirm("Are you sure you want to clear chat history?")) {
+        const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = '';
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
+        window.closeTrashModal();
+    }
+};
+
+window.openTrashModal = function() {
+    if(window.closeDropdown) window.closeDropdown();
+    document.getElementById('trash-modal').classList.add('active');
+};
+
+window.closeTrashModal = function() { document.getElementById('trash-modal')?.classList.remove('active'); };
+
+window.actionArchiveChat = function() { window.smartArchive(); };
+
+window.actionClearHistory = function() {
+    if(confirm("Clear all messages in this chat?")) {
+        const chatMsgs = document.getElementById('chat-messages'); 
+        if(chatMsgs) chatMsgs.innerHTML = '';
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
+        window.showToast("Chat Cleared", "Message history deleted", "", "");
+        window.closeTrashModal();
+    }
+};
+
+window.actionDeleteForever = function() {
+    if(confirm("WARNING: Delete this chat forever? This cannot be undone.")) {
+        const chatMsgs = document.getElementById('chat-messages'); 
+        if(chatMsgs) chatMsgs.innerHTML = '';
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove(); }
+        window.showToast("Deleted Forever", "Room and history destroyed", "", "");
+        window.closeTrashModal();
+        if (window.currentRoomId !== 'global') { window.switchChatRoom('global'); }
+    }
+};
+
 window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
@@ -405,6 +619,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('voice-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); } });
     document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); } });
 });
+
+// ==========================================
+// ПАНЕЛЬ ЯЗЫКОВ И МИКРОФОН
+// ==========================================
 
 window.openPersonalLangModal = function() {
     if (window.closeDropdown) window.closeDropdown();
@@ -548,154 +766,9 @@ window.startUniversalMic = async function(mode) {
 };
 
 // ==========================================
-// НОВЫЙ БЛОК: МЕНЮ, АРХИВ, МАГАЗИН
+// ДАТА ЦЕНТР, ПОЧТА И МАГАЗИН
 // ==========================================
 
-// 1. УМНОЕ ОТКРЫТИЕ МЕНЮ С 3 ТОЧКАМИ
-window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
-    if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-    }
-    
-    let itemContent = "Текст файла";
-    
-    if (itemType === 'email' && window.mailArchiveDB) {
-        let mail = window.mailArchiveDB.find(m => m.id === itemId);
-        if (mail) itemContent = mail.text || mail.body || "";
-    }
-    
-    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
-    
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    
-    if (!modal || !contentBox) {
-        alert("ОШИБКА: HTML-блок меню не найден! Проверь index.html на наличие <div id='archive-action-modal'>");
-        return;
-    }
-    
-    document.getElementById('action-modal-title').innerText = itemTitle || "Действие с файлом";
-    
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    
-    setTimeout(() => {
-        if(contentBox) contentBox.classList.remove('translate-y-full');
-    }, 10);
-};
-
-window.closeArchiveActionMenu = function() {
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    
-    if(contentBox) contentBox.classList.add('translate-y-full');
-    setTimeout(() => {
-        if(modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-        window.currentArchiveItem = null;
-    }, 300);
-};
-
-window.archiveAction = function(actionType) {
-    if (!window.currentArchiveItem) return;
-    const { id, title, content } = window.currentArchiveItem;
-
-    if (actionType === 'delete') {
-        if (window.mailArchiveDB) {
-            window.mailArchiveDB = window.mailArchiveDB.filter(item => item.id !== id);
-            if(document.getElementById('email-list-view') && !document.getElementById('email-list-view').classList.contains('hidden')) {
-                window.renderEmailArchive(); 
-            }
-        }
-        const domItem = document.getElementById(id);
-        if (domItem) domItem.remove();
-        
-        if (window.showToast) window.showToast("Удалено", "Файл стерт из базы", "", "");
-        
-    } else if (actionType === 'copy') {
-        navigator.clipboard.writeText(content).then(() => {
-            if (window.showToast) window.showToast("Скопировано", "Текст сохранен в буфер", "", "");
-        }).catch(() => {
-            if (window.showToast) window.showToast("Скопировано", "Готово", "", "");
-        });
-    } else if (actionType === 'save') {
-        if (window.showToast) window.showToast("Сохранено", "Успешно загружено", "", "");
-    }
-    
-    window.closeArchiveActionMenu();
-};
-
-window.smartArchive = function() {
-    const archiveList = document.getElementById('archive-list'); 
-    const emptyMsg = document.getElementById('empty-archive'); 
-    if(emptyMsg) emptyMsg.style.display = 'none';
-    
-    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
-    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
-    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
-    
-    let date = new Date().toLocaleDateString(); 
-    let uniqueId = 'archive_item_' + Date.now();
-    
-    let archiveItem = document.createElement('div'); 
-    archiveItem.id = uniqueId;
-    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
-    
-    archiveItem.innerHTML = `
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div>
-            <div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div>
-        </div>
-        <button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'backup')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 ml-2 relative z-[100]">
-            <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
-        </button>
-    `;
-    
-    archiveList.prepend(archiveItem); 
-    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
-    window.closeTrashModal(); 
-    window.switchTab(5);
-};
-
-window.smartClear = function() {
-    if(confirm("Are you sure you want to clear chat history?")) {
-        const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = '';
-        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
-        window.closeTrashModal();
-    }
-};
-
-window.closeTrashModal = function() { document.getElementById('trash-modal')?.classList.remove('active'); };
-
-window.actionArchiveChat = function() {
-    window.smartArchive();
-};
-
-window.actionClearHistory = function() {
-    if(confirm("Clear all messages in this chat?")) {
-        const chatMsgs = document.getElementById('chat-messages'); 
-        if(chatMsgs) chatMsgs.innerHTML = '';
-        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
-        window.showToast("Chat Cleared", "Message history deleted", "", "");
-        window.closeTrashModal();
-    }
-};
-
-window.actionDeleteForever = function() {
-    if(confirm("WARNING: Delete this chat forever? This cannot be undone.")) {
-        const chatMsgs = document.getElementById('chat-messages'); 
-        if(chatMsgs) chatMsgs.innerHTML = '';
-        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove(); }
-        window.showToast("Deleted Forever", "Room and history destroyed", "", "");
-        window.closeTrashModal();
-        if (window.currentRoomId !== 'global') { window.switchChatRoom('global'); }
-    }
-};
-
-// 2. ДАТА ЦЕНТР И ЧЕКИ
 window.mailArchiveDB = [];
 
 window.updateArchiveBadge = function() {
@@ -873,7 +946,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(window.initMailArchiveRealtime, 2000);
 });
 
-// 3. МАГАЗИН
 window.openEmailStore = function() {
     if (window.closeDropdown) window.closeDropdown(); 
     const modal = document.getElementById('email-store-modal');
@@ -953,18 +1025,3 @@ window.buyCorporateEmail = function() {
 
     window.closeEmailStore();
 };
-
-// 4. БАННЕР ДЛЯ IOS IPHONE
-document.addEventListener('DOMContentLoaded', () => {
-    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (isIos && !isStandalone) {
-        setTimeout(() => {
-            const banner = document.getElementById('ios-install-banner');
-            if (banner) {
-                banner.classList.remove('hidden');
-                banner.style.display = 'flex';
-            }
-        }, 4000); 
-    }
-});
