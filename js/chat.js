@@ -751,3 +751,90 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(window.updateArchiveBadge, 1000);
     setTimeout(window.initMailArchiveRealtime, 2000);
 });
+
+// ==========================================
+// ДЕМО-МАГАЗИН: ПОКУПКА ПОЧТЫ ЗА 1 ЦЕНТ
+// ==========================================
+
+window.openEmailStore = function() {
+    if (window.closeDropdown) window.closeDropdown(); 
+    const modal = document.getElementById('email-store-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => { modal.querySelector('div').classList.remove('scale-95'); }, 10);
+        document.getElementById('new-email-prefix').value = '';
+    }
+};
+
+window.closeEmailStore = function() {
+    const modal = document.getElementById('email-store-modal');
+    if (modal) {
+        modal.querySelector('div').classList.add('scale-95');
+        setTimeout(() => { 
+            modal.classList.add('hidden'); 
+            modal.classList.remove('flex');
+        }, 200);
+    }
+};
+
+window.buyCorporateEmail = function() {
+    const prefixInput = document.getElementById('new-email-prefix').value.trim().toLowerCase();
+    let currentLang = window.appLang || 'en';
+    
+    if (!prefixInput) {
+        let errorMsg = currentLang === 'ru' ? "Введите желаемое имя!" : (currentLang === 'az' ? "İstədiyiniz adı daxil edin!" : "Please enter a desired name!");
+        if (window.showToast) window.showToast("Error", errorMsg, "", "");
+        return;
+    }
+
+    if (/[^a-z0-9.]/.test(prefixInput)) {
+        let errorValid = currentLang === 'ru' ? "Только английские буквы и цифры" : (currentLang === 'az' ? "Yalnız ingilis hərfləri və rəqəmlər" : "Only English letters and numbers");
+        if (window.showToast) window.showToast("Error", errorValid, "", "");
+        return;
+    }
+
+    const price = 0.01;
+    const domain = "@universal.com";
+    const fullEmail = prefixInput + domain;
+    
+    // 1. Проигрываем звук кассы
+    if (window.sndCash) {
+        window.sndCash.play().catch(e => console.log('Audio play prevented'));
+    }
+
+    // 2. Показываем переведенное уведомление
+    let toastTitle = currentLang === 'ru' ? "Оплата успешна" : (currentLang === 'az' ? "Ödəniş uğurlu oldu" : "Transaction Successful");
+    let toastDesc = currentLang === 'ru' ? `Почта <b>${fullEmail}</b> активна.<br>Списано: $${price}` : (currentLang === 'az' ? `E-poçt <b>${fullEmail}</b> aktivdir.<br>Çıxıldı: $${price}` : `Email <b>${fullEmail}</b> activated.<br>Charged: $${price}`);
+
+    if (window.showToast) {
+        window.showToast(toastTitle, toastDesc, "https://ui-avatars.com/api/?name=$&background=00a884&color=111b21", "");
+    }
+
+    // 3. Создаем системное письмо (чек) на нужном языке в Архиве
+    if (window.mailArchiveDB) {
+        let mailSubject = currentLang === 'ru' ? 'Чек: Корпоративная почта' : (currentLang === 'az' ? 'Qəbz: Korporativ e-poçt' : 'Receipt: Corporate Email');
+        
+        let mailBody = "";
+        if (currentLang === 'ru') {
+            mailBody = `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Universal.`;
+        } else if (currentLang === 'az') {
+            mailBody = `Salam, ${window.myUsername || 'User'}.\n\nYeni korporativ ünvanınız aktivdir: ${fullEmail}\n\nMəbləğ: $0.01\nÖdəniş: Daxili pul kisəsi\n\nUniversal-a xoş gəlmisiniz.`;
+        } else {
+            mailBody = `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to the Universal Ecosystem.`;
+        }
+
+        let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        window.mailArchiveDB.unshift({
+            id: 'sys_' + Date.now(),
+            unread: true,
+            date: mailDate,
+            from: 'billing@universal.com',
+            subject: mailSubject,
+            text: mailBody
+        });
+        if (window.updateArchiveBadge) window.updateArchiveBadge();
+    }
+
+    window.closeEmailStore();
+};
