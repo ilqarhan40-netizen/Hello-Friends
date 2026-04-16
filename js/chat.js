@@ -642,7 +642,6 @@ window.openMainArchive = function() {
     const title = document.getElementById('archive-modal-title');
     if (title) title.innerHTML = `<i class="fa-solid fa-box-archive text-[#00a884] mr-2"></i> Data Center`;
 
-    // ИСПРАВЛЕНО: теперь открывает правильное окно archive-modal
     document.getElementById('archive-modal').classList.add('active');
     window.updateArchiveBadge(); 
 };
@@ -712,10 +711,36 @@ window.backToEmailList = function() {
 };
 
 window.closeEmailArchive = function() {
-    // ИСПРАВЛЕНО: теперь закрывает правильное окно archive-modal
     document.getElementById('archive-modal').classList.remove('active');
+};
+
+// ==========================================
+// ЖИВОЙ СЛУШАТЕЛЬ ПОЧТОВОГО АРХИВА (FIREBASE)
+// ==========================================
+window.initMailArchiveRealtime = function() {
+    const mailRef = firebase.database().ref('mailArchive');
+
+    mailRef.on('child_added', (snapshot) => {
+        const newMail = snapshot.val();
+        if (!newMail) return;
+
+        const exists = window.mailArchiveDB.some(m => m.timestamp === newMail.timestamp);
+        if (!exists) {
+            window.mailArchiveDB.unshift({
+                id: snapshot.key,
+                ...newMail
+            });
+            window.updateArchiveBadge();
+            if (window.showToast) {
+                window.showToast("New Email", newMail.subject, "https://ui-avatars.com/api/?name=Mail&background=00a884&color=fff", "");
+            }
+            if (window.sndMsg) window.sndMsg.play().catch(e=>{});
+        }
+    });
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(window.updateArchiveBadge, 1000);
+    // Запускаем прослушку реальной почты при старте!
+    setTimeout(window.initMailArchiveRealtime, 2000);
 });
