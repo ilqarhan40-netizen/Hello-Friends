@@ -395,139 +395,6 @@ window.handleNewMessage = async function(snapshot) {
     }
 };
 
-// ==========================================
-// ОСНОВНЫЕ ФУНКЦИИ И АРХИВ
-// ==========================================
-
-window.openArchiveActionMenu = function(e, itemId, itemTitle, itemContent) {
-    if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-    }
-    
-    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    
-    if (!modal || !contentBox) return;
-    
-    document.getElementById('action-modal-title').innerText = itemTitle || "Действие с файлом";
-    
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    
-    setTimeout(() => {
-        contentBox.classList.remove('translate-y-full');
-    }, 10);
-};
-
-window.closeArchiveActionMenu = function() {
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    
-    contentBox.classList.add('translate-y-full');
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        window.currentArchiveItem = null;
-    }, 300);
-};
-
-window.archiveAction = function(actionType) {
-    if (!window.currentArchiveItem) return;
-    const { id, title, content } = window.currentArchiveItem;
-
-    if (actionType === 'delete') {
-        if (window.mailArchiveDB) {
-            window.mailArchiveDB = window.mailArchiveDB.filter(item => item.id !== id);
-            if(document.getElementById('email-list-view') && !document.getElementById('email-list-view').classList.contains('hidden')) {
-                window.renderEmailArchive(); 
-            }
-        }
-        const domItem = document.getElementById(id);
-        if (domItem) domItem.remove();
-        
-        if (window.showToast) window.showToast("Deleted", "File removed.", "", "");
-        
-    } else if (actionType === 'copy') {
-        navigator.clipboard.writeText(content).then(() => {
-            if (window.showToast) window.showToast("Copied", "Copied to clipboard.", "", "");
-        });
-    } else if (actionType === 'save') {
-        if (window.showToast) window.showToast("Saved", "File saved to device.", "", "");
-    }
-    
-    window.closeArchiveActionMenu();
-};
-
-window.smartArchive = function() {
-    const archiveList = document.getElementById('archive-list'); 
-    const emptyMsg = document.getElementById('empty-archive'); 
-    if(emptyMsg) emptyMsg.style.display = 'none';
-    
-    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
-    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
-    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
-    
-    let date = new Date().toLocaleDateString(); 
-    let uniqueId = 'archive_item_' + Date.now();
-    
-    let archiveItem = document.createElement('div'); 
-    archiveItem.id = uniqueId;
-    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
-    
-    archiveItem.innerHTML = `
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div>
-            <div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div>
-        </div>
-        <button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'Текст бэкапа')" class="text-[#8696a0] hover:text-white transition p-2 text-lg shrink-0 z-10 relative">
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-        </button>
-    `;
-    
-    archiveList.prepend(archiveItem); 
-    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
-    window.closeTrashModal(); 
-    window.switchTab(5);
-};
-
-window.smartClear = function() {
-    if(confirm("Are you sure you want to clear chat history?")) {
-        const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = '';
-        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
-        window.closeTrashModal();
-    }
-};
-
-window.closeTrashModal = function() { document.getElementById('trash-modal')?.classList.remove('active'); };
-
-window.actionArchiveChat = function() {
-    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
-    window.closeTrashModal(); 
-};
-
-window.actionClearHistory = function() {
-    if(confirm("Clear all messages in this chat?")) {
-        const chatMsgs = document.getElementById('chat-messages'); 
-        if(chatMsgs) chatMsgs.innerHTML = '';
-        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
-        window.showToast("Chat Cleared", "Message history deleted", "", "");
-        window.closeTrashModal();
-    }
-};
-
-window.actionDeleteForever = function() {
-    if(confirm("WARNING: Delete this chat forever? This cannot be undone.")) {
-        const chatMsgs = document.getElementById('chat-messages'); 
-        if(chatMsgs) chatMsgs.innerHTML = '';
-        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove(); }
-        window.showToast("Deleted Forever", "Room and history destroyed", "", "");
-        window.closeTrashModal();
-        if (window.currentRoomId !== 'global') { window.switchChatRoom('global'); }
-    }
-};
-
 window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
@@ -681,8 +548,154 @@ window.startUniversalMic = async function(mode) {
 };
 
 // ==========================================
-// МОДУЛЬ: ПОЧТОВЫЙ АРХИВ И ДАТА ЦЕНТР
+// НОВЫЙ БЛОК: МЕНЮ, АРХИВ, МАГАЗИН
 // ==========================================
+
+// 1. УМНОЕ ОТКРЫТИЕ МЕНЮ С 3 ТОЧКАМИ
+window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+    
+    let itemContent = "Текст файла";
+    
+    if (itemType === 'email' && window.mailArchiveDB) {
+        let mail = window.mailArchiveDB.find(m => m.id === itemId);
+        if (mail) itemContent = mail.text || mail.body || "";
+    }
+    
+    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
+    
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    
+    if (!modal || !contentBox) {
+        alert("ОШИБКА: HTML-блок меню не найден! Проверь index.html на наличие <div id='archive-action-modal'>");
+        return;
+    }
+    
+    document.getElementById('action-modal-title').innerText = itemTitle || "Действие с файлом";
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    setTimeout(() => {
+        if(contentBox) contentBox.classList.remove('translate-y-full');
+    }, 10);
+};
+
+window.closeArchiveActionMenu = function() {
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    
+    if(contentBox) contentBox.classList.add('translate-y-full');
+    setTimeout(() => {
+        if(modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        window.currentArchiveItem = null;
+    }, 300);
+};
+
+window.archiveAction = function(actionType) {
+    if (!window.currentArchiveItem) return;
+    const { id, title, content } = window.currentArchiveItem;
+
+    if (actionType === 'delete') {
+        if (window.mailArchiveDB) {
+            window.mailArchiveDB = window.mailArchiveDB.filter(item => item.id !== id);
+            if(document.getElementById('email-list-view') && !document.getElementById('email-list-view').classList.contains('hidden')) {
+                window.renderEmailArchive(); 
+            }
+        }
+        const domItem = document.getElementById(id);
+        if (domItem) domItem.remove();
+        
+        if (window.showToast) window.showToast("Удалено", "Файл стерт из базы", "", "");
+        
+    } else if (actionType === 'copy') {
+        navigator.clipboard.writeText(content).then(() => {
+            if (window.showToast) window.showToast("Скопировано", "Текст сохранен в буфер", "", "");
+        }).catch(() => {
+            if (window.showToast) window.showToast("Скопировано", "Готово", "", "");
+        });
+    } else if (actionType === 'save') {
+        if (window.showToast) window.showToast("Сохранено", "Успешно загружено", "", "");
+    }
+    
+    window.closeArchiveActionMenu();
+};
+
+window.smartArchive = function() {
+    const archiveList = document.getElementById('archive-list'); 
+    const emptyMsg = document.getElementById('empty-archive'); 
+    if(emptyMsg) emptyMsg.style.display = 'none';
+    
+    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
+    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
+    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
+    
+    let date = new Date().toLocaleDateString(); 
+    let uniqueId = 'archive_item_' + Date.now();
+    
+    let archiveItem = document.createElement('div'); 
+    archiveItem.id = uniqueId;
+    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
+    
+    archiveItem.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div>
+            <div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div>
+        </div>
+        <button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'backup')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 ml-2 relative z-[100]">
+            <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
+        </button>
+    `;
+    
+    archiveList.prepend(archiveItem); 
+    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
+    window.closeTrashModal(); 
+    window.switchTab(5);
+};
+
+window.smartClear = function() {
+    if(confirm("Are you sure you want to clear chat history?")) {
+        const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = '';
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
+        window.closeTrashModal();
+    }
+};
+
+window.closeTrashModal = function() { document.getElementById('trash-modal')?.classList.remove('active'); };
+
+window.actionArchiveChat = function() {
+    window.smartArchive();
+};
+
+window.actionClearHistory = function() {
+    if(confirm("Clear all messages in this chat?")) {
+        const chatMsgs = document.getElementById('chat-messages'); 
+        if(chatMsgs) chatMsgs.innerHTML = '';
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
+        window.showToast("Chat Cleared", "Message history deleted", "", "");
+        window.closeTrashModal();
+    }
+};
+
+window.actionDeleteForever = function() {
+    if(confirm("WARNING: Delete this chat forever? This cannot be undone.")) {
+        const chatMsgs = document.getElementById('chat-messages'); 
+        if(chatMsgs) chatMsgs.innerHTML = '';
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove(); }
+        window.showToast("Deleted Forever", "Room and history destroyed", "", "");
+        window.closeTrashModal();
+        if (window.currentRoomId !== 'global') { window.switchChatRoom('global'); }
+    }
+};
+
+// 2. ДАТА ЦЕНТР И ЧЕКИ
 window.mailArchiveDB = [];
 
 window.updateArchiveBadge = function() {
@@ -748,7 +761,7 @@ window.openEmailArchive = function() {
         return;
     }
 
-    window.renderEmailArchive(); // Вызываем новую отрисовку с 3 точками
+    window.renderEmailArchive();
 };
 
 window.renderEmailArchive = function() {
@@ -767,7 +780,6 @@ window.renderEmailArchive = function() {
         let bgClass = email.unread ? 'bg-[#202c33] border-[#3b82f6]/30' : 'bg-[#111b21] border-[#2a3942] opacity-80';
         let textBold = email.unread ? 'text-white font-bold' : 'text-[#e9edef]';
         
-        let safeText = (email.text || email.body || '').replace(/\n/g, '\\n').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         let safeSubject = (email.subject || 'No Subject').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         listContainer.innerHTML += `
@@ -785,8 +797,8 @@ window.renderEmailArchive = function() {
                     </div>
                     ${unreadDot}
                 </div>
-                <button onclick="event.stopPropagation(); window.openArchiveActionMenu(event, '${email.id}', '${safeSubject}', '${safeText}')" class="text-[#8696a0] hover:text-white transition p-2 text-lg shrink-0 ml-1 z-10 relative">
-                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                <button onclick="window.openArchiveActionMenu(event, '${email.id}', '${safeSubject}', 'email')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 ml-1 relative z-[100]">
+                    <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
                 </button>
             </div>
         `;
@@ -861,10 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(window.initMailArchiveRealtime, 2000);
 });
 
-// ==========================================
-// ДЕМО-МАГАЗИН: ПОКУПКА ПОЧТЫ ЗА 1 ЦЕНТ
-// ==========================================
-
+// 3. МАГАЗИН
 window.openEmailStore = function() {
     if (window.closeDropdown) window.closeDropdown(); 
     const modal = document.getElementById('email-store-modal');
@@ -945,7 +954,7 @@ window.buyCorporateEmail = function() {
     window.closeEmailStore();
 };
 
-// Активация баннера для iOS
+// 4. БАННЕР ДЛЯ IOS IPHONE
 document.addEventListener('DOMContentLoaded', () => {
     const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
