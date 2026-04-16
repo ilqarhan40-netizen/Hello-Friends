@@ -645,13 +645,17 @@ if (window.OneSignalDeferred) {
     <i class="fa-solid fa-location-dot"></i>
 </div>
 
-<div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeAllMenus();" title="Archive">
-    <i class="fa-solid fa-box-archive"></i>
-</div>
-
-<div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeAllMenus();" title="Clear Chat">
-    <i class="fa-solid fa-trash-can"></i>
-</div>
+<div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
+            <div class="app-modal-content">
+                <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
+                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2>
+                <div class="flex flex-col gap-3">
+                    <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.actionArchiveChat()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button>
+                    <button class="btn-primary !bg-[#b45309] !text-white" onclick="window.actionClearHistory()"><i class="fa-solid fa-eraser mr-2"></i> Clear History</button>
+                    <button class="btn-primary !bg-red-600 !text-white" onclick="window.actionDeleteForever()"><i class="fa-solid fa-trash-can mr-2"></i> Delete Forever</button>
+                </div>
+            </div>
+        </div>
                 </div>
             </div>
         </div>
@@ -901,6 +905,29 @@ if (window.OneSignalDeferred) {
                 </form>
             </div>
         </div>
+
+        <div id="archive-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailArchive();">
+    <div class="app-modal-content flex flex-col" style="height: 75vh; max-height: 800px;">
+        <div class="close-sheet-btn" onclick="window.closeEmailArchive()"><i class="fa-solid fa-xmark"></i></div>
+        
+        <h2 id="archive-modal-title" class="text-xl font-bold mb-4 text-white text-center mt-2">
+            <i class="fa-solid fa-box-archive text-[#00a884] mr-2"></i> Data Center
+        </h2>
+        
+        <div id="email-list-view" class="flex flex-col gap-2 overflow-y-auto flex-1 pb-4"></div>
+
+        <div id="email-reader-view" class="hidden flex-col flex-1 h-full">
+            <div class="bg-[#202c33] p-4 rounded-xl border border-[#2a3942] flex-1 overflow-y-auto shadow-inner relative">
+                <h3 id="email-read-subject" class="text-white font-bold text-lg mb-1 pr-8"></h3>
+                <div class="text-[#8696a0] text-xs mb-4 pb-3 border-b border-[#2a3942] flex justify-between">
+                    <span>From: <b id="email-read-from" class="text-white"></b></span>
+                    <span id="email-read-date"></span>
+                </div>
+                <div id="email-read-body" class="text-[#e9edef] text-sm whitespace-pre-wrap leading-relaxed"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
         <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
             <div class="app-modal-content h-[60vh]">
