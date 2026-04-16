@@ -412,21 +412,6 @@ window.closeTrashModal = function() {
 };
 
 window.actionArchiveChat = function() {
-    const archiveList = document.getElementById('archive-list'); 
-    const emptyMsg = document.getElementById('empty-archive'); 
-    if(emptyMsg) emptyMsg.style.display = 'none';
-    
-    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Room";
-    if (window.currentRoomId === 'global') chatName = "Global Room";
-    else if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
-    else if (window.currentRoomId && window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
-    
-    let date = new Date().toLocaleDateString(); 
-    let archiveItem = document.createElement('div'); 
-    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
-    archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`;
-    
-    if (archiveList) archiveList.prepend(archiveItem); 
     window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
     window.closeTrashModal(); 
 };
@@ -435,10 +420,7 @@ window.actionClearHistory = function() {
     if(confirm("Clear all messages in this chat?")) {
         const chatMsgs = document.getElementById('chat-messages'); 
         if(chatMsgs) chatMsgs.innerHTML = '';
-        
-        if(window.currentRoomId) { 
-            firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); 
-        }
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
         window.showToast("Chat Cleared", "Message history deleted", "", "");
         window.closeTrashModal();
     }
@@ -448,16 +430,10 @@ window.actionDeleteForever = function() {
     if(confirm("WARNING: Delete this chat forever? This cannot be undone.")) {
         const chatMsgs = document.getElementById('chat-messages'); 
         if(chatMsgs) chatMsgs.innerHTML = '';
-        
-        if(window.currentRoomId) { 
-            firebase.database().ref(window.currentRoomId).remove(); 
-        }
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove(); }
         window.showToast("Deleted Forever", "Room and history destroyed", "", "");
         window.closeTrashModal();
-        
-        if (window.currentRoomId !== 'global') {
-            window.switchChatRoom('global');
-        }
+        if (window.currentRoomId !== 'global') { window.switchChatRoom('global'); }
     }
 };
 
@@ -486,7 +462,6 @@ window.openPersonalLangModal = function() {
     let isVoice = window.currentIndex === 1;
     let isConf = window.currentIndex === 2;
     let targetKey = window.getLangKey(isVoice, isConf);
-    
     let currentPref = localStorage.getItem(targetKey) || 'auto';
 
     const langs = [
@@ -517,7 +492,6 @@ window.openPersonalLangModal = function() {
 window.saveSpecificLang = function(langCode, targetKey) {
     if (langCode === 'auto') { localStorage.removeItem(targetKey); } 
     else { localStorage.setItem(targetKey, langCode); }
-    
     document.getElementById('personal-lang-modal').classList.remove('active');
     if (window.showToast) window.showToast("Language Saved", "Applied strictly to this section.", "", "");
 };
@@ -536,11 +510,7 @@ window.getMicLangKey = function() {
 
 window.saveRoomMicLang = function(val) {
     let key = window.getMicLangKey();
-    if (val === 'auto' || !val) {
-        localStorage.removeItem(key);
-    } else {
-        localStorage.setItem(key, val);
-    }
+    if (val === 'auto' || !val) { localStorage.removeItem(key); } else { localStorage.setItem(key, val); }
     if (window.showToast) window.showToast("Mic Language", "Saved strictly for this room", "", "");
 };
 
@@ -548,33 +518,21 @@ window.syncMicLangUI = function() {
     let key = window.getMicLangKey();
     let saved = localStorage.getItem(key) || 'auto';
     let sel = document.getElementById('plus-mic-lang');
-    if (sel) {
-        sel.value = saved;
-    }
+    if (sel) { sel.value = saved; }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         let micSel = document.getElementById('plus-mic-lang');
-        if (micSel) {
-            micSel.addEventListener('change', function() {
-                window.saveRoomMicLang(this.value);
-            });
-        }
+        if (micSel) { micSel.addEventListener('change', function() { window.saveRoomMicLang(this.value); }); }
     }, 1000);
 });
 
 if (!window.micSyncHooked) {
     const origSwitchTabMic = window.switchTab;
-    window.switchTab = function(index) {
-        if (origSwitchTabMic) origSwitchTabMic(index);
-        setTimeout(window.syncMicLangUI, 100);
-    };
+    window.switchTab = function(index) { if (origSwitchTabMic) origSwitchTabMic(index); setTimeout(window.syncMicLangUI, 100); };
     const origSwitchChatMic = window.switchChatRoom;
-    window.switchChatRoom = function(targetId) {
-        if (origSwitchChatMic) origSwitchChatMic(targetId);
-        setTimeout(window.syncMicLangUI, 100);
-    };
+    window.switchChatRoom = function(targetId) { if (origSwitchChatMic) origSwitchChatMic(targetId); setTimeout(window.syncMicLangUI, 100); };
     window.micSyncHooked = true;
 }
 
@@ -592,40 +550,27 @@ window.startUniversalMic = async function(mode) {
     let currentMicCode = 'en-US';
     
     if (selectedMicLang === 'auto') {
-        let phone = window.myProfileInfo.phone || ""; 
-        let flag = window.myProfileInfo.flagCode || "un"; 
-        if (phone.startsWith('+7')) currentMicCode = 'ru-RU'; 
-        else if (phone.startsWith('+994')) currentMicCode = 'az-AZ'; 
-        else if (phone.startsWith('+39')) currentMicCode = 'it-IT'; 
-        else if (phone.startsWith('+49')) currentMicCode = 'de-DE'; 
-        else if (phone.startsWith('+33')) currentMicCode = 'fr-FR'; 
-        else if (phone.startsWith('+81')) currentMicCode = 'ja-JP'; 
-        else if (phone.startsWith('+34')) currentMicCode = 'es-ES'; 
-        else if (phone.startsWith('+86')) currentMicCode = 'zh-CN'; 
-        else if (phone.startsWith('+351')) currentMicCode = 'pt-PT'; 
-        else if (flag === 'ru') currentMicCode = 'ru-RU'; 
-        else if (flag === 'az') currentMicCode = 'az-AZ'; 
-        else if (flag === 'it') currentMicCode = 'it-IT'; 
-        else if (flag === 'de') currentMicCode = 'de-DE'; 
-        else if (flag === 'fr') currentMicCode = 'fr-FR'; 
-        else if (flag === 'jp') currentMicCode = 'ja-JP'; 
-        else if (flag === 'es') currentMicCode = 'es-ES'; 
-        else if (flag === 'cn') currentMicCode = 'zh-CN'; 
-        else if (flag === 'pt') currentMicCode = 'pt-PT';
+        let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; 
+        if (phone.startsWith('+7')) currentMicCode = 'ru-RU'; else if (phone.startsWith('+994')) currentMicCode = 'az-AZ'; 
+        else if (phone.startsWith('+39')) currentMicCode = 'it-IT'; else if (phone.startsWith('+49')) currentMicCode = 'de-DE'; 
+        else if (phone.startsWith('+33')) currentMicCode = 'fr-FR'; else if (phone.startsWith('+81')) currentMicCode = 'ja-JP'; 
+        else if (phone.startsWith('+34')) currentMicCode = 'es-ES'; else if (phone.startsWith('+86')) currentMicCode = 'zh-CN'; 
+        else if (phone.startsWith('+351')) currentMicCode = 'pt-PT'; else if (flag === 'ru') currentMicCode = 'ru-RU'; 
+        else if (flag === 'az') currentMicCode = 'az-AZ'; else if (flag === 'it') currentMicCode = 'it-IT'; 
+        else if (flag === 'de') currentMicCode = 'de-DE'; else if (flag === 'fr') currentMicCode = 'fr-FR'; 
+        else if (flag === 'jp') currentMicCode = 'ja-JP'; else if (flag === 'es') currentMicCode = 'es-ES'; 
+        else if (flag === 'cn') currentMicCode = 'zh-CN'; else if (flag === 'pt') currentMicCode = 'pt-PT';
         rec.lang = currentMicCode;
     } else {
         rec.lang = selectedMicLang;
     }
     
     let sourceTranslateLang = rec.lang.substring(0, 2);
-    
     window.showToast("Listening...", "Speak into the microphone", "", "");
     
     rec.onresult = async (e) => { 
         window.speechRecognizedText = e.results[0][0].transcript; 
-        
         let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
-
         window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = window.speechRecognizedText;
         
@@ -637,23 +582,142 @@ window.startUniversalMic = async function(mode) {
 
         let isVoice = window.currentMicInputTarget === 'voice-chat-input';
         let isConf = window.currentMicInputTarget === 'conf-chat-input';
-
         let msgPayload = { 
-            userId: window.myProfileInfo.id, name: window.myUsername, 
-            text: textToShip, originalText: window.speechRecognizedText, 
-            sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, 
-            photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, 
-            flagCode: window.myProfileInfo.flagCode, 
-            langCode: sourceTranslateLang,
+            userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, 
+            sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, 
+            flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: sourceTranslateLang,
             isVoiceRoomMsg: isVoice, isConfMsg: isConf 
         };
 
-        if (mode === 'text') {
-            firebase.database().ref(window.currentRoomId).push(msgPayload);
-        } else if (mode === 'ai-audio') {
-            msgPayload.isAIAudio = true;
-            firebase.database().ref(window.currentRoomId).push(msgPayload);
-        }
+        if (mode === 'text') { firebase.database().ref(window.currentRoomId).push(msgPayload); } 
+        else if (mode === 'ai-audio') { msgPayload.isAIAudio = true; firebase.database().ref(window.currentRoomId).push(msgPayload); }
     };
     try { rec.start(); } catch(e){}
 };
+
+// =======================
+// АРХИВ, ПАПКИ И ИНДИКАТОР ПОЧТЫ
+// =======================
+
+window.mailArchiveDB = [
+    { id: 1, from: 'investor@siliconvalley.com', subject: 'Investment Proposal for Universal App', text: 'Hello Team,\n\nWe are very impressed with the real-time translation features of your Babylon ecosystem. We would like to schedule a video conference next week to discuss funding.\n\nBest regards,\nJohn', date: '10:30 AM', unread: true },
+    { id: 2, from: 'support@mailgun.com', subject: 'Domain Verification Complete', text: 'Your domain hellofriends@app.gmail.com has been successfully linked to the archive module. All incoming emails will now be routed here.', date: 'Yesterday', unread: false }
+];
+
+window.updateArchiveBadge = function() {
+    const unreadCount = window.mailArchiveDB.filter(mail => mail.unread).length;
+    const badge = document.getElementById('archive-unread-badge'); 
+    if (badge) {
+        if (unreadCount > 0) { badge.classList.remove('hidden'); } 
+        else { badge.classList.add('hidden'); }
+    }
+};
+
+window.openMainArchive = function() {
+    if (window.closeDropdown) window.closeDropdown();
+    
+    const listContainer = document.getElementById('email-list-view');
+    if (!listContainer) return;
+
+    const categories = [
+        { id: 'mail', name: 'Mail (Inbox)', icon: 'fa-envelope', color: 'text-blue-400', count: window.mailArchiveDB.filter(m => m.unread).length },
+        { id: 'video', name: 'Video Files', icon: 'fa-video', color: 'text-red-400', count: 0 },
+        { id: 'files', name: 'General Files', icon: 'fa-file', color: 'text-yellow-400', count: 0 },
+        { id: 'docs', name: 'Documents', icon: 'fa-file-lines', color: 'text-green-400', count: 0 }
+    ];
+
+    let html = `<div class="grid grid-cols-2 gap-3 p-2 w-full">`;
+    categories.forEach(cat => {
+        let badgeHtml = cat.count > 0 ? `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full border-2 border-[#202c33] shadow-md">${cat.count}</span>` : '';
+        html += `
+            <div onclick="window.openArchiveFolder('${cat.id}')" class="relative bg-[#202c33] border border-[#2a3942] p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#00a884] transition cursor-pointer shadow-sm min-h-[100px]">
+                <i class="fa-solid ${cat.icon} text-3xl ${cat.color}"></i>
+                <span class="text-white text-[0.65rem] font-bold uppercase tracking-wider text-center mt-1">${cat.name}</span>
+                ${badgeHtml}
+            </div>
+        `;
+    });
+    html += `</div>`;
+    listContainer.innerHTML = html;
+
+    document.getElementById('email-list-view').classList.remove('hidden');
+    document.getElementById('email-reader-view').classList.add('hidden');
+    
+    const title = document.getElementById('archive-modal-title');
+    if (title) title.innerHTML = `<i class="fa-solid fa-box-archive text-[#00a884] mr-2"></i> Data Center`;
+
+    document.getElementById('email-modal').classList.add('active');
+    window.updateArchiveBadge(); 
+};
+
+window.openArchiveFolder = function(folderId) {
+    if (folderId === 'mail') { window.openEmailArchive(); } 
+    else { window.showToast("Folder Status", "This folder is currently empty.", "", ""); }
+};
+
+window.openEmailArchive = function() {
+    const title = document.getElementById('archive-modal-title');
+    if (title) title.innerHTML = `<button onclick="window.openMainArchive()" class="text-[#8696a0] hover:text-white mr-3 transition"><i class="fa-solid fa-arrow-left"></i></button><i class="fa-solid fa-envelope-open-text text-blue-400 mr-2"></i> Mail Archive`;
+
+    const listContainer = document.getElementById('email-list-view');
+    listContainer.innerHTML = '';
+
+    if (window.mailArchiveDB.length === 0) {
+        listContainer.innerHTML = `<div class="text-center text-[#8696a0] mt-10"><i class="fa-solid fa-inbox text-4xl mb-3 opacity-50"></i><br>Archive is empty</div>`;
+        return;
+    }
+
+    window.mailArchiveDB.forEach(email => {
+        let unreadDot = email.unread ? `<div class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>` : ``;
+        let bgClass = email.unread ? 'bg-[#202c33] border-[#3b82f6]/30' : 'bg-[#111b21] border-[#2a3942] opacity-80';
+        let textBold = email.unread ? 'text-white font-bold' : 'text-[#e9edef]';
+
+        listContainer.innerHTML += `
+            <div class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer hover:border-blue-400 transition shadow-sm ${bgClass} mb-2" onclick="window.viewSpecificEmail(${email.id})">
+                <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#8696a0]">
+                    <i class="fa-solid fa-at"></i>
+                </div>
+                <div class="flex flex-col flex-1 overflow-hidden">
+                    <div class="flex justify-between items-center w-full">
+                        <span class="text-xs text-[#8696a0] truncate max-w-[70%]">${email.from}</span>
+                        <span class="text-[0.65rem] text-[#8696a0]">${email.date}</span>
+                    </div>
+                    <span class="${textBold} text-sm truncate w-full mt-0.5">${email.subject}</span>
+                </div>
+                ${unreadDot}
+            </div>
+        `;
+    });
+};
+
+window.viewSpecificEmail = function(id) {
+    const email = window.mailArchiveDB.find(e => e.id === id);
+    if (!email) return;
+
+    email.unread = false;
+    window.updateArchiveBadge(); 
+
+    document.getElementById('email-read-subject').innerText = email.subject;
+    document.getElementById('email-read-from').innerText = email.from;
+    document.getElementById('email-read-date').innerText = email.date;
+    document.getElementById('email-read-body').innerText = email.text;
+
+    document.getElementById('email-list-view').classList.add('hidden');
+    document.getElementById('email-reader-view').classList.remove('hidden');
+    document.getElementById('email-reader-view').classList.add('flex');
+};
+
+window.backToEmailList = function() {
+    window.openEmailArchive(); 
+    document.getElementById('email-reader-view').classList.add('hidden');
+    document.getElementById('email-reader-view').classList.remove('flex');
+    document.getElementById('email-list-view').classList.remove('hidden');
+};
+
+window.closeEmailArchive = function() {
+    document.getElementById('email-modal').classList.remove('active');
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(window.updateArchiveBadge, 1000);
+});
