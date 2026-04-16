@@ -395,16 +395,101 @@ window.handleNewMessage = async function(snapshot) {
     }
 };
 
+// ==========================================
+// ОСНОВНЫЕ ФУНКЦИИ И АРХИВ
+// ==========================================
+
+window.openArchiveActionMenu = function(e, itemId, itemTitle, itemContent) {
+    if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+    
+    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    
+    if (!modal || !contentBox) return;
+    
+    document.getElementById('action-modal-title').innerText = itemTitle || "Действие с файлом";
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    setTimeout(() => {
+        contentBox.classList.remove('translate-y-full');
+    }, 10);
+};
+
+window.closeArchiveActionMenu = function() {
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    
+    contentBox.classList.add('translate-y-full');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        window.currentArchiveItem = null;
+    }, 300);
+};
+
+window.archiveAction = function(actionType) {
+    if (!window.currentArchiveItem) return;
+    const { id, title, content } = window.currentArchiveItem;
+
+    if (actionType === 'delete') {
+        if (window.mailArchiveDB) {
+            window.mailArchiveDB = window.mailArchiveDB.filter(item => item.id !== id);
+            if(document.getElementById('email-list-view') && !document.getElementById('email-list-view').classList.contains('hidden')) {
+                window.renderEmailArchive(); 
+            }
+        }
+        const domItem = document.getElementById(id);
+        if (domItem) domItem.remove();
+        
+        if (window.showToast) window.showToast("Deleted", "File removed.", "", "");
+        
+    } else if (actionType === 'copy') {
+        navigator.clipboard.writeText(content).then(() => {
+            if (window.showToast) window.showToast("Copied", "Copied to clipboard.", "", "");
+        });
+    } else if (actionType === 'save') {
+        if (window.showToast) window.showToast("Saved", "File saved to device.", "", "");
+    }
+    
+    window.closeArchiveActionMenu();
+};
+
 window.smartArchive = function() {
-    const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none';
+    const archiveList = document.getElementById('archive-list'); 
+    const emptyMsg = document.getElementById('empty-archive'); 
+    if(emptyMsg) emptyMsg.style.display = 'none';
+    
     let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
-    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
-    let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); 
+    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
+    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
+    
+    let date = new Date().toLocaleDateString(); 
     let uniqueId = 'archive_item_' + Date.now();
+    
+    let archiveItem = document.createElement('div'); 
     archiveItem.id = uniqueId;
     archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
-    archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><button onclick="window.openArchiveActionMenu('${uniqueId}', 'Backup: ${chatName}', 'Текст бэкапа')" class="text-[#8696a0] hover:text-white transition p-2 text-lg"><i class="fa-solid fa-ellipsis-vertical"></i></button>`;
-    archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5);
+    
+    archiveItem.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div>
+            <div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div>
+        </div>
+        <button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'Текст бэкапа')" class="text-[#8696a0] hover:text-white transition p-2 text-lg shrink-0 z-10 relative">
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+        </button>
+    `;
+    
+    archiveList.prepend(archiveItem); 
+    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
+    window.closeTrashModal(); 
+    window.switchTab(5);
 };
 
 window.smartClear = function() {
@@ -415,7 +500,7 @@ window.smartClear = function() {
     }
 };
 
-window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
+window.closeTrashModal = function() { document.getElementById('trash-modal')?.classList.remove('active'); };
 
 window.actionArchiveChat = function() {
     window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
@@ -596,7 +681,7 @@ window.startUniversalMic = async function(mode) {
 };
 
 // ==========================================
-// МОДУЛЬ: ПОЧТОВЫЙ АРХИВ
+// МОДУЛЬ: ПОЧТОВЫЙ АРХИВ И ДАТА ЦЕНТР
 // ==========================================
 window.mailArchiveDB = [];
 
@@ -663,15 +748,30 @@ window.openEmailArchive = function() {
         return;
     }
 
-    // НОВЫЙ КОД ОТРИСОВКИ С ТРЕМЯ ТОЧКАМИ
+    window.renderEmailArchive(); // Вызываем новую отрисовку с 3 точками
+};
+
+window.renderEmailArchive = function() {
+    const listContainer = document.getElementById('email-list-view');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '';
+    
+    if (window.mailArchiveDB.length === 0) {
+        listContainer.innerHTML = '<p class="text-center text-[#8696a0] text-sm mt-4">Data Center is empty.</p>';
+        return;
+    }
+
     window.mailArchiveDB.forEach(email => {
         let unreadDot = email.unread ? `<div class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] shrink-0"></div>` : ``;
         let bgClass = email.unread ? 'bg-[#202c33] border-[#3b82f6]/30' : 'bg-[#111b21] border-[#2a3942] opacity-80';
         let textBold = email.unread ? 'text-white font-bold' : 'text-[#e9edef]';
-        let safeText = (email.text || email.body || '').replace(/\n/g, '\\n').replace(/'/g, "\\'");
+        
+        let safeText = (email.text || email.body || '').replace(/\n/g, '\\n').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        let safeSubject = (email.subject || 'No Subject').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
         listContainer.innerHTML += `
-            <div id="${email.id}" class="flex items-center justify-between p-3 rounded-xl border hover:border-blue-400 transition shadow-sm ${bgClass} mb-2">
+            <div id="${email.id}" class="flex items-center justify-between p-3 rounded-xl border hover:border-blue-400 transition shadow-sm ${bgClass} mb-2 relative">
                 <div class="flex items-center gap-3 flex-1 overflow-hidden cursor-pointer" onclick="window.viewSpecificEmail('${email.id}')">
                     <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#8696a0]">
                         <i class="fa-solid fa-at"></i>
@@ -681,11 +781,11 @@ window.openEmailArchive = function() {
                             <span class="text-xs text-[#8696a0] truncate max-w-[70%]">${email.from || email.sender || 'Unknown'}</span>
                             <span class="text-[0.65rem] text-[#8696a0] pr-2">${email.date || ''}</span>
                         </div>
-                        <span class="${textBold} text-sm truncate w-full mt-0.5">${email.subject || 'No Subject'}</span>
+                        <span class="${textBold} text-sm truncate w-full mt-0.5">${safeSubject}</span>
                     </div>
                     ${unreadDot}
                 </div>
-                <button onclick="event.stopPropagation(); window.openArchiveActionMenu('${email.id}', '${email.subject}', '${safeText}')" class="text-[#8696a0] hover:text-white transition p-2 text-lg shrink-0 ml-1">
+                <button onclick="event.stopPropagation(); window.openArchiveActionMenu(event, '${email.id}', '${safeSubject}', '${safeText}')" class="text-[#8696a0] hover:text-white transition p-2 text-lg shrink-0 ml-1 z-10 relative">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
                 </button>
             </div>
@@ -807,12 +907,10 @@ window.buyCorporateEmail = function() {
     const domain = "@hellofriends.app";
     const fullEmail = prefixInput + domain;
     
-    // 1. Проигрываем звук кассы
     if (window.sndCash) {
         window.sndCash.play().catch(e => console.log('Audio play prevented'));
     }
 
-    // 2. Показываем переведенное уведомление
     let toastTitle = currentLang === 'ru' ? "Оплата успешна" : (currentLang === 'az' ? "Ödəniş uğurlu oldu" : "Transaction Successful");
     let toastDesc = currentLang === 'ru' ? `Почта <b>${fullEmail}</b> активна.<br>Списано: $${price}` : (currentLang === 'az' ? `E-poçt <b>${fullEmail}</b> aktivdir.<br>Çıxıldı: $${price}` : `Email <b>${fullEmail}</b> activated.<br>Charged: $${price}`);
 
@@ -820,7 +918,6 @@ window.buyCorporateEmail = function() {
         window.showToast(toastTitle, toastDesc, "https://ui-avatars.com/api/?name=$&background=00a884&color=111b21", "");
     }
 
-    // 3. Создаем системное письмо (чек) на нужном языке в Архиве
     if (window.mailArchiveDB) {
         let mailSubject = currentLang === 'ru' ? 'Чек: Корпоративная почта' : (currentLang === 'az' ? 'Qəbz: Korporativ e-poçt' : 'Receipt: Corporate Email');
         
@@ -862,61 +959,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000); 
     }
 });
-
-// ==========================================
-// ЛОГИКА МЕНЮ АРХИВА (SAVE, COPY, DELETE)
-// ==========================================
-window.currentArchiveItem = null;
-
-window.openArchiveActionMenu = function(itemId, itemTitle, itemContent) {
-    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    
-    document.getElementById('action-modal-title').innerText = itemTitle || "Действие с файлом";
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    
-    setTimeout(() => {
-        contentBox.classList.remove('translate-y-full');
-    }, 10);
-};
-
-window.closeArchiveActionMenu = function() {
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    
-    contentBox.classList.add('translate-y-full');
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        window.currentArchiveItem = null;
-    }, 300);
-};
-
-window.archiveAction = function(actionType) {
-    if (!window.currentArchiveItem) return;
-    const { id, title, content } = window.currentArchiveItem;
-
-    if (actionType === 'delete') {
-        if (window.mailArchiveDB) {
-            window.mailArchiveDB = window.mailArchiveDB.filter(item => item.id !== id);
-            if(document.getElementById('email-list-view') && !document.getElementById('email-list-view').classList.contains('hidden')) {
-                window.openEmailArchive(); 
-            }
-        }
-        const domItem = document.getElementById(id);
-        if (domItem) domItem.remove();
-        
-        if (window.showToast) window.showToast("Deleted", "File removed.", "", "");
-        
-    } else if (actionType === 'copy') {
-        navigator.clipboard.writeText(content).then(() => {
-            if (window.showToast) window.showToast("Copied", "Copied to clipboard.", "", "");
-        });
-    } else if (actionType === 'save') {
-        if (window.showToast) window.showToast("Saved", "File saved to device.", "", "");
-    }
-    
-    window.closeArchiveActionMenu();
-};
