@@ -1442,7 +1442,43 @@ window.handleCountryChange = function(sel) {
 };
    window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
-window.smartArchive = function() { const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none'; let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`; archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); };
+window.smartArchive = function() { 
+    const archiveList = document.getElementById('archive-list'); 
+    const emptyMsg = document.getElementById('empty-archive'); 
+    if(emptyMsg) emptyMsg.style.display = 'none'; 
+    
+    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; 
+    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
+    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; 
+    
+    let date = new Date().toLocaleDateString(); 
+    let uniqueId = 'archive_item_' + Date.now(); // Создаем уникальный ID для удаления
+    
+    let archiveItem = document.createElement('div'); 
+    archiveItem.id = uniqueId; // Присваиваем ID блоку
+    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; 
+    
+    // Вставляем структуру с новой кнопкой (3 точки)
+    archiveItem.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]">
+                <i class="fa-solid fa-file-zipper"></i>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-white font-bold text-sm">Backup: ${chatName}</span>
+                <span class="text-[#8696a0] text-xs">${date} • Database</span>
+            </div>
+        </div>
+        <button onclick="window.openArchiveActionMenu('${uniqueId}', 'Backup: ${chatName}', 'Текст бэкапа')" class="text-[#8696a0] hover:text-white transition p-2 text-lg">
+            <i class="fa-solid fa-ellipsis-vertical"></i>
+        </button>
+    `; 
+    
+    archiveList.prepend(archiveItem); 
+    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
+    window.closeTrashModal(); 
+    window.switchTab(5); 
+};
 window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { db.ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
 window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
 window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
@@ -1823,6 +1859,29 @@ window.participants = [aiBot];
     </div>
     <button onclick="this.parentElement.style.display='none'" class="mt-4 text-[#00a884] font-bold text-[0.65rem] uppercase tracking-widest hover:text-white transition">Not Now</button>
     <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#00a884]"></div>
+</div>
+    <div id="archive-action-modal" class="fixed inset-0 z-[10015] hidden items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity" onclick="if(event.target===this) window.closeArchiveActionMenu();">
+    <div id="archive-action-content" class="bg-[#202c33] w-full max-w-md rounded-t-2xl p-5 transform translate-y-full transition-transform duration-300 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-[#2a3942]">
+        <div class="w-12 h-1.5 bg-[#8696a0]/30 rounded-full mx-auto mb-4"></div>
+        <h3 id="action-modal-title" class="text-white font-bold text-center mb-5 truncate">Действие с файлом</h3>
+
+        <div class="flex flex-col gap-2">
+            <button onclick="window.archiveAction('save')" class="flex items-center gap-4 bg-[#111b21] p-4 rounded-xl text-white hover:bg-[#2a3942] transition">
+                <i class="fa-solid fa-download text-[#00a884] text-xl w-6 text-center"></i>
+                <span class="font-bold text-sm">Save (Сохранить)</span>
+            </button>
+
+            <button onclick="window.archiveAction('copy')" class="flex items-center gap-4 bg-[#111b21] p-4 rounded-xl text-white hover:bg-[#2a3942] transition">
+                <i class="fa-solid fa-copy text-blue-400 text-xl w-6 text-center"></i>
+                <span class="font-bold text-sm">Copy Text (Скопировать)</span>
+            </button>
+
+            <button onclick="window.archiveAction('delete')" class="flex items-center gap-4 bg-[#111b21] p-4 rounded-xl text-[#f15c6d] hover:bg-[#2a3942] transition border border-[#f15c6d]/20">
+                <i class="fa-solid fa-trash-can text-xl w-6 text-center"></i>
+                <span class="font-bold text-sm">Delete (Удалить)</span>
+            </button>
+        </div>
+    </div>
 </div>
 </body>
 </html>
