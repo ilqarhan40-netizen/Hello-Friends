@@ -838,3 +838,17 @@ window.buyCorporateEmail = function() {
 
     window.closeEmailStore();
 };
+// Активация баннера для iOS
+document.addEventListener('DOMContentLoaded', () => {
+    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isIos && !isStandalone) {
+        setTimeout(() => {
+            const banner = document.getElementById('ios-install-banner');
+            if (banner) {
+                banner.classList.remove('hidden');
+                banner.style.display = 'flex';
+            }
+        }, 4000); 
+    }
+});
