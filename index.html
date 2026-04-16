@@ -8,9 +8,11 @@
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
+ <meta name="apple-mobile-web-app-title" content="Hello Friends">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=HF&background=00a884&color=fff&size=192">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script> (function(){ emailjs.init("_iFSpvIKpRoNrFh_e"); })(); </script>
@@ -1718,7 +1720,7 @@ window.participants = [aiBot];
                 <div class="w-full flex items-center bg-[#202c33] border border-[#2a3942] rounded-lg overflow-hidden focus-within:border-[#00a884] transition shadow-inner">
                     <input type="text" id="new-email-prefix" placeholder="ceo, sales, ivan..." class="bg-transparent text-white p-3 w-full outline-none text-sm font-bold text-right placeholder-[#8696a0]/50" autocomplete="off">
                     <div class="bg-[#2a3942] text-[#8696a0] p-3 text-sm font-bold select-none">
-                        @universal.com
+                        @hellofriends.app
                     </div>
                 </div>
 
@@ -1803,5 +1805,24 @@ window.participants = [aiBot];
             }
         }, 1500);
     </script>
+    <div id="ios-install-banner" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#111b21] border-2 border-[#00a884] text-white p-5 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[10005] hidden flex-col items-center text-center w-[92%] max-w-sm">
+    <div class="w-12 h-12 bg-[#00a884] rounded-full flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(0,168,132,0.5)]">
+        <i class="fa-brands fa-apple text-2xl text-[#111b21]"></i>
+    </div>
+    <p class="text-sm font-bold mb-1 uppercase tracking-tight">Official Web App</p>
+    <p class="text-[0.7rem] text-[#8696a0] mb-4">To use Hello Friends as an official app on your iPhone:</p>
+    <div class="text-xs text-left w-full text-[#e9edef] bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
+        <p class="mb-3 flex items-center gap-3">
+            <span class="w-5 h-5 bg-[#00a884] rounded-full flex items-center justify-center text-[10px] font-bold text-[#111b21]">1</span>
+            <span>Tap the <b>Share</b> icon <i class="fa-solid fa-arrow-up-from-bracket text-blue-400 mx-1"></i> in Safari.</span>
+        </p>
+        <p class="flex items-center gap-3">
+            <span class="w-5 h-5 bg-[#00a884] rounded-full flex items-center justify-center text-[10px] font-bold text-[#111b21]">2</span>
+            <span>Select <b>"Add to Home Screen"</b> <i class="fa-solid fa-square-plus text-[#8696a0] mx-1"></i>.</span>
+        </p>
+    </div>
+    <button onclick="this.parentElement.style.display='none'" class="mt-4 text-[#00a884] font-bold text-[0.65rem] uppercase tracking-widest hover:text-white transition">Not Now</button>
+    <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#00a884]"></div>
+</div>
 </body>
 </html>
