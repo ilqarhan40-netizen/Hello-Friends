@@ -609,12 +609,12 @@ if (window.OneSignalDeferred) {
                 <a class="nav-item" onclick="window.switchTab(3)"><i class="fa-solid fa-briefcase"></i><span data-i18n="cv">CV</span></a>
                 <a class="nav-item" onclick="window.switchTab(4)"><i class="fa-solid fa-hashtag"></i><span data-i18n="social">Social</span></a>
             </div>
-            
-            <div class="rhombus-wrapper">
+     <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
-               <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+                    
+                    <select id="plus-mic-lang" onchange="window.saveRoomMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
                         <option value="auto" selected>🤖 Auto (Profile)</option>
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ru-RU">🇷🇺 Русский</option>
@@ -629,23 +629,34 @@ if (window.OneSignalDeferred) {
                         <option value="ja-JP">🇯🇵 日本語</option>
                         <option value="zh-CN">🇨🇳 中文</option>
                     </select>
-           <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
-    <i class="fa-solid fa-video"></i>
-</div>
 
-<div class="action-icon text-[#a29bfe] hover:text-white" onclick="window.showMyQR(); window.closeAllMenus();" title="My QR Code">
-    <i class="fa-solid fa-qrcode"></i>
-</div>
+                    <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
+                        <i class="fa-solid fa-video"></i>
+                    </div>
 
-<div class="action-icon" onclick="window.openEmailModal(); window.closeAllMenus();" title="Send Email">
-    <i class="fa-solid fa-envelope"></i>
-</div>
+                    <div class="action-icon text-[#a29bfe] hover:text-white" onclick="window.showMyQR(); window.closeAllMenus();" title="My QR Code">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
 
-<div class="action-icon" onclick="window.openLocationModal(); window.closeAllMenus();" title="Location">
-    <i class="fa-solid fa-location-dot"></i>
-</div>
+                    <div class="action-icon" onclick="if(window.openEmailModal) window.openEmailModal(); window.closeAllMenus();" title="Send Email">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
 
-<div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
+                    <div class="action-icon" onclick="if(window.openLocationModal) window.openLocationModal(); window.closeAllMenus();" title="Location">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+
+                    <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="if(window.openMainArchive) window.openMainArchive(); window.closeAllMenus();" title="Archive">
+                        <i class="fa-solid fa-box-archive"></i>
+                    </div>
+
+                    <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeAllMenus();" title="Clear Chat">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div> <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
                 <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2>
@@ -653,9 +664,6 @@ if (window.OneSignalDeferred) {
                     <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.actionArchiveChat()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button>
                     <button class="btn-primary !bg-[#b45309] !text-white" onclick="window.actionClearHistory()"><i class="fa-solid fa-eraser mr-2"></i> Clear History</button>
                     <button class="btn-primary !bg-red-600 !text-white" onclick="window.actionDeleteForever()"><i class="fa-solid fa-trash-can mr-2"></i> Delete Forever</button>
-                </div>
-            </div>
-        </div>
                 </div>
             </div>
         </div>
