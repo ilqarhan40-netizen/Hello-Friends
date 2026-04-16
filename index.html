@@ -1700,7 +1700,6 @@ window.participants = [aiBot];
             </div>
         </div>
     </div>
-
 <div id="email-store-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity" onclick="if(event.target===this) window.closeEmailStore();">
         <div class="bg-[#111b21] w-[90%] max-w-sm rounded-2xl border border-[#2a3942] shadow-2xl overflow-hidden flex flex-col transform transition-transform scale-95" onclick="event.stopPropagation();">
             
@@ -1742,16 +1741,6 @@ window.participants = [aiBot];
         </div>
     </div>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA SW Registered!', reg.scope))
-                    .catch(err => console.log('PWA SW Failed!', err));
-            });
-        }
-    </script>
-
     <div id="qr-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
         <div class="app-modal-content flex flex-col items-center text-center">
             <div class="close-sheet-btn" onclick="document.getElementById('qr-modal').classList.remove('active')">
@@ -1775,7 +1764,63 @@ window.participants = [aiBot];
         </div>
     </div>
 
+    <div id="ios-install-banner" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#111b21] border-2 border-[#00a884] text-white p-5 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[10005] hidden flex-col items-center text-center w-[92%] max-w-sm">
+        <div class="w-12 h-12 bg-[#00a884] rounded-full flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(0,168,132,0.5)]">
+            <i class="fa-brands fa-apple text-2xl text-[#111b21]"></i>
+        </div>
+        <p class="text-sm font-bold mb-1 uppercase tracking-tight">Official Web App</p>
+        <p class="text-[0.7rem] text-[#8696a0] mb-4">To use Hello Friends as an official app on your iPhone:</p>
+        <div class="text-xs text-left w-full text-[#e9edef] bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
+            <p class="mb-3 flex items-center gap-3">
+                <span class="w-5 h-5 bg-[#00a884] rounded-full flex items-center justify-center text-[10px] font-bold text-[#111b21]">1</span>
+                <span>Tap the <b>Share</b> icon <i class="fa-solid fa-arrow-up-from-bracket text-blue-400 mx-1"></i> in Safari.</span>
+            </p>
+            <p class="flex items-center gap-3">
+                <span class="w-5 h-5 bg-[#00a884] rounded-full flex items-center justify-center text-[10px] font-bold text-[#111b21]">2</span>
+                <span>Select <b>"Add to Home Screen"</b> <i class="fa-solid fa-square-plus text-[#8696a0] mx-1"></i>.</span>
+            </p>
+        </div>
+        <button onclick="this.parentElement.style.display='none'" class="mt-4 text-[#00a884] font-bold text-[0.65rem] uppercase tracking-widest hover:text-white transition">Not Now</button>
+        <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#00a884]"></div>
+    </div>
+
+    <div id="archive-action-modal" class="fixed inset-0 z-[10015] hidden items-end justify-center bg-black/20 transition-opacity" onclick="if(event.target===this) window.closeArchiveActionMenu();">
+        <div id="archive-action-content" class="bg-[#202c33] w-full max-w-md rounded-t-[20px] p-3 pb-5 transform translate-y-full transition-transform duration-300 shadow-[0_-15px_40px_rgba(0,0,0,0.4)] border-t border-[#2a3942]">
+            
+            <div class="w-8 h-1 bg-[#8696a0]/40 rounded-full mx-auto mb-2"></div>
+            
+            <h3 id="action-modal-title" class="text-white font-bold text-center text-[0.8rem] mb-2 truncate px-2" data-i18n="file_action">File Action</h3>
+
+            <div class="flex flex-col gap-1.5">
+                <button onclick="window.archiveAction('save')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
+                    <i class="fa-solid fa-download text-[#00a884] text-base w-5 text-center"></i>
+                    <span class="font-bold text-[0.75rem]" data-i18n="save_btn">Save</span>
+                </button>
+
+                <button onclick="window.archiveAction('copy')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
+                    <i class="fa-solid fa-copy text-blue-400 text-base w-5 text-center"></i>
+                    <span class="font-bold text-[0.75rem]" data-i18n="copy_btn">Copy Text</span>
+                </button>
+
+                <button onclick="window.archiveAction('delete')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-[#f15c6d] hover:bg-[#2a3942] transition border border-[#f15c6d]/20">
+                    <i class="fa-solid fa-trash-can text-base w-5 text-center"></i>
+                    <span class="font-bold text-[0.75rem]" data-i18n="delete_btn">Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('PWA SW Registered!', reg.scope))
+                    .catch(err => console.log('PWA SW Failed!', err));
+            });
+        }
+
+        // Email Store Functions
         window.closeEmailStore = function() {
             const modal = document.getElementById('email-store-modal');
             if(modal) {
@@ -1784,17 +1829,20 @@ window.participants = [aiBot];
             }
         };
 
+        // QR Code Functions
         window.showMyQR = function() {
             const appUrl = "https://hello-friends-p8p3i7.web.app"; 
             const qrImg = document.getElementById('qr-image');
             const qrModal = document.getElementById('qr-modal');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
-            qrModal.classList.add('active');
+            if(qrImg && qrModal) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
+                qrModal.classList.add('active');
+            }
         };
 
         window.downloadQR = function() {
             const qrImg = document.getElementById('qr-image');
-            if (!qrImg.src) return;
+            if (!qrImg || !qrImg.src) return;
             const link = document.createElement('a');
             link.href = qrImg.src;
             link.download = 'Hello_Friends_QR.png'; 
@@ -1803,55 +1851,12 @@ window.participants = [aiBot];
             document.body.removeChild(link);
         };
 
+        // Init Conference
         setTimeout(function() {
             if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
                 window.initConference();
             }
         }, 1500);
     </script>
-    <div id="ios-install-banner" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#111b21] border-2 border-[#00a884] text-white p-5 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-[10005] hidden flex-col items-center text-center w-[92%] max-w-sm">
-    <div class="w-12 h-12 bg-[#00a884] rounded-full flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(0,168,132,0.5)]">
-        <i class="fa-brands fa-apple text-2xl text-[#111b21]"></i>
-    </div>
-    <p class="text-sm font-bold mb-1 uppercase tracking-tight">Official Web App</p>
-    <p class="text-[0.7rem] text-[#8696a0] mb-4">To use Hello Friends as an official app on your iPhone:</p>
-    <div class="text-xs text-left w-full text-[#e9edef] bg-[#202c33] p-4 rounded-2xl border border-[#2a3942]">
-        <p class="mb-3 flex items-center gap-3">
-            <span class="w-5 h-5 bg-[#00a884] rounded-full flex items-center justify-center text-[10px] font-bold text-[#111b21]">1</span>
-            <span>Tap the <b>Share</b> icon <i class="fa-solid fa-arrow-up-from-bracket text-blue-400 mx-1"></i> in Safari.</span>
-        </p>
-        <p class="flex items-center gap-3">
-            <span class="w-5 h-5 bg-[#00a884] rounded-full flex items-center justify-center text-[10px] font-bold text-[#111b21]">2</span>
-            <span>Select <b>"Add to Home Screen"</b> <i class="fa-solid fa-square-plus text-[#8696a0] mx-1"></i>.</span>
-        </p>
-    </div>
-    <button onclick="this.parentElement.style.display='none'" class="mt-4 text-[#00a884] font-bold text-[0.65rem] uppercase tracking-widest hover:text-white transition">Not Now</button>
-    <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#00a884]"></div>
-</div>
-<div id="archive-action-modal" class="fixed inset-0 z-[10015] hidden items-end justify-center bg-black/20 transition-opacity" onclick="if(event.target===this) window.closeArchiveActionMenu();">
-    <div id="archive-action-content" class="bg-[#202c33] w-full max-w-md rounded-t-[20px] p-3 pb-5 transform translate-y-full transition-transform duration-300 shadow-[0_-15px_40px_rgba(0,0,0,0.4)] border-t border-[#2a3942]">
-        
-        <div class="w-8 h-1 bg-[#8696a0]/40 rounded-full mx-auto mb-2"></div>
-        
-        <h3 id="action-modal-title" class="text-white font-bold text-center text-[0.8rem] mb-2 truncate px-2" data-i18n="file_action">File Action</h3>
-
-        <div class="flex flex-col gap-1.5">
-            <button onclick="window.archiveAction('save')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
-                <i class="fa-solid fa-download text-[#00a884] text-base w-5 text-center"></i>
-                <span class="font-bold text-[0.75rem]" data-i18n="save_btn">Save</span>
-            </button>
-
-            <button onclick="window.archiveAction('copy')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
-                <i class="fa-solid fa-copy text-blue-400 text-base w-5 text-center"></i>
-                <span class="font-bold text-[0.75rem]" data-i18n="copy_btn">Copy Text</span>
-            </button>
-
-            <button onclick="window.archiveAction('delete')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-[#f15c6d] hover:bg-[#2a3942] transition border border-[#f15c6d]/20">
-                <i class="fa-solid fa-trash-can text-base w-5 text-center"></i>
-                <span class="font-bold text-[0.75rem]" data-i18n="delete_btn">Delete</span>
-            </button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
