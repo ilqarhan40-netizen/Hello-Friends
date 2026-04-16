@@ -237,7 +237,6 @@ window.handleNewMessage = async function(snapshot) {
 
     let finalTranslatedText = data.text; 
 
-    // 1. ПЕРЕВОД ДЛЯ ВСЕХ СООБЩЕНИЙ
     if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
             if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
@@ -257,7 +256,6 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    // 2. ПЛЕЕР С ГОЛОСОМ
     if (data.isAIAudio) {
         let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
         let mainText = isMe ? data.originalText : finalTranslatedText; 
@@ -595,10 +593,10 @@ window.startUniversalMic = async function(mode) {
     try { rec.start(); } catch(e){}
 };
 
-window.mailArchiveDB = [
-    { id: 1, from: 'investor@siliconvalley.com', subject: 'Investment Proposal for Universal App', text: 'Hello Team,\n\nWe are very impressed with the real-time translation features of your Babylon ecosystem. We would like to schedule a video conference next week to discuss funding.\n\nBest regards,\nJohn', date: '10:30 AM', unread: true },
-    { id: 2, from: 'support@mailgun.com', subject: 'Domain Verification Complete', text: 'Your domain hellofriends@app.gmail.com has been successfully linked to the archive module. All incoming emails will now be routed here.', date: 'Yesterday', unread: false }
-];
+// ==========================================
+// МОДУЛЬ: ПОЧТОВЫЙ АРХИВ
+// ==========================================
+window.mailArchiveDB = [];
 
 window.updateArchiveBadge = function() {
     const unreadCount = window.mailArchiveDB.filter(mail => mail.unread).length;
@@ -669,16 +667,16 @@ window.openEmailArchive = function() {
         let textBold = email.unread ? 'text-white font-bold' : 'text-[#e9edef]';
 
         listContainer.innerHTML += `
-            <div class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer hover:border-blue-400 transition shadow-sm ${bgClass} mb-2" onclick="window.viewSpecificEmail(${email.id})">
+            <div class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer hover:border-blue-400 transition shadow-sm ${bgClass} mb-2" onclick="window.viewSpecificEmail('${email.id}')">
                 <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#8696a0]">
                     <i class="fa-solid fa-at"></i>
                 </div>
                 <div class="flex flex-col flex-1 overflow-hidden">
                     <div class="flex justify-between items-center w-full">
-                        <span class="text-xs text-[#8696a0] truncate max-w-[70%]">${email.from}</span>
-                        <span class="text-[0.65rem] text-[#8696a0]">${email.date}</span>
+                        <span class="text-xs text-[#8696a0] truncate max-w-[70%]">${email.from || email.sender || 'Unknown'}</span>
+                        <span class="text-[0.65rem] text-[#8696a0]">${email.date || ''}</span>
                     </div>
-                    <span class="${textBold} text-sm truncate w-full mt-0.5">${email.subject}</span>
+                    <span class="${textBold} text-sm truncate w-full mt-0.5">${email.subject || 'No Subject'}</span>
                 </div>
                 ${unreadDot}
             </div>
@@ -687,16 +685,18 @@ window.openEmailArchive = function() {
 };
 
 window.viewSpecificEmail = function(id) {
-    const email = window.mailArchiveDB.find(e => e.id === id);
+    const email = window.mailArchiveDB.find(e => String(e.id) === String(id));
     if (!email) return;
 
     email.unread = false;
     window.updateArchiveBadge(); 
 
-    document.getElementById('email-read-subject').innerText = email.subject;
-    document.getElementById('email-read-from').innerText = email.from;
-    document.getElementById('email-read-date').innerText = email.date;
-    document.getElementById('email-read-body').innerText = email.text;
+    document.getElementById('email-read-subject').innerText = email.subject || 'No Subject';
+    document.getElementById('email-read-from').innerText = email.from || email.sender || 'Unknown';
+    document.getElementById('email-read-date').innerText = email.date || '';
+    
+    let bodyText = email.text || email.body || email.plainBody || 'Empty message';
+    document.getElementById('email-read-body').innerHTML = bodyText.replace(/\n/g, '<br>');
 
     document.getElementById('email-list-view').classList.add('hidden');
     document.getElementById('email-reader-view').classList.remove('hidden');
@@ -714,9 +714,6 @@ window.closeEmailArchive = function() {
     document.getElementById('archive-modal').classList.remove('active');
 };
 
-// ==========================================
-// ЖИВОЙ СЛУШАТЕЛЬ ПОЧТОВОГО АРХИВА (FIREBASE)
-// ==========================================
 window.initMailArchiveRealtime = function() {
     const mailRef = firebase.database().ref('mailArchive');
 
@@ -724,15 +721,26 @@ window.initMailArchiveRealtime = function() {
         const newMail = snapshot.val();
         if (!newMail) return;
 
-        const exists = window.mailArchiveDB.some(m => m.timestamp === newMail.timestamp);
+        const exists = window.mailArchiveDB.some(m => m.id === snapshot.key);
         if (!exists) {
+            let mailDate = newMail.date || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
             window.mailArchiveDB.unshift({
                 id: snapshot.key,
+                unread: true,
+                date: mailDate,
                 ...newMail
             });
+            
             window.updateArchiveBadge();
+            
+            const listContainer = document.getElementById('email-list-view');
+            if (listContainer && !listContainer.classList.contains('hidden')) {
+                window.openEmailArchive();
+            }
+
             if (window.showToast) {
-                window.showToast("New Email", newMail.subject, "https://ui-avatars.com/api/?name=Mail&background=00a884&color=fff", "");
+                window.showToast("New Email", newMail.subject || "New message", "https://ui-avatars.com/api/?name=Mail&background=00a884&color=fff", "");
             }
             if (window.sndMsg) window.sndMsg.play().catch(e=>{});
         }
@@ -741,6 +749,5 @@ window.initMailArchiveRealtime = function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(window.updateArchiveBadge, 1000);
-    // Запускаем прослушку реальной почты при старте!
     setTimeout(window.initMailArchiveRealtime, 2000);
 });
