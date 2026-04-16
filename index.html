@@ -1456,45 +1456,7 @@ window.handleCountryChange = function(sel) {
 };
    window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
         
-window.smartArchive = function() { 
-    const archiveList = document.getElementById('archive-list'); 
-    const emptyMsg = document.getElementById('empty-archive'); 
-    if(emptyMsg) emptyMsg.style.display = 'none'; 
-    
-    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; 
-    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
-    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; 
-    
-    let date = new Date().toLocaleDateString(); 
-    let uniqueId = 'archive_item_' + Date.now(); // Создаем уникальный ID для удаления
-    
-    let archiveItem = document.createElement('div'); 
-    archiveItem.id = uniqueId; // Присваиваем ID блоку
-    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; 
-    
-    // Вставляем структуру с новой кнопкой (3 точки)
-    archiveItem.innerHTML = `
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]">
-                <i class="fa-solid fa-file-zipper"></i>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-white font-bold text-sm">Backup: ${chatName}</span>
-                <span class="text-[#8696a0] text-xs">${date} • Database</span>
-            </div>
-        </div>
-        <button onclick="window.openArchiveActionMenu('${uniqueId}', 'Backup: ${chatName}', 'Текст бэкапа')" class="text-[#8696a0] hover:text-white transition p-2 text-lg">
-            <i class="fa-solid fa-ellipsis-vertical"></i>
-        </button>
-    `; 
-    
-    archiveList.prepend(archiveItem); 
-    window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
-    window.closeTrashModal(); 
-    window.switchTab(5); 
-};
-window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { db.ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
-window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
+
 window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
 window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
 
@@ -1538,15 +1500,7 @@ const i18n = {
     ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "ビデオ", cv: "履歴書", social: "ソーシャル", profile: "プロフィール", wallet: "ウォレット", theme: "テーマ", export: "出力", import: "入力", logout: "ログアウト", delete_acc: "アカウント削除", welcome_empty: "Hello Friendsへようこそ！", global_smart_net: "グローバルスマートネットワーク", app_creator_greet: "Hello Friendsの作成者", reg_title: "ようこそ！", reg_subtitle: "登録を完了する", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_save: "保存", edit_title: "プロフィール", edit_subtitle: "基本情報", global_chat: "グローバルチャット", news: "ニュース", contacts: "連絡先", msg_placeholder: "メッセージ...", voice_room_title: "ボイスルーム", waiting_voice: "音声入力を待っています...", select_contact: "連絡先を選択", conference_title: "会議", meet_msg_placeholder: "会議メッセージ...", global_talents: "グローバルタレント", edit_my_cv: "履歴書を編集", prof_cv: "プロフェッショナル履歴書", business_contacts: "ビジネスの連絡先詳細", profession: "職業", languages_spoken: "言語", business_location: "勤務地", select_country: "国を選択", business_phone: "ビジネス電話", business_email: "ビジネスメール", core_skills: "コアスキル", work_exp: "職歴", education: "教育", about_cv: "私について（履歴書）", save_cv: "履歴書を保存", social_hub: "ソーシャルハブ", invite_whatsapp: "WhatsAppで招待", cloud_repo: "クラウド リポジトリ", docs: "ドキュメント", media: "メディア", saved_backups: "保存されたバックアップ", repo_empty: "リポジトリは空です。", global_search: "グローバル検索", search_placeholder: "人、スキル、ウェブを検索...", global_news: "グローバルニュース", news_breaking: "最新ニュース", news_tech: "ITとテクノロジー", news_crypto: "暗号通貨", news_sports: "スポーツ", people_skills: "人物とスキル", search_web: "ウェブ検索", about_me: "私について", lang_placeholder: "例: English, 日本語...", bio_placeholder: "あなたについて教えてください...", skills_placeholder: "例: JavaScript, デザイン...", exp_placeholder: "2020 - 現在: 会社...", edu_placeholder: "コンピュータサイエンスの学士号...", cv_bio_placeholder: "プロフェッショナルサマリー...", cv_empty: "このユーザーはまだ履歴書を記入していません。", call_user: "電話をかける", voice_msg_ai: "音声メッセージ (AI)", voice_text: "音声テキスト", chat_lang: "チャット言語", attach_file: "ファイルを添付", attach_photo: "写真/画像", attach_loc: "場所を共有", attach_doc: "ドキュメント", ai_trans_active: "AI翻訳システムが有効...", corporate_email: "企業メール", store: "ストア", email_desc: "Universalアカウントにリンクされたプロフェッショナルなメールアドレスで目立ちましょう。", email_placeholder: "ceo, sales, ivan...", price: "価格:", lifetime: "/ 永久", purchase_now: "今すぐ購入" },
     zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "视频", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出", import: "导入", logout: "登出", delete_acc: "删除帐户", welcome_empty: "欢迎来到 Hello Friends！", global_smart_net: "全球智能网络", app_creator_greet: "Hello Friends 创建者", reg_title: "欢迎！", reg_subtitle: "完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话号码", reg_email: "电子邮件", reg_save: "保存", edit_title: "我的资料", edit_subtitle: "基本信息", global_chat: "全球聊天", news: "新闻", contacts: "联系人", msg_placeholder: "信息...", voice_room_title: "语音室", waiting_voice: "等待语音输入...", select_contact: "选择联系人", conference_title: "会议", meet_msg_placeholder: "会议信息...", global_talents: "全球人才", edit_my_cv: "编辑我的简历", prof_cv: "专业简历", business_contacts: "商业联系方式", profession: "职业", languages_spoken: "语言", business_location: "营业地点", select_country: "选择国家", business_phone: "商业电话", business_email: "商业电邮", core_skills: "核心技能", work_exp: "工作经验", education: "教育", about_cv: "关于我 (简历)", save_cv: "保存简历", social_hub: "社交中心", invite_whatsapp: "通过 WhatsApp 邀请", cloud_repo: "云存储库", docs: "文件", media: "媒体", saved_backups: "保存的备份", repo_empty: "存储库为空。", global_search: "全球搜索", search_placeholder: "寻找人、技能、网络...", global_news: "全球新闻", news_breaking: "突发新闻", news_tech: "IT与科技", news_crypto: "加密货币", news_sports: "体育", people_skills: "人员与技能", search_web: "搜索网络", about_me: "关于我", lang_placeholder: "例如: English, 中文...", bio_placeholder: "介绍一下你自己...", skills_placeholder: "例如: JavaScript, 设计...", exp_placeholder: "2020 - 至今: 公司...", edu_placeholder: "计算机科学学士...", cv_bio_placeholder: "专业摘要...", cv_empty: "该用户尚未填写简历。", call_user: "打电话", voice_msg_ai: "语音信息 (AI)", voice_text: "语音文本", chat_lang: "聊天语言", attach_file: "附加文件", attach_photo: "照片 / 图像", attach_loc: "分享位置", attach_doc: "文件", ai_trans_active: "AI翻译系统已激活...", corporate_email: "企业邮箱", store: "商店", email_desc: "使用链接到您 Universal 帐户的专业电子邮件地址脱颖而出。", email_placeholder: "ceo, sales, ivan...", price: "价格:", lifetime: "/ 终身", purchase_now: "立即购买" }
 };
-            let sysLang = navigator.language.slice(0, 2); let defLang = i18n[sysLang] ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
-            
-            window.changeAppLanguage = function(langCode) { 
-                window.appLang = langCode; 
-                localStorage.setItem('hf_app_lang', window.appLang); 
-                window.applyTranslations(); 
-                window.closeDropdown(); 
-            };
-            
+        
             window.applyTranslations = function() { 
                 const dict = i18n[window.appLang] || i18n['en']; 
                 
@@ -1879,22 +1833,22 @@ window.participants = [aiBot];
         
         <div class="w-8 h-1 bg-[#8696a0]/40 rounded-full mx-auto mb-2"></div>
         
-        <h3 id="action-modal-title" class="text-white font-bold text-center text-[0.8rem] mb-2 truncate px-2">Действие с файлом</h3>
+        <h3 id="action-modal-title" class="text-white font-bold text-center text-[0.8rem] mb-2 truncate px-2" data-i18n="file_action">File Action</h3>
 
         <div class="flex flex-col gap-1.5">
             <button onclick="window.archiveAction('save')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
                 <i class="fa-solid fa-download text-[#00a884] text-base w-5 text-center"></i>
-                <span class="font-bold text-[0.75rem]">Save (Сохранить)</span>
+                <span class="font-bold text-[0.75rem]" data-i18n="save_btn">Save</span>
             </button>
 
             <button onclick="window.archiveAction('copy')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
                 <i class="fa-solid fa-copy text-blue-400 text-base w-5 text-center"></i>
-                <span class="font-bold text-[0.75rem]">Copy Text (Скопировать)</span>
+                <span class="font-bold text-[0.75rem]" data-i18n="copy_btn">Copy Text</span>
             </button>
 
             <button onclick="window.archiveAction('delete')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-[#f15c6d] hover:bg-[#2a3942] transition border border-[#f15c6d]/20">
                 <i class="fa-solid fa-trash-can text-base w-5 text-center"></i>
-                <span class="font-bold text-[0.75rem]">Delete (Удалить)</span>
+                <span class="font-bold text-[0.75rem]" data-i18n="delete_btn">Delete</span>
             </button>
         </div>
     </div>
