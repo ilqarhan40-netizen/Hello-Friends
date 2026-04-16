@@ -400,8 +400,10 @@ window.smartArchive = function() {
     let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
     if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
     let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); 
+    let uniqueId = 'archive_item_' + Date.now();
+    archiveItem.id = uniqueId;
     archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
-    archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`;
+    archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><button onclick="window.openArchiveActionMenu('${uniqueId}', 'Backup: ${chatName}', 'Текст бэкапа')" class="text-[#8696a0] hover:text-white transition p-2 text-lg"><i class="fa-solid fa-ellipsis-vertical"></i></button>`;
     archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5);
 };
 
@@ -661,24 +663,31 @@ window.openEmailArchive = function() {
         return;
     }
 
+    // НОВЫЙ КОД ОТРИСОВКИ С ТРЕМЯ ТОЧКАМИ
     window.mailArchiveDB.forEach(email => {
-        let unreadDot = email.unread ? `<div class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>` : ``;
+        let unreadDot = email.unread ? `<div class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] shrink-0"></div>` : ``;
         let bgClass = email.unread ? 'bg-[#202c33] border-[#3b82f6]/30' : 'bg-[#111b21] border-[#2a3942] opacity-80';
         let textBold = email.unread ? 'text-white font-bold' : 'text-[#e9edef]';
+        let safeText = (email.text || email.body || '').replace(/\n/g, '\\n').replace(/'/g, "\\'");
 
         listContainer.innerHTML += `
-            <div class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer hover:border-blue-400 transition shadow-sm ${bgClass} mb-2" onclick="window.viewSpecificEmail('${email.id}')">
-                <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#8696a0]">
-                    <i class="fa-solid fa-at"></i>
-                </div>
-                <div class="flex flex-col flex-1 overflow-hidden">
-                    <div class="flex justify-between items-center w-full">
-                        <span class="text-xs text-[#8696a0] truncate max-w-[70%]">${email.from || email.sender || 'Unknown'}</span>
-                        <span class="text-[0.65rem] text-[#8696a0]">${email.date || ''}</span>
+            <div id="${email.id}" class="flex items-center justify-between p-3 rounded-xl border hover:border-blue-400 transition shadow-sm ${bgClass} mb-2">
+                <div class="flex items-center gap-3 flex-1 overflow-hidden cursor-pointer" onclick="window.viewSpecificEmail('${email.id}')">
+                    <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#8696a0]">
+                        <i class="fa-solid fa-at"></i>
                     </div>
-                    <span class="${textBold} text-sm truncate w-full mt-0.5">${email.subject || 'No Subject'}</span>
+                    <div class="flex flex-col flex-1 overflow-hidden">
+                        <div class="flex justify-between items-center w-full">
+                            <span class="text-xs text-[#8696a0] truncate max-w-[70%]">${email.from || email.sender || 'Unknown'}</span>
+                            <span class="text-[0.65rem] text-[#8696a0] pr-2">${email.date || ''}</span>
+                        </div>
+                        <span class="${textBold} text-sm truncate w-full mt-0.5">${email.subject || 'No Subject'}</span>
+                    </div>
+                    ${unreadDot}
                 </div>
-                ${unreadDot}
+                <button onclick="event.stopPropagation(); window.openArchiveActionMenu('${email.id}', '${email.subject}', '${safeText}')" class="text-[#8696a0] hover:text-white transition p-2 text-lg shrink-0 ml-1">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
             </div>
         `;
     });
@@ -795,7 +804,7 @@ window.buyCorporateEmail = function() {
     }
 
     const price = 0.01;
-    const domain = "@universal.com";
+    const domain = "@hellofriends.app";
     const fullEmail = prefixInput + domain;
     
     // 1. Проигрываем звук кассы
@@ -817,11 +826,11 @@ window.buyCorporateEmail = function() {
         
         let mailBody = "";
         if (currentLang === 'ru') {
-            mailBody = `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Universal.`;
+            mailBody = `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Hello Friends.`;
         } else if (currentLang === 'az') {
-            mailBody = `Salam, ${window.myUsername || 'User'}.\n\nYeni korporativ ünvanınız aktivdir: ${fullEmail}\n\nMəbləğ: $0.01\nÖdəniş: Daxili pul kisəsi\n\nUniversal-a xoş gəlmisiniz.`;
+            mailBody = `Salam, ${window.myUsername || 'User'}.\n\nYeni korporativ ünvanınız aktivdir: ${fullEmail}\n\nMəbləğ: $0.01\nÖdəniş: Daxili pul kisəsi\n\nHello Friends-ə xoş gəlmisiniz.`;
         } else {
-            mailBody = `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to the Universal Ecosystem.`;
+            mailBody = `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to Hello Friends.`;
         }
 
         let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -829,7 +838,7 @@ window.buyCorporateEmail = function() {
             id: 'sys_' + Date.now(),
             unread: true,
             date: mailDate,
-            from: 'billing@universal.com',
+            from: 'billing@hellofriends.app',
             subject: mailSubject,
             text: mailBody
         });
@@ -838,6 +847,7 @@ window.buyCorporateEmail = function() {
 
     window.closeEmailStore();
 };
+
 // Активация баннера для iOS
 document.addEventListener('DOMContentLoaded', () => {
     const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
@@ -852,3 +862,61 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 4000); 
     }
 });
+
+// ==========================================
+// ЛОГИКА МЕНЮ АРХИВА (SAVE, COPY, DELETE)
+// ==========================================
+window.currentArchiveItem = null;
+
+window.openArchiveActionMenu = function(itemId, itemTitle, itemContent) {
+    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    
+    document.getElementById('action-modal-title').innerText = itemTitle || "Действие с файлом";
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    setTimeout(() => {
+        contentBox.classList.remove('translate-y-full');
+    }, 10);
+};
+
+window.closeArchiveActionMenu = function() {
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    
+    contentBox.classList.add('translate-y-full');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        window.currentArchiveItem = null;
+    }, 300);
+};
+
+window.archiveAction = function(actionType) {
+    if (!window.currentArchiveItem) return;
+    const { id, title, content } = window.currentArchiveItem;
+
+    if (actionType === 'delete') {
+        if (window.mailArchiveDB) {
+            window.mailArchiveDB = window.mailArchiveDB.filter(item => item.id !== id);
+            if(document.getElementById('email-list-view') && !document.getElementById('email-list-view').classList.contains('hidden')) {
+                window.openEmailArchive(); 
+            }
+        }
+        const domItem = document.getElementById(id);
+        if (domItem) domItem.remove();
+        
+        if (window.showToast) window.showToast("Deleted", "File removed.", "", "");
+        
+    } else if (actionType === 'copy') {
+        navigator.clipboard.writeText(content).then(() => {
+            if (window.showToast) window.showToast("Copied", "Copied to clipboard.", "", "");
+        });
+    } else if (actionType === 'save') {
+        if (window.showToast) window.showToast("Saved", "File saved to device.", "", "");
+    }
+    
+    window.closeArchiveActionMenu();
+};
