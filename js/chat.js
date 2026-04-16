@@ -232,13 +232,12 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // ДИНАМИЧЕСКИЙ ПЕРЕХВАТ
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg);
     let senderLang = data.langCode || 'auto'; 
 
     let finalTranslatedText = data.text; 
 
-    // 1. ПЕРЕВОД ДЛЯ ВСЕХ СООБЩЕНИЙ (Без запрета на аудио)
+    // 1. ПЕРЕВОД ДЛЯ ВСЕХ СООБЩЕНИЙ
     if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
         if (window.currentRoomId !== 'global' || isHistory) {
             if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
@@ -398,18 +397,25 @@ window.handleNewMessage = async function(snapshot) {
     }
 };
 
-// =======================
-// УПРАВЛЕНИЕ ЧАТОМ (КОРЗИНА И АРХИВ)
-// =======================
-
-window.openTrashModal = function() {
-    if(window.closeDropdown) window.closeDropdown();
-    document.getElementById('trash-modal').classList.add('active');
+window.smartArchive = function() {
+    const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none';
+    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
+    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
+    let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); 
+    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
+    archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`;
+    archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5);
 };
 
-window.closeTrashModal = function() {
-    document.getElementById('trash-modal').classList.remove('active');
+window.smartClear = function() {
+    if(confirm("Are you sure you want to clear chat history?")) {
+        const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = '';
+        if(window.currentRoomId) { firebase.database().ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); }
+        window.closeTrashModal();
+    }
 };
+
+window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
 
 window.actionArchiveChat = function() {
     window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
@@ -437,9 +443,6 @@ window.actionDeleteForever = function() {
     }
 };
 
-// =======================
-// EMOJI И СЛУШАТЕЛИ ВВОДА
-// =======================
 window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
@@ -451,9 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('conf-chat-input')?.addEventListener('keypress', e => { if(e.key === 'Enter') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); } });
 });
 
-// =======================
-// ПАНЕЛЬ ЯЗЫКОВ И МИКРОФОН
-// =======================
 window.openPersonalLangModal = function() {
     if (window.closeDropdown) window.closeDropdown();
     const listContainer = document.getElementById('personal-lang-list');
@@ -595,10 +595,6 @@ window.startUniversalMic = async function(mode) {
     try { rec.start(); } catch(e){}
 };
 
-// =======================
-// АРХИВ, ПАПКИ И ИНДИКАТОР ПОЧТЫ
-// =======================
-
 window.mailArchiveDB = [
     { id: 1, from: 'investor@siliconvalley.com', subject: 'Investment Proposal for Universal App', text: 'Hello Team,\n\nWe are very impressed with the real-time translation features of your Babylon ecosystem. We would like to schedule a video conference next week to discuss funding.\n\nBest regards,\nJohn', date: '10:30 AM', unread: true },
     { id: 2, from: 'support@mailgun.com', subject: 'Domain Verification Complete', text: 'Your domain hellofriends@app.gmail.com has been successfully linked to the archive module. All incoming emails will now be routed here.', date: 'Yesterday', unread: false }
@@ -646,7 +642,8 @@ window.openMainArchive = function() {
     const title = document.getElementById('archive-modal-title');
     if (title) title.innerHTML = `<i class="fa-solid fa-box-archive text-[#00a884] mr-2"></i> Data Center`;
 
-    document.getElementById('email-modal').classList.add('active');
+    // ИСПРАВЛЕНО: теперь открывает правильное окно archive-modal
+    document.getElementById('archive-modal').classList.add('active');
     window.updateArchiveBadge(); 
 };
 
@@ -715,7 +712,8 @@ window.backToEmailList = function() {
 };
 
 window.closeEmailArchive = function() {
-    document.getElementById('email-modal').classList.remove('active');
+    // ИСПРАВЛЕНО: теперь закрывает правильное окно archive-modal
+    document.getElementById('archive-modal').classList.remove('active');
 };
 
 document.addEventListener('DOMContentLoaded', () => {
