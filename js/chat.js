@@ -6,14 +6,14 @@ window.changeAppLanguage = function(langCode) {
     localStorage.setItem('hf_app_lang', langCode); 
     
     if (langCode === 'auto') {
-        let smartLang = 'en'; // По умолчанию
+        let smartLang = null; // Никакого английского по умолчанию!
         
-        // Включаем умное автоопределение по ПРОФИЛЮ
-        if (window.myProfileInfo && (window.myProfileInfo.phone || window.myProfileInfo.flagCode)) {
+        // 1. УМНОЕ ОПРЕДЕЛЕНИЕ ПО ПРОФИЛЮ
+        if (window.myProfileInfo) {
             let phone = window.myProfileInfo.phone || "";
             let flag = window.myProfileInfo.flagCode || "un";
             
-            // 1. Наивысший приоритет: ПРЕФИКС ТЕЛЕФОНА
+            // Приоритет А: Префикс телефона
             if (phone.startsWith('+7')) smartLang = 'ru';
             else if (phone.startsWith('+994')) smartLang = 'az';
             else if (phone.startsWith('+39')) smartLang = 'it';
@@ -25,31 +25,34 @@ window.changeAppLanguage = function(langCode) {
             else if (phone.startsWith('+351')) smartLang = 'pt';
             else if (phone.startsWith('+1') || phone.startsWith('+44')) smartLang = 'en';
             else if (phone.startsWith('+971')) smartLang = 'ar';
-            // 2. Если префикс неизвестен — смотрим на ФЛАГ
-            else {
+            // Приоритет Б: Флаг страны (если номер не указан)
+            else if (flag !== 'un') {
                 const flagToLang = {
                     'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
                     'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
                 };
                 if (flagToLang[flag]) smartLang = flagToLang[flag];
             }
-        } else {
-            // Если это пустой гость без профиля — смотрим на язык его браузера
+        }
+        
+        // 2. Если профиля еще нет (гость), берем язык его телефона/браузера
+        if (!smartLang) {
             smartLang = navigator.language.slice(0, 2);
         }
         
-        // Применяем найденный язык ко всей экосистеме
-        window.appLang = (typeof i18n !== 'undefined' && i18n[smartLang]) ? smartLang : 'en';
+        // Назначаем найденный язык (и страхуемся: если в словаре i18n его нет, ставим базовый)
+        window.appLang = (typeof window.i18n !== 'undefined' && window.i18n[smartLang]) ? smartLang : 'en';
+        
     } else {
-        // Если юзер жестко выбрал язык вручную (не Auto)
+        // Если юзер выбрал конкретный язык вручную в меню
         window.appLang = langCode; 
     }
     
-    // Обновляем все тексты на экране
+    // Применяем переводы на экран
     if (typeof window.applyTranslations === 'function') window.applyTranslations(); 
     if (typeof window.closeDropdown === 'function') window.closeDropdown(); 
     
-    // Меняем галочку в меню
+    // Обновляем галочку в селекте меню
     const langSelect = document.getElementById('app-lang-select'); 
     if (langSelect) langSelect.value = langCode;
 };
