@@ -453,23 +453,36 @@ if (window.OneSignalDeferred) {
                 <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('text')"><i class="fa-solid fa-microphone mic-opt-text"></i> <span data-i18n="voice_text">Voice Text</span></button>
             </div>
 
-            <div id="message" class="page-content active h-full flex flex-col relative z-10">
-                <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition" onclick="window.switchChatRoom('global')">
-                        <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title" data-i18n="global_chat">Global Chat</span></span>
-                        <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
-                    </div>
-                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News"><i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm" data-i18n="news">News</span></button>
-                  <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition relative z-50" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg pointer-events-none"></i><span class="pointer-events-none" data-i18n="contacts">Contacts</span></button>
-                </div>
-                
-                <div class="chat-info-marquee-container">
-                    <button onclick="window.toggleMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Auto-Translate"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
-                    <div id="typing-marquee-container" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
-                        <span class="chat-info-marquee-text" id="chat-info-marquee" data-i18n="ai_trans_active">AI Translation System Active...</span>
-                    </div>
-                </div>
-
+       <div id="message" class="page-content active h-full flex flex-col relative z-10">
+        
+        <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
+            
+            <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition flex-1 min-w-0 mr-4" onclick="window.switchChatRoom('global')">
+                <span class="text-white font-bold flex items-center gap-2 w-full truncate">
+                    <i class="fa-solid fa-globe text-[#00a884] text-xl shrink-0"></i> 
+                    <span id="chat-header-title" data-i18n="global_chat" class="truncate">Global Chat</span>
+                </span>
+                <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5 w-full truncate" id="chat-header-room">ID: global</span>
+            </div>
+            
+            <div class="flex items-center gap-4 shrink-0 whitespace-nowrap">
+                <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News">
+                    <i class="fa-regular fa-newspaper text-lg text-blue-400"></i> 
+                    <span class="text-sm" data-i18n="news">News</span>
+                </button>
+                <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition relative z-50" onclick="window.openContactsModal()">
+                    <i class="fa-solid fa-users text-lg pointer-events-none"></i>
+                    <span class="pointer-events-none" data-i18n="contacts">Contacts</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-info-marquee-container">
+            <button onclick="window.toggleMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10" title="Toggle Auto-Translate"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+            <div id="typing-marquee-container" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
+                <span class="chat-info-marquee-text" id="chat-info-marquee" data-i18n="ai_trans_active">AI Translation System Active...</span>
+            </div>
+        </div>
                 <div class="flex h-full overflow-hidden w-full bg-[#0b141a]">
                     <div class="chat-sidebar" id="chat-sidebar"></div>
                     <div class="flex flex-col flex-grow h-full overflow-hidden relative">
