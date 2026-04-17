@@ -87,6 +87,9 @@ window.getLangPref = function(isVoice, isConf) {
 window.renderSidebar = function() {
     const chatSidebar = document.getElementById('chat-sidebar'); 
     if (!chatSidebar) return;
+    const welcomeImg = document.getElementById('welcome-user-photo');
+    if (welcomeImg && window.myProfileInfo && window.myProfileInfo.photo) { welcomeImg.src = window.myProfileInfo.photo; }
+
     let sidebarHTML = `
         <div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')">
             <div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div>
@@ -149,7 +152,10 @@ window.switchChatRoom = function(targetId) {
     const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
     window.renderSidebar();
     window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
+    
+    if (window.syncMicLangUI) setTimeout(window.syncMicLangUI, 150);
 };
+
 
 // ==========================================
 // 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
@@ -237,8 +243,6 @@ window.handleNewMessage = async function(snapshot) {
         let textPreview = data.text; 
         if(data.isAIAudio) textPreview = "🤖 AI Voice Message"; 
         if(data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo"; 
-        if(data.isLocation) textPreview = "📍 Shared Location"; 
-        if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
         if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) window.showToast("Message | " + senderDisplayName, textPreview, p.photo, "");
     }
 
@@ -284,10 +288,6 @@ window.handleNewMessage = async function(snapshot) {
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
         bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; 
     }
-    else if (data.isLocation) { 
-        bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
-        bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
-    }
 
     if (!data.isVoiceRoomMsg && !data.isConfMsg) {
         msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
@@ -301,10 +301,11 @@ window.handleNewMessage = async function(snapshot) {
         const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
         
         let manualLang = window.getLangPref(false, false);
-        if (manualLang && revLangMap[manualLang.substring(0,2)]) myFanFlag = revLangMap[manualLang.substring(0,2)];
+        if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
 
         if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
-            processedLangs.add(myReadLang.substring(0,2)); targetUsers.push({ code: myReadLang, flag: myFanFlag, photo: window.myProfileInfo.photo });
+            processedLangs.add(myReadLang.substring(0,2));
+            targetUsers.push({ code: myReadLang, flag: myFanFlag, photo: window.myProfileInfo.photo });
         }
 
         window.participants.filter(part => part.id !== 'ai').forEach(member => {
@@ -365,7 +366,6 @@ window.handleNewMessage = async function(snapshot) {
             if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
                 let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText; let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
                 vMarquee.innerHTML = `<div class="flex items-center"><img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm"><span class="text-white font-bold mr-1">${senderName}:</span><span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]"><span class="text-white font-bold mr-1">${receiverName}:</span><span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span></div>`;
-                vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
             }
         });
     }
@@ -391,15 +391,13 @@ window.handleNewMessage = async function(snapshot) {
                 .then(resData => {
                     let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
                     listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
-                    listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
                 }).catch(e => console.log('Meet Translate Error'));
         });
     }
 };
 
-
 // ==========================================
-// 4. МЕНЮ ФАЙЛОВ АРХИВА, ТРЕШ И ПОЧТА
+// 4. МЕНЮ ФАЙЛОВ АРХИВА И ПОЧТА
 // ==========================================
 
 window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
@@ -459,7 +457,7 @@ window.smartArchive = function() {
     
     let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
     if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; 
-    else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
+    else if (window.currentRoomId && window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
     
     let date = new Date().toLocaleDateString(); 
     let uniqueId = 'item_' + Date.now();
@@ -478,15 +476,15 @@ window.smartArchive = function() {
                 <span class="text-[#8696a0] text-xs">${date} • Database</span>
             </div>
         </div>
-        <button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'backup')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 ml-2 relative z-[100]">
+        <button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'backup')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 relative z-[100]">
             <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
         </button>
     `;
     
     if(archiveList) archiveList.prepend(archiveItem); 
     if (window.showToast) window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
-    window.closeTrashModal(); 
-    window.switchTab(5);
+    if (window.closeTrashModal) window.closeTrashModal(); 
+    if (window.switchTab) window.switchTab(5);
 };
 
 window.openTrashModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('trash-modal')?.classList.add('active'); };
@@ -510,6 +508,112 @@ window.actionDeleteForever = function() {
         window.closeTrashModal();
         if (window.currentRoomId !== 'global') window.switchChatRoom('global');
     }
+};
+
+window.mailArchiveDB = window.mailArchiveDB || [];
+
+window.updateArchiveBadge = function() {
+    const unreadCount = window.mailArchiveDB.filter(mail => mail.unread).length;
+    const badge = document.getElementById('archive-unread-badge'); 
+    if (badge) {
+        if (unreadCount > 0) { badge.classList.remove('hidden'); } 
+        else { badge.classList.add('hidden'); }
+    }
+};
+
+window.openMainArchive = function() {
+    if (window.closeDropdown) window.closeDropdown();
+    const listContainer = document.getElementById('email-list-view');
+    if (!listContainer) return;
+    const categories = [
+        { id: 'mail', name: 'Mail (Inbox)', icon: 'fa-envelope', color: 'text-blue-400', count: window.mailArchiveDB.filter(m => m.unread).length },
+        { id: 'video', name: 'Video Files', icon: 'fa-video', color: 'text-red-400', count: 0 },
+        { id: 'files', name: 'General Files', icon: 'fa-file', color: 'text-yellow-400', count: 0 },
+        { id: 'docs', name: 'Documents', icon: 'fa-file-lines', color: 'text-green-400', count: 0 }
+    ];
+    let html = `<div class="grid grid-cols-2 gap-3 p-2 w-full">`;
+    categories.forEach(cat => {
+        let badgeHtml = cat.count > 0 ? `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full border-2 border-[#202c33] shadow-md">${cat.count}</span>` : '';
+        html += `<div onclick="window.openArchiveFolder('${cat.id}')" class="relative bg-[#202c33] border border-[#2a3942] p-4 rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-[#00a884] transition cursor-pointer shadow-sm min-h-[100px]"><i class="fa-solid ${cat.icon} text-3xl ${cat.color}"></i><span class="text-white text-[0.65rem] font-bold uppercase tracking-wider text-center mt-1">${cat.name}</span>${badgeHtml}</div>`;
+    });
+    html += `</div>`;
+    listContainer.innerHTML = html;
+    document.getElementById('email-list-view').classList.remove('hidden');
+    document.getElementById('email-reader-view').classList.add('hidden');
+    const title = document.getElementById('archive-modal-title');
+    if (title) title.innerHTML = `<i class="fa-solid fa-box-archive text-[#00a884] mr-2"></i> Data Center`;
+    document.getElementById('archive-modal').classList.add('active');
+    window.updateArchiveBadge(); 
+};
+
+window.openArchiveFolder = function(folderId) {
+    if (folderId === 'mail') { window.openEmailArchive(); } 
+    else { if(window.showToast) window.showToast("Folder Status", "This folder is currently empty.", "", ""); }
+};
+
+window.openEmailArchive = function() {
+    const title = document.getElementById('archive-modal-title');
+    if (title) title.innerHTML = `<button onclick="window.openMainArchive()" class="text-[#8696a0] hover:text-white mr-3 transition"><i class="fa-solid fa-arrow-left"></i></button><i class="fa-solid fa-envelope-open-text text-blue-400 mr-2"></i> Mail Archive`;
+    const listContainer = document.getElementById('email-list-view');
+    listContainer.innerHTML = '';
+    if (window.mailArchiveDB.length === 0) {
+        listContainer.innerHTML = `<div class="text-center text-[#8696a0] mt-10"><i class="fa-solid fa-inbox text-4xl mb-3 opacity-50"></i><br>Archive is empty</div>`;
+        return;
+    }
+    window.renderEmailArchive();
+};
+
+window.renderEmailArchive = function() {
+    const listContainer = document.getElementById('email-list-view');
+    if (!listContainer) return;
+    listContainer.innerHTML = '';
+    if (window.mailArchiveDB.length === 0) {
+        listContainer.innerHTML = '<p class="text-center text-[#8696a0] text-sm mt-4">Data Center is empty.</p>';
+        return;
+    }
+    window.mailArchiveDB.forEach(email => {
+        let unreadDot = email.unread ? `<div class="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] shrink-0"></div>` : ``;
+        let bgClass = email.unread ? 'bg-[#202c33] border-[#3b82f6]/30' : 'bg-[#111b21] border-[#2a3942] opacity-80';
+        let textBold = email.unread ? 'text-white font-bold' : 'text-[#e9edef]';
+        let safeSubject = (email.subject || 'No Subject').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        listContainer.innerHTML += `
+            <div id="${email.id}" class="flex items-center justify-between p-3 rounded-xl border hover:border-blue-400 transition shadow-sm ${bgClass} mb-2 relative">
+                <div class="flex items-center gap-3 flex-1 overflow-hidden cursor-pointer" onclick="window.viewSpecificEmail('${email.id}')">
+                    <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#8696a0]"><i class="fa-solid fa-at"></i></div>
+                    <div class="flex flex-col flex-1 overflow-hidden">
+                        <div class="flex justify-between items-center w-full"><span class="text-xs text-[#8696a0] truncate max-w-[70%]">${email.from || email.sender || 'Unknown'}</span><span class="text-[0.65rem] text-[#8696a0] pr-2">${email.date || ''}</span></div>
+                        <span class="${textBold} text-sm truncate w-full mt-0.5">${safeSubject}</span>
+                    </div>
+                    ${unreadDot}
+                </div>
+                <button onclick="window.openArchiveActionMenu(event, '${email.id}', '${safeSubject}', 'email')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 ml-1 relative z-[100]">
+                    <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
+                </button>
+            </div>
+        `;
+    });
+};
+
+window.viewSpecificEmail = function(id) {
+    const email = window.mailArchiveDB.find(e => String(e.id) === String(id));
+    if (!email) return;
+    email.unread = false;
+    window.updateArchiveBadge(); 
+    document.getElementById('email-read-subject').innerText = email.subject || 'No Subject';
+    document.getElementById('email-read-from').innerText = email.from || email.sender || 'Unknown';
+    document.getElementById('email-read-date').innerText = email.date || '';
+    let bodyText = email.text || email.body || email.plainBody || 'Empty message';
+    document.getElementById('email-read-body').innerHTML = bodyText.replace(/\n/g, '<br>');
+    document.getElementById('email-list-view').classList.add('hidden');
+    document.getElementById('email-reader-view').classList.remove('hidden');
+    document.getElementById('email-reader-view').classList.add('flex');
+};
+
+window.backToEmailList = function() {
+    window.openEmailArchive(); 
+    document.getElementById('email-reader-view').classList.add('hidden');
+    document.getElementById('email-reader-view').classList.remove('flex');
+    document.getElementById('email-list-view').classList.remove('hidden');
 };
 
 window.buyCorporateEmail = function() {
@@ -547,6 +651,7 @@ window.buyCorporateEmail = function() {
     }
     if (window.closeEmailStore) window.closeEmailStore();
 };
+
 
 // ==========================================
 // 5. ПАНЕЛЬ ЯЗЫКОВ И МИКРОФОН
@@ -619,29 +724,6 @@ window.syncMicLangUI = function() {
     if (sel) { sel.value = saved; }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        let micSel = document.getElementById('plus-mic-lang');
-        if (micSel) { micSel.addEventListener('change', function() { window.saveRoomMicLang(this.value); }); }
-    }, 1000);
-});
-
-if (!window.micSyncHooked) {
-    const origSwitchTabMic = window.switchTab;
-    window.switchTab = function(index) {
-        if (origSwitchTabMic) origSwitchTabMic(index);
-        setTimeout(window.syncMicLangUI, 100);
-    };
-    const origSwitchChatMic = window.switchChatRoom;
-    window.switchChatRoom = function(targetId) {
-        if (origSwitchChatMic) origSwitchChatMic(targetId);
-        setTimeout(window.syncMicLangUI, 100);
-    };
-    window.micSyncHooked = true;
-}
-
-window.autoSetMicLang = function() { window.syncMicLangUI(); };
-
 window.startUniversalMic = async function(mode) {
     window.speechRecognizedText = "";
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -703,8 +785,7 @@ window.startUniversalMic = async function(mode) {
             text: textToShip, originalText: window.speechRecognizedText, 
             sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, 
             photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, 
-            flagCode: window.myProfileInfo.flagCode, 
-            langCode: sourceTranslateLang,
+            flagCode: window.myProfileInfo.flagCode, langCode: sourceTranslateLang,
             isVoiceRoomMsg: isVoice, isConfMsg: isConf 
         };
 
@@ -719,13 +800,14 @@ window.startUniversalMic = async function(mode) {
 };
 
 // ==========================================
-// 6. EMOJI И ОТПРАВКА КЛАВИШЕЙ ENTER
+// 6. КЛАВИША ENTER И ИЗОЛЯЦИЯ КОМНАТ
 // ==========================================
 window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
 
+// НАДЕЖНАЯ ОТПРАВКА ЧЕРЕЗ ENTER
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         const activeId = document.activeElement ? document.activeElement.id : null;
@@ -733,4 +815,18 @@ document.addEventListener('keydown', (e) => {
         else if (activeId === 'voice-chat-input') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); }
         else if (activeId === 'conf-chat-input') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); }
     }
+});
+
+// ИЗОЛЯЦИЯ МИКРОФОНОВ
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (window.switchTab) {
+            const origSwitchTab = window.switchTab;
+            window.switchTab = function(index) { origSwitchTab(index); setTimeout(window.syncMicLangUI, 150); };
+        }
+        if (window.switchChatRoom) {
+            const origSwitchChat = window.switchChatRoom;
+            window.switchChatRoom = function(targetId) { origSwitchChat(targetId); setTimeout(window.syncMicLangUI, 150); };
+        }
+    }, 1500);
 });
