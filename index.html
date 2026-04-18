@@ -403,20 +403,21 @@ if (window.OneSignalDeferred) {
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
                     <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
-             <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
-                        <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
-                        <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
-                        <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
-                        <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
-                        <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
-                        <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
-                        <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
-                        <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
-                        <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
-                        <option value="pt" class="bg-[#111b21]">🇵🇹 Português</option>
-                        <option value="ja" class="bg-[#111b21]">🇯🇵 日本語</option>
-                        <option value="zh" class="bg-[#111b21]">🇨🇳 中文</option>
-                    </select>
+          <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
+                <option value="auto" class="bg-[#111b21] text-[#00a884]">🤖 Auto (Profile)</option>
+                <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
+                <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
+                <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
+                <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
+                <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
+                <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
+                <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
+                <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
+                <option value="pt" class="bg-[#111b21]">🇵🇹 Português</option>
+                <option value="ja" class="bg-[#111b21]">🇯🇵 日本語</option>
+                <option value="zh" class="bg-[#111b21]">🇨🇳 中文</option>
+            </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-xs pointer-events-none"></i>
                 </div>
                 <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
@@ -451,13 +452,15 @@ if (window.OneSignalDeferred) {
             </div>
 
             <div id="message" class="page-content active h-full flex flex-col relative z-10">
-                <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition" onclick="window.switchChatRoom('global')">
-                        <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title" data-i18n="global_chat">Global Chat</span></span>
+              <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition overflow-hidden pr-2" onclick="window.switchChatRoom('global')">
+                        <span class="text-white font-bold flex items-center gap-2 truncate"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title" data-i18n="global_chat">Global Chat</span></span>
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
-                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News"><i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm" data-i18n="news">News</span></button>
-                  <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition relative z-50" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg pointer-events-none"></i><span class="pointer-events-none" data-i18n="contacts">Contacts</span></button>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <button class="text-white font-bold flex items-center gap-1.5 hover:text-blue-400 transition whitespace-nowrap" onclick="window.openNewsFast()" title="World News"><i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm" data-i18n="news">News</span></button>
+                        <button class="text-[#8696a0] font-bold flex items-center gap-1.5 hover:text-white transition relative z-50 whitespace-nowrap" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg pointer-events-none"></i><span class="pointer-events-none" data-i18n="contacts">Contacts</span></button>
+                    </div>
                 </div>
                 
                 <div class="chat-info-marquee-container">
@@ -585,17 +588,18 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-            <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
+       <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
                 <div class="page-container">
                     <div class="flex justify-between items-center px-2 mb-6 mt-2">
-                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Cloud Repository</span></h2>
+                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Data Center</span></h2>
                         <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 mb-6 px-1">
-                        <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition shadow-lg"><i class="fa-solid fa-folder-open text-3xl text-[#a29bfe] mb-2"></i><span class="text-white font-bold text-sm" data-i18n="docs">Documents</span><span class="text-[#8696a0] text-xs">12 Files</span></div>
-                        <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition shadow-lg"><i class="fa-solid fa-photo-film text-3xl text-green-400 mb-2"></i><span class="text-white font-bold text-sm" data-i18n="media">Media</span><span class="text-[#8696a0] text-xs">45 Items</span></div>
+                    <div class="grid grid-cols-3 gap-2 mb-6 px-1">
+                        <div onclick="window.switchArchiveTab('docs')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition shadow-lg text-center"><i class="fa-solid fa-folder-open text-2xl text-[#a29bfe] mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="docs">Docs</span></div>
+                        <div onclick="window.switchArchiveTab('media')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition shadow-lg text-center"><i class="fa-solid fa-photo-film text-2xl text-green-400 mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="media">Media</span></div>
+                        <div onclick="window.switchArchiveTab('mail')" class="bg-[#202c33] p-3 rounded-2xl border border-[#00a884] flex flex-col items-center justify-center cursor-pointer hover:bg-[#00a884]/10 transition shadow-lg text-center relative"><span id="mail-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse hidden"></span><i class="fa-solid fa-envelope text-2xl text-[#00a884] mb-1"></i><span class="text-white font-bold text-[0.7rem]">Mail</span></div>
                     </div>
-                    <h3 class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2" data-i18n="saved_backups">Saved Backups</h3>
+                    <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2">Saved Backups</h3>
                     <div id="archive-list" class="flex flex-col gap-3 px-1 pb-20"><p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4" data-i18n="repo_empty">Repository is empty.</p></div>
                 </div>
             </div>
