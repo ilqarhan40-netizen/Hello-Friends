@@ -394,35 +394,37 @@ if (window.OneSignalDeferred) {
                 <i class="fa-solid fa-ellipsis-vertical" onclick="window.toggleHeaderMenu(event)"></i>
             </div>
             
-         <div id="header-dropdown" class="header-dropdown" onclick="event.stopPropagation();">
+            <div id="header-dropdown" class="header-dropdown" onclick="event.stopPropagation();">
                 <div class="flex justify-between items-center px-1 pb-2 mb-2 border-b border-[#202c33]">
                     <span class="text-white font-bold text-[0.95rem] tracking-wide" data-i18n="menu">Settings</span>
                     <i class="fa-solid fa-xmark text-[#8696a0] hover:text-red-500 cursor-pointer text-2xl transition" onclick="window.closeAllMenus();"></i>
                 </div>
-                
                 <a id="admin-menu-btn" style="display: none; color: #a29bfe;" onclick="window.openAdminModal()"><i class="fa-solid fa-crown w-5"></i> <span>Admin Panel</span></a>
-                
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
-                
-                <a onclick="if(window.openEmailStore) window.openEmailStore(); window.closeAllMenus();"><i class="fa-solid fa-store text-pink-400 w-5"></i> <span>Email Store</span></a>
-
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
                     <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
-                    <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
-                        <option value="auto">🤖 Auto (Profile)</option>
-                        <option value="en">🇬🇧 English</option>
-                        <option value="ru">🇷🇺 Русский</option>
-                        <option value="az">🇦🇿 Azərbaycanca</option>
-                        <option value="tr">🇹🇷 Türkçe</option>
-                    </select>
+          <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
+                <option value="auto" class="bg-[#111b21] text-[#00a884]">🤖 Auto (Profile)</option>
+                <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
+                <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
+                <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
+                <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
+                <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
+                <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
+                <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
+                <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
+                <option value="pt" class="bg-[#111b21]">🇵🇹 Português</option>
+                <option value="ja" class="bg-[#111b21]">🇯🇵 日本語</option>
+                <option value="zh" class="bg-[#111b21]">🇨🇳 中文</option>
+            </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-xs pointer-events-none"></i>
                 </div>
-
                 <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
-                
+                <a onclick="if(window.openEmailStore) window.openEmailStore(); window.closeAllMenus();"><i class="fa-solid fa-store text-[#00a884] w-5"></i> <span>Email Store</span></a>
                 <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
-                
                 <a onclick="window.toggleTheme()"><i class="fa-solid fa-sun text-yellow-400 w-5" id="theme-icon"></i> <span data-i18n="theme">Theme</span></a>
+               
                 
                 <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
                 
@@ -587,8 +589,8 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-    <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
-                <div class="page-container" id="email-list-view">
+       <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
+                <div class="page-container">
                     <div class="flex justify-between items-center px-2 mb-6 mt-2">
                         <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Data Center</span></h2>
                         <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
@@ -600,21 +602,6 @@ if (window.OneSignalDeferred) {
                     </div>
                     <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2">Saved Backups</h3>
                     <div id="archive-list" class="flex flex-col gap-3 px-1 pb-20"><p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4" data-i18n="repo_empty">Repository is empty.</p></div>
-                </div>
-
-                <div class="page-container hidden flex-col h-full bg-[#0b141a]" id="email-reader-view">
-                    <div class="flex justify-between items-center mb-4 pb-2 border-b border-[#202c33] shrink-0">
-                        <div class="flex flex-col">
-                            <span class="text-white font-bold text-lg leading-tight" id="email-read-subject">Subject</span>
-                            <span class="text-[#8696a0] text-xs mt-1" id="email-read-from">From</span>
-                        </div>
-                        <span class="text-[#8696a0] text-[0.65rem] shrink-0" id="email-read-date">00:00</span>
-                    </div>
-                    <div class="text-[#e9edef] text-sm leading-relaxed overflow-y-auto flex-1 pr-2 pb-20" id="email-read-body">
-                        </div>
-                    <button onclick="window.backToEmailList()" class="absolute bottom-4 left-4 right-4 bg-[#202c33] border border-[#2a3942] text-white py-3 rounded-xl font-bold hover:bg-[#2a3942] transition z-50">
-                        <i class="fa-solid fa-arrow-left mr-2"></i> Back to Mailbox
-                    </button>
                 </div>
             </div>
         </main>
