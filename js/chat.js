@@ -405,7 +405,6 @@ window.switchArchiveTab = function(tab) {
     const readerView = document.getElementById('email-reader-view');
     const listView = document.getElementById('email-list-view');
     
-    // Прячем читалку, показываем список
     if (readerView) { readerView.classList.add('hidden'); readerView.classList.remove('flex'); }
     if (listView) listView.classList.remove('hidden');
 
@@ -453,7 +452,6 @@ window.renderEmailArchive = function() {
         list.appendChild(item);
     });
     
-    // Обновляем бейджики
     let unread = window.mailArchiveDB.some(m => m.unread);
     const badgeEl = document.getElementById('mail-badge');
     const archiveMenuBadge = document.getElementById('archive-unread-badge');
@@ -465,13 +463,20 @@ window.viewSpecificEmail = function(id) {
     const email = window.mailArchiveDB.find(e => String(e.id) === String(id));
     if (!email) return;
     email.unread = false;
-    window.renderEmailArchive(); 
+    window.renderEmailArchive();
     
     document.getElementById('email-read-subject').innerText = email.subject || 'No Subject';
     document.getElementById('email-read-from').innerText = email.from || 'Unknown';
     document.getElementById('email-read-date').innerText = email.date || '';
     let bodyText = email.text || email.body || 'Empty message';
     document.getElementById('email-read-body').innerHTML = bodyText.replace(/\n/g, '<br>');
+
+    // Привязываем кнопку "Три точки" внутри открытого письма
+    const actionBtn = document.getElementById('email-read-action-btn');
+    if (actionBtn) {
+        let safeSubject = (email.subject || 'No Subject').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        actionBtn.onclick = (e) => window.openArchiveActionMenu(e, email.id, safeSubject, 'email');
+    }
     
     document.getElementById('email-list-view').classList.add('hidden');
     document.getElementById('email-reader-view').classList.remove('hidden');
@@ -511,14 +516,27 @@ window.closeArchiveActionMenu = function() {
 window.archiveAction = function(actionType) {
     if (!window.currentArchiveItem) return;
     const { id, content } = window.currentArchiveItem;
+    
     if (actionType === 'delete') {
-        if (window.mailArchiveDB) { window.mailArchiveDB = window.mailArchiveDB.filter(item => String(item.id) !== String(id)); if(window.renderEmailArchive) window.renderEmailArchive(); }
+        if (window.mailArchiveDB) { 
+            window.mailArchiveDB = window.mailArchiveDB.filter(item => String(item.id) !== String(id)); 
+            if(window.renderEmailArchive) window.renderEmailArchive(); 
+        }
         const domItem = document.getElementById(id); if (domItem) domItem.remove();
-        if (window.showToast) window.showToast("Deleted", "Item removed", "", "");
+        if (window.showToast) window.showToast("Deleted", "Email permanently removed", "", "");
+        const readerView = document.getElementById('email-reader-view');
+        if (readerView && !readerView.classList.contains('hidden')) { window.backToEmailList(); }
+        
     } else if (actionType === 'copy') {
-        navigator.clipboard.writeText(content).then(() => { if (window.showToast) window.showToast("Copied", "Saved to clipboard", "", ""); });
+        navigator.clipboard.writeText(content).then(() => { if (window.showToast) window.showToast("Copied", "Email text copied to clipboard", "", ""); });
     } else if (actionType === 'save') {
-        if (window.showToast) window.showToast("Saved", "Downloaded successfully", "", "");
+        const blob = new Blob([content], { type: 'text/plain' }); 
+        const url = window.URL.createObjectURL(blob); 
+        const a = document.createElement('a'); 
+        a.href = url; a.download = `Email_${id}.txt`; 
+        document.body.appendChild(a); a.click(); 
+        window.URL.revokeObjectURL(url);
+        if (window.showToast) window.showToast("Saved", "File downloaded to your device", "", "");
     }
     window.closeArchiveActionMenu();
 };
@@ -558,20 +576,31 @@ window.buyCorporateEmail = function() {
     }
     const price = 0.01; const domain = "@hellofriends.app"; const fullEmail = prefixInput + domain;
     if (window.sndCash) { window.sndCash.play().catch(e=>{}); }
+    
     let toastTitle = currentLang === 'ru' ? "Оплата успешна" : (currentLang === 'az' ? "Ödəniş uğurlu oldu" : "Transaction Successful");
     let toastDesc = currentLang === 'ru' ? `Почта <b>${fullEmail}</b> активна.<br>Списано: $${price}` : (currentLang === 'az' ? `E-poçt <b>${fullEmail}</b> aktivdir.<br>Çıxıldı: $${price}` : `Email <b>${fullEmail}</b> activated.<br>Charged: $${price}`);
     if (window.showToast) window.showToast(toastTitle, toastDesc, "https://ui-avatars.com/api/?name=$&background=00a884&color=111b21", "");
     
-    window.mailArchiveDB = window.mailArchiveDB || [];
-    let mailSubject = currentLang === 'ru' ? 'Чек: Корпоративная почта' : (currentLang === 'az' ? 'Qəbz: Korporativ e-poçt' : 'Receipt: Corporate Email');
-    let mailBody = currentLang === 'ru' ? `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Hello Friends.` : (currentLang === 'az' ? `Salam, ${window.myUsername || 'User'}.\n\nYeni korporativ ünvanınız aktivdir: ${fullEmail}\n\nMəbləğ: $0.01\nÖdəniş: Daxili pul kisəsi\n\nHello Friends-ə xoş gəldiniz.` : `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to Hello Friends.`);
-    let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    window.mailArchiveDB.unshift({ id: 'sys_' + Date.now(), unread: true, date: mailDate, from: 'billing@hellofriends.app', subject: mailSubject, text: mailBody });
+    window.receiveIncomingEmail('billing@hellofriends.app', (currentLang === 'ru' ? 'Чек: Корпоративная почта' : 'Receipt: Corporate Email'), (currentLang === 'ru' ? `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Hello Friends.` : `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to Hello Friends.`));
     
-    if (window.renderEmailArchive) window.renderEmailArchive();
     if (window.closeEmailStore) window.closeEmailStore();
 };
 
+window.receiveIncomingEmail = function(fromEmail, subject, text) {
+    window.mailArchiveDB = window.mailArchiveDB || [];
+    let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    let mailId = 'inbox_' + Date.now();
+    
+    window.mailArchiveDB.unshift({ id: mailId, unread: true, date: mailDate, from: fromEmail, subject: subject, text: text });
+    
+    if (window.sndMsg) window.sndMsg.play().catch(e=>{});
+    if (window.showToast) window.showToast("New Email", `From: ${fromEmail}<br>Subject: ${subject}`, "https://ui-avatars.com/api/?name=Inbox&background=3b82f6&color=fff", "");
+    
+    const badge = document.getElementById('archive-unread-badge'); if (badge) badge.classList.remove('hidden');
+    const mailBadge = document.getElementById('mail-badge'); if (mailBadge) mailBadge.classList.remove('hidden');
+    
+    if (window.renderEmailArchive) window.renderEmailArchive();
+};
 
 // ==========================================
 // 5. ПАНЕЛЬ ЯЗЫКОВ И МИКРОФОН
@@ -750,81 +779,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1500);
 });
-// ==========================================
-// ФИНАЛЬНЫЙ ФИКС: ВХОДЯЩАЯ ПОЧТА И ТРИ КНОПКИ
-// ==========================================
-
-// 1. Функция "Приема" письма (вызывай её, когда хочешь симулировать приход почты)
-window.receiveIncomingEmail = function(fromEmail, subject, text) {
-    window.mailArchiveDB = window.mailArchiveDB || [];
-    
-    let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    let mailId = 'inbox_' + Date.now();
-    
-    // Кладем письмо в базу
-    window.mailArchiveDB.unshift({
-        id: mailId,
-        unread: true,
-        date: mailDate,
-        from: fromEmail,
-        subject: subject,
-        text: text
-    });
-
-    // 2. Включаем уведомления (Звук + Тост + Красные точки)
-    if (window.sndMsg) window.sndMsg.play().catch(e=>{});
-    
-    if (window.showToast) {
-        window.showToast("New Email", `From: ${fromEmail}<br>Subject: ${subject}`, "https://ui-avatars.com/api/?name=Inbox&background=3b82f6&color=fff", "");
-    }
-
-    // Зажигаем точки в меню
-    const badge = document.getElementById('archive-unread-badge');
-    if (badge) badge.classList.remove('hidden');
-    
-    const mailBadge = document.getElementById('mail-badge');
-    if (mailBadge) mailBadge.classList.remove('hidden');
-
-    // Если юзер уже в архиве - перерисовываем список
-    if (window.renderEmailArchive) window.renderEmailArchive();
-};
-
-// 3. Исправляем кнопки в меню "Три точки" (Action Menu)
-window.archiveAction = function(actionType) {
-    if (!window.currentArchiveItem) return;
-    const { id, title, content } = window.currentArchiveItem;
-
-    if (actionType === 'delete') {
-        // УДАЛИТЬ
-        if (window.mailArchiveDB) {
-            window.mailArchiveDB = window.mailArchiveDB.filter(item => String(item.id) !== String(id));
-            window.renderEmailArchive(); 
-        }
-        const domItem = document.getElementById(id);
-        if (domItem) domItem.remove();
-        window.showToast("Deleted", "Email permanently removed", "", "");
-        
-    } else if (actionType === 'copy') {
-        // КОПИРОВАТЬ
-        navigator.clipboard.writeText(content).then(() => {
-            window.showToast("Copied", "Email text copied to clipboard", "", "");
-        });
-        
-    } else if (actionType === 'save') {
-        // СОХРАНИТЬ (Скачивание как .txt)
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Email_${id}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        window.showToast("Saved", "File downloaded to your device", "", "");
-    }
-    
-    window.closeArchiveActionMenu();
-};
-
-// ТЕСТОВАЯ КНОПКА (Чтобы ты проверил, как работает твой Gmail)
-// Вызови это в консоли или добавь куда-нибудь: window.receiveIncomingEmail('hellofriendsaap@gmail.com', 'Welcome!', 'Hello! Your messenger mail is working now.');
