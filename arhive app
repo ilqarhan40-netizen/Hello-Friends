@@ -403,23 +403,25 @@ if (window.OneSignalDeferred) {
                 <a onclick="window.openMyProfile()"><i class="fa-solid fa-user text-[#00a884] w-5"></i> <span data-i18n="profile">My Profile</span></a>
                 <div class="flex items-center gap-3 px-2 py-2 rounded-[10px] hover:bg-[#202c33] cursor-pointer transition relative">
                     <i class="fa-solid fa-globe text-blue-400 w-[20px] text-center pointer-events-none"></i>
-             <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
-                        <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
-                        <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
-                        <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
-                        <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
-                        <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
-                        <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
-                        <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
-                        <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
-                        <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
-                        <option value="pt" class="bg-[#111b21]">🇵🇹 Português</option>
-                        <option value="ja" class="bg-[#111b21]">🇯🇵 日本語</option>
-                        <option value="zh" class="bg-[#111b21]">🇨🇳 中文</option>
-                    </select>
+          <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
+                <option value="auto" class="bg-[#111b21] text-[#00a884]">🤖 Auto (Profile)</option>
+                <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
+                <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
+                <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
+                <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
+                <option value="tr" class="bg-[#111b21]">🇹🇷 Türkçe</option>
+                <option value="ar" class="bg-[#111b21]">🇦🇪 العربية</option>
+                <option value="it" class="bg-[#111b21]">🇮🇹 Italiano</option>
+                <option value="es" class="bg-[#111b21]">🇪🇸 Español</option>
+                <option value="fr" class="bg-[#111b21]">🇫🇷 Français</option>
+                <option value="pt" class="bg-[#111b21]">🇵🇹 Português</option>
+                <option value="ja" class="bg-[#111b21]">🇯🇵 日本語</option>
+                <option value="zh" class="bg-[#111b21]">🇨🇳 中文</option>
+            </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-xs pointer-events-none"></i>
                 </div>
                 <a onclick="window.openBankTransferModal()"><i class="fa-solid fa-wallet text-green-500 w-5"></i> <span data-i18n="wallet">Wallet</span></a>
+                <a onclick="if(window.openEmailStore) window.openEmailStore(); window.closeAllMenus();"><i class="fa-solid fa-store text-[#00a884] w-5"></i> <span>Email Store</span></a>
                 <div style="height: 1px; background: var(--wa-border); margin: 4px 0;"></div>
                 <a onclick="window.toggleTheme()"><i class="fa-solid fa-sun text-yellow-400 w-5" id="theme-icon"></i> <span data-i18n="theme">Theme</span></a>
                
@@ -451,13 +453,15 @@ if (window.OneSignalDeferred) {
             </div>
 
             <div id="message" class="page-content active h-full flex flex-col relative z-10">
-                <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition" onclick="window.switchChatRoom('global')">
-                        <span class="text-white font-bold flex items-center gap-2"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title" data-i18n="global_chat">Global Chat</span></span>
+              <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <div class="flex flex-col items-start cursor-pointer hover:opacity-80 transition overflow-hidden pr-2" onclick="window.switchChatRoom('global')">
+                        <span class="text-white font-bold flex items-center gap-2 truncate"><i class="fa-solid fa-globe text-[#00a884] text-xl"></i> <span id="chat-header-title" data-i18n="global_chat">Global Chat</span></span>
                         <span class="text-[#8696a0] text-[0.55rem] font-mono mt-0.5" id="chat-header-room">ID: global</span>
                     </div>
-                    <button class="text-white font-bold flex items-center gap-2 hover:text-blue-400 transition" onclick="window.openNewsFast()" title="World News"><i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm" data-i18n="news">News</span></button>
-                  <button class="text-[#8696a0] font-bold flex items-center gap-2 hover:text-white transition relative z-50" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg pointer-events-none"></i><span class="pointer-events-none" data-i18n="contacts">Contacts</span></button>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <button class="text-white font-bold flex items-center gap-1.5 hover:text-blue-400 transition whitespace-nowrap" onclick="window.openNewsFast()" title="World News"><i class="fa-regular fa-newspaper text-lg text-blue-400"></i> <span class="text-sm" data-i18n="news">News</span></button>
+                        <button class="text-[#8696a0] font-bold flex items-center gap-1.5 hover:text-white transition relative z-50 whitespace-nowrap" onclick="window.openContactsModal()"><i class="fa-solid fa-users text-lg pointer-events-none"></i><span class="pointer-events-none" data-i18n="contacts">Contacts</span></button>
+                    </div>
                 </div>
                 
                 <div class="chat-info-marquee-container">
@@ -585,17 +589,18 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-            <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
+       <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
                 <div class="page-container">
                     <div class="flex justify-between items-center px-2 mb-6 mt-2">
-                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-cloud-arrow-up text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Cloud Repository</span></h2>
+                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Data Center</span></h2>
                         <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 mb-6 px-1">
-                        <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition shadow-lg"><i class="fa-solid fa-folder-open text-3xl text-[#a29bfe] mb-2"></i><span class="text-white font-bold text-sm" data-i18n="docs">Documents</span><span class="text-[#8696a0] text-xs">12 Files</span></div>
-                        <div class="bg-[#202c33] p-4 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition shadow-lg"><i class="fa-solid fa-photo-film text-3xl text-green-400 mb-2"></i><span class="text-white font-bold text-sm" data-i18n="media">Media</span><span class="text-[#8696a0] text-xs">45 Items</span></div>
+                    <div class="grid grid-cols-3 gap-2 mb-6 px-1">
+                        <div onclick="window.switchArchiveTab('docs')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition shadow-lg text-center"><i class="fa-solid fa-folder-open text-2xl text-[#a29bfe] mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="docs">Docs</span></div>
+                        <div onclick="window.switchArchiveTab('media')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition shadow-lg text-center"><i class="fa-solid fa-photo-film text-2xl text-green-400 mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="media">Media</span></div>
+                        <div onclick="window.switchArchiveTab('mail')" class="bg-[#202c33] p-3 rounded-2xl border border-[#00a884] flex flex-col items-center justify-center cursor-pointer hover:bg-[#00a884]/10 transition shadow-lg text-center relative"><span id="mail-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse hidden"></span><i class="fa-solid fa-envelope text-2xl text-[#00a884] mb-1"></i><span class="text-white font-bold text-[0.7rem]">Mail</span></div>
                     </div>
-                    <h3 class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2" data-i18n="saved_backups">Saved Backups</h3>
+                    <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2">Saved Backups</h3>
                     <div id="archive-list" class="flex flex-col gap-3 px-1 pb-20"><p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4" data-i18n="repo_empty">Repository is empty.</p></div>
                 </div>
             </div>
@@ -610,11 +615,12 @@ if (window.OneSignalDeferred) {
                 <a class="nav-item" onclick="window.switchTab(4)"><i class="fa-solid fa-hashtag"></i><span data-i18n="social">Social</span></a>
             </div>
             
-            <div class="rhombus-wrapper">
+        <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
-               <select id="plus-mic-lang" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+                    
+                    <select id="plus-mic-lang" onchange="window.saveRoomMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
                         <option value="auto" selected>🤖 Auto (Profile)</option>
                         <option value="en-US">🇬🇧 English</option>
                         <option value="ru-RU">🇷🇺 Русский</option>
@@ -629,32 +635,33 @@ if (window.OneSignalDeferred) {
                         <option value="ja-JP">🇯🇵 日本語</option>
                         <option value="zh-CN">🇨🇳 中文</option>
                     </select>
-           <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
-    <i class="fa-solid fa-video"></i>
-</div>
 
-<div class="action-icon text-[#a29bfe] hover:text-white" onclick="window.showMyQR(); window.closeAllMenus();" title="My QR Code">
-    <i class="fa-solid fa-qrcode"></i>
-</div>
+                    <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
+                        <i class="fa-solid fa-video"></i>
+                    </div>
 
-<div class="action-icon" onclick="window.openEmailModal(); window.closeAllMenus();" title="Send Email">
-    <i class="fa-solid fa-envelope"></i>
-</div>
+                    <div class="action-icon text-[#a29bfe] hover:text-white" onclick="window.showMyQR(); window.closeAllMenus();" title="My QR Code">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
 
-<div class="action-icon" onclick="window.openLocationModal(); window.closeAllMenus();" title="Location">
-    <i class="fa-solid fa-location-dot"></i>
-</div>
+                    <div class="action-icon" onclick="if(window.openEmailModal) window.openEmailModal(); window.closeAllMenus();" title="Send Email">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
 
-<div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500" onclick="window.switchTab(5); window.closeAllMenus();" title="Archive">
-    <i class="fa-solid fa-box-archive"></i>
-</div>
+                    <div class="action-icon" onclick="if(window.openLocationModal) window.openLocationModal(); window.closeAllMenus();" title="Location">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                        <div class="action-icon text-blue-400 hover:text-white hover:bg-blue-500 relative" onclick="window.switchTab(5); window.closeAllMenus();" title="Data Center">
+                        <span id="archive-unread-badge" class="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse hidden"></span>
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+              
 
-<div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="window.openTrashModal(); window.closeAllMenus();" title="Clear Chat">
-    <i class="fa-solid fa-trash-can"></i>
-</div>
+                    <div class="action-icon text-red-500 hover:text-white hover:bg-red-500" onclick="if(window.openTrashModal) window.openTrashModal(); window.closeAllMenus();" title="Clear Chat">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
                 </div>
             </div>
-        </div>
 
         <div id="attach-modal" class="app-modal" onclick="if(event.target===this) window.closeAttachModal();">
             <div class="app-modal-content">
@@ -989,7 +996,55 @@ if (window.OneSignalDeferred) {
             </div>
         </div>
     </div>
-
+<div id="email-store-modal" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity" onclick="if(event.target===this) window.closeEmailStore();">
+        <div class="bg-[#111b21] w-[90%] max-w-sm rounded-2xl border border-[#2a3942] shadow-2xl overflow-hidden flex flex-col transform transition-transform scale-95" onclick="event.stopPropagation();">
+            <div class="bg-[#202c33] p-4 flex justify-between items-center border-b border-[#2a3942]">
+                <div class="text-white font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-store text-[#00a884]"></i> Store</div>
+                <button onclick="window.closeEmailStore()" class="text-[#8696a0] hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-5 flex flex-col items-center">
+                <div class="w-16 h-16 bg-[#00a884]/20 rounded-full flex items-center justify-center mb-4 border border-[#00a884]/50 shadow-[0_0_15px_rgba(0,168,132,0.2)]">
+                    <i class="fa-solid fa-envelope-circle-check text-3xl text-[#00a884]"></i>
+                </div>
+                <h3 class="text-white font-bold text-center mb-1">Corporate Email</h3>
+                <p class="text-[#8696a0] text-xs text-center mb-5">Stand out with a professional email address linked to your Universal account.</p>
+                <div class="w-full flex items-center bg-[#202c33] border border-[#2a3942] rounded-lg overflow-hidden focus-within:border-[#00a884] transition shadow-inner">
+                    <input type="text" id="new-email-prefix" placeholder="ceo, sales, ivan..." class="bg-transparent text-white p-3 w-full outline-none text-sm font-bold text-right placeholder-[#8696a0]/50" autocomplete="off">
+                    <div class="bg-[#2a3942] text-[#8696a0] p-3 text-sm font-bold select-none">@hellofriends.app</div>
+                </div>
+                <div class="w-full flex justify-between items-center mt-5 mb-2 px-1">
+                    <span class="text-[#8696a0] text-sm">Price:</span>
+                    <span class="text-white font-bold text-xl">$0.01 <span class="text-xs text-[#8696a0] font-normal">/ lifetime</span></span>
+                </div>
+            </div>
+            <div class="p-4 bg-[#202c33] border-t border-[#2a3942]">
+                <button onclick="window.buyCorporateEmail()" class="w-full bg-[#00a884] hover:bg-[#008f6f] text-[#111b21] font-bold py-3 rounded-xl transition shadow-[0_4px_14px_0_rgba(0,168,132,0.39)] flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping"></i> Purchase Now
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="archive-action-modal" class="fixed inset-0 z-[10015] hidden items-end justify-center bg-black/20 transition-opacity" onclick="if(event.target===this) window.closeArchiveActionMenu();">
+        <div id="archive-action-content" class="bg-[#202c33] w-full max-w-md rounded-t-[20px] p-3 pb-5 transform translate-y-full transition-transform duration-300 shadow-[0_-15px_40px_rgba(0,0,0,0.4)] border-t border-[#2a3942]">
+            <div class="w-8 h-1 bg-[#8696a0]/40 rounded-full mx-auto mb-2"></div>
+            <h3 id="action-modal-title" class="text-white font-bold text-center text-[0.8rem] mb-2 truncate px-2" data-i18n="file_action">File Action</h3>
+            <div class="flex flex-col gap-1.5">
+                <button onclick="window.archiveAction('save')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
+                    <i class="fa-solid fa-download text-[#00a884] text-base w-5 text-center pointer-events-none"></i>
+                    <span class="font-bold text-[0.75rem]" data-i18n="save_btn">Save</span>
+                </button>
+                <button onclick="window.archiveAction('copy')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-white hover:bg-[#2a3942] transition">
+                    <i class="fa-solid fa-copy text-blue-400 text-base w-5 text-center pointer-events-none"></i>
+                    <span class="font-bold text-[0.75rem]" data-i18n="copy_btn">Copy Text</span>
+                </button>
+                <button onclick="window.archiveAction('delete')" class="flex items-center gap-2.5 bg-[#111b21] py-2.5 px-3 rounded-xl text-[#f15c6d] hover:bg-[#2a3942] transition border border-[#f15c6d]/20">
+                    <i class="fa-solid fa-trash-can text-base w-5 text-center pointer-events-none"></i>
+                    <span class="font-bold text-[0.75rem]" data-i18n="delete_btn">Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
     <script>
 window.signOutGoogle = function() {
     firebase.auth().signOut().then(() => {
@@ -1403,12 +1458,90 @@ window.handleCountryChange = function(sel) {
     }
 };
    window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
-        
-window.smartArchive = function() { const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none'; let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room"; if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId.startsWith('private_me')) chatName = "My Notes"; let date = new Date().toLocaleDateString(); let archiveItem = document.createElement('div'); archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2"; archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><i class="fa-solid fa-cloud-arrow-down text-[#00a884] cursor-pointer hover:text-white transition" title="Download"></i>`; archiveList.prepend(archiveItem); window.showToast("Archived", "Saved to Cloud Repository", "", ""); window.closeTrashModal(); window.switchTab(5); };
+window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
+    if (e) { e.stopPropagation(); e.preventDefault(); }
+    let itemContent = "Текст файла";
+    if (itemType === 'email' && window.mailArchiveDB) {
+        let mail = window.mailArchiveDB.find(m => String(m.id) === String(itemId));
+        if (mail) itemContent = mail.text || mail.body || "";
+    }
+    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    if (!modal || !contentBox) return;
+    const titleEl = document.getElementById('action-modal-title');
+    if (titleEl) titleEl.innerText = itemTitle || "File Action";
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+    setTimeout(() => { contentBox.classList.remove('translate-y-full'); }, 10);
+};
+
+window.closeArchiveActionMenu = function() {
+    const modal = document.getElementById('archive-action-modal');
+    const contentBox = document.getElementById('archive-action-content');
+    if(contentBox) contentBox.classList.add('translate-y-full');
+    setTimeout(() => { if(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } }, 300);
+};
+
+window.archiveAction = function(actionType) {
+    if (!window.currentArchiveItem) return;
+    const { id, content } = window.currentArchiveItem;
+    if (actionType === 'delete') {
+        if (window.mailArchiveDB) { window.mailArchiveDB = window.mailArchiveDB.filter(item => String(item.id) !== String(id)); if(window.renderEmailArchive) window.renderEmailArchive(); }
+        const domItem = document.getElementById(id); if (domItem) domItem.remove();
+        if (window.showToast) window.showToast("Deleted", "Item removed", "", "");
+    } else if (actionType === 'copy') {
+        navigator.clipboard.writeText(content).then(() => { if (window.showToast) window.showToast("Copied", "Saved to clipboard", "", ""); });
+    } else if (actionType === 'save') {
+        if (window.showToast) window.showToast("Saved", "Downloaded successfully", "", "");
+    }
+    window.closeArchiveActionMenu();
+};
+
+window.smartArchive = function() {
+    const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none';
+    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
+    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId && window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
+    let date = new Date().toLocaleDateString(); let uniqueId = 'item_' + Date.now();
+    let archiveItem = document.createElement('div'); archiveItem.id = uniqueId;
+    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
+    archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'backup')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 relative z-[100]"><i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i></button>`;
+    if(archiveList) archiveList.prepend(archiveItem); 
+    if (window.showToast) window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
+    if (window.closeTrashModal) window.closeTrashModal(); 
+    if (window.switchTab) window.switchTab(5);
+};
 window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { db.ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
 window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
 window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
 window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
+ window.openEmailStore = function() { window.closeDropdown(); const modal = document.getElementById('email-store-modal'); if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); setTimeout(() => { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-95'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-100'); }, 10); } };
+window.closeEmailStore = function() { const modal = document.getElementById('email-store-modal'); if(modal) { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-100'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200); } };
+
+window.buyCorporateEmail = function() {
+    const prefixInput = document.getElementById('new-email-prefix').value.trim().toLowerCase();
+    let currentLang = window.appLang || 'en';
+    if (!prefixInput) {
+        let errorMsg = currentLang === 'ru' ? "Введите желаемое имя!" : (currentLang === 'az' ? "İstədiyiniz adı daxil edin!" : "Please enter a desired name!");
+        if (window.showToast) window.showToast("Error", errorMsg, "", ""); return;
+    }
+    if (/[^a-z0-9.]/.test(prefixInput)) {
+        let errorValid = currentLang === 'ru' ? "Только английские буквы и цифры" : (currentLang === 'az' ? "Yalnız ingilis hərfləri və rəqəmlər" : "Only English letters and numbers");
+        if (window.showToast) window.showToast("Error", errorValid, "", ""); return;
+    }
+    const price = 0.01; const domain = "@hellofriends.app"; const fullEmail = prefixInput + domain;
+    if (window.sndCash) { window.sndCash.play().catch(e=>{}); }
+    let toastTitle = currentLang === 'ru' ? "Оплата успешна" : (currentLang === 'az' ? "Ödəniş uğurlu oldu" : "Transaction Successful");
+    let toastDesc = currentLang === 'ru' ? `Почта <b>${fullEmail}</b> активна.<br>Списано: $${price}` : (currentLang === 'az' ? `E-poçt <b>${fullEmail}</b> aktivdir.<br>Çıxıldı: $${price}` : `Email <b>${fullEmail}</b> activated.<br>Charged: $${price}`);
+    if (window.showToast) window.showToast(toastTitle, toastDesc, "https://ui-avatars.com/api/?name=$&background=00a884&color=111b21", "");
+    
+    window.mailArchiveDB = window.mailArchiveDB || [];
+    let mailSubject = currentLang === 'ru' ? 'Чек: Корпоративная почта' : (currentLang === 'az' ? 'Qəbz: Korporativ e-poçt' : 'Receipt: Corporate Email');
+    let mailBody = currentLang === 'ru' ? `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Hello Friends.` : (currentLang === 'az' ? `Salam, ${window.myUsername || 'User'}.\n\nYeni korporativ ünvanınız aktivdir: ${fullEmail}\n\nMəbləğ: $0.01\nÖdəniş: Daxili pul kisəsi\n\nHello Friends-ə xoş gəldiniz.` : `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to Hello Friends.`);
+    let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    window.mailArchiveDB.unshift({ id: 'sys_' + Date.now(), unread: true, date: mailDate, from: 'billing@hellofriends.app', subject: mailSubject, text: mailBody });
+    if (window.updateArchiveBadge) window.updateArchiveBadge();
+    if (window.closeEmailStore) window.closeEmailStore();
+};       
 
 window.toggleRhombusMenu = function(e) { e.stopPropagation(); const actions = document.getElementById('rhombus-actions'); const btn = document.getElementById('rhombus-btn'); if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } };
 window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
@@ -1624,13 +1757,34 @@ window.participants = [aiBot];
             let rMic = document.getElementById('plus-mic-lang'); 
             if(rMic && !rMic.value) rMic.value = 'auto'; 
         };
-
-            window.switchChatRoom('global');
+window.switchChatRoom('global');
             if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
-         window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
+            
+            // Фикс кнопки ENTER
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const activeId = document.activeElement ? document.activeElement.id : null;
+                    if (activeId === 'chat-input') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); }
+                    else if (activeId === 'voice-chat-input') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); }
+                    else if (activeId === 'conf-chat-input') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); }
+                }
+            });
+
+            // Изоляция микрофона
+            setTimeout(() => {
+                if (window.switchTab) {
+                    const origSwitchTab = window.switchTab;
+                    window.switchTab = function(index) { origSwitchTab(index); setTimeout(window.syncMicLangUI, 150); };
+                }
+                if (window.switchChatRoom) {
+                    const origSwitchChat = window.switchChatRoom;
+                    window.switchChatRoom = function(targetId) { origSwitchChat(targetId); setTimeout(window.syncMicLangUI, 150); };
+                }
+            }, 1500);
+
+            window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
     </script>
-
     <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
         <div class="app-modal-content">
             <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div>
