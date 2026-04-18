@@ -750,3 +750,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1500);
 });
+// ==========================================
+// ФИНАЛЬНЫЙ ФИКС: ВХОДЯЩАЯ ПОЧТА И ТРИ КНОПКИ
+// ==========================================
+
+// 1. Функция "Приема" письма (вызывай её, когда хочешь симулировать приход почты)
+window.receiveIncomingEmail = function(fromEmail, subject, text) {
+    window.mailArchiveDB = window.mailArchiveDB || [];
+    
+    let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    let mailId = 'inbox_' + Date.now();
+    
+    // Кладем письмо в базу
+    window.mailArchiveDB.unshift({
+        id: mailId,
+        unread: true,
+        date: mailDate,
+        from: fromEmail,
+        subject: subject,
+        text: text
+    });
+
+    // 2. Включаем уведомления (Звук + Тост + Красные точки)
+    if (window.sndMsg) window.sndMsg.play().catch(e=>{});
+    
+    if (window.showToast) {
+        window.showToast("New Email", `From: ${fromEmail}<br>Subject: ${subject}`, "https://ui-avatars.com/api/?name=Inbox&background=3b82f6&color=fff", "");
+    }
+
+    // Зажигаем точки в меню
+    const badge = document.getElementById('archive-unread-badge');
+    if (badge) badge.classList.remove('hidden');
+    
+    const mailBadge = document.getElementById('mail-badge');
+    if (mailBadge) mailBadge.classList.remove('hidden');
+
+    // Если юзер уже в архиве - перерисовываем список
+    if (window.renderEmailArchive) window.renderEmailArchive();
+};
+
+// 3. Исправляем кнопки в меню "Три точки" (Action Menu)
+window.archiveAction = function(actionType) {
+    if (!window.currentArchiveItem) return;
+    const { id, title, content } = window.currentArchiveItem;
+
+    if (actionType === 'delete') {
+        // УДАЛИТЬ
+        if (window.mailArchiveDB) {
+            window.mailArchiveDB = window.mailArchiveDB.filter(item => String(item.id) !== String(id));
+            window.renderEmailArchive(); 
+        }
+        const domItem = document.getElementById(id);
+        if (domItem) domItem.remove();
+        window.showToast("Deleted", "Email permanently removed", "", "");
+        
+    } else if (actionType === 'copy') {
+        // КОПИРОВАТЬ
+        navigator.clipboard.writeText(content).then(() => {
+            window.showToast("Copied", "Email text copied to clipboard", "", "");
+        });
+        
+    } else if (actionType === 'save') {
+        // СОХРАНИТЬ (Скачивание как .txt)
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Email_${id}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        window.showToast("Saved", "File downloaded to your device", "", "");
+    }
+    
+    window.closeArchiveActionMenu();
+};
+
+// ТЕСТОВАЯ КНОПКА (Чтобы ты проверил, как работает твой Gmail)
+// Вызови это в консоли или добавь куда-нибудь: window.receiveIncomingEmail('hellofriendsaap@gmail.com', 'Welcome!', 'Hello! Your messenger mail is working now.');
