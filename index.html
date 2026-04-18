@@ -589,8 +589,8 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-       <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
-                <div class="page-container">
+    <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
+                <div class="page-container" id="email-list-view">
                     <div class="flex justify-between items-center px-2 mb-6 mt-2">
                         <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Data Center</span></h2>
                         <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
@@ -602,6 +602,21 @@ if (window.OneSignalDeferred) {
                     </div>
                     <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2">Saved Backups</h3>
                     <div id="archive-list" class="flex flex-col gap-3 px-1 pb-20"><p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4" data-i18n="repo_empty">Repository is empty.</p></div>
+                </div>
+
+                <div class="page-container hidden flex-col h-full bg-[#0b141a]" id="email-reader-view">
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b border-[#202c33] shrink-0">
+                        <div class="flex flex-col">
+                            <span class="text-white font-bold text-lg leading-tight" id="email-read-subject">Subject</span>
+                            <span class="text-[#8696a0] text-xs mt-1" id="email-read-from">From</span>
+                        </div>
+                        <span class="text-[#8696a0] text-[0.65rem] shrink-0" id="email-read-date">00:00</span>
+                    </div>
+                    <div class="text-[#e9edef] text-sm leading-relaxed overflow-y-auto flex-1 pr-2 pb-20" id="email-read-body">
+                        </div>
+                    <button onclick="window.backToEmailList()" class="absolute bottom-4 left-4 right-4 bg-[#202c33] border border-[#2a3942] text-white py-3 rounded-xl font-bold hover:bg-[#2a3942] transition z-50">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Back to Mailbox
+                    </button>
                 </div>
             </div>
         </main>
