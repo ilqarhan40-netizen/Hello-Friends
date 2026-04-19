@@ -720,7 +720,6 @@ if (window.OneSignalDeferred) {
                 <div class="flex flex-col gap-2 overflow-y-auto pb-6" id="personal-lang-list" style="max-height: 50vh;"></div>
             </div>
         </div>
-
 <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
     <div class="app-modal-content relative" onclick="event.stopPropagation();">
         <div class="sheet-handle" onclick="window.closeProfileModal()"></div>
@@ -751,26 +750,34 @@ if (window.OneSignalDeferred) {
                     <div class="relative w-full h-[42px] bg-[#111b21] border border-[#202c33] rounded-xl flex items-center px-2 focus-within:border-[#00a884] transition">
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-6 h-4 rounded-sm object-cover mr-2 shrink-0">
                         <select id="edit-country-select" class="bg-transparent text-white w-full outline-none text-[0.8rem] appearance-none cursor-pointer" onchange="window.handleCountryChange(this)">
-                            <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option>
-                            <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
-                            <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
-                            <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
-                            <option value="gb" data-name="UK" data-emoji="🇬🇧" data-lang="en">UK</option>
-                            <option value="us" data-name="USA" data-emoji="🇺🇸" data-lang="en">USA</option>
+                            <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">🌐 Global</option>
+                            <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">🇦🇿 Azerbaijan</option>
+                            <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">🇷🇺 Russia</option>
+                            <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">🇹🇷 Turkey</option>
+                            <option value="gb" data-name="UK" data-emoji="🇬🇧" data-lang="en">🇬🇧 UK</option>
+                            <option value="us" data-name="USA" data-emoji="🇺🇸" data-lang="en">🇺🇸 USA</option>
+                            <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">🇩🇪 Germany</option>
+                            <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">🇮🇹 Italy</option>
+                            <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">🇦🇪 UAE</option>
+                            <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">🇫🇷 France</option>
+                            <option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">🇯🇵 Japan</option>
+                            <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">🇪🇸 Spain</option>
+                            <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">🇨🇳 China</option>
+                            <option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">🇵🇹 Portugal</option>
                         </select>
                         <i class="fa-solid fa-chevron-down absolute right-2 text-[#8696a0] text-[10px] pointer-events-none"></i> 
                     </div>
                 </div>
             </div>
             
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-[1fr_1.5fr] gap-2">
                 <div>
                     <label class="form-label" data-i18n="reg_phone">Phone</label>
-                    <input type="tel" id="edit-phone" class="form-input-box !py-2.5 !mb-0" placeholder="+1...">
+                    <input type="tel" id="edit-phone" class="form-input-box !py-2.5 !mb-0 !text-[0.85rem]" placeholder="+1...">
                 </div>
                 <div>
                     <label class="form-label" data-i18n="reg_email">Email</label>
-                    <input type="email" id="edit-email" class="form-input-box !py-2.5 !mb-0" placeholder="@...">
+                    <input type="email" id="edit-email" class="form-input-box !py-2.5 !mb-0 !text-[0.8rem]" placeholder="@...">
                 </div>
             </div>
             
