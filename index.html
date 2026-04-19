@@ -25,7 +25,7 @@
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="js/language.js"></script>
 <script src="js/ecosystem.js"></script>
-<script src="js/profiles.js"></script>
+<script src="js/profiles.js?v=7"></script>
 <script src="js/calls.js"></script>
 <script src="js/voice.js?v=6"></script>
 <script src="js/chat.js?v=6"></script>
@@ -749,8 +749,8 @@ if (window.OneSignalDeferred) {
                         <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
                         <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
                         <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
-                        <option value="gb" data-name="UK" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
-                        <option value="us" data-name="USA" data-emoji="🇺🇸" data-lang="en">United States</option>
+                        <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
+                        <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-[10px] pointer-events-none"></i> 
                 </div>
@@ -763,11 +763,13 @@ if (window.OneSignalDeferred) {
             <textarea id="edit-profile-bio" class="form-input-box !py-2.5 resize-none mb-4" rows="2" placeholder="Tell us about yourself..."></textarea>
         </div>
 
-        <button onclick="window.saveProfileData()" class="btn-primary !py-3 mt-2 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-base font-bold"><span data-i18n="reg_save">Save Profile</span></button>
-        
-        <div class="mt-6 pt-4 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
-            <img src="ilgar.jpg" class="w-8 h-8 rounded-full object-cover border-2 border-[#00a884] shadow-md">
-            <span class="text-[0.7rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
+        <div class="shrink-0 w-full mt-2">
+            <button onclick="window.saveProfileData()" class="btn-primary !py-3 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-base font-bold"><span data-i18n="reg_save">Save Profile</span></button>
+            
+            <div class="mt-4 pt-4 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2">
+                <img src="ilgar.jpg" class="w-8 h-8 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+                <span class="text-[0.7rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
+            </div>
         </div>
     </div>
 </div>
