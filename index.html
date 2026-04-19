@@ -751,6 +751,14 @@ if (window.OneSignalDeferred) {
                         <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
                         <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
                         <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
+                        <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
+                        <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
+                        <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option>
+                        <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
+                        <option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option>
+                        <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
+                        <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option>
+                        <option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-[#8696a0] text-[10px] pointer-events-none"></i> 
                 </div>
@@ -759,8 +767,14 @@ if (window.OneSignalDeferred) {
             <label class="form-label" data-i18n="reg_phone">Phone Number</label>
             <input type="tel" id="edit-phone" class="form-input-box !py-2.5" placeholder="+1...">
             
-            <label class="form-label">About Me</label>
-            <textarea id="edit-profile-bio" class="form-input-box !py-2.5 resize-none mb-4" rows="2" placeholder="Tell us about yourself..."></textarea>
+            <label class="form-label" data-i18n="reg_email">Email</label>
+            <input type="email" id="edit-email" class="form-input-box !py-2.5" placeholder="@...">
+            
+            <label class="form-label mt-2" data-i18n="languages_spoken">Languages</label>
+            <input type="text" id="edit-profile-langs" class="form-input-box !py-2.5" data-i18n-placeholder="lang_placeholder" placeholder="e.g. English, Русский...">
+            
+            <label class="form-label" data-i18n="about_me">About Me</label>
+            <textarea id="edit-profile-bio" class="form-input-box !py-2.5 resize-none mb-4" rows="2" data-i18n-placeholder="bio_placeholder" placeholder="Tell us about yourself..."></textarea>
         </div>
 
         <div class="shrink-0 w-full mt-2">
