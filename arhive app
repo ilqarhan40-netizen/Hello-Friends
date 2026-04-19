@@ -721,63 +721,51 @@ if (window.OneSignalDeferred) {
             </div>
         </div>
 
-        <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
-            <div class="app-modal-content flex flex-col" style="max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; width: 100%; padding: 0; position: relative;" onclick="event.stopPropagation();">
-                <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
-                    <div><h2 id="profile-modal-title" class="text-xl font-bold text-white mb-0.5" data-i18n="reg_title">Welcome!</h2><p id="profile-modal-subtitle" class="text-[0.7rem] text-[#8696a0] m-0" data-i18n="reg_subtitle">Basic Information</p></div>
-                    <button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark text-xl"></i></button>
+ <div id="edit-profile-modal" class="app-modal !items-start !justify-start !p-0" onclick="if(event.target===this) window.closeProfileModal();">
+    <div class="app-modal-content flex flex-col !max-w-full !w-full !h-full !max-h-full !rounded-none !p-0 !translate-y-0" onclick="event.stopPropagation();">
+        <div class="flex justify-between items-center px-5 py-4 bg-[#111b21] border-b border-[#202c33] shrink-0 z-50 shadow-md">
+            <div><h2 id="profile-modal-title" class="text-xl font-bold text-white mb-0.5" data-i18n="reg_title">Welcome!</h2><p id="profile-modal-subtitle" class="text-[0.7rem] text-[#8696a0] m-0" data-i18n="reg_subtitle">Basic Information</p></div>
+            <button class="w-10 h-10 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition shrink-0" onclick="window.closeProfileModal()"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="overflow-y-auto flex-grow p-5 pb-10 bg-[#0b141a]">
+            <div class="flex flex-col items-center mb-6 mt-2 shrink-0">
+                <div class="relative w-24 h-24"><img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] shadow-lg"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera"></i></button></div>
+            </div>
+            
+            <label class="form-label" data-i18n="reg_name">Full Name</label>
+            <input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
+            
+            <label class="form-label" data-i18n="reg_country">Country (Auto-Translate)</label>
+            <div class="flex items-center gap-3 mb-4 shrink-0">
+                <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
+                <div class="relative w-full">
+                    <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8 bg-[#111b21]" onchange="window.handleCountryChange(this)">
+                        <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option><option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option><option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option><option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option><option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option><option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option><option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option><option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option><option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option><option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option><option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option><option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option><option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
+                    </select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i>
                 </div>
-                <div class="overflow-y-auto flex-grow p-5 pb-10">
-                    <div class="flex flex-col items-center mb-6 mt-2 shrink-0">
-                        <div class="relative w-24 h-24"><img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] shadow-lg"><button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera"></i></button></div>
-                    </div>
-                    <label class="form-label" data-i18n="reg_name">Full Name</label>
-                    <input type="text" id="edit-name" class="form-input-box" placeholder="John Doe">
-                    
-                    <label class="form-label" data-i18n="reg_country">Country</label>
-                    <div class="flex items-center gap-3 mb-4 shrink-0">
-                        <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-10 h-7 rounded object-cover shadow-sm">
-                        <div class="relative w-full">
-                         <select id="edit-country-select" class="form-input-box mb-0 appearance-none pr-8" onchange="window.handleCountryChange(this)">
-    <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">Global</option>
-    <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">Azerbaijan</option>
-    <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">Russia</option>
-    <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">Turkey</option>
-    <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">United Kingdom</option>
-    <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">United States</option>
-    <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">Germany</option>
-    <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">Italy</option>
-    <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">UAE</option>
-    <option value="fr" data-name="France" data-emoji="🇫🇷" data-lang="fr">France</option>
-    <option value="jp" data-name="Japan" data-emoji="🇯🇵" data-lang="ja">Japan</option>
-    <option value="es" data-name="Spain" data-emoji="🇪🇸" data-lang="es">Spain</option>
-    <option value="cn" data-name="China" data-emoji="🇨🇳" data-lang="zh">China</option>
-    <option value="pt" data-name="Portugal" data-emoji="🇵🇹" data-lang="pt">Portugal</option>
-</select><i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] pointer-events-none"></i> 
-                        </div>
-                    </div>
-                    
-                    <label class="form-label" data-i18n="reg_phone">Phone Number</label>
-                    <input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
-                    
-                    <label class="form-label" data-i18n="reg_email">Email</label>
-                    <input type="email" id="edit-email" class="form-input-box" placeholder="@...">
-                    
-                    <label class="form-label mt-2" data-i18n="languages_spoken">Languages</label>
-                    <input type="text" id="edit-profile-langs" class="form-input-box" data-i18n-placeholder="lang_placeholder" placeholder="e.g. English, Русский...">
-                    
-                    <label class="form-label" data-i18n="about_me">About Me</label>
-                    <textarea id="edit-profile-bio" class="form-input-box resize-none" rows="3" data-i18n-placeholder="bio_placeholder" placeholder="Tell us about yourself..."></textarea>
+            </div>
+            
+            <label class="form-label" data-i18n="reg_phone">Phone Number</label>
+            <input type="tel" id="edit-phone" class="form-input-box" placeholder="+1...">
+            
+            <label class="form-label" data-i18n="reg_email">Email</label>
+            <input type="email" id="edit-email" class="form-input-box" placeholder="@...">
+            
+            <label class="form-label mt-2">Languages Spoken</label>
+            <input type="text" id="edit-profile-langs" class="form-input-box" placeholder="e.g. English, Русский...">
+            
+            <label class="form-label">About Me</label>
+            <textarea id="edit-profile-bio" class="form-input-box resize-none" rows="3" placeholder="Tell us about yourself..."></textarea>
 
-                    <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
-                        <img src="ilgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
-                        <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
-                    </div>
-                </div>
-                <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg"><span data-i18n="reg_save">Save Profile</span></button></div>
+            <div class="mt-8 pt-6 border-t border-[#202c33] flex items-center justify-center gap-3 pb-2 shrink-0">
+                <img src="ilgar.jpg" class="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+                <span class="text-[0.85rem] text-[#00a884] font-bold tracking-wide pr-3" data-i18n="app_creator_greet">Creator of Hello Friends</span>
             </div>
         </div>
-
+        <div class="shrink-0 p-4 bg-[#111b21] border-t border-[#202c33] z-50"><button onclick="window.saveProfileData()" class="btn-primary m-0 w-full shadow-[0_0_15px_rgba(0,168,132,0.3)] text-lg" data-i18n="reg_save">Save Profile</button></div>
+    </div>
+</div>
+            
 <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
             <div class="app-modal-content flex flex-col" style="max-height: 90vh;">
                 <div class="close-sheet-btn" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark"></i></div>
