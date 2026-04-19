@@ -720,30 +720,31 @@ if (window.OneSignalDeferred) {
                 <div class="flex flex-col gap-2 overflow-y-auto pb-6" id="personal-lang-list" style="max-height: 50vh;"></div>
             </div>
         </div>
-<div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
-    <div class="app-modal-content relative" onclick="event.stopPropagation();">
+
+           <div id="edit-profile-modal" class="app-modal" onclick="if(event.target===this) window.closeProfileModal();">
+    <div class="app-modal-content relative flex flex-col h-[92%]" onclick="event.stopPropagation();">
         <div class="sheet-handle" onclick="window.closeProfileModal()"></div>
         
         <button class="absolute top-4 right-4 w-8 h-8 bg-[#ef4444] text-white rounded-full flex justify-center items-center cursor-pointer shadow-lg hover:scale-95 transition z-50" onclick="window.closeProfileModal()">
             <i class="fa-solid fa-xmark text-sm"></i>
         </button>
         
-        <h2 id="profile-modal-title" class="text-xl font-bold text-white text-center mt-4 mb-1" data-i18n="reg_title">Welcome!</h2>
-        <p id="profile-modal-subtitle" class="text-[0.7rem] text-[#8696a0] text-center mb-6" data-i18n="reg_subtitle">Basic Information</p>
+        <h2 id="profile-modal-title" class="text-xl font-bold text-white text-center mt-2 mb-1 shrink-0" data-i18n="reg_title">Welcome!</h2>
+        <p id="profile-modal-subtitle" class="text-[0.7rem] text-[#8696a0] text-center mb-4 shrink-0" data-i18n="reg_subtitle">Basic Information</p>
         
-        <div class="flex flex-col items-center mb-5 shrink-0">
-            <div class="relative w-20 h-20">
+        <div class="flex flex-col items-center mb-4 shrink-0">
+            <div class="relative w-24 h-24">
                 <img id="edit-preview-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-[#00a884] shadow-lg">
-                <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-7 h-7 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera text-[10px]"></i></button>
+                <button onclick="document.getElementById('photo-upload-input').click()" class="absolute bottom-0 right-0 bg-[#00a884] text-[#111b21] rounded-full w-8 h-8 flex justify-center items-center border-2 border-[#111b21] hover:scale-105 transition"><i class="fa-solid fa-camera text-xs"></i></button>
             </div>
         </div>
         
-        <div class="flex flex-col gap-3 overflow-y-auto pr-1 pb-2" style="max-height: 50vh;">
+        <div class="flex flex-col gap-3 overflow-y-auto pr-1 pb-2 flex-grow">
             
             <div class="grid grid-cols-2 gap-2">
                 <div>
                     <label class="form-label" data-i18n="reg_name">Full Name</label>
-                    <input type="text" id="edit-name" class="form-input-box !py-2.5 !mb-0" placeholder="John Doe">
+                    <input type="text" id="edit-name" class="form-input-box !py-2.5 !mb-0" placeholder="Name">
                 </div>
                 <div>
                     <label class="form-label" data-i18n="reg_country">Country</label>
@@ -754,8 +755,8 @@ if (window.OneSignalDeferred) {
                             <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">🇦🇿 Azerbaijan</option>
                             <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">🇷🇺 Russia</option>
                             <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">🇹🇷 Turkey</option>
-                            <option value="gb" data-name="UK" data-emoji="🇬🇧" data-lang="en">🇬🇧 UK</option>
-                            <option value="us" data-name="USA" data-emoji="🇺🇸" data-lang="en">🇺🇸 USA</option>
+                            <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">🇬🇧 UK</option>
+                            <option value="us" data-name="United States" data-emoji="🇺🇸" data-lang="en">🇺🇸 USA</option>
                             <option value="de" data-name="Germany" data-emoji="🇩🇪" data-lang="de">🇩🇪 Germany</option>
                             <option value="it" data-name="Italy" data-emoji="🇮🇹" data-lang="it">🇮🇹 Italy</option>
                             <option value="ae" data-name="UAE" data-emoji="🇦🇪" data-lang="ar">🇦🇪 UAE</option>
@@ -770,20 +771,20 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
             
-            <div class="grid grid-cols-[1fr_1.5fr] gap-2">
+            <div class="grid grid-cols-2 gap-2">
                 <div>
                     <label class="form-label" data-i18n="reg_phone">Phone</label>
-                    <input type="tel" id="edit-phone" class="form-input-box !py-2.5 !mb-0 !text-[0.85rem]" placeholder="+1...">
+                    <input type="tel" id="edit-phone" class="form-input-box !py-2.5 !mb-0" placeholder="+1...">
                 </div>
                 <div>
-                    <label class="form-label" data-i18n="reg_email">Email</label>
-                    <input type="email" id="edit-email" class="form-input-box !py-2.5 !mb-0 !text-[0.8rem]" placeholder="@...">
+                    <label class="form-label" data-i18n="languages_spoken">Languages</label>
+                    <input type="text" id="edit-profile-langs" class="form-input-box !py-2.5 !mb-0" data-i18n-placeholder="lang_placeholder" placeholder="En, Ru...">
                 </div>
             </div>
             
             <div>
-                <label class="form-label" data-i18n="languages_spoken">Languages</label>
-                <input type="text" id="edit-profile-langs" class="form-input-box !py-2.5 !mb-0" data-i18n-placeholder="lang_placeholder" placeholder="e.g. English, Русский...">
+                <label class="form-label" data-i18n="reg_email">Email Address</label>
+                <input type="email" id="edit-email" class="form-input-box !py-2.5 !mb-0" placeholder="hellofriendsaap@gmail.com">
             </div>
             
             <div>
@@ -801,9 +802,9 @@ if (window.OneSignalDeferred) {
             </div>
         </div>
     </div>
-</div>
+</div> 
             
-<div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
+            <div id="edit-cv-modal" class="app-modal" onclick="if(event.target===this) window.closeEditCV();">
             <div class="app-modal-content flex flex-col" style="max-height: 90vh;">
                 <div class="close-sheet-btn" onclick="window.closeEditCV()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="sheet-handle" onclick="window.closeEditCV()"></div>
