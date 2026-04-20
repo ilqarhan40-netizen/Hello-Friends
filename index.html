@@ -1485,69 +1485,6 @@ window.handleCountryChange = function(sel) {
     }
 };
    window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
-window.switchArchiveTab = function(tabName) {
-    const archiveList = document.getElementById('archive-list');
-    const secTitle = document.getElementById('archive-section-title');
-    window.currentArchiveTab = tabName; 
-    
-    let dict = i18n[window.appLang] || i18n['en'];
-
-    const titles = {
-        'mail': dict['email_inbox'] || "Email Inbox",
-        'docs': dict['saved_docs'] || "Saved Documents",
-        'media': dict['saved_media'] || "Saved Media"
-    };
-    
-    if(secTitle) secTitle.innerText = titles[tabName];
-    window.renderArchiveItems(tabName);
-};
-
-window.renderArchiveItems = function(type) {
-    const archiveList = document.getElementById('archive-list');
-    if (!archiveList) return;
-
-    window.archiveDB = window.archiveDB || { mail: [], docs: [], media: [] };
-    const items = (type === 'mail') ? (window.mailArchiveDB || []) : (window.archiveDB[type] || []);
-    
-    let dict = i18n[window.appLang] || i18n['en'];
-
-    if (items.length === 0) {
-        archiveList.innerHTML = `<p class="text-center text-sm text-[#8696a0] mt-4">${dict['repo_empty'] || "Repository is empty."}</p>`;
-        return;
-    }
-
-    let html = '';
-    items.forEach(item => {
-        let icon = 'fa-file';
-        if (type === 'mail') icon = 'fa-envelope-open-text';
-        if (type === 'media') icon = 'fa-photo-film';
-        if (item.text && item.text.includes('📹')) icon = 'fa-video';
-
-        let safeTitle = (item.subject || item.name || 'File').replace(/'/g, "\\'");
-        let unreadDot = item.unread ? `<div class="w-2.5 h-2.5 bg-blue-500 rounded-full absolute top-3 left-3 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>` : '';
-        let bgClass = item.unread ? 'bg-[#202c33] border-[#00a884]/50' : 'bg-[#111b21] border-[#2a3942]';
-
-        html += `
-        <div id="${item.id}" class="${bgClass} border p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2 relative" onclick="this.classList.remove('bg-[#202c33]', 'border-[#00a884]/50'); this.classList.add('bg-[#111b21]', 'border-[#2a3942]'); this.querySelector('.bg-blue-500')?.remove();">
-            ${unreadDot}
-            <div class="flex items-center gap-3 overflow-hidden w-full pl-2">
-                <div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-[#00a884] border border-[#2a3942] shrink-0">
-                    <i class="fa-solid ${icon}"></i>
-                </div>
-                <div class="flex flex-col overflow-hidden w-full">
-                    <span class="text-white font-bold text-[0.8rem] truncate">${item.subject || item.name || 'Unnamed'}</span>
-                    <span class="text-[#8696a0] text-[0.65rem] truncate">${item.from || item.date || ''}</span>
-                </div>
-            </div>
-            <button onclick="window.openArchiveActionMenu(event, '${item.id}', '${safeTitle}', '${type}')" 
-                    class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 z-[100] relative">
-                <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
-            </button>
-        </div>`;
-    });
-    archiveList.innerHTML = html;
-};
-
 window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
     if (e) { e.stopPropagation(); e.preventDefault(); }
     let itemContent = "Текст файла";
@@ -1574,24 +1511,16 @@ window.closeArchiveActionMenu = function() {
 
 window.archiveAction = function(actionType) {
     if (!window.currentArchiveItem) return;
-    const { id, content, title } = window.currentArchiveItem;
-    let dict = i18n[window.appLang] || i18n['en'];
-
+    const { id, content } = window.currentArchiveItem;
     if (actionType === 'delete') {
-        if (confirm(dict['delete_btn'] ? dict['delete_btn'] + "?" : "Delete?")) {
-            if (window.mailArchiveDB) window.mailArchiveDB = window.mailArchiveDB.filter(m => String(m.id) !== String(id)); 
-            document.getElementById(id)?.remove();
-            if (window.showToast) window.showToast(title, "Deleted", "", "");
-        }
+        if (window.mailArchiveDB) { window.mailArchiveDB = window.mailArchiveDB.filter(item => String(item.id) !== String(id)); if(window.renderEmailArchive) window.renderEmailArchive(); }
+        const domItem = document.getElementById(id); if (domItem) domItem.remove();
+        if (window.showToast) window.showToast("Deleted", "Item removed", "", "");
     } else if (actionType === 'copy') {
-        navigator.clipboard.writeText(content).then(() => { 
-            if (window.showToast) window.showToast("Copied", dict['copy_btn'] || "Saved to clipboard", "", ""); 
-        });
+        navigator.clipboard.writeText(content).then(() => { if (window.showToast) window.showToast("Copied", "Saved to clipboard", "", ""); });
     } else if (actionType === 'save') {
-        if (window.showToast) window.showToast(title, dict['save_btn'] || "Saved", "", "");
+        if (window.showToast) window.showToast("Saved", "Downloaded successfully", "", "");
     }
-    window.closeArchiveActionMenu();
-};
     window.closeArchiveActionMenu();
 };
 
@@ -1683,19 +1612,12 @@ window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new sec
             };
             let sysLang = navigator.language.slice(0, 2); let defLang = i18n[sysLang] ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
             
-     window.changeAppLanguage = function(langCode) { 
-    window.appLang = langCode; 
-    localStorage.setItem('hf_app_lang', window.appLang); 
-    window.applyTranslations(); 
-    
-    // ДОБАВЛЕНО: Если мы прямо сейчас сидим во вкладке Архива (индекс 5),
-    // заставляем его мгновенно перерисовать заголовки на новом языке
-    if (window.currentIndex === 5) {
-        window.switchArchiveTab(window.currentArchiveTab || 'docs');
-    }
-    
-    window.closeDropdown(); 
-};
+            window.changeAppLanguage = function(langCode) { 
+                window.appLang = langCode; 
+                localStorage.setItem('hf_app_lang', window.appLang); 
+                window.applyTranslations(); 
+                window.closeDropdown(); 
+            };
             
             window.applyTranslations = function() { 
                 const dict = i18n[window.appLang] || i18n['en']; 
@@ -1833,40 +1755,6 @@ window.participants = [aiBot];
                 if(!window.isGuest && window.initSignalListener && !window.signalListenerActive) { window.initSignalListener(); window.signalListenerActive = true; }
             });
 
-            // Слушатель входящих писем
-            db.ref('mailArchive').on('child_added', (snapshot) => {
-                const mail = snapshot.val();
-                if (!mail) return;
-
-                if (Date.now() - mail.timestamp < 60000) {
-                    if (window.sndMsg) window.sndMsg.play().catch(e=>{});
-                    
-                    let dict = i18n[window.appLang] || i18n['en'];
-                    let msgNotify = window.appLang === 'ru' ? "Новое письмо" : (window.appLang === 'az' ? "Yeni e-poçt" : "New Email");
-                    
-                    window.showToast(msgNotify, `${mail.from}\n${mail.subject}`, "https://ui-avatars.com/api/?name=M&background=00a884&color=fff", "");
-                    
-                    const badge = document.getElementById('mail-badge');
-                    const navBadge = document.getElementById('archive-unread-badge');
-                    if (badge) badge.classList.remove('hidden');
-                    if (navBadge) navBadge.classList.remove('hidden');
-                }
-                
-                window.mailArchiveDB = window.mailArchiveDB || [];
-                if (!window.mailArchiveDB.find(m => m.id === snapshot.key)) {
-                    window.mailArchiveDB.unshift({
-                        id: snapshot.key,
-                        unread: mail.unread,
-                        date: mail.date,
-                        from: mail.from,
-                        subject: mail.subject,
-                        text: mail.text
-                    });
-                    if (window.currentIndex === 5 && window.currentArchiveTab === 'mail') {
-                        window.renderArchiveItems('mail');
-                    }
-                }
-            });
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
                 const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
