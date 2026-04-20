@@ -29,6 +29,7 @@
 <script src="js/calls.js"></script>
 <script src="js/voice.js?v=6"></script>
 <script src="js/chat.js?v=6"></script>
+ <script src="js/archive.js"></script>   
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function(OneSignal) {
@@ -1485,61 +1486,39 @@ window.handleCountryChange = function(sel) {
     }
 };
    window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
-window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
-    if (e) { e.stopPropagation(); e.preventDefault(); }
-    let itemContent = "Текст файла";
-    if (itemType === 'email' && window.mailArchiveDB) {
-        let mail = window.mailArchiveDB.find(m => String(m.id) === String(itemId));
-        if (mail) itemContent = mail.text || mail.body || "";
-    }
-    window.currentArchiveItem = { id: itemId, title: itemTitle, content: itemContent };
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    if (!modal || !contentBox) return;
-    const titleEl = document.getElementById('action-modal-title');
-    if (titleEl) titleEl.innerText = itemTitle || "File Action";
-    modal.classList.remove('hidden'); modal.classList.add('flex');
-    setTimeout(() => { contentBox.classList.remove('translate-y-full'); }, 10);
-};
 
-window.closeArchiveActionMenu = function() {
-    const modal = document.getElementById('archive-action-modal');
-    const contentBox = document.getElementById('archive-action-content');
-    if(contentBox) contentBox.classList.add('translate-y-full');
-    setTimeout(() => { if(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } }, 300);
-};
-
-window.archiveAction = function(actionType) {
-    if (!window.currentArchiveItem) return;
-    const { id, content } = window.currentArchiveItem;
-    if (actionType === 'delete') {
-        if (window.mailArchiveDB) { window.mailArchiveDB = window.mailArchiveDB.filter(item => String(item.id) !== String(id)); if(window.renderEmailArchive) window.renderEmailArchive(); }
-        const domItem = document.getElementById(id); if (domItem) domItem.remove();
-        if (window.showToast) window.showToast("Deleted", "Item removed", "", "");
-    } else if (actionType === 'copy') {
-        navigator.clipboard.writeText(content).then(() => { if (window.showToast) window.showToast("Copied", "Saved to clipboard", "", ""); });
-    } else if (actionType === 'save') {
-        if (window.showToast) window.showToast("Saved", "Downloaded successfully", "", "");
-    }
-    window.closeArchiveActionMenu();
-};
-
-window.smartArchive = function() {
-    const archiveList = document.getElementById('archive-list'); const emptyMsg = document.getElementById('empty-archive'); if(emptyMsg) emptyMsg.style.display = 'none';
-    let chatName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : "Global Room";
-    if (window.currentRoomId === 'private_ai_bot') chatName = "AI Assistant"; else if (window.currentRoomId && window.currentRoomId.startsWith('private_me')) chatName = "My Notes";
-    let date = new Date().toLocaleDateString(); let uniqueId = 'item_' + Date.now();
-    let archiveItem = document.createElement('div'); archiveItem.id = uniqueId;
-    archiveItem.className = "bg-[#202c33] border border-[#2a3942] p-3 rounded-2xl flex justify-between items-center shadow-sm mb-2";
-    archiveItem.innerHTML = `<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-[#111b21] flex items-center justify-center text-blue-400 border border-[#2a3942]"><i class="fa-solid fa-file-zipper"></i></div><div class="flex flex-col"><span class="text-white font-bold text-sm">Backup: ${chatName}</span><span class="text-[#8696a0] text-xs">${date} • Database</span></div></div><button onclick="window.openArchiveActionMenu(event, '${uniqueId}', 'Backup: ${chatName}', 'backup')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 relative z-[100]"><i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i></button>`;
-    if(archiveList) archiveList.prepend(archiveItem); 
-    if (window.showToast) window.showToast("Archived", "Saved to Cloud Repository", "", ""); 
-    if (window.closeTrashModal) window.closeTrashModal(); 
-    if (window.switchTab) window.switchTab(5);
-};
 window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { db.ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
 window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
 window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
+ window.sendEmailForm = function(event) {
+    event.preventDefault();
+    const to = document.getElementById('email-to').value.trim();
+    const subject = document.getElementById('email-subject').value.trim();
+    const text = document.getElementById('email-text').value.trim();
+    const from = "hellofriendsaap@gmail.com";
+
+    const btn = document.querySelector('#email-form-element button[type="submit"]');
+    const origText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>...';
+
+    setTimeout(() => {
+        btn.innerHTML = origText;
+        if (window.showToast) window.showToast("Success", "Email sent & archived!", "", "");
+        document.getElementById('email-form-element').reset();
+        window.closeEmailModal();
+
+        window.mailArchiveDB = window.mailArchiveDB || [];
+        let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        let newMailId = 'mail_sent_' + Date.now();
+        window.mailArchiveDB.unshift({
+            id: newMailId, unread: false, date: mailDate, from: 'To: ' + to, subject: subject, text: text
+        });
+        
+        if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
+            window.renderArchiveList('email', window.mailArchiveDB);
+        }
+    }, 800);
+};       
 window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
  window.openEmailStore = function() { window.closeDropdown(); const modal = document.getElementById('email-store-modal'); if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); setTimeout(() => { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-95'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-100'); }, 10); } };
 window.closeEmailStore = function() { const modal = document.getElementById('email-store-modal'); if(modal) { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-100'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200); } };
