@@ -1557,7 +1557,77 @@ window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new sec
 
         window.openFullscreenImage = function(src) { if(src) document.getElementById('fullscreen-img-src').src = src; document.getElementById('fullscreen-image-modal').classList.add('active'); };
         window.closeFullscreenImage = function() { document.getElementById('fullscreen-image-modal').classList.remove('active'); };
-        window.handleMediaUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const isVideo = file.type.startsWith('video/'); db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); window.closeAttachModal(); }; reader.readAsDataURL(file); };
+      window.handleMediaUpload = function(event) { 
+    const file = event.target.files[0]; 
+    if (!file) return; 
+    const reader = new FileReader(); 
+    reader.onload = function(e) { 
+        const base64Data = e.target.result; 
+        const isVideo = file.type.startsWith('video/'); 
+        
+        // 1. Отправка в чат
+        if (window.currentRoomId) {
+            db.ref(window.currentRoomId).push({ 
+                userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", 
+                mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, 
+                flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode 
+            }); 
+        }
+
+        // 2. Автосохранение в Архив (Вкладка Media)
+        window.mediaArchiveDB = window.mediaArchiveDB || [];
+        window.mediaArchiveDB.unshift({
+            id: 'media_' + Date.now(),
+            title: file.name || (isVideo ? 'Video File' : 'Image File'),
+            date: new Date().toLocaleDateString(),
+            size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+            sender: 'Me',
+            url: base64Data,
+            mediaUrl: base64Data,
+            isVideo: isVideo
+        });
+        
+        if (window.closeAttachModal) window.closeAttachModal(); 
+        if (window.showToast) window.showToast("Uploaded", "Media sent and archived.", "", "");
+    }; 
+    reader.readAsDataURL(file); 
+};
+
+window.handleDocUpload = function(event) {
+    const file = event.target.files[0]; 
+    if (!file) return; 
+    const reader = new FileReader(); 
+    reader.onload = function(e) { 
+        const base64Data = e.target.result; 
+        
+        // 1. Отправка в чат
+        if (window.currentRoomId) {
+            db.ref(window.currentRoomId).push({ 
+                userId: window.myProfileInfo.id, name: window.myUsername, text: "📄 Document: " + file.name, 
+                mediaUrl: base64Data, mediaType: 'document', sessionId: window.mySessionId, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, 
+                flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode 
+            }); 
+        }
+
+        // 2. Автосохранение в Архив (Вкладка Docs)
+        window.docsArchiveDB = window.docsArchiveDB || [];
+        window.docsArchiveDB.unshift({
+            id: 'doc_' + Date.now(),
+            title: file.name || 'Document',
+            date: new Date().toLocaleDateString(),
+            size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+            sender: 'Me',
+            url: base64Data,
+            content: "Base64 File Data" 
+        });
+        
+        if (window.closeAttachModal) window.closeAttachModal(); 
+        if (window.showToast) window.showToast("Uploaded", "Document sent and archived.", "", "");
+    }; 
+    reader.readAsDataURL(file); 
+};
         
         window.deleteMyAccount = function() { 
             if (confirm("ВНИМАНИЕ! Навсегда удалить ваш аккаунт из сети Hello Friends? Это действие нельзя отменить.")) { 
