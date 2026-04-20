@@ -224,3 +224,42 @@ window.smartArchive = function() {
     if (window.showToast) window.showToast("Notice", "Chat backup is disabled.", "", "");
     if (window.closeTrashModal) window.closeTrashModal(); 
 };
+// --- СЛУШАТЕЛЬ РЕАЛЬНОЙ ПОЧТЫ ИЗ FIREBASE ---
+// Этот блок следит за новыми письмами в базе в реальном времени
+if (typeof db !== 'undefined') {
+    db.ref('mailArchive').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            window.mailArchiveDB = [];
+            
+            // Превращаем объект из базы в массив для нашего интерфейса
+            Object.keys(data).forEach(key => {
+                let mailItem = data[key];
+                mailItem.id = key; 
+                window.mailArchiveDB.push(mailItem);
+            });
+            
+            // Сортируем: свежие письма всегда сверху
+            window.mailArchiveDB.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            // Обновляем список, если пользователь сейчас открыл вкладку Mail
+            if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
+                window.renderArchiveList('email', window.mailArchiveDB);
+            }
+            
+            // Показываем синюю точку (badge), если есть непрочитанные
+            let hasUnread = window.mailArchiveDB.some(m => m.unread);
+            const badgeEl = document.getElementById('mail-badge');
+            const archiveMenuBadge = document.getElementById('archive-unread-badge');
+            
+            if (badgeEl) {
+                if (hasUnread) badgeEl.classList.remove('hidden');
+                else badgeEl.classList.add('hidden');
+            }
+            if (archiveMenuBadge) {
+                if (hasUnread) archiveMenuBadge.classList.remove('hidden');
+                else archiveMenuBadge.classList.add('hidden');
+            }
+        }
+    });
+}
