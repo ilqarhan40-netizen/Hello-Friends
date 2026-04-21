@@ -1197,20 +1197,32 @@ window.signOutGoogle = function() {
   
         window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
         
-        window.secretClicks = 0;
+    window.secretClicks = 0;
         window.activateGodMode = function() {
             window.secretClicks++; 
             if(window.secretClicks === 5) { 
                 window.secretClicks = 0; 
                 let pass = prompt("Enter Admin Password:"); 
-                if(pass === "777") { 
-                    localStorage.setItem('hf_god_mode', 'true'); 
+                if (!pass) return;
+                
+                let myUid = window.myProfileInfo?.id;
+                if (!myUid || myUid === 'guest') {
+                    alert("Please log in with Google first!");
+                    return;
+                }
+
+                // Отправляем пароль в сейф Firebase на проверку
+                db.ref('admins/' + myUid).set({ pass: pass, active: true })
+                .then(() => {
+                    localStorage.setItem('hf_god_mode', 'true');
                     const adminBtn = document.getElementById('admin-menu-btn');
                     if (adminBtn) adminBtn.style.display = 'flex';
-                    alert("GOD MODE UNLOCKED! Open the menu."); 
-                } else { 
-                    alert("Access Denied."); 
-                } 
+                    alert("GOD MODE UNLOCKED! Welcome, Creator.");
+                })
+                .catch(err => {
+                    alert("Access Denied. Server blocked the connection.");
+                    localStorage.removeItem('hf_god_mode');
+                });
             }
         };
 
