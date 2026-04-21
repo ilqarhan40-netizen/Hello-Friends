@@ -1,5 +1,5 @@
 // ==========================================
-// MODULE: ARCHIVE & DATA CENTER (Email, Docs, Media)
+// MODULE: ARCHIVE & DATA CENTER
 // ==========================================
 
 // --- 1. ОТПРАВКА ПОЧТЫ И АВТОСОХРАНЕНИЕ ---
@@ -70,42 +70,57 @@ window.renderArchiveList = function(type, dbArray) {
     list.innerHTML = '';
     
     dbArray.forEach(item => {
-        let icon = '<i class="fa-solid fa-file"></i>';
+        let icon = '<i class="fa-solid fa-file-lines text-4xl"></i>';
         let iconColor = 'text-[#a29bfe]';
         
         if (type === 'email') { 
-            icon = '<i class="fa-solid fa-at"></i>'; 
-            iconColor = 'text-[#8696a0]'; 
+            icon = '<i class="fa-solid fa-envelope text-4xl"></i>'; 
+            iconColor = 'text-[#00a884]'; 
         } else if (type === 'media') { 
-            icon = item.isVideo ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-image"></i>'; 
+            icon = item.isVideo ? '<i class="fa-solid fa-video text-4xl"></i>' : '<i class="fa-solid fa-image text-4xl"></i>'; 
             iconColor = 'text-green-400'; 
         }
 
-        let bgClass = item.unread ? 'bg-[#202c33] border-[#3b82f6]/30' : 'bg-[#111b21] border-[#2a3942] opacity-80';
+        let glowClass = item.unread 
+            ? 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.6)] bg-[#1a2938]' 
+            : 'border-[#2a3942] bg-[#111b21]';
+            
         let textBold = item.unread ? 'text-white font-bold' : 'text-[#e9edef]';
         let safeTitle = (item.title || item.subject || 'File').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         let subtitle = item.date || item.size || 'Saved Item';
         let sender = item.sender || item.from || 'System';
         let clickAction = type === 'email' ? `onclick="window.viewSpecificEmail('${item.id}')"` : '';
-        
+
         let domItem = document.createElement('div');
         domItem.id = item.id;
-        domItem.className = `flex items-center justify-between p-3 rounded-xl border hover:border-blue-400 transition shadow-sm ${bgClass} mb-2 relative`;
+        domItem.className = `flex items-center gap-4 p-2 rounded-xl mb-3`;
         
         domItem.innerHTML = `
-            <div class="flex items-center gap-3 flex-1 overflow-hidden ${type==='email' ? 'cursor-pointer' : ''}" ${clickAction}>
-                <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center ${iconColor}">${icon}</div>
-                <div class="flex flex-col flex-1 overflow-hidden">
-                    <div class="flex justify-between items-center w-full"><span class="text-xs text-[#8696a0] truncate max-w-[70%]">${sender}</span><span class="text-[0.65rem] text-[#8696a0] pr-2">${subtitle}</span></div>
-                    <span class="${textBold} text-sm truncate w-full mt-0.5">${safeTitle}</span>
-                </div>
+            <div class="relative w-24 h-24 shrink-0 rounded-xl border flex flex-col items-center justify-center transition cursor-pointer ${glowClass}" ${clickAction}>
+                <div class="${iconColor} mb-2">${icon}</div>
+                <button onclick="window.openArchiveActionMenu(event, '${item.id}', '${safeTitle}', '${type}')" class="absolute bottom-1 right-2 text-[#8696a0] hover:text-white transition z-[100] px-2 py-1">
+                    <i class="fa-solid fa-ellipsis text-xl tracking-widest"></i>
+                </button>
             </div>
-            <button onclick="window.openArchiveActionMenu(event, '${item.id}', '${safeTitle}', '${type}')" class="text-[#8696a0] hover:text-white transition p-2 text-xl shrink-0 ml-1 relative z-[100]">
-                <i class="fa-solid fa-ellipsis-vertical pointer-events-none"></i>
-            </button>
+            
+            <div class="flex flex-col flex-1 overflow-hidden cursor-pointer" ${clickAction}>
+                <div class="flex justify-between items-center w-full mb-1">
+                    <span class="text-[0.75rem] text-[#00a884] font-bold truncate max-w-[70%] uppercase tracking-wider">${sender}</span>
+                    <span class="text-[0.7rem] text-[#8696a0] font-mono">${subtitle}</span>
+                </div>
+                <span class="${textBold} text-[1rem] truncate w-full leading-tight">${safeTitle}</span>
+            </div>
         `;
         list.appendChild(domItem);
     });
+
+    if (type === 'email') {
+        let unread = dbArray.some(m => m.unread);
+        const badgeEl = document.getElementById('mail-badge');
+        const archiveMenuBadge = document.getElementById('archive-unread-badge');
+        if (badgeEl) { if (unread) badgeEl.classList.remove('hidden'); else badgeEl.classList.add('hidden'); }
+        if (archiveMenuBadge) { if (unread) archiveMenuBadge.classList.remove('hidden'); else archiveMenuBadge.classList.add('hidden'); }
+    }
 };
 
 window.viewSpecificEmail = function(id) {
@@ -224,42 +239,28 @@ window.smartArchive = function() {
     if (window.showToast) window.showToast("Notice", "Chat backup is disabled.", "", "");
     if (window.closeTrashModal) window.closeTrashModal(); 
 };
-// --- СЛУШАТЕЛЬ РЕАЛЬНОЙ ПОЧТЫ ИЗ FIREBASE ---
-// Этот блок следит за новыми письмами в базе в реальном времени
+
+// --- 4. СЛУШАТЕЛЬ РЕАЛЬНОЙ ПОЧТЫ ИЗ FIREBASE ---
 if (typeof db !== 'undefined') {
     db.ref('mailArchive').on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
             window.mailArchiveDB = [];
-            
-            // Превращаем объект из базы в массив для нашего интерфейса
             Object.keys(data).forEach(key => {
                 let mailItem = data[key];
                 mailItem.id = key; 
                 window.mailArchiveDB.push(mailItem);
             });
-            
-            // Сортируем: свежие письма всегда сверху
             window.mailArchiveDB.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            
-            // Обновляем список, если пользователь сейчас открыл вкладку Mail
             if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
                 window.renderArchiveList('email', window.mailArchiveDB);
             }
             
-            // Показываем синюю точку (badge), если есть непрочитанные
             let hasUnread = window.mailArchiveDB.some(m => m.unread);
             const badgeEl = document.getElementById('mail-badge');
             const archiveMenuBadge = document.getElementById('archive-unread-badge');
-            
-            if (badgeEl) {
-                if (hasUnread) badgeEl.classList.remove('hidden');
-                else badgeEl.classList.add('hidden');
-            }
-            if (archiveMenuBadge) {
-                if (hasUnread) archiveMenuBadge.classList.remove('hidden');
-                else archiveMenuBadge.classList.add('hidden');
-            }
+            if (badgeEl) { if (hasUnread) badgeEl.classList.remove('hidden'); else badgeEl.classList.add('hidden'); }
+            if (archiveMenuBadge) { if (hasUnread) archiveMenuBadge.classList.remove('hidden'); else archiveMenuBadge.classList.add('hidden'); }
         }
     });
 }
