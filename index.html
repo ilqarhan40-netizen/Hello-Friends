@@ -1761,39 +1761,10 @@ window.sendPushToUser = function(targetUserId, title, body) {
     });
 };
 
-    const notification = {
-        app_id: ONESIGNAL_APP_ID,
-        include_aliases: { "external_id": [targetUserId] }, 
-        headings: { "en": title, "ru": title, "az": title },
-        contents: { "en": body, "ru": body, "az": body },
-        android_channel_id: "b455502c-7b2a-4318-8422-921c172d1f94",
-        data: { type: "incoming_call" } 
-    };
-
-    fetch('https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
-        },
-        body: JSON.stringify(notification)
-    }).catch(e => console.error("OneSignal Error:", e));
-};
-
-            let activeUserId = localStorage.getItem('hf_active_user');
-            window.isGuest = !activeUserId; 
-            window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
-
-            const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
-
-let cachedProfile = null;
-if (activeUserId) {
-    try {
-        const storedData = localStorage.getItem('hf_custom_' + activeUserId);
-        if (storedData) cachedProfile = JSON.parse(storedData);
-    } catch(e) { console.error("Ошибка чтения кэша", e); }
-}
-
+let activeUserId = localStorage.getItem('hf_active_user');
+window.isGuest = !activeUserId; 
+window.currentRoomId = "global"; 
+// ... и так далее
 window.myProfileInfo = cachedProfile || { 
     id: activeUserId || 'guest', 
     name: 'User', 
