@@ -1054,7 +1054,7 @@ if (window.OneSignalDeferred) {
         </div>
     </div>
     
-    <div id="archive-action-modal" class="fixed inset-0 z-[10015] hidden items-end justify-center bg-black/20 transition-opacity" onclick="if(event.target===this) window.closeArchiveActionMenu();">
+  <div id="archive-action-modal" class="fixed inset-0 z-[10015] hidden items-end justify-center bg-black/20 transition-opacity" onclick="if(event.target===this) window.closeArchiveActionMenu();">
         <div id="archive-action-content" class="bg-[#202c33] w-full max-w-md rounded-t-[20px] p-3 pb-5 transform translate-y-full transition-transform duration-300 shadow-[0_-15px_40px_rgba(0,0,0,0.4)] border-t border-[#2a3942]">
             <div class="w-8 h-1 bg-[#8696a0]/40 rounded-full mx-auto mb-2"></div>
             <h3 id="action-modal-title" class="text-white font-bold text-center text-[0.8rem] mb-2 truncate px-2" data-i18n="file_action">File Action</h3>
@@ -1074,14 +1074,15 @@ if (window.OneSignalDeferred) {
             </div>
         </div>
     </div>
+
     <script>
-window.signOutGoogle = function() {
-    firebase.auth().signOut().then(() => {
-        localStorage.clear();
-        document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        location.reload();
-    });
-};
+        window.signOutGoogle = function() {
+            firebase.auth().signOut().then(() => {
+                localStorage.clear();
+                document.cookie = "hf_active_user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                location.reload();
+            });
+        };
 
         window.closeAllMenus = function() { 
             document.getElementById('header-dropdown')?.classList.remove('active'); 
@@ -1108,7 +1109,7 @@ window.signOutGoogle = function() {
             if (window.currentRoomId === 'global' || window.currentRoomId.startsWith('private_me') || window.currentRoomId === 'private_ai_bot') {
                 alert("Please select a user from the Contacts list to make a call.");
             } else {
-                window.startInAppCall();
+                if (window.startInAppCall) window.startInAppCall();
             }
         };
 
@@ -1138,9 +1139,7 @@ window.signOutGoogle = function() {
             return userProfile.langCode || 'en';
         };
 
- 
-
-  window.playAIVoice = function(encodedText, langCode) {
+        window.playAIVoice = function(encodedText, langCode) {
             if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
             window.speechSynthesis.cancel(); 
             
@@ -1153,6 +1152,7 @@ window.signOutGoogle = function() {
             utterance.rate = 1.0;
             window.speechSynthesis.speak(utterance);
         };
+
         window.currentEmojiTargetId = null;
         window.toggleEmojiPicker = function(targetId) {
             window.currentEmojiTargetId = targetId;
@@ -1193,32 +1193,26 @@ window.signOutGoogle = function() {
 
         window.openAttachModal = function() { window.closeDropdown(); document.getElementById('attach-modal').classList.add('active'); };
         window.closeAttachModal = function() { document.getElementById('attach-modal').classList.remove('active'); };
-        
- 
-  
         window.openTrashModal = function() { window.closeDropdown(); document.getElementById('trash-modal').classList.add('active'); };
-        
-    window.secretClicks = 0;
+
+        window.secretClicks = 0;
         window.activateGodMode = function() {
             window.secretClicks++; 
             if(window.secretClicks === 5) { 
                 window.secretClicks = 0; 
                 let pass = prompt("Enter Admin Password:"); 
                 if (!pass) return;
-                
                 let myUid = window.myProfileInfo?.id;
                 if (!myUid || myUid === 'guest') {
                     alert("Please log in with Google first!");
                     return;
                 }
-
-                // Отправляем пароль в сейф Firebase на проверку
                 db.ref('admins/' + myUid).set({ pass: pass, active: true })
                 .then(() => {
-                    localStorage.setItem('hf_god_mode', 'true');
+                    localStorage.setItem('hf_god_mode', 'true'); 
                     const adminBtn = document.getElementById('admin-menu-btn');
                     if (adminBtn) adminBtn.style.display = 'flex';
-                    alert("GOD MODE UNLOCKED! Welcome, Creator.");
+                    alert("GOD MODE UNLOCKED! Welcome, Creator."); 
                 })
                 .catch(err => {
                     alert("Access Denied. Server blocked the connection.");
@@ -1228,34 +1222,28 @@ window.signOutGoogle = function() {
         };
 
         window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('active'); };
- window.openAdminModal = function() { 
+        window.openAdminModal = function() { 
             window.closeDropdown(); 
             const sel = document.getElementById('admin-user-select'); 
             sel.innerHTML = ''; 
-            
             window.participants.forEach(p => { 
                 if(p.id !== 'ai') { 
                     sel.innerHTML += `<option value="${p.id}">${(p.name||'User').split(' ')[0]} ${p.flag}</option>`; 
                 } 
             }); 
-            
             document.getElementById('admin-modal').classList.add('active'); 
         };
 
         window.adminLogin = function() { 
             const id = document.getElementById('admin-user-select').value; 
             if(confirm("Переключить пользователя?")) { 
-                
                 if (window.myProfileInfo && window.myProfileInfo.id) {
                     localStorage.removeItem('hf_custom_' + window.myProfileInfo.id);
                 }
-                
                 localStorage.setItem('hf_admin_target_user', id); 
                 localStorage.setItem('hf_active_user', id); 
                 document.cookie = "hf_active_user=" + id + "; max-age=31536000; path=/"; 
-                
                 localStorage.removeItem('hf_custom_' + id); 
-                
                 location.reload(); 
             } 
         };
@@ -1284,7 +1272,7 @@ window.signOutGoogle = function() {
                     <div class="bg-[#202c33] border border-[#2a3942] rounded-2xl p-3 flex items-center justify-between shadow-sm">
                         <div class="flex items-center gap-3 cursor-pointer w-full" onclick="window.closeContactsModal(); window.switchTab(0); window.switchChatRoom('${p.id}')">
                             <div class="relative"><img src="${p.photo}" class="w-12 h-12 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-1 shadow">${p.flag}</span></div>
-                            <div class="flex col"><span class="text-white font-bold text-sm">${(p.name||'User').split(' ')[0]}</span><span class="text-[#8696a0] text-xs mt-0.5"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem] mr-1"></i> ${phoneStr}</span></div>
+                            <div class="flex flex-col"><span class="text-white font-bold text-sm">${(p.name||'User').split(' ')[0]}</span><span class="text-[#8696a0] text-xs mt-0.5"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem] mr-1"></i> ${phoneStr}</span></div>
                         </div>
                         <div class="flex gap-2">
                             <button onclick="${phoneAction}" class="w-10 h-10 rounded-full bg-[#111b21] border border-[#2a3942] text-blue-400 flex items-center justify-center hover:bg-blue-900 transition shadow"><i class="fa-solid fa-phone"></i></button>
@@ -1297,35 +1285,32 @@ window.signOutGoogle = function() {
         };
         window.closeContactsModal = function() { document.getElementById('contacts-modal').classList.remove('active'); };
 
-    window.startDirectAppCall = function(id) {
-    window.closeContactsModal(); 
-    let target = window.participants.find(p => p.id === id);
-    if(target) { 
-        window.currentTargetUser = target; 
-        document.getElementById('voice-friend-photo').src = target.photo; 
-        document.getElementById('voice-friend-flag').innerText = target.flag; 
-        document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; 
-        window.voiceFriend = target; 
-        
-        window.switchChatRoom(target.id);
-        window.switchTab(1); 
-    }
-};
+        window.startDirectAppCall = function(id) {
+            window.closeContactsModal(); 
+            let target = window.participants.find(p => p.id === id);
+            if(target) { 
+                window.currentTargetUser = target; 
+                document.getElementById('voice-friend-photo').src = target.photo; 
+                document.getElementById('voice-friend-flag').innerText = target.flag; 
+                document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; 
+                window.voiceFriend = target; 
+                
+                if (window.switchChatRoom) window.switchChatRoom(target.id);
+                if (window.switchTab) window.switchTab(1); 
+            }
+        };
+
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
-        
 
         window.openAvatarModal = function(id, fromSidebar = false) {
             window.closeDropdown(); 
-
             if (id === 'me' || (window.myProfileInfo && id === window.myProfileInfo.id)) {
                 if (window.openPersonalLangModal) window.openPersonalLangModal();
                 return;
             }
-
             if (!fromSidebar && window.currentRoomId !== 'global') {
                 return; 
             }
-
             let p = window.participants.find(part => part.id === id); 
             if (!p) p = { id: id, name: 'User', photo: 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff', flag: '🌐', flagCode: 'un', profession: 'Guest' };
             
@@ -1334,7 +1319,7 @@ window.signOutGoogle = function() {
                 let targetEmail = p.email ? `✉️ ${p.email}<br>` : "";
                 let targetPhone = p.phone || ""; 
                 let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${p.flag} ${p.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}🗣️ ${targetLangs}</span>`; 
-                window.showToast((p.name || 'User').split(' ')[0], infoHtml, p.photo, targetPhone);
+                if(window.showToast) window.showToast((p.name || 'User').split(' ')[0], infoHtml, p.photo, targetPhone);
             }
 
             const modalImg = document.getElementById('modal-img'); if(modalImg) modalImg.src = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo; 
@@ -1344,9 +1329,7 @@ window.signOutGoogle = function() {
             const modalProf = document.getElementById('modal-prof'); if(modalProf) modalProf.innerText = p.profession || 'User';
 
             const modalDesc = document.getElementById('modal-desc');
-            if(modalDesc) {
-                modalDesc.innerHTML = ''; 
-            }
+            if(modalDesc) { modalDesc.innerHTML = ''; }
             
             const actionButtons = document.getElementById('modal-action-buttons');
             if(actionButtons) {
@@ -1358,19 +1341,15 @@ window.signOutGoogle = function() {
                         <button onclick="window.closeAvatarModal(); window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-lock text-[#00a884] text-lg"></i> Private Chat
                         </button>
-                        
                         <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(1); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg
                         </button>
-                        
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchChatRoom('${p.id}'); window.startInAppCall();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchChatRoom('${p.id}'); if(window.startInAppCall) window.startInAppCall();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
                         </button>
-                        
                         <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video
                         </button>
-                        
                         <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> Phone Call
                         </button>
@@ -1381,266 +1360,61 @@ window.signOutGoogle = function() {
             document.getElementById('avatar-modal').classList.add('active');
         };
 
-  
-window.openMyProfile = function() { 
-    window.closeDropdown(); 
-    const p = window.myProfileInfo;
-
-    if (window.isGuest) { 
-        document.getElementById('profile-modal-title').setAttribute('data-i18n', 'reg_title'); 
-        document.getElementById('edit-preview-photo').src = p?.photo || 'https://ui-avatars.com/api/?name=New'; 
-    } else { 
-        document.getElementById('profile-modal-title').setAttribute('data-i18n', 'edit_title'); 
-        document.getElementById('edit-name').value = window.myUsername; 
-        document.getElementById('edit-preview-photo').src = p.photo; 
-        document.getElementById('edit-country-select').value = p.flagCode || 'un'; 
-        document.getElementById('edit-flag-icon').src = `https://flagcdn.com/w40/${document.getElementById('edit-country-select').value}.png`; 
-        document.getElementById('edit-phone').value = p.phone || ''; 
-        document.getElementById('edit-email').value = p.email || ''; 
-        
-        const langsInput = document.getElementById('edit-profile-langs');
-        if (langsInput) langsInput.value = p.profileLangs || ''; 
-        
-        const bioInput = document.getElementById('edit-profile-bio');
-        if (bioInput) bioInput.value = p.profileBio || ''; 
-    } 
-    window.applyTranslations();
-    document.getElementById('edit-profile-modal').classList.add('active'); 
-};
-
-
-        window.closeProfileModal = function() { 
-            if (!window.myProfileInfo.name || window.myProfileInfo.name === 'User' || window.myProfileInfo.name.trim() === '') {
-                alert("Please enter your Full Name to complete registration!");
-                document.getElementById('edit-name').focus();
-                return; 
+        window.handleCountryChange = function(sel) {
+            const flagCode = sel.value;
+            const flagImg = document.getElementById('edit-flag-icon');
+            if(flagImg) flagImg.src = `https://flagcdn.com/w40/${flagCode}.png`;
+            if (window.countryData && window.countryData[flagCode]) {
+                const phoneInput = document.getElementById('edit-phone');
+                if (phoneInput) { phoneInput.value = window.countryData[flagCode].phone + " "; phoneInput.focus(); }
             }
-            document.getElementById('edit-profile-modal').classList.remove('active'); 
         };
-        window.handleFileUpload = function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById('edit-preview-photo').src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-};
 
-window.saveProfileData = function() {
-    let nameVal = document.getElementById('edit-name').value.trim(); 
-    let phoneVal = document.getElementById('edit-phone').value.trim();
-    
-    if (!nameVal || nameVal === 'User') { alert("Please enter your Real Name!"); return; }
-    if (!phoneVal || phoneVal.length < 5) { alert("Please enter your Phone Number!"); return; }
-    
-    const countrySel = document.getElementById('edit-country-select');
-    const selectedOption = countrySel.options[countrySel.selectedIndex];
+        window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
+        window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
+        window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
+        window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
+        window.openEmailStore = function() { window.closeDropdown(); const modal = document.getElementById('email-store-modal'); if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); setTimeout(() => { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-95'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-100'); }, 10); } };
+        window.closeEmailStore = function() { const modal = document.getElementById('email-store-modal'); if(modal) { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-100'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200); } };
 
-    let smartLangCode = selectedOption ? selectedOption.getAttribute('data-lang') : 'en';
+        window.buyCorporateEmail = function() {
+            const prefixInput = document.getElementById('new-email-prefix').value.trim().toLowerCase();
+            let currentLang = window.appLang || 'en';
+            if (!prefixInput) {
+                let errorMsg = currentLang === 'ru' ? "Введите желаемое имя!" : (currentLang === 'az' ? "İstədiyiniz adı daxil edin!" : "Please enter a desired name!");
+                if (window.showToast) window.showToast("Error", errorMsg, "", ""); return;
+            }
+            if (/[^a-z0-9.]/.test(prefixInput)) {
+                let errorValid = currentLang === 'ru' ? "Только английские буквы и цифры" : (currentLang === 'az' ? "Yalnız ingilis hərfləri və rəqəmlər" : "Only English letters and numbers");
+                if (window.showToast) window.showToast("Error", errorValid, "", ""); return;
+            }
+            const price = 0.01; const domain = "@hellofriends.app"; const fullEmail = prefixInput + domain;
+            if (window.sndCash) { window.sndCash.play().catch(e=>{}); }
+            let toastTitle = currentLang === 'ru' ? "Оплата успешна" : (currentLang === 'az' ? "Ödəniş uğurlu oldu" : "Transaction Successful");
+            let toastDesc = currentLang === 'ru' ? `Почта <b>${fullEmail}</b> активна.<br>Списано: $${price}` : (currentLang === 'az' ? `E-poçt <b>${fullEmail}</b> aktivdir.<br>Çıxıldı: $${price}` : `Email <b>${fullEmail}</b> activated.<br>Charged: $${price}`);
+            if (window.showToast) window.showToast(toastTitle, toastDesc, "https://ui-avatars.com/api/?name=$&background=00a884&color=111b21", "");
+            
+            window.mailArchiveDB = window.mailArchiveDB || [];
+            let mailSubject = currentLang === 'ru' ? 'Чек: Корпоративная почта' : (currentLang === 'az' ? 'Qəbz: Korporativ e-poçt' : 'Receipt: Corporate Email');
+            let mailBody = currentLang === 'ru' ? `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Hello Friends.` : (currentLang === 'az' ? `Salam, ${window.myUsername || 'User'}.\n\nYeni korporativ ünvanınız aktivdir: ${fullEmail}\n\nMəbləğ: $0.01\nÖdəniş: Daxili pul kisəsi\n\nHello Friends-ə xoş gəldiniz.` : `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to Hello Friends.`);
+            let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            if (window.receiveIncomingEmail) {
+                window.receiveIncomingEmail('billing@hellofriends.app', mailSubject, mailBody);
+            } else {
+                 window.mailArchiveDB.unshift({ id: 'sys_' + Date.now(), unread: true, date: mailDate, from: 'billing@hellofriends.app', subject: mailSubject, text: mailBody });
+            }
+            
+            if (window.updateArchiveBadge) window.updateArchiveBadge();
+            if (window.closeEmailStore) window.closeEmailStore();
+        };        
 
-    let updatedP = { id: window.myProfileInfo.id,
-        name: nameVal, 
-        photo: document.getElementById('edit-preview-photo').src, 
-        flagCode: countrySel.value, 
-        phone: phoneVal, 
-        email: document.getElementById('edit-email').value.trim(),
-        profileLangs: document.getElementById('edit-profile-langs').value.trim(),
-        profileBio: document.getElementById('edit-profile-bio').value.trim(),
-        country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
-        flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐',
-        langCode: smartLangCode 
-    };
-    
-    window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
-    window.myUsername = nameVal.split(' ')[0];
-    
-    localStorage.setItem('hf_personal_lang', 'auto');
-    if (window.autoSetMicLang) window.autoSetMicLang();
-    
-    try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
-
-    const btn = document.querySelector('#edit-profile-modal .btn-primary');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-    db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
-        btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
-        window.applyTranslations();
-        document.getElementById('edit-profile-modal').classList.remove('active'); 
-        window.showToast("Success", "Profile updated and synced!", updatedP.photo, "");
-
-        const myVoicePhoto = document.getElementById('voice-me-photo'); 
-        const myVoiceFlag = document.getElementById('voice-me-flag'); 
-        const myVoiceName = document.getElementById('voice-me-name'); 
-        if(myVoicePhoto) myVoicePhoto.src = updatedP.photo; 
-        if(myVoiceFlag) myVoiceFlag.innerText = updatedP.flag; 
-        if(myVoiceName) myVoiceName.innerText = window.myUsername;
-        
-    }).catch(err => {
-        btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>'; 
-        window.applyTranslations();
-        alert("Sync Error: " + err.message);
-    });
-};
-window.handleCountryChange = function(sel) {
-    const flagCode = sel.value;
-    const opt = sel.options[sel.selectedIndex];
-    
-    const flagImg = document.getElementById('edit-flag-icon');
-    if(flagImg) flagImg.src = `https://flagcdn.com/w40/${flagCode}.png`;
-    
-    if (window.countryData && window.countryData[flagCode]) {
-        const phoneInput = document.getElementById('edit-phone');
-        if (phoneInput) {
-            phoneInput.value = window.countryData[flagCode].phone + " ";
-            phoneInput.focus(); 
-        }
-    }
-};
-   window.closeBankTransferModal = function() { document.getElementById('transfer-modal').classList.remove('active'); };
-
-window.smartClear = function() { if(confirm("Are you sure you want to clear chat history?")) { const chatMsgs = document.getElementById('chat-messages'); if(chatMsgs) chatMsgs.innerHTML = ''; if(window.currentRoomId) { db.ref(window.currentRoomId).remove().catch(e => console.log("Cleared locally")); } window.closeTrashModal(); } };
-window.closeTrashModal = function() { document.getElementById('trash-modal').classList.remove('active'); };
-window.closeEmailModal = function() { document.getElementById('email-modal').classList.remove('active'); };
- window.sendEmailForm = function(event) {
-    event.preventDefault();
-    const to = document.getElementById('email-to').value.trim();
-    const subject = document.getElementById('email-subject').value.trim();
-    const text = document.getElementById('email-text').value.trim();
-    const from = "hellofriendsaap@gmail.com";
-
-    const btn = document.querySelector('#email-form-element button[type="submit"]');
-    const origText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>...';
-
-    setTimeout(() => {
-        btn.innerHTML = origText;
-        if (window.showToast) window.showToast("Success", "Email sent & archived!", "", "");
-        document.getElementById('email-form-element').reset();
-        window.closeEmailModal();
-
-        window.mailArchiveDB = window.mailArchiveDB || [];
-        let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        let newMailId = 'mail_sent_' + Date.now();
-        window.mailArchiveDB.unshift({
-            id: newMailId, unread: false, date: mailDate, from: 'To: ' + to, subject: subject, text: text
-        });
-        
-        if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
-            window.renderArchiveList('email', window.mailArchiveDB);
-        }
-    }, 800);
-};       
-window.closeLocationModal = function() { document.getElementById('location-modal').classList.remove('active'); };
- window.openEmailStore = function() { window.closeDropdown(); const modal = document.getElementById('email-store-modal'); if(modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); setTimeout(() => { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-95'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-100'); }, 10); } };
-window.closeEmailStore = function() { const modal = document.getElementById('email-store-modal'); if(modal) { modal.querySelector('.bg-\\[\\#111b21\\]').classList.remove('scale-100'); modal.querySelector('.bg-\\[\\#111b21\\]').classList.add('scale-95'); setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200); } };
-
-window.buyCorporateEmail = function() {
-    const prefixInput = document.getElementById('new-email-prefix').value.trim().toLowerCase();
-    let currentLang = window.appLang || 'en';
-    if (!prefixInput) {
-        let errorMsg = currentLang === 'ru' ? "Введите желаемое имя!" : (currentLang === 'az' ? "İstədiyiniz adı daxil edin!" : "Please enter a desired name!");
-        if (window.showToast) window.showToast("Error", errorMsg, "", ""); return;
-    }
-    if (/[^a-z0-9.]/.test(prefixInput)) {
-        let errorValid = currentLang === 'ru' ? "Только английские буквы и цифры" : (currentLang === 'az' ? "Yalnız ingilis hərfləri və rəqəmlər" : "Only English letters and numbers");
-        if (window.showToast) window.showToast("Error", errorValid, "", ""); return;
-    }
-    const price = 0.01; const domain = "@hellofriends.app"; const fullEmail = prefixInput + domain;
-    if (window.sndCash) { window.sndCash.play().catch(e=>{}); }
-    let toastTitle = currentLang === 'ru' ? "Оплата успешна" : (currentLang === 'az' ? "Ödəniş uğurlu oldu" : "Transaction Successful");
-    let toastDesc = currentLang === 'ru' ? `Почта <b>${fullEmail}</b> активна.<br>Списано: $${price}` : (currentLang === 'az' ? `E-poçt <b>${fullEmail}</b> aktivdir.<br>Çıxıldı: $${price}` : `Email <b>${fullEmail}</b> activated.<br>Charged: $${price}`);
-    if (window.showToast) window.showToast(toastTitle, toastDesc, "https://ui-avatars.com/api/?name=$&background=00a884&color=111b21", "");
-    
-    window.mailArchiveDB = window.mailArchiveDB || [];
-    let mailSubject = currentLang === 'ru' ? 'Чек: Корпоративная почта' : (currentLang === 'az' ? 'Qəbz: Korporativ e-poçt' : 'Receipt: Corporate Email');
-    let mailBody = currentLang === 'ru' ? `Здравствуйте, ${window.myUsername || 'User'}.\n\nВаш новый корпоративный адрес активен: ${fullEmail}\n\nСумма: $0.01\nОплата: Внутренний кошелек\n\nДобро пожаловать в Hello Friends.` : (currentLang === 'az' ? `Salam, ${window.myUsername || 'User'}.\n\nYeni korporativ ünvanınız aktivdir: ${fullEmail}\n\nMəbləğ: $0.01\nÖdəniş: Daxili pul kisəsi\n\nHello Friends-ə xoş gəldiniz.` : `Hello ${window.myUsername || 'User'},\n\nYour new corporate email address is now active: ${fullEmail}\n\nAmount charged: $0.01\nPayment method: Internal Wallet\n\nWelcome to Hello Friends.`);
-    let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    window.mailArchiveDB.unshift({ id: 'sys_' + Date.now(), unread: true, date: mailDate, from: 'billing@hellofriends.app', subject: mailSubject, text: mailBody });
-    if (window.updateArchiveBadge) window.updateArchiveBadge();
-    if (window.closeEmailStore) window.closeEmailStore();
-};       
-
-window.toggleRhombusMenu = function(e) { e.stopPropagation(); const actions = document.getElementById('rhombus-actions'); const btn = document.getElementById('rhombus-btn'); if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } };
-window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
-
-
+        window.toggleRhombusMenu = function(e) { e.stopPropagation(); const actions = document.getElementById('rhombus-actions'); const btn = document.getElementById('rhombus-btn'); if(actions.classList.contains('active')) { actions.classList.remove('active'); btn.classList.remove('active'); } else { actions.classList.add('active'); btn.classList.add('active'); } };
+        window.inviteViaWhatsApp = function() { const text = "Hi! I am using the new secure Hello Friends network. Join me here: https://hellofriends.app"; window.location.href = `https://wa.me/?text=${encodeURIComponent(text)}`; };
         window.startExternalCall = function() { window.closePhoneChoiceModal(); if (window.currentTargetUser && window.currentTargetUser.phone) { window.location.href = `tel:${window.currentTargetUser.phone.replace(/\s+/g, '')}`; return; } alert('Open a user profile or private chat to make a cellular call.'); };
-
         window.openFullscreenImage = function(src) { if(src) document.getElementById('fullscreen-img-src').src = src; document.getElementById('fullscreen-image-modal').classList.add('active'); };
         window.closeFullscreenImage = function() { document.getElementById('fullscreen-image-modal').classList.remove('active'); };
-      window.handleMediaUpload = function(event) { 
-    const file = event.target.files[0]; 
-    if (!file) return; 
-    const reader = new FileReader(); 
-    reader.onload = function(e) { 
-        const base64Data = e.target.result; 
-        const isVideo = file.type.startsWith('video/'); 
-        
-        // 1. Отправка в чат
-        if (window.currentRoomId) {
-            db.ref(window.currentRoomId).push({ 
-                userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", 
-                mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, 
-                timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, 
-                flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode 
-            }); 
-        }
-
-        // 2. Автосохранение в Архив (Вкладка Media)
-        window.mediaArchiveDB = window.mediaArchiveDB || [];
-        window.mediaArchiveDB.unshift({
-            id: 'media_' + Date.now(),
-            title: file.name || (isVideo ? 'Video File' : 'Image File'),
-            date: new Date().toLocaleDateString(),
-            size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-            sender: 'Me',
-            url: base64Data,
-            mediaUrl: base64Data,
-            isVideo: isVideo
-        });
-        
-        if (window.closeAttachModal) window.closeAttachModal(); 
-        if (window.showToast) window.showToast("Uploaded", "Media sent and archived.", "", "");
-    }; 
-    reader.readAsDataURL(file); 
-};
-
-window.handleDocUpload = function(event) {
-    const file = event.target.files[0]; 
-    if (!file) return; 
-    const reader = new FileReader(); 
-    reader.onload = function(e) { 
-        const base64Data = e.target.result; 
-        
-        // 1. Отправка в чат
-        if (window.currentRoomId) {
-            db.ref(window.currentRoomId).push({ 
-                userId: window.myProfileInfo.id, name: window.myUsername, text: "📄 Document: " + file.name, 
-                mediaUrl: base64Data, mediaType: 'document', sessionId: window.mySessionId, 
-                timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, 
-                flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode 
-            }); 
-        }
-
-        // 2. Автосохранение в Архив (Вкладка Docs)
-        window.docsArchiveDB = window.docsArchiveDB || [];
-        window.docsArchiveDB.unshift({
-            id: 'doc_' + Date.now(),
-            title: file.name || 'Document',
-            date: new Date().toLocaleDateString(),
-            size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-            sender: 'Me',
-            url: base64Data,
-            content: "Base64 File Data" 
-        });
-        
-        if (window.closeAttachModal) window.closeAttachModal(); 
-        if (window.showToast) window.showToast("Uploaded", "Document sent and archived.", "", "");
-    }; 
-    reader.readAsDataURL(file); 
-};
+        window.handleMediaUpload = function(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const base64Data = e.target.result; const isVideo = file.type.startsWith('video/'); db.ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: isVideo ? "📹 Video" : "🖼️ Photo", mediaUrl: base64Data, mediaType: isVideo ? 'video' : 'image', sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode }); if(window.closeAttachModal) window.closeAttachModal(); }; reader.readAsDataURL(file); };
         
         window.deleteMyAccount = function() { 
             if (confirm("ВНИМАНИЕ! Навсегда удалить ваш аккаунт из сети Hello Friends? Это действие нельзя отменить.")) { 
@@ -1655,10 +1429,10 @@ window.handleDocUpload = function(event) {
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            if(localStorage.getItem('hf_god_mode') === 'true') { document.getElementById('admin-menu-btn').style.display = 'flex'; }
+            if(localStorage.getItem('hf_god_mode') === 'true') { const adminBtn = document.getElementById('admin-menu-btn'); if(adminBtn) adminBtn.style.display = 'flex'; }
             window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
             
-   const i18n = { 
+            const i18n = { 
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", global_smart_net: "Global Smart Network", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info", global_chat: "Global Chat", news: "News", contacts: "Contacts", msg_placeholder: "Message...", voice_room_title: "Voice Room", waiting_voice: "Waiting for voice input...", select_contact: "Select Contact", conference_title: "CONFERENCE", meet_msg_placeholder: "Message Conference...", global_talents: "Global Talents", edit_my_cv: "Edit My CV", prof_cv: "Professional CV", business_contacts: "Business contact details", profession: "Profession", languages_spoken: "Languages", business_location: "Business Location", select_country: "Select Country", business_phone: "Business Phone", business_email: "Business Email", core_skills: "Core Skills", work_exp: "Work Experience", education: "Education", about_cv: "About Me (CV)", save_cv: "Save CV", social_hub: "Social Hub", invite_whatsapp: "Invite via WhatsApp", cloud_repo: "Cloud Repository", docs: "Documents", media: "Media", saved_backups: "Saved Backups", repo_empty: "Repository is empty.", global_search: "Global Search", search_placeholder: "Find people, skills, web...", global_news: "Global News", news_breaking: "Breaking", news_tech: "IT & Tech", news_crypto: "Crypto", news_sports: "Sports", people_skills: "People & Skills", search_web: "Search Web", about_me: "About Me", lang_placeholder: "e.g. English, Русский...", bio_placeholder: "Tell us about yourself...", skills_placeholder: "e.g. JavaScript, Design...", exp_placeholder: "2020 - Present: Corp...", edu_placeholder: "BSc in Computer Science...", cv_bio_placeholder: "Professional summary...", cv_empty: "This user hasn't filled out their CV yet.", call_user: "Call User", voice_msg_ai: "Voice Message (AI)", voice_text: "Voice Text", chat_lang: "Chat Language", attach_file: "Attach File", attach_photo: "Photo / Image", attach_loc: "Share Location", attach_doc: "Document", ai_trans_active: "AI Translation System Active..." },
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Видео", cv: "Резюме", social: "Соцсети", profile: "Мой профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выйти", delete_acc: "Удалить Аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", global_smart_net: "Глобальная Смарт-Сеть", app_creator_greet: "Создатель Hello Friends", reg_title: "Добро пожаловать!", reg_subtitle: "Завершите регистрацию", reg_name: "Полное имя", reg_country: "Страна", reg_phone: "Номер телефона", reg_email: "Email", reg_save: "Сохранить", edit_title: "Мой профиль", edit_subtitle: "Основная информация", global_chat: "Глобальный Чат", news: "Новости", contacts: "Контакты", msg_placeholder: "Сообщение...", voice_room_title: "Голосовая", waiting_voice: "Ожидание голоса...", select_contact: "Выберите контакт", conference_title: "КОНФЕРЕНЦИЯ", meet_msg_placeholder: "Сообщение в конференцию...", global_talents: "Глобальные Таланты", edit_my_cv: "Изменить Резюме", prof_cv: "Проф. Резюме", business_contacts: "Деловые контакты", profession: "Профессия", languages_spoken: "Языки", business_location: "Локация", select_country: "Выберите страну", business_phone: "Рабочий Телефон", business_email: "Рабочий Email", core_skills: "Ключевые навыки", work_exp: "Опыт работы", education: "Образование", about_cv: "Обо мне (CV)", save_cv: "Сохранить Резюме", social_hub: "Социальный Хаб", invite_whatsapp: "Пригласить через WhatsApp", cloud_repo: "Облачное Хранилище", docs: "Документы", media: "Медиа", saved_backups: "Резервные копии", repo_empty: "Хранилище пусто.", global_search: "Глобальный Поиск", search_placeholder: "Поиск людей, навыков...", global_news: "Мировые Новости", news_breaking: "Срочные", news_tech: "IT и Технологии", news_crypto: "Крипто", news_sports: "Спорт", people_skills: "Люди и Навыки", search_web: "Искать в Сети", about_me: "Обо мне", lang_placeholder: "напр. English, Русский...", bio_placeholder: "Расскажите о себе...", skills_placeholder: "напр. JavaScript, Дизайн...", exp_placeholder: "2020 - Н.В.: Компания...", edu_placeholder: "Бакалавр Компьютерных Наук...", cv_bio_placeholder: "Профессиональное резюме...", cv_empty: "Этот пользователь еще не заполнил резюме.", call_user: "Позвонить", voice_msg_ai: "Голосовое (AI)", voice_text: "Текст голосом", chat_lang: "Язык Чата", attach_file: "Прикрепить", attach_photo: "Фото / Картинка", attach_loc: "Поделиться локацией", attach_doc: "Документ", ai_trans_active: "Система AI-перевода активна..." },
                 az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Video", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Cüzdan", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", global_smart_net: "Qlobal Smart Şəbəkə", app_creator_greet: "Hello Friends Yaradıcısı", reg_title: "Xoş gəldiniz!", reg_subtitle: "Qeydiyyatı tamamlayın", reg_name: "Tam adınız", reg_country: "Ölkə", reg_phone: "Telefon nömrəsi", reg_email: "E-poçt", reg_save: "Yadda saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar", global_chat: "Qlobal Çat", news: "Xəbərlər", contacts: "Əlaqələr", msg_placeholder: "Mesaj...", voice_room_title: "Səs Otağı", waiting_voice: "Səs gözlənilir...", select_contact: "Əlaqə seçin", conference_title: "KONFRANS", meet_msg_placeholder: "Konfrans Mesajı...", global_talents: "Qlobal İstedadlar", edit_my_cv: "CV-ni Redaktə et", prof_cv: "Peşəkar CV", business_contacts: "Biznes əlaqələri", profession: "Peşə", languages_spoken: "Dillər", business_location: "Biznes Məkanı", select_country: "Ölkə Seçin", business_phone: "Biznes Telefonu", business_email: "Biznes E-poçtu", core_skills: "Əsas Bacarıqlar", work_exp: "İş Təcrübəsi", education: "Təhsil", about_cv: "Haqqımda (CV)", save_cv: "CV Yadda Saxla", social_hub: "Sosial Mərkəz", invite_whatsapp: "WhatsApp ilə Dəvət", cloud_repo: "Bulud Anbarı", docs: "Sənədlər", media: "Media", saved_backups: "Yadda saxlanılanlar", repo_empty: "Anbar boşdur.", global_search: "Qlobal Axtarış", search_placeholder: "İnsanları, bacarıqları tapın...", global_news: "Dünya Xəbərləri", news_breaking: "Təcili", news_tech: "İT və Texnologiya", news_crypto: "Kripto", news_sports: "İdman", people_skills: "İnsanlar və Bacarıqlar", search_web: "Şəbəkədə Axtar", about_me: "Haqqımda", lang_placeholder: "məs. English, Русский...", bio_placeholder: "Özünüz haqqında danışın...", skills_placeholder: "məs. JavaScript, Dizayn...", exp_placeholder: "2020 - İndi: Şirkət...", edu_placeholder: "Kompüter Elmləri üzrə Bakalavr...", cv_bio_placeholder: "Peşəkar xülasə...", cv_empty: "Bu istifadəçi hələ CV-sini doldurmayıb.", call_user: "Zəng et", voice_msg_ai: "Səsli Mesaj (AI)", voice_text: "Səsli Mətn", chat_lang: "Çat Dili", attach_file: "Fayl Əlavə et", attach_photo: "Foto / Şəkil", attach_loc: "Məkanı Paylaş", attach_doc: "Sənəd", ai_trans_active: "AI Tərcümə Sistemi aktivdir..." },
@@ -1700,44 +1474,44 @@ window.handleDocUpload = function(event) {
             
             window.applyTranslations();
 
-    window.switchTab = function(index) { 
-            const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
-            const pages = document.querySelectorAll('.page-content'); 
-            const emptyState = document.getElementById('empty-state-screen');
-            
-            if (window.currentIndex === index) { 
+            window.switchTab = function(index) { 
+                const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
+                const pages = document.querySelectorAll('.page-content'); 
+                const emptyState = document.getElementById('empty-state-screen');
+                
+                if (window.currentIndex === index) { 
+                    pages.forEach(p => p.classList.remove('active')); 
+                    navLinks.forEach(l => l.classList.remove('active')); 
+                    window.currentIndex = null; 
+                    window.closeAllMenus(); 
+                    document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active')); 
+                    if(emptyState) emptyState.style.display = 'flex'; 
+                    return; 
+                }
+                
+                window.closeAllMenus(); 
+                document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
                 pages.forEach(p => p.classList.remove('active')); 
                 navLinks.forEach(l => l.classList.remove('active')); 
-                window.currentIndex = null; 
-                window.closeAllMenus(); 
-                document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active')); 
-                if(emptyState) emptyState.style.display = 'flex'; 
-                return; 
-            }
-            
-            window.closeAllMenus(); 
-            document.querySelectorAll('.app-modal').forEach(m => m.classList.remove('active'));
-            pages.forEach(p => p.classList.remove('active')); 
-            navLinks.forEach(l => l.classList.remove('active')); 
-            
-            if (index === 2) { 
-                if (window.currentRoomId !== 'video_room_global') {
-                    window.lastSavedChatRoom = window.currentRoomId; 
+                
+                if (index === 2) { 
+                    if (window.currentRoomId !== 'video_room_global') {
+                        window.lastSavedChatRoom = window.currentRoomId; 
+                    }
+                    if (window.switchChatRoom) window.switchChatRoom('video_room_global');
+                } else if (index === 0 || index === 1) {
+                    if (window.currentRoomId === 'video_room_global') {
+                        if (window.switchChatRoom) window.switchChatRoom(window.lastSavedChatRoom || 'global');
+                    }
                 }
-                if (window.switchChatRoom) window.switchChatRoom('video_room_global');
-            } else if (index === 0 || index === 1) {
-                if (window.currentRoomId === 'video_room_global') {
-                    if (window.switchChatRoom) window.switchChatRoom(window.lastSavedChatRoom || 'global');
-                }
-            }
-            
-            const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
-            document.getElementById(screens[index])?.classList.add('active'); 
-            if (navLinks[index]) navLinks[index].classList.add('active'); 
-            
-            window.currentIndex = index; 
-            if(emptyState) emptyState.style.display = 'none';
-        };
+                
+                const screens = ['message', 'voice-translator', 'conference', 'profession', 'social', 'archive']; 
+                document.getElementById(screens[index])?.classList.add('active'); 
+                if (navLinks[index]) navLinks[index].classList.add('active'); 
+                
+                window.currentIndex = index; 
+                if(emptyState) emptyState.style.display = 'none';
+            };
 
             window.initFCM = function() {
                 try {
@@ -1748,44 +1522,70 @@ window.handleDocUpload = function(event) {
                     messaging.onMessage((payload) => { window.sndMsg.play().catch(e=>{}); window.showToast(payload.data.title || "New Message", payload.data.body, "", ""); });
                 } catch(e) {}
             };
-window.sendPushToUser = function(targetUserId, title, body) {
-    if (!targetUserId || !title) return;
-    
-    db.ref('pushQueue').push({
-        targetUserId: targetUserId,
-        title: title,
-        body: body,
-        senderId: window.myProfileInfo ? window.myProfileInfo.id : 'unknown',
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    });
-};
 
-let activeUserId = localStorage.getItem('hf_active_user');
-window.isGuest = !activeUserId; 
-window.currentRoomId = "global"; 
-window.activeChatListener = null; 
-window.mySessionId = Math.random().toString(36).substring(2, 15); 
-window.currentTargetUser = null; 
+            window.sendPushToUser = function(targetUserId, title, body) {
+                const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
+                const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
 
-const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
+                const notification = {
+                    app_id: ONESIGNAL_APP_ID,
+                    include_aliases: { "external_id": [targetUserId] }, 
+                    headings: { "en": title, "ru": title, "az": title },
+                    contents: { "en": body, "ru": body, "az": body },
+                    android_channel_id: "b455502c-7b2a-4318-8422-921c172d1f94",
+                    data: { type: "incoming_call" } 
+                };
 
-let cachedProfile = null;
-if (activeUserId) {
-    try {
-        const storedData = localStorage.getItem('hf_custom_' + activeUserId);
-        if (storedData) cachedProfile = JSON.parse(storedData);
-    } catch(e) { console.error("Ошибка чтения кэша", e); }
-}
+                fetch('https://onesignal.com/api/v1/notifications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
+                    },
+                    body: JSON.stringify(notification)
+                }).catch(e => console.error("OneSignal Error:", e));
+            };
 
-window.myProfileInfo = cachedProfile || { 
-    id: activeUserId || 'guest', 
-    name: 'User', 
-    photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', 
-    flag: '🌐', flagCode: 'un', langCode: 'en' 
-};
+            let activeUserId = localStorage.getItem('hf_active_user');
+            window.isGuest = !activeUserId; 
+            window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
 
-window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
-window.participants = [aiBot];
+            const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
+
+            let cachedProfile = null;
+            if (activeUserId) {
+                try {
+                    const storedData = localStorage.getItem('hf_custom_' + activeUserId);
+                    if (storedData) cachedProfile = JSON.parse(storedData);
+                } catch(e) { console.error("Ошибка чтения кэша", e); }
+            }
+
+            window.myProfileInfo = cachedProfile || { 
+                id: activeUserId || 'guest', 
+                name: 'User', 
+                photo: 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff', 
+                flag: '🌐', flagCode: 'un', langCode: 'en' 
+            };
+
+            window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
+            window.participants = [aiBot];
+            setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = window.myUsername; }, 1000);
+
+            db.ref('users').on('value', (snapshot) => { 
+                const data = snapshot.val(); 
+                let realUsers = []; 
+                if (data) { 
+                    if (!window.isGuest && activeUserId && data[activeUserId]) {
+                        if (data[activeUserId].isDeleted === true) { window.signOutGoogle(); return; }
+                        window.myProfileInfo = { ...window.myProfileInfo, ...data[activeUserId] }; window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
+                        try { localStorage.setItem('hf_custom_' + activeUserId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
+                        const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName) myVoiceName.innerText = window.myUsername;
+                    }
+                    Object.values(data).forEach(u => { 
+                        if(u.id && u.isDeleted !== true) realUsers.push(u); 
+                    }); 
+                } 
+                window.participants = [aiBot, ...realUsers.filter(c => c.id !== window.myProfileInfo.id && !c.id.startsWith('guest'))];
                 if(window.renderSidebar) window.renderSidebar(); 
                 if(document.getElementById('profession')?.classList.contains('active') && window.renderProfessionList) window.renderProfessionList(); 
                 if(!window.isGuest && window.initSignalListener && !window.signalListenerActive) { window.initSignalListener(); window.signalListenerActive = true; }
@@ -1793,15 +1593,17 @@ window.participants = [aiBot];
 
             window.renderProfessionList = function() { 
                 const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
-                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
+                const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; 
+                const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); 
+                let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
+                let dict = (typeof i18n !== 'undefined' && window.appLang) ? (i18n[window.appLang] || i18n['en']) : {};
+                
                 validUsers.forEach((p) => { 
                     let isMe = p.id === window.myProfileInfo.id; 
                     let avatarClick = isMe ? `window.openAvatarModal('me')` : `window.openAvatarModal('${p.id}')`; 
                     let cvClick = isMe ? `window.openViewCVModal('me')` : `window.openViewCVModal('${p.id}')`; 
                     
-                    let dict = i18n[window.appLang] || i18n['en'];
-                    let btnText = isMe ? (dict['edit_my_cv'] || 'Edit My CV') : 'View CV'; 
-                    if (!isMe && dict['prof_cv']) btnText = "CV";
+                    let btnText = isMe ? (dict['edit_my_cv'] || 'Edit My CV') : (dict['prof_cv'] ? 'CV' : 'View CV'); 
 
                     let nameTxt = (p.name||'User').split(' ')[0]; 
                     let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-[#2a3942]'; 
@@ -1811,43 +1613,60 @@ window.participants = [aiBot];
             };
             if(document.getElementById('profession-list')) window.renderProfessionList();
 
-            window.isMarqueeEnabled = true; window.toggleMarquee = function() { window.isMarqueeEnabled = !window.isMarqueeEnabled; const mCont = document.getElementById('typing-marquee-container'); if(mCont) { if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } else { mCont.style.opacity = "0"; mCont.style.width = "0"; } } };
+            window.isMarqueeEnabled = true; 
+            window.toggleMarquee = function() { 
+                window.isMarqueeEnabled = !window.isMarqueeEnabled; 
+                const mCont = document.getElementById('typing-marquee-container'); 
+                if(mCont) { 
+                    if(window.isMarqueeEnabled) { mCont.style.opacity = "1"; mCont.style.width = "auto"; } 
+                    else { mCont.style.opacity = "0"; mCont.style.width = "0"; } 
+                } 
+            };
             
-            window.isVoiceMarqueeEnabled = true; window.toggleVoiceMarquee = function() { window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; const mCont = document.getElementById('voice-marquee-container-anim'); if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; };
+            window.isVoiceMarqueeEnabled = true; 
+            window.toggleVoiceMarquee = function() { 
+                window.isVoiceMarqueeEnabled = !window.isVoiceMarqueeEnabled; 
+                const mCont = document.getElementById('voice-marquee-container-anim'); 
+                if(mCont) mCont.style.opacity = window.isVoiceMarqueeEnabled ? "1" : "0"; 
+            };
 
- 
-         window.autoSetMicLang = function() { 
-            let rMic = document.getElementById('plus-mic-lang'); 
-            if(rMic && !rMic.value) rMic.value = 'auto'; 
-        };
-window.switchChatRoom('global');
-            if (window.isGuest && !document.getElementById('security-lock').style.display) { setTimeout(() => { window.openMyProfile(); }, 800); } else { setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); }
+            window.autoSetMicLang = function() { 
+                let rMic = document.getElementById('plus-mic-lang'); 
+                if(rMic && !rMic.value) rMic.value = 'auto'; 
+            };
             
-            // Фикс кнопки ENTER
+            if(window.switchChatRoom) window.switchChatRoom('global');
+            
+            if (window.isGuest && !document.getElementById('security-lock').style.display) { 
+                setTimeout(() => { if(window.openMyProfile) window.openMyProfile(); }, 800); 
+            } else { 
+                setTimeout(() => { if(window.autoSetMicLang) window.autoSetMicLang(); }, 500); 
+            }
+            
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     const activeId = document.activeElement ? document.activeElement.id : null;
-                    if (activeId === 'chat-input') { window.currentMicInputTarget = 'chat-input'; window.sendFirebaseMsg(); }
-                    else if (activeId === 'voice-chat-input') { window.currentMicInputTarget = 'voice-chat-input'; window.sendFirebaseMsg(); }
-                    else if (activeId === 'conf-chat-input') { window.currentMicInputTarget = 'conf-chat-input'; window.sendFirebaseMsg(); }
+                    if (activeId === 'chat-input') { window.currentMicInputTarget = 'chat-input'; if(window.sendFirebaseMsg) window.sendFirebaseMsg(); }
+                    else if (activeId === 'voice-chat-input') { window.currentMicInputTarget = 'voice-chat-input'; if(window.sendFirebaseMsg) window.sendFirebaseMsg(); }
+                    else if (activeId === 'conf-chat-input') { window.currentMicInputTarget = 'conf-chat-input'; if(window.sendFirebaseMsg) window.sendFirebaseMsg(); }
                 }
             });
 
-            // Изоляция микрофона
             setTimeout(() => {
                 if (window.switchTab) {
                     const origSwitchTab = window.switchTab;
-                    window.switchTab = function(index) { origSwitchTab(index); setTimeout(window.syncMicLangUI, 150); };
+                    window.switchTab = function(index) { origSwitchTab(index); if(window.syncMicLangUI) setTimeout(window.syncMicLangUI, 150); };
                 }
                 if (window.switchChatRoom) {
                     const origSwitchChat = window.switchChatRoom;
-                    window.switchChatRoom = function(targetId) { origSwitchChat(targetId); setTimeout(window.syncMicLangUI, 150); };
+                    window.switchChatRoom = function(targetId) { origSwitchChat(targetId); if(window.syncMicLangUI) setTimeout(window.syncMicLangUI, 150); };
                 }
             }, 1500);
 
             window.toggleTheme = function() { const s = document.getElementById('phone-body'); s.classList.toggle('light-theme'); window.closeDropdown(); };
         });
     </script>
+    
     <div id="admin-modal" class="app-modal" onclick="if(event.target===this) window.closeAdminModal();">
         <div class="app-modal-content">
             <div class="close-sheet-btn" onclick="window.closeAdminModal()"><i class="fa-solid fa-xmark"></i></div>
@@ -1875,7 +1694,8 @@ window.switchChatRoom('global');
             </div>
         </div>
     </div>
-<script>
+    
+    <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -1884,52 +1704,55 @@ window.switchChatRoom('global');
             });
         }
     </script>
+    
     <div id="qr-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
-    <div class="app-modal-content flex flex-col items-center text-center">
-        <div class="close-sheet-btn" onclick="document.getElementById('qr-modal').classList.remove('active')">
-            <i class="fa-solid fa-xmark"></i>
+        <div class="app-modal-content flex flex-col items-center text-center">
+            <div class="close-sheet-btn" onclick="document.getElementById('qr-modal').classList.remove('active')">
+                <i class="fa-solid fa-xmark"></i>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-white mb-2 mt-4 tracking-tight">Hello Friends</h2>
+            <p class="text-[#00a884] text-[10px] font-bold uppercase tracking-[3px] mb-6 text-center" data-i18n="global_smart_net">Global Smart Network</p>
+            
+            <div class="bg-white p-5 rounded-[32px] shadow-[0_0_30px_rgba(0,168,132,0.2)] mb-8">
+                <img id="qr-image" src="" alt="QR Code" class="w-52 h-52">
+            </div>
+            
+            <button onclick="window.downloadQR()" class="btn-primary !bg-[#202c33] !text-white border border-[#2a3942] w-full flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i> Save QR Image
+            </button>
+            
+            <p class="text-[#8696a0] text-[10px] mt-6 leading-relaxed">
+                Scan this code to join our global professional community.
+            </p>
         </div>
-        
-        <h2 class="text-2xl font-bold text-white mb-2 mt-4 tracking-tight">Hello Friends</h2>
-        <p class="text-[#00a884] text-[10px] font-bold uppercase tracking-[3px] mb-6 text-center" data-i18n="global_smart_net">Global Smart Network</p>
-        
-        <div class="bg-white p-5 rounded-[32px] shadow-[0_0_30px_rgba(0,168,132,0.2)] mb-8">
-            <img id="qr-image" src="" alt="QR Code" class="w-52 h-52">
-        </div>
-        
-        <button onclick="window.downloadQR()" class="btn-primary !bg-[#202c33] !text-white border border-[#2a3942] w-full flex items-center justify-center gap-2">
-            <i class="fa-solid fa-download"></i> Save QR Image
-        </button>
-        
-        <p class="text-[#8696a0] text-[10px] mt-6 leading-relaxed">
-            Scan this code to join our global professional community.
-        </p>
     </div>
-</div>
+    
     <script>
-    window.showMyQR = function() {
-        const appUrl = "https://hello-friends-p8p3i7.web.app"; 
-        const qrImg = document.getElementById('qr-image');
-        const qrModal = document.getElementById('qr-modal');
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
-        qrModal.classList.add('active');
-    };
+        window.showMyQR = function() {
+            const appUrl = "https://hello-friends-p8p3i7.web.app"; 
+            const qrImg = document.getElementById('qr-image');
+            const qrModal = document.getElementById('qr-modal');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
+            qrModal.classList.add('active');
+        };
 
-    window.downloadQR = function() {
-        const qrImg = document.getElementById('qr-image');
-        if (!qrImg.src) return;
-        const link = document.createElement('a');
-        link.href = qrImg.src;
-        link.download = 'Hello_Friends_QR.png'; 
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-       setTimeout(function() {
-        if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
-            window.initConference();
-        }
-    }, 1500);
-</script>
+        window.downloadQR = function() {
+            const qrImg = document.getElementById('qr-image');
+            if (!qrImg.src) return;
+            const link = document.createElement('a');
+            link.href = qrImg.src;
+            link.download = 'Hello_Friends_QR.png'; 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+        
+        setTimeout(function() {
+            if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
+                window.initConference();
+            }
+        }, 1500);
+    </script>
 </body>
 </html>
