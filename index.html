@@ -1751,7 +1751,6 @@ window.handleDocUpload = function(event) {
 window.sendPushToUser = function(targetUserId, title, body) {
     if (!targetUserId || !title) return;
     
-    // Безопасная отправка: кладем заявку на пуш в базу данных
     db.ref('pushQueue').push({
         targetUserId: targetUserId,
         title: title,
@@ -1764,7 +1763,20 @@ window.sendPushToUser = function(targetUserId, title, body) {
 let activeUserId = localStorage.getItem('hf_active_user');
 window.isGuest = !activeUserId; 
 window.currentRoomId = "global"; 
-// ... и так далее
+window.activeChatListener = null; 
+window.mySessionId = Math.random().toString(36).substring(2, 15); 
+window.currentTargetUser = null; 
+
+const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
+
+let cachedProfile = null;
+if (activeUserId) {
+    try {
+        const storedData = localStorage.getItem('hf_custom_' + activeUserId);
+        if (storedData) cachedProfile = JSON.parse(storedData);
+    } catch(e) { console.error("Ошибка чтения кэша", e); }
+}
+
 window.myProfileInfo = cachedProfile || { 
     id: activeUserId || 'guest', 
     name: 'User', 
@@ -1774,23 +1786,6 @@ window.myProfileInfo = cachedProfile || {
 
 window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
 window.participants = [aiBot];
-            setTimeout(() => { const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto && window.myProfileInfo) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag && window.myProfileInfo) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName && window.myProfileInfo) myVoiceName.innerText = window.myUsername; }, 1000);
-
-            db.ref('users').on('value', (snapshot) => { 
-                const data = snapshot.val(); 
-                let realUsers = []; 
-                if (data) { 
-                    if (!window.isGuest && activeUserId && data[activeUserId]) {
-                        if (data[activeUserId].isDeleted === true) { window.signOutGoogle(); return; }
-                        window.myProfileInfo = { ...window.myProfileInfo, ...data[activeUserId] }; window.myUsername = window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : "User";
-                        try { localStorage.setItem('hf_custom_' + activeUserId, JSON.stringify(window.myProfileInfo)); } catch(e) {}
-                        const myVoicePhoto = document.getElementById('voice-me-photo'); const myVoiceFlag = document.getElementById('voice-me-flag'); const myVoiceName = document.getElementById('voice-me-name'); if(myVoicePhoto) myVoicePhoto.src = window.myProfileInfo.photo; if(myVoiceFlag) myVoiceFlag.innerText = window.myProfileInfo.flag; if(myVoiceName) myVoiceName.innerText = window.myUsername;
-                    }
-                    Object.values(data).forEach(u => { 
-                        if(u.id && u.isDeleted !== true) realUsers.push(u); 
-                    }); 
-                } 
-                window.participants = [aiBot, ...realUsers.filter(c => c.id !== window.myProfileInfo.id && !c.id.startsWith('guest'))];
                 if(window.renderSidebar) window.renderSidebar(); 
                 if(document.getElementById('profession')?.classList.contains('active') && window.renderProfessionList) window.renderProfessionList(); 
                 if(!window.isGuest && window.initSignalListener && !window.signalListenerActive) { window.initSignalListener(); window.signalListenerActive = true; }
