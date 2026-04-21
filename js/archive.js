@@ -2,7 +2,6 @@
 // MODULE: ARCHIVE & DATA CENTER
 // ==========================================
 
-// --- 1. ОТПРАВКА ПОЧТЫ И АВТОСОХРАНЕНИЕ ---
 window.sendEmailForm = function(event) {
     event.preventDefault();
     const to = document.getElementById('email-to').value.trim();
@@ -29,10 +28,30 @@ window.sendEmailForm = function(event) {
         if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
             window.renderArchiveList('email', window.mailArchiveDB);
         }
+        window.updateTopTabsGlow(); 
     }, 800);
 };
 
-// --- 2. ЛОГИКА АРХИВА И ВКЛАДОК ---
+window.updateTopTabsGlow = function() {
+    const tabs = document.querySelectorAll('[onclick^="window.switchArchiveTab"]');
+    tabs.forEach(tab => {
+        let isUnread = false;
+        let onclickCode = tab.getAttribute('onclick');
+        
+        if (onclickCode.includes('mail')) isUnread = window.mailArchiveDB && window.mailArchiveDB.some(m => m.unread);
+        if (onclickCode.includes('docs')) isUnread = window.docsArchiveDB && window.docsArchiveDB.some(m => m.unread);
+        if (onclickCode.includes('media')) isUnread = window.mediaArchiveDB && window.mediaArchiveDB.some(m => m.unread);
+
+        if (isUnread) {
+            tab.classList.add('border-[#00a884]', 'shadow-[0_0_15px_rgba(0,168,132,0.6)]', 'bg-[#1a2938]');
+            tab.classList.remove('border-[#2a3942]', 'bg-[#111b21]');
+        } else {
+            tab.classList.remove('border-[#00a884]', 'shadow-[0_0_15px_rgba(0,168,132,0.6)]', 'bg-[#1a2938]');
+            tab.classList.add('border-[#2a3942]', 'bg-[#111b21]');
+        }
+    });
+};
+
 window.docsArchiveDB = window.docsArchiveDB || [];
 window.mediaArchiveDB = window.mediaArchiveDB || [];
 window.currentArchiveTab = 'mail';
@@ -82,7 +101,7 @@ window.renderArchiveList = function(type, dbArray) {
         }
 
         let glowClass = item.unread 
-            ? 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.6)] bg-[#1a2938]' 
+            ? 'border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.6)] bg-[#1a2938]' 
             : 'border-[#2a3942] bg-[#111b21]';
             
         let textBold = item.unread ? 'text-white font-bold' : 'text-[#e9edef]';
@@ -93,34 +112,29 @@ window.renderArchiveList = function(type, dbArray) {
 
         let domItem = document.createElement('div');
         domItem.id = item.id;
-        domItem.className = `flex items-center gap-4 p-2 rounded-xl mb-3`;
+        domItem.className = `flex items-center gap-3 p-2 rounded-2xl mb-3 border border-transparent transition relative`;
         
         domItem.innerHTML = `
-            <div class="relative w-24 h-24 shrink-0 rounded-xl border flex flex-col items-center justify-center transition cursor-pointer ${glowClass}" ${clickAction}>
-                <div class="${iconColor} mb-2">${icon}</div>
-                <button onclick="window.openArchiveActionMenu(event, '${item.id}', '${safeTitle}', '${type}')" class="absolute bottom-1 right-2 text-[#8696a0] hover:text-white transition z-[100] px-2 py-1">
-                    <i class="fa-solid fa-ellipsis text-xl tracking-widest"></i>
+            <div class="relative w-24 h-24 shrink-0 rounded-xl border flex items-center justify-center transition cursor-pointer overflow-hidden ${glowClass}" ${clickAction}>
+                <div class="${iconColor} pr-3">${icon}</div>
+                
+                <button onclick="window.openArchiveActionMenu(event, '${item.id}', '${safeTitle}', '${type}')" class="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center text-[#8696a0] hover:text-white hover:bg-black/30 transition z-[100]">
+                    <i class="fa-solid fa-ellipsis-vertical text-xl"></i>
                 </button>
             </div>
             
-            <div class="flex flex-col flex-1 overflow-hidden cursor-pointer" ${clickAction}>
+            <div class="flex flex-col flex-1 overflow-hidden cursor-pointer pl-1" ${clickAction}>
                 <div class="flex justify-between items-center w-full mb-1">
                     <span class="text-[0.75rem] text-[#00a884] font-bold truncate max-w-[70%] uppercase tracking-wider">${sender}</span>
                     <span class="text-[0.7rem] text-[#8696a0] font-mono">${subtitle}</span>
                 </div>
-                <span class="${textBold} text-[1rem] truncate w-full leading-tight">${safeTitle}</span>
+                <span class="${textBold} text-[0.95rem] truncate w-full leading-tight">${safeTitle}</span>
             </div>
         `;
         list.appendChild(domItem);
     });
 
-    if (type === 'email') {
-        let unread = dbArray.some(m => m.unread);
-        const badgeEl = document.getElementById('mail-badge');
-        const archiveMenuBadge = document.getElementById('archive-unread-badge');
-        if (badgeEl) { if (unread) badgeEl.classList.remove('hidden'); else badgeEl.classList.add('hidden'); }
-        if (archiveMenuBadge) { if (unread) archiveMenuBadge.classList.remove('hidden'); else archiveMenuBadge.classList.add('hidden'); }
-    }
+    window.updateTopTabsGlow(); 
 };
 
 window.viewSpecificEmail = function(id) {
@@ -158,7 +172,6 @@ window.backToEmailList = function() {
     if(lView) lView.classList.remove('hidden');
 };
 
-// --- 3. ТРИ ТОЧКИ (ДЕЙСТВИЯ) ---
 window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
     if (e) { e.stopPropagation(); e.preventDefault(); }
     let itemContent = "No content available.";
@@ -182,6 +195,11 @@ window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
     if (!modal || !contentBox) return;
     const titleEl = document.getElementById('action-modal-title');
     if (titleEl) titleEl.innerText = itemTitle || "File Action";
+    
+    // Фикс меню внутри телефона
+    const phoneScreen = document.querySelector('.mobile-screen') || document.querySelector('#phone-body') || document.body;
+    if (modal.parentElement !== phoneScreen) phoneScreen.appendChild(modal);
+    modal.classList.remove('fixed'); modal.classList.add('absolute');
     
     modal.classList.remove('hidden'); modal.classList.add('flex');
     setTimeout(() => { contentBox.classList.remove('translate-y-full'); }, 10);
@@ -219,7 +237,6 @@ window.archiveAction = function(actionType) {
 
     } else if (actionType === 'copy') {
         navigator.clipboard.writeText(content).then(() => { if (window.showToast) window.showToast("Copied", "Copied to clipboard", "", ""); });
-        
     } else if (actionType === 'save') {
         if (url) {
             const a = document.createElement('a'); a.href = url; a.download = title || 'downloaded_file';
@@ -240,27 +257,35 @@ window.smartArchive = function() {
     if (window.closeTrashModal) window.closeTrashModal(); 
 };
 
-// --- 4. СЛУШАТЕЛЬ РЕАЛЬНОЙ ПОЧТЫ ИЗ FIREBASE ---
-if (typeof db !== 'undefined') {
-    db.ref('mailArchive').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            window.mailArchiveDB = [];
-            Object.keys(data).forEach(key => {
-                let mailItem = data[key];
-                mailItem.id = key; 
-                window.mailArchiveDB.push(mailItem);
-            });
-            window.mailArchiveDB.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
-                window.renderArchiveList('email', window.mailArchiveDB);
+// --- СЛУШАТЕЛЬ FIREBASE (НАДЕЖНОЕ ПОДКЛЮЧЕНИЕ) ---
+function connectMailListener() {
+    // Проверяем, проснулась ли база данных
+    if (typeof firebase !== 'undefined' && typeof db !== 'undefined') {
+        db.ref('mailArchive').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                window.mailArchiveDB = [];
+                Object.keys(data).forEach(key => {
+                    let mailItem = data[key];
+                    mailItem.id = key; 
+                    window.mailArchiveDB.push(mailItem);
+                });
+                // Сортируем: новые сверху
+                window.mailArchiveDB.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                // Перерисовываем список или зажигаем зеленую кнопку
+                if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
+                    window.renderArchiveList('email', window.mailArchiveDB);
+                } else {
+                    if (window.updateTopTabsGlow) window.updateTopTabsGlow(); 
+                }
             }
-            
-            let hasUnread = window.mailArchiveDB.some(m => m.unread);
-            const badgeEl = document.getElementById('mail-badge');
-            const archiveMenuBadge = document.getElementById('archive-unread-badge');
-            if (badgeEl) { if (hasUnread) badgeEl.classList.remove('hidden'); else badgeEl.classList.add('hidden'); }
-            if (archiveMenuBadge) { if (hasUnread) archiveMenuBadge.classList.remove('hidden'); else archiveMenuBadge.classList.add('hidden'); }
-        }
-    });
+        });
+    } else {
+        // Если база еще не загрузилась, ждем полсекунды и пробуем снова
+        setTimeout(connectMailListener, 500);
+    }
 }
+
+// Запускаем нашу умную проверку
+connectMailListener();
