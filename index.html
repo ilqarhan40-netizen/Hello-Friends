@@ -9,6 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00a884">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=HF&background=00a884&color=fff&size=192">
     
@@ -1747,10 +1748,18 @@ window.handleDocUpload = function(event) {
                     messaging.onMessage((payload) => { window.sndMsg.play().catch(e=>{}); window.showToast(payload.data.title || "New Message", payload.data.body, "", ""); });
                 } catch(e) {}
             };
-
-      window.sendPushToUser = function(targetUserId, title, body) {
-    const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
-    const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
+window.sendPushToUser = function(targetUserId, title, body) {
+    if (!targetUserId || !title) return;
+    
+    // Безопасная отправка: кладем заявку на пуш в базу данных
+    db.ref('pushQueue').push({
+        targetUserId: targetUserId,
+        title: title,
+        body: body,
+        senderId: window.myProfileInfo ? window.myProfileInfo.id : 'unknown',
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+};
 
     const notification = {
         app_id: ONESIGNAL_APP_ID,
