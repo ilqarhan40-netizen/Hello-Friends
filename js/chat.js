@@ -7,8 +7,10 @@ window.changeAppLanguage = function(langCode) {
     if (langCode === 'auto') {
         let smartLang = null; 
         if (window.myProfileInfo) {
-            let phone = window.myProfileInfo.phone || "";
+            let rawPhone = window.myProfileInfo.phone;
+            let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
             let flag = window.myProfileInfo.flagCode || "un";
+            
             if (phone.startsWith('+7')) smartLang = 'ru';
             else if (phone.startsWith('+994')) smartLang = 'az';
             else if (phone.startsWith('+49')) smartLang = 'de';
@@ -57,7 +59,10 @@ setTimeout(() => {
 window.getSmartLang = function(userProfile) {
     if (!userProfile) return 'en'; 
     if (userProfile.langCode && userProfile.langCode !== 'auto' && userProfile.langCode !== 'un') { return userProfile.langCode; }
-    let phone = userProfile.phone || "";
+    
+    let rawPhone = userProfile.phone;
+    let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
+    
     if (phone.startsWith('+7')) return 'ru';
     if (phone.startsWith('+994')) return 'az';
     if (phone.startsWith('+39')) return 'it';
@@ -92,6 +97,17 @@ window.getLangPref = function(isVoice, isConf) {
 // ==========================================
 // 2. ОТРИСОВКА И ПЕРЕКЛЮЧЕНИЕ ЧАТОВ
 // ==========================================
+
+window.updateRoomMarquee = function() {
+    const mText = document.getElementById('chat-info-marquee');
+    if(!mText) return;
+    if(window.currentRoomId === 'global' || window.currentRoomId === 'video_room_global') {
+        mText.innerText = "🌍 Global Chat • AI Translation System Active...";
+    } else if (window.currentTargetUser) {
+        mText.innerText = `🔒 Private Room with ${window.currentTargetUser.name.split(' ')[0]} • AI Translation Active...`;
+    }
+};
+
 window.renderSidebar = function() {
     const chatSidebar = document.getElementById('chat-sidebar'); 
     if (!chatSidebar) return;
@@ -158,7 +174,7 @@ window.switchChatRoom = function(targetId) {
             window.currentTargetUser = targetUser;
             let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id);
             window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
-            headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = window.currentRoomId;
+            headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = "Private Encrypted";
             let targetBio = targetUser.profileBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${targetUser.profileBio}</span>` : ""; 
             let targetLangs = targetUser.profileLangs ? `🗣️ ${targetUser.profileLangs}<br>` : "";
             let targetEmail = targetUser.email ? `✉️ ${targetUser.email}<br>` : ""; 
@@ -170,7 +186,10 @@ window.switchChatRoom = function(targetId) {
     }
     const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle;
     const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
+    
+    window.updateRoomMarquee();
     window.renderSidebar();
+    
     window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
 };
 
@@ -759,7 +778,9 @@ window.startUniversalMic = async function(mode) {
     let currentMicCode = 'en-US';
     
     if (selectedMicLang === 'auto') {
-        let phone = window.myProfileInfo.phone || ""; let flag = window.myProfileInfo.flagCode || "un"; 
+        let rawPhone = window.myProfileInfo.phone;
+        let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
+        let flag = window.myProfileInfo.flagCode || "un"; 
         if (phone.startsWith('+7')) currentMicCode = 'ru-RU'; else if (phone.startsWith('+994')) currentMicCode = 'az-AZ'; 
         else if (phone.startsWith('+39')) currentMicCode = 'it-IT'; else if (phone.startsWith('+49')) currentMicCode = 'de-DE'; 
         else if (phone.startsWith('+33')) currentMicCode = 'fr-FR'; else if (phone.startsWith('+81')) currentMicCode = 'ja-JP'; 
