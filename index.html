@@ -81,7 +81,7 @@
         .chat-contact-name { font-size: 0.6rem; color: var(--wa-text-muted); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 65px; text-align: center; }
         .chat-contact.active-room .chat-contact-name { color: var(--wa-green); font-weight: bold; }
         .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
-        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
+        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 15s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
         .chat-messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 16px; gap: 4px; scroll-behavior: smooth; }
         .chat-bubble-wrapper { display: flex; flex-direction: column; max-width: 90%; }
         .chat-bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -1113,30 +1113,28 @@ if (window.OneSignalDeferred) {
             }
         };
 
-        window.getSmartLang = function(userProfile) {
-            if (!userProfile) return 'en'; 
-            let phone = userProfile.phone || "";
-            let flag = userProfile.flagCode || "un";
+    window.getSmartLang = function(phone, flagCode) {
+            let p = phone ? phone.replace(/\s+/g, '') : "";
+            let f = flagCode || "un";
             
-            if (phone.startsWith('+7')) return 'ru';
-            if (phone.startsWith('+994')) return 'az';
-            if (phone.startsWith('+39')) return 'it';
-            if (phone.startsWith('+49')) return 'de';
-            if (phone.startsWith('+33')) return 'fr';
-            if (phone.startsWith('+81')) return 'ja';
-            if (phone.startsWith('+34')) return 'es';
-            if (phone.startsWith('+86')) return 'zh';
-            if (phone.startsWith('+351')) return 'pt';
-            if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
-            if (phone.startsWith('+971')) return 'ar';
+            if (p.startsWith('+7')) return 'ru';
+            if (p.startsWith('+994')) return 'az';
+            if (p.startsWith('+90')) return 'tr';
+            if (p.startsWith('+39')) return 'it';
+            if (p.startsWith('+49')) return 'de';
+            if (p.startsWith('+33')) return 'fr';
+            if (p.startsWith('+81')) return 'ja';
+            if (p.startsWith('+34')) return 'es';
+            if (p.startsWith('+86')) return 'zh';
+            if (p.startsWith('+351')) return 'pt';
+            if (p.startsWith('+1') || p.startsWith('+44')) return 'en';
+            if (p.startsWith('+971')) return 'ar';
 
             const flagToLang = {
                 'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
-                'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
+                'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr'
             };
-            if (flagToLang[flag]) return flagToLang[flag];
-            
-            return userProfile.langCode || 'en';
+            return flagToLang[f] || 'en'; // Умный откат на флаг, если телефон не распознан
         };
 
         window.playAIVoice = function(encodedText, langCode) {
