@@ -41,6 +41,7 @@ window.startInAppCall = function() {
     const target = window.currentTargetUser; 
     window.closePhoneChoiceModal(); 
     
+    // Дергаем Firebase для моментального звонка
     let callRef = db.ref('signals/' + target.id).push();
     callRef.set({ 
         type: 'call', 
@@ -77,7 +78,11 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey)
     document.getElementById('incoming-call-photo').src = callerPhoto || 'https://ui-avatars.com/api/?name=U&background=00a884&color=fff'; 
     document.getElementById('incoming-call-modal').classList.add('active'); 
     
-    if(window.sndRing) window.sndRing.play().catch(e => console.log("Sound autoplay blocked by browser")); 
+    if(window.sndRing) {
+        window.sndRing.currentTime = 0;
+        window.sndRing.play().catch(e => console.log("Sound autoplay blocked by browser")); 
+    }
+    
     if(window.firePush) window.firePush("Incoming Call 📞", `${callerName || 'User'} is calling you on Hello Friends!`, callerPhoto);
     
     if (navigator.vibrate) {
@@ -120,6 +125,9 @@ window.declineCall = function() {
 };
 
 window.initSignalListener = function() { 
+    // Защитная проверка: если гость или нет ID - не слушаем
+    if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
+    
     db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
         const sig = snap.val(); if (!sig) return; 
         
