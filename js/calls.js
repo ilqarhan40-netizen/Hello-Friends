@@ -27,9 +27,18 @@ window.startWebRTC = async function(isCaller, targetId) {
             remoteAudio = document.createElement('audio');
             remoteAudio.id = 'remote-audio-player';
             remoteAudio.autoplay = true;
+            remoteAudio.playsInline = true; // Фикс для жестких правил iOS/Safari
             document.body.appendChild(remoteAudio);
         }
         remoteAudio.srcObject = event.streams[0];
+        
+        // Фикс для мобильных браузеров: принудительный запуск звука
+        remoteAudio.onloadedmetadata = () => {
+            remoteAudio.play().catch(e => {
+                console.log("Браузер заблокировал автовоспроизведение звука:", e);
+                if(window.showToast) window.showToast("Внимание", "Нажмите на экран, чтобы включить звук собеседника", "", "");
+            });
+        };
     };
 
     const callRoomId = isCaller ? (window.myProfileInfo.id + '_' + targetId) : (targetId + '_' + window.myProfileInfo.id);
@@ -194,7 +203,6 @@ window.initConference = function() {
     
     let usersToRender = [];
     
-    // ЛОГИКА ИЗОЛЯЦИИ: Если мы в глобалке - берем всех. Если в привате - только собеседника.
     if (window.currentRoomId === 'global' || window.currentRoomId === 'video_room_global') {
         usersToRender = (window.participants || []).filter(p => p.id !== 'ai'); 
     } else if (window.currentTargetUser) {
