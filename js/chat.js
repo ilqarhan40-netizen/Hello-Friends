@@ -204,7 +204,15 @@ window.switchChatRoom = function(targetId) {
 window.isGeminiWaiting = false;
 
 window.sendFirebaseMsg = async function() {
-    let inputId = window.currentMicInputTarget || 'chat-input';
+    // УМНЫЙ ПОИСК ПОЛЯ ВВОДА (определяет, откуда реально идет текст)
+    let inputId = 'chat-input';
+    if (window.currentRoomId === 'video_room_global') inputId = 'conf-chat-input';
+    
+    // Подстраховка: ищем поле, в котором сейчас есть текст
+    if (document.getElementById('conf-chat-input') && document.getElementById('conf-chat-input').value.trim() !== '') inputId = 'conf-chat-input';
+    else if (document.getElementById('voice-chat-input') && document.getElementById('voice-chat-input').value.trim() !== '') inputId = 'voice-chat-input';
+    else if (window.currentMicInputTarget) inputId = window.currentMicInputTarget;
+
     const inputField = document.getElementById(inputId);
     if (!inputField) return;
 
@@ -218,7 +226,7 @@ window.sendFirebaseMsg = async function() {
     inputField.value = '';
 
     let isVoice = inputId === 'voice-chat-input';
-    let isConf = inputId === 'conf-chat-input';
+    let isConf = inputId === 'conf-chat-input' || window.currentRoomId === 'video_room_global';
     let myActiveLang = window.getLangPref(isVoice, isConf) || 'en';
 
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
@@ -260,7 +268,7 @@ window.sendFirebaseMsg = async function() {
 
     const chatMsgs = document.getElementById('chat-messages'); 
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
-    if (window.currentTargetUser && !isConf && !isVoice) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
+    if (window.currentTargetUser && !isConf && !isVoice && window.sendPushToUser) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
     if (window.currentRoomId === 'private_ai_bot') {
         window.isGeminiWaiting = true;
@@ -471,7 +479,6 @@ window.handleNewMessage = async function(snapshot) {
         });
     }
 };
-
 // ==========================================
 // 4. МЕНЮ ФАЙЛОВ АРХИВА, ТРЕШ И ЭМОДЗИ
 // ==========================================
