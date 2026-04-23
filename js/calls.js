@@ -195,7 +195,7 @@ window.initConference = function() {
     
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
-        <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted></video>
+       <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="window.openPersonalLangModal()"></video>
         <div class="video-overlay">${window.myUsername}</div>
         <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode || 'un'}.png" class="w-6 rounded-sm"></div>
         <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">➔ [AUTO] Связь защищена</div></div>
