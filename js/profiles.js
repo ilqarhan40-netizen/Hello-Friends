@@ -169,6 +169,42 @@ window.openEditCV = function() {
 
 window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
 
+window.openEditCV = function() {
+    if (window.closeDropdown) window.closeDropdown();
+    const cvSelect = document.getElementById('cv-edit-country-select');
+    const mainSelect = document.getElementById('edit-country-select');
+
+    if (cvSelect && mainSelect && cvSelect.options.length <= 1) {
+        cvSelect.innerHTML = mainSelect.innerHTML;
+    }
+
+    // СЕКРЕТ: Заставляем приложение всегда брать САМЫЕ свежие данные!
+    let p = window.myProfileInfo;
+    try {
+        const storedData = localStorage.getItem('hf_custom_' + p.id);
+        if (storedData) p = { ...p, ...JSON.parse(storedData) };
+    } catch(e) {}
+    
+    document.getElementById('cv-edit-prof').value = p.cvProfession || '';
+    document.getElementById('cv-edit-langs').value = p.cvLanguages || '';
+    document.getElementById('cv-edit-skills').value = p.cvSkills || '';
+    document.getElementById('cv-edit-exp').value = p.cvExperience || '';
+    document.getElementById('cv-edit-edu').value = p.cvEducation || '';
+    document.getElementById('cv-edit-bio').value = p.cvDesc || '';
+    document.getElementById('cv-edit-phone').value = p.cvPhone || '';
+    document.getElementById('cv-edit-email').value = p.cvEmail || '';
+
+    if(cvSelect) {
+        cvSelect.value = p.cvCountryCode || 'un';
+        window.handleCVCountryChange(cvSelect, true);
+    }
+    
+    if (window.applyTranslations) window.applyTranslations();
+    document.getElementById('edit-cv-modal').classList.add('active');
+};
+
+window.closeEditCV = function() { document.getElementById('edit-cv-modal').classList.remove('active'); };
+
 window.saveCVData = function() {
     const sel = document.getElementById('cv-edit-country-select');
     const selectedOpt = sel ? sel.options[sel.selectedIndex] : null;
@@ -190,8 +226,12 @@ window.saveCVData = function() {
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
     
-    window.myProfileInfo = { ...window.myProfileInfo, ...cvData };
-    try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
+    // СЕКРЕТ 2: Железно вшиваем новые данные в глобальную переменную
+    window.myProfileInfo = Object.assign(window.myProfileInfo || {}, cvData);
+    
+    try { 
+        localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); 
+    } catch(e){}
     
     db.ref('users/' + window.myProfileInfo.id).update(cvData).then(() => {
         btn.innerHTML = '<span data-i18n="save_cv">Save CV</span>';
@@ -203,7 +243,6 @@ window.saveCVData = function() {
         alert("Error: " + err.message);
     });
 };
-
 // --- ПРОСМОТР ЧУЖИХ КАРТОЧЕК И CV ---
 window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
 
