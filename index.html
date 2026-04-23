@@ -227,11 +227,7 @@
     </div>
 
  <script>
-        window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
-        window.sndCash = new Audio('https://actions.google.com/sounds/v1/foley/cash_register.ogg');
-        window.sndRing = new Audio('https://actions.google.com/sounds/v1/ringtones/phone_ringing.ogg');
-        window.sndRing.loop = true;
-
+      
         window.requestPushPermissions = function() {
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
