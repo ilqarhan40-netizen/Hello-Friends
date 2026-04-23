@@ -1117,9 +1117,16 @@ if (window.OneSignalDeferred) {
             }
         };
 
-    window.getSmartLang = function(phone, flagCode) {
-            let p = phone ? phone.replace(/\s+/g, '') : "";
-            let f = flagCode || "un";
+ window.getSmartLang = function(phone, flagCode) {
+    // БРОНЯ: Если передали целый объект пользователя, достаем из него нужные данные
+    if (typeof phone === 'object' && phone !== null) {
+        flagCode = phone.flagCode;
+        phone = phone.phone;
+    }
+    
+    // Теперь безопасно удаляем пробелы
+    let p = (phone && typeof phone === 'string') ? phone.replace(/\s+/g, '') : "";
+    let f = flagCode || "un";
             
             if (p.startsWith('+7')) return 'ru';
             if (p.startsWith('+994')) return 'az';
