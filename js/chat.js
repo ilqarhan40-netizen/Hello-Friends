@@ -56,11 +56,17 @@ setTimeout(() => {
     window.changeAppLanguage(saved);
 }, 1000);
 
-window.getSmartLang = function(userProfile) {
-    if (!userProfile) return 'en'; 
-    if (userProfile.langCode && userProfile.langCode !== 'auto' && userProfile.langCode !== 'un') { return userProfile.langCode; }
+// БРОНЕБОЙНАЯ ФУНКЦИЯ ЯЗЫКА
+window.getSmartLang = function(userData) {
+    if (!userData) return 'en'; 
     
-    let rawPhone = userProfile.phone;
+    // Защита: если передали объект, вытаскиваем из него данные. Если строку - работаем как со строкой.
+    let rawPhone = typeof userData === 'object' ? userData.phone : userData;
+    let flag = (typeof userData === 'object' && userData.flagCode) ? userData.flagCode : "un";
+    let langPref = typeof userData === 'object' ? userData.langCode : null;
+
+    if (langPref && langPref !== 'auto' && langPref !== 'un') return langPref;
+    
     let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
     
     if (phone.startsWith('+7')) return 'ru';
@@ -75,7 +81,6 @@ window.getSmartLang = function(userProfile) {
     if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
     if (phone.startsWith('+971')) return 'ar';
 
-    let flag = userProfile.flagCode || "un";
     const flagToLang = { 'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar' };
     if (flagToLang[flag]) return flagToLang[flag];
     return 'en';
@@ -216,7 +221,6 @@ window.sendFirebaseMsg = async function() {
     let isConf = inputId === 'conf-chat-input';
     let myActiveLang = window.getLangPref(isVoice, isConf) || 'en';
 
-    // БРОНЯ: Защита от undefined-крашей Firebase
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
     let safeName = window.myUsername || 'User';
     let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
@@ -274,6 +278,7 @@ window.sendFirebaseMsg = async function() {
         }).finally(() => { setTimeout(() => { window.isGeminiWaiting = false; }, 2000); });
     }
 };
+
 window.handleNewMessage = async function(snapshot) {
     const data = snapshot.val(); 
     if(!data) return; 
@@ -414,7 +419,6 @@ window.handleNewMessage = async function(snapshot) {
 
     if (data.isVoiceRoomMsg) {
         let originalText = data.originalText || data.text;
-        
         let myPersonalLang = window.getLangPref(true, false);
         
         let senderPhoto, senderFlag, senderLang, senderName;
@@ -443,22 +447,17 @@ window.handleNewMessage = async function(snapshot) {
 
     if (data.isConfMsg) {
         let originalText = data.originalText || data.text;
-        
         let senderLangCode = data.langCode || 'auto'; 
-        
         let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
         let speakerMarquee = document.getElementById(senderMarqueeId);
         
         if (speakerMarquee) {
             speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
-            speakerMarquee.style.animation = 'none'; 
-            void speakerMarquee.offsetWidth; 
-            speakerMarquee.style.animation = null;
+            speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
         }
 
         document.querySelectorAll('.conf-listener-marquee').forEach(listenerMarquee => {
             if (listenerMarquee.id === senderMarqueeId) return; 
-            
             let targetLang = listenerMarquee.getAttribute('data-lang') || 'en'; 
             let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
             
@@ -466,12 +465,8 @@ window.handleNewMessage = async function(snapshot) {
                 .then(r => r.json())
                 .then(resData => {
                     let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
-                    
                     listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
-                    
-                    listenerMarquee.style.animation = 'none'; 
-                    void listenerMarquee.offsetWidth; 
-                    listenerMarquee.style.animation = null;
+                    listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
                 }).catch(e => console.log('Meet Translate Error'));
         });
     }
@@ -480,7 +475,6 @@ window.handleNewMessage = async function(snapshot) {
 // ==========================================
 // 4. МЕНЮ ФАЙЛОВ АРХИВА, ТРЕШ И ЭМОДЗИ
 // ==========================================
-
 window.switchArchiveTab = function(tab) {
     const title = document.getElementById('archive-section-title');
     const readerView = document.getElementById('email-reader-view');
@@ -775,7 +769,28 @@ window.syncMicLangUI = function() {
 
 window.autoSetMicLang = function() { window.syncMicLangUI(); };
 
-rec.onresult = async (e) => { 
+// --- ИСПРАВЛЕННЫЙ И ПОЛНОЦЕННЫЙ БЛОК МИКРОФОНА ---
+window.startUniversalMic = async function(mode) {
+    if (window.closeAllMenus) window.closeAllMenus();
+    const targetInputId = window.currentMicInputTarget || 'chat-input';
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
+    
+    let sourceTranslateLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
+    if (sourceTranslateLang === 'auto') {
+        sourceTranslateLang = window.getSmartLang(window.myProfileInfo);
+    }
+
+    const rec = new SpeechRecognition();
+    rec.lang = sourceTranslateLang || 'en';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    rec.onstart = () => { if(window.showToast) window.showToast("Mic Active", "Говорите...", "", ""); };
+    rec.onerror = (e) => { if(window.showToast) window.showToast("Mic Error", e.error, "", ""); };
+
+    rec.onresult = async (e) => { 
         window.speechRecognizedText = e.results[0][0].transcript; 
         let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
         
@@ -791,7 +806,6 @@ rec.onresult = async (e) => {
         let isVoice = window.currentMicInputTarget === 'voice-chat-input';
         let isConf = window.currentMicInputTarget === 'conf-chat-input';
         
-        // БРОНЯ для голоса
         let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
         let safeName = window.myUsername || 'User';
         let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
@@ -807,6 +821,7 @@ rec.onresult = async (e) => {
         else if (mode === 'ai-audio') { msgPayload.isAIAudio = true; firebase.database().ref(window.currentRoomId).push(msgPayload); }
     };
     try { rec.start(); } catch(e){}
+};
 
 // ==========================================
 // 6. ПОДДЕРЖКА КЛАВИАТУРЫ И ПРОЧИЕ УТИЛИТЫ
