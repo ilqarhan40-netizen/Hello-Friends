@@ -7,13 +7,13 @@ window.peerConnection = null;
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 
-// --- 0. ПОЛНЫЙ ЗВУКОВОЙ ДВИЖОК И ВИБРАЦИЯ (Cloud Audio) ---
-window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
-window.sndCash = new Audio('https://actions.google.com/sounds/v1/foley/cash_register.ogg');
-window.sndEmail = new Audio('https://actions.google.com/sounds/v1/water/water_drop.ogg'); 
-window.sndMissed = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); 
-window.sndRing = new Audio('https://actions.google.com/sounds/v1/ringtones/phone_ringing.ogg');
-window.sndCallOut = new Audio('https://actions.google.com/sounds/v1/communications/dial_tone.ogg'); 
+// --- 0. ПОЛНЫЙ ЗВУКОВОЙ ДВИЖОК И ВИБРАЦИЯ ---
+window.sndMsg = new Audio('sounds/message.mp3');
+window.sndCash = new Audio('sounds/cash.mp3');
+window.sndEmail = new Audio('sounds/email.mp3'); 
+window.sndMissed = new Audio('sounds/missed.mp3'); 
+window.sndRing = new Audio('sounds/ringtone.mp3');
+window.sndCallOut = new Audio('sounds/calling.mp3'); 
 
 window.sndRing.loop = true; 
 window.sndCallOut.loop = true;
@@ -36,13 +36,14 @@ window.stopAllRings = function() {
     if ("vibrate" in navigator) navigator.vibrate(0);
 };
 
-// Секретный разблокировщик для мобилок
-document.body.addEventListener('click', function unlockAudio() {
-    const allSounds = [window.sndMsg, window.sndCash, window.sndEmail, window.sndMissed, window.sndRing, window.sndCallOut];
-    allSounds.forEach(snd => { snd.play().then(() => snd.pause()).catch(e => {}); });
-    document.body.removeEventListener('click', unlockAudio);
-}, { once: true });
-
+// ЗАЩИТА ОТ КРАША: Ждем загрузки <body>, прежде чем вешать клик
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', function unlockAudio() {
+        const allSounds = [window.sndMsg, window.sndCash, window.sndEmail, window.sndMissed, window.sndRing, window.sndCallOut];
+        allSounds.forEach(snd => { snd.play().then(() => snd.pause()).catch(e => {}); });
+        document.body.removeEventListener('click', unlockAudio);
+    }, { once: true });
+});
 
 // --- 1. ПЕРЕДАЧА ГОЛОСА (WebRTC) ---
 window.startWebRTC = async function(isCaller, targetId) {
