@@ -206,16 +206,22 @@ window.sendFirebaseMsg = async function() {
     const rawText = inputField.value.trim(); 
     if (!rawText) return;
     
-    if (window.currentRoomId === 'private_ai_bot' && window.isGeminiWaiting) { window.showToast("Google AI", "Please wait a moment...", "", ""); return; }
+    if (window.currentRoomId === 'private_ai_bot' && window.isGeminiWaiting) { 
+        if (window.showToast) window.showToast("Google AI", "Please wait a moment...", "", ""); 
+        return; 
+    }
     inputField.value = '';
 
     let isVoice = inputId === 'voice-chat-input';
     let isConf = inputId === 'conf-chat-input';
+    let myActiveLang = window.getLangPref(isVoice, isConf) || 'en';
 
-    let myActiveLang = window.getLangPref(isVoice, isConf);
-
-    let activeFlag = window.myProfileInfo.flag || '🌐';
-    let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+    // БРОНЯ: Защита от undefined-крашей Firebase
+    let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
+    let safeName = window.myUsername || 'User';
+    let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+    let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+    let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
     const langMap = { 'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
     if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
@@ -237,12 +243,16 @@ window.sendFirebaseMsg = async function() {
         } catch (e) {}
     }
 
-    firebase.database().ref(window.currentRoomId).push({
-        userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: myBaseText,
-        sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP,
-        photo: window.myProfileInfo.photo, flag: activeFlag, flagCode: activeFlagCode, langCode: myActiveLang,
-        isVoiceRoomMsg: isVoice, isConfMsg: isConf
-    });
+    try {
+        firebase.database().ref(window.currentRoomId).push({
+            userId: safeId, name: safeName, text: textToShip || "Error", originalText: myBaseText || "Error",
+            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: safePhoto, flag: activeFlag, flagCode: activeFlagCode, langCode: myActiveLang,
+            isVoiceRoomMsg: isVoice, isConfMsg: isConf
+        });
+    } catch(err) {
+        alert("Ошибка отправки в базу: " + err.message);
+    }
 
     const chatMsgs = document.getElementById('chat-messages'); 
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
@@ -254,20 +264,16 @@ window.sendFirebaseMsg = async function() {
         fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, { 
             method: 'POST', headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify({ contents: [{ parts: [{ text: "Reply in the exact same language: " + rawText }] }] }) 
-        })
-        .then(res => res.json())
-        .then(data => { 
+        }).then(res => res.json()).then(data => { 
             let replyText = data.candidates[0].content.parts[0].text; 
             firebase.database().ref(window.currentRoomId).push({ 
                 name: "AI Assistant", text: replyText, sessionId: "ai-bot-session", 
                 timestamp: firebase.database.ServerValue.TIMESTAMP, userId: 'ai', 
                 langCode: 'en', flag: '🤖', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' 
             }); 
-        })
-        .finally(() => { setTimeout(() => { window.isGeminiWaiting = false; }, 2000); });
+        }).finally(() => { setTimeout(() => { window.isGeminiWaiting = false; }, 2000); });
     }
 };
-
 window.handleNewMessage = async function(snapshot) {
     const data = snapshot.val(); 
     if(!data) return; 
@@ -674,6 +680,10 @@ window.closeTrashModal = function() {
 window.actionArchiveChat = function() { window.smartArchive(); };
 
 window.actionClearHistory = function() {
+    if (window.currentRoomId === 'global') {
+        alert("Глобальный чат нельзя очистить! Сообщения в нем остаются навсегда.");
+        return;
+    }
     if(confirm("Clear all messages in this chat?")) {
         const chatMsgs = document.getElementById('chat-messages'); 
         if(chatMsgs) chatMsgs.innerHTML = '';
@@ -682,7 +692,6 @@ window.actionClearHistory = function() {
         if (window.closeTrashModal) window.closeTrashModal();
     }
 };
-
 window.actionDeleteForever = function() {
     if(confirm("WARNING: Delete this chat forever? This cannot be undone.")) {
         const chatMsgs = document.getElementById('chat-messages'); 
@@ -766,39 +775,7 @@ window.syncMicLangUI = function() {
 
 window.autoSetMicLang = function() { window.syncMicLangUI(); };
 
-window.startUniversalMic = async function(mode) {
-    window.speechRecognizedText = "";
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let rec = SpeechRec ? new SpeechRec() : null;
-    if (!rec) return alert("Browser does not support Speech Recognition.");
-    
-    rec.continuous = false; rec.interimResults = false;
-    
-    let selectedMicLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
-    let currentMicCode = 'en-US';
-    
-    if (selectedMicLang === 'auto') {
-        let rawPhone = window.myProfileInfo.phone;
-        let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
-        let flag = window.myProfileInfo.flagCode || "un"; 
-        if (phone.startsWith('+7')) currentMicCode = 'ru-RU'; else if (phone.startsWith('+994')) currentMicCode = 'az-AZ'; 
-        else if (phone.startsWith('+39')) currentMicCode = 'it-IT'; else if (phone.startsWith('+49')) currentMicCode = 'de-DE'; 
-        else if (phone.startsWith('+33')) currentMicCode = 'fr-FR'; else if (phone.startsWith('+81')) currentMicCode = 'ja-JP'; 
-        else if (phone.startsWith('+34')) currentMicCode = 'es-ES'; else if (phone.startsWith('+86')) currentMicCode = 'zh-CN'; 
-        else if (phone.startsWith('+351')) currentMicCode = 'pt-PT'; else if (flag === 'ru') currentMicCode = 'ru-RU'; 
-        else if (flag === 'az') currentMicCode = 'az-AZ'; else if (flag === 'it') currentMicCode = 'it-IT'; 
-        else if (flag === 'de') currentMicCode = 'de-DE'; else if (flag === 'fr') currentMicCode = 'fr-FR'; 
-        else if (flag === 'jp') currentMicCode = 'ja-JP'; else if (flag === 'es') currentMicCode = 'es-ES'; 
-        else if (flag === 'cn') currentMicCode = 'zh-CN'; else if (flag === 'pt') currentMicCode = 'pt-PT';
-        rec.lang = currentMicCode;
-    } else {
-        rec.lang = selectedMicLang;
-    }
-    
-    let sourceTranslateLang = rec.lang.substring(0, 2);
-    if (window.showToast) window.showToast("Listening...", "Speak into the microphone", "", "");
-    
-    rec.onresult = async (e) => { 
+rec.onresult = async (e) => { 
         window.speechRecognizedText = e.results[0][0].transcript; 
         let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
         
@@ -813,10 +790,16 @@ window.startUniversalMic = async function(mode) {
 
         let isVoice = window.currentMicInputTarget === 'voice-chat-input';
         let isConf = window.currentMicInputTarget === 'conf-chat-input';
+        
+        // БРОНЯ для голоса
+        let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
+        let safeName = window.myUsername || 'User';
+        let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+
         let msgPayload = { 
-            userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, 
-            sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, 
-            flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: sourceTranslateLang,
+            userId: safeId, name: safeName, text: textToShip || "...", originalText: window.speechRecognizedText || "...", 
+            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP, photo: safePhoto, 
+            flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', langCode: sourceTranslateLang || 'en',
             isVoiceRoomMsg: isVoice, isConfMsg: isConf 
         };
 
@@ -824,7 +807,6 @@ window.startUniversalMic = async function(mode) {
         else if (mode === 'ai-audio') { msgPayload.isAIAudio = true; firebase.database().ref(window.currentRoomId).push(msgPayload); }
     };
     try { rec.start(); } catch(e){}
-};
 
 // ==========================================
 // 6. ПОДДЕРЖКА КЛАВИАТУРЫ И ПРОЧИЕ УТИЛИТЫ
