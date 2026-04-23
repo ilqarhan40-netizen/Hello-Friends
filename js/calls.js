@@ -7,6 +7,43 @@ window.peerConnection = null;
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 
+// --- 0. ПОЛНЫЙ ЗВУКОВОЙ ДВИЖОК И ВИБРАЦИЯ (Cloud Audio) ---
+window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
+window.sndCash = new Audio('https://actions.google.com/sounds/v1/foley/cash_register.ogg');
+window.sndEmail = new Audio('https://actions.google.com/sounds/v1/water/water_drop.ogg'); 
+window.sndMissed = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'); 
+window.sndRing = new Audio('https://actions.google.com/sounds/v1/ringtones/phone_ringing.ogg');
+window.sndCallOut = new Audio('https://actions.google.com/sounds/v1/communications/dial_tone.ogg'); 
+
+window.sndRing.loop = true; 
+window.sndCallOut.loop = true;
+
+window.playSafeSound = function(audioElement, vibratePattern) {
+    if (!audioElement) return;
+    audioElement.currentTime = 0; 
+    let playPromise = audioElement.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => { console.warn("Звук заблокирован. Нужен клик по экрану."); });
+    }
+    if (vibratePattern && "vibrate" in navigator) {
+        navigator.vibrate(vibratePattern);
+    }
+};
+
+window.stopAllRings = function() {
+    if(window.sndRing) { window.sndRing.pause(); window.sndRing.currentTime = 0; }
+    if(window.sndCallOut) { window.sndCallOut.pause(); window.sndCallOut.currentTime = 0; }
+    if ("vibrate" in navigator) navigator.vibrate(0);
+};
+
+// Секретный разблокировщик для мобилок
+document.body.addEventListener('click', function unlockAudio() {
+    const allSounds = [window.sndMsg, window.sndCash, window.sndEmail, window.sndMissed, window.sndRing, window.sndCallOut];
+    allSounds.forEach(snd => { snd.play().then(() => snd.pause()).catch(e => {}); });
+    document.body.removeEventListener('click', unlockAudio);
+}, { once: true });
+
+
 // --- 1. ПЕРЕДАЧА ГОЛОСА (WebRTC) ---
 window.startWebRTC = async function(isCaller, targetId) {
     try {
@@ -27,15 +64,13 @@ window.startWebRTC = async function(isCaller, targetId) {
             remoteAudio = document.createElement('audio');
             remoteAudio.id = 'remote-audio-player';
             remoteAudio.autoplay = true;
-            remoteAudio.playsInline = true; // Фикс для жестких правил iOS/Safari
+            remoteAudio.playsInline = true;
             document.body.appendChild(remoteAudio);
         }
         remoteAudio.srcObject = event.streams[0];
         
-        // Фикс для мобильных браузеров: принудительный запуск звука
         remoteAudio.onloadedmetadata = () => {
             remoteAudio.play().catch(e => {
-                console.log("Браузер заблокировал автовоспроизведение звука:", e);
                 if(window.showToast) window.showToast("Внимание", "Нажмите на экран, чтобы включить звук собеседника", "", "");
             });
         };
@@ -116,10 +151,16 @@ window.startInAppCall = function() {
     if (window.switchTab) window.switchTab(1); 
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
+    // ВКЛЮЧАЕМ ГУДКИ
+    window.playSafeSound(window.sndCallOut);
+    
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
         db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
         callRef.remove(); window.callTimeout = null;
+        window.stopAllRings();
+        window.playSafeSound(window.sndMissed, [200, 100, 200]); // Вибро сброса
+        if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
     }, 30000);
 };
 
@@ -130,11 +171,13 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey)
     if(nameEl) nameEl.innerText = callerName || 'User'; 
     if(photoEl) photoEl.src = callerPhoto || 'https://ui-avatars.com/api/?name=U'; 
     document.getElementById('incoming-call-modal').classList.add('active'); 
-    if(window.sndRing) { window.sndRing.currentTime = 0; window.sndRing.play().catch(e => {}); }
+    
+    // ВКЛЮЧАЕМ РИНГТОН И ВИБРАЦИЮ
+    window.playSafeSound(window.sndRing, [1000, 500, 1000, 500, 1000, 500, 1000]);
 };
 
 window.acceptCall = function() { 
-    if(window.sndRing) { window.sndRing.pause(); window.sndRing.currentTime = 0; }
+    window.stopAllRings();
     document.getElementById('incoming-call-modal').classList.remove('active'); 
     db.ref('signals/' + window.currentCallerId).push({ type: 'answered' });
     db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
@@ -154,7 +197,7 @@ window.acceptCall = function() {
 };
 
 window.declineCall = function() { 
-    if(window.sndRing) { window.sndRing.pause(); window.sndRing.currentTime = 0; }
+    window.stopAllRings();
     document.getElementById('incoming-call-modal').classList.remove('active'); 
     db.ref('signals/' + window.currentCallerId).push({ type: 'reject', callerName: window.myUsername });
     db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
@@ -171,18 +214,21 @@ window.initSignalListener = function() {
             else db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
         } 
         else if (sig.type === 'reject') {
+            window.stopAllRings();
+            window.playSafeSound(window.sndMissed, [200, 100, 200]); // Звук сброса
             if(window.showToast) window.showToast("Сброс", `${sig.callerName} отклонил вызов.`, "", "");
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             window.endWebRTCCall();
         }
         else if (sig.type === 'answered') {
+            window.stopAllRings();
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             window.startWebRTC(true, window.currentTargetUser.id);
         }
         else if (sig.type === 'missed') {
-            if(window.sndRing) window.sndRing.pause();
+            window.stopAllRings();
             document.getElementById('incoming-call-modal').classList.remove('active');
             db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
         }
