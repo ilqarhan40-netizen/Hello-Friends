@@ -267,7 +267,7 @@ window.initConference = function() {
        <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="window.openPersonalLangModal()"></video>
         <div class="video-overlay">${window.myUsername}</div>
         <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode || 'un'}.png" class="w-6 rounded-sm"></div>
-        <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">➔ [AUTO] Связь защищена</div></div>
+        <div class="translation-bar"><div id="speaker-marquee" class="conf-marquee-text conf-listener-marquee" data-lang="${window.getSmartLang(window.myProfileInfo)}" data-flag="${window.myProfileInfo.flag || '🌐'}" style="animation-duration: 15s;">➔ [AUTO] Связь защищена</div></div>
     </div>`;
     
     let activeUsers = [];
@@ -288,7 +288,7 @@ window.initConference = function() {
                     <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
                     <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
                     <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
-                    <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
+                    <div class="translation-bar"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode || window.getSmartLang(p)}" data-flag="${p.flag || '🌐'}" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
                 </div>`;
             });
         } else {
@@ -298,7 +298,7 @@ window.initConference = function() {
                     <span class="text-4xl mb-2">${langArea.flag}</span>
                     <span class="text-xs text-[#8696a0]">Ожидание (${langArea.lang})</span>
                 </div>
-                <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 20s;">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
+                <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${langArea.code}" data-flag="${langArea.flag}" style="animation-duration: 20s;">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
             </div>`;
         }
     });
@@ -311,7 +311,7 @@ window.initConference = function() {
             <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
             <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
             <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
-            <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
+            <div class="translation-bar"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode || window.getSmartLang(p)}" data-flag="${p.flag || '🌐'}" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
         </div>`;
     });
 
