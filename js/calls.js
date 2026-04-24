@@ -25,7 +25,6 @@ window.playSafeSound = function(audioElement, vibratePattern) {
     if (playPromise !== undefined) {
         playPromise.catch(error => { console.warn("Звук заблокирован до клика по экрану."); });
     }
-    // Вибрация сработает только на Android (Apple аппаратно блокирует её в Safari)
     if (vibratePattern && "vibrate" in navigator) {
         try { navigator.vibrate(vibratePattern); } catch(e){}
     }
@@ -54,7 +53,6 @@ window.startWebRTC = async function(isCaller, targetId) {
         return;
     }
     
-    // РАСШИРЕННЫЙ ПУЛ STUN-СЕРВЕРОВ ДЛЯ МОБИЛЬНЫХ СЕТЕЙ
     const servers = { 
         iceServers: [ 
             { urls: 'stun:stun.l.google.com:19302' },
@@ -206,12 +204,10 @@ window.declineCall = function() {
     window.endWebRTCCall();
 };
 
-// НОВАЯ ФУНКЦИЯ ДЛЯ КРАСНОЙ КНОПКИ ОТБОЯ АКТИВНОГО ЗВОНКА
 window.hangUpCall = function() {
     window.stopAllRings();
     window.endWebRTCCall();
     
-    // Если мы знаем, с кем говорили, отправляем ему сигнал отбоя
     if (window.currentTargetUser) {
         db.ref('signals/' + window.currentTargetUser.id).push({ type: 'reject', callerName: window.myUsername });
     }
@@ -219,7 +215,6 @@ window.hangUpCall = function() {
     if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
     if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
     
-    // Возвращаем пользователя обратно в чаты
     if (window.switchTab) window.switchTab(0);
 };
 
