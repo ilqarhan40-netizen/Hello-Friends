@@ -7,13 +7,13 @@ window.peerConnection = null;
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 
-// --- 0. ПОЛНЫЙ ЗВУКОВОЙ ДВИЖОК И ВИБРАЦИЯ ---
-window.sndMsg = new Audio('sounds/message.mp3');
-window.sndCash = new Audio('sounds/cash.mp3');
-window.sndEmail = new Audio('sounds/email.mp3'); 
-window.sndMissed = new Audio('sounds/missed.mp3'); 
-window.sndRing = new Audio('sounds/ringtone.mp3');
-window.sndCallOut = new Audio('sounds/calling.mp3'); 
+// --- 0. ЗВУКОВОЙ ДВИЖОК (Читаем файлы прямо из корня, как у тебя на GitHub) ---
+window.sndMsg = new Audio('message.mp3.wav');
+window.sndCash = new Audio('cash.mp3.wav');
+window.sndEmail = new Audio('email.mp3.wav'); 
+window.sndMissed = new Audio('missed.mp3.wav'); 
+window.sndRing = new Audio('ringtone.mp3.wav');
+window.sndCallOut = new Audio('calling.mp3.wav'); 
 
 window.sndRing.loop = true; 
 window.sndCallOut.loop = true;
@@ -23,7 +23,7 @@ window.playSafeSound = function(audioElement, vibratePattern) {
     audioElement.currentTime = 0; 
     let playPromise = audioElement.play();
     if (playPromise !== undefined) {
-        playPromise.catch(error => { console.warn("Звук заблокирован. Нужен клик по экрану."); });
+        playPromise.catch(error => { console.warn("Звук заблокирован до клика по экрану."); });
     }
     if (vibratePattern && "vibrate" in navigator) {
         navigator.vibrate(vibratePattern);
@@ -36,7 +36,6 @@ window.stopAllRings = function() {
     if ("vibrate" in navigator) navigator.vibrate(0);
 };
 
-// ЗАЩИТА ОТ КРАША: Ждем загрузки <body>, прежде чем вешать клик
 document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('click', function unlockAudio() {
         const allSounds = [window.sndMsg, window.sndCash, window.sndEmail, window.sndMissed, window.sndRing, window.sndCallOut];
@@ -71,9 +70,7 @@ window.startWebRTC = async function(isCaller, targetId) {
         remoteAudio.srcObject = event.streams[0];
         
         remoteAudio.onloadedmetadata = () => {
-            remoteAudio.play().catch(e => {
-                if(window.showToast) window.showToast("Внимание", "Нажмите на экран, чтобы включить звук собеседника", "", "");
-            });
+            remoteAudio.play().catch(e => {});
         };
     };
 
@@ -117,16 +114,12 @@ window.startWebRTC = async function(isCaller, targetId) {
             window.peerConnection.addIceCandidate(new RTCIceCandidate(snap.val()));
         });
     }
-    
-    const marquee = document.getElementById('voice-info-marquee');
-    if (marquee) marquee.innerText = "🟢 СВЯЗЬ УСТАНОВЛЕНА - ГОВОРИТЕ";
 };
 
 window.endWebRTCCall = function() {
     if (window.peerConnection) { window.peerConnection.close(); window.peerConnection = null; }
     if (window.localStream) { window.localStream.getTracks().forEach(t => t.stop()); window.localStream = null; }
     const remoteAudio = document.getElementById('remote-audio-player'); if (remoteAudio) remoteAudio.remove();
-    const marquee = document.getElementById('voice-info-marquee'); if (marquee) marquee.innerText = "Ожидание собеседника...";
 };
 
 // --- 2. ЛОГИКА ЗВОНКОВ ---
@@ -152,7 +145,6 @@ window.startInAppCall = function() {
     if (window.switchTab) window.switchTab(1); 
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
-    // ВКЛЮЧАЕМ ГУДКИ
     window.playSafeSound(window.sndCallOut);
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
@@ -160,7 +152,7 @@ window.startInAppCall = function() {
         db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
         callRef.remove(); window.callTimeout = null;
         window.stopAllRings();
-        window.playSafeSound(window.sndMissed, [200, 100, 200]); // Вибро сброса
+        window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
     }, 30000);
 };
@@ -173,7 +165,6 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey)
     if(photoEl) photoEl.src = callerPhoto || 'https://ui-avatars.com/api/?name=U'; 
     document.getElementById('incoming-call-modal').classList.add('active'); 
     
-    // ВКЛЮЧАЕМ РИНГТОН И ВИБРАЦИЮ
     window.playSafeSound(window.sndRing, [1000, 500, 1000, 500, 1000, 500, 1000]);
 };
 
@@ -216,14 +207,13 @@ window.initSignalListener = function() {
         } 
         else if (sig.type === 'reject') {
             window.stopAllRings();
-            window.playSafeSound(window.sndMissed, [200, 100, 200]); // Звук сброса
-            if(window.showToast) window.showToast("Сброс", `${sig.callerName} отклонил вызов.`, "", "");
+            window.playSafeSound(window.sndMissed, [200, 100, 200]);
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             window.endWebRTCCall();
         }
         else if (sig.type === 'answered') {
-            window.stopAllRings();
+            window.stopAllRings(); 
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             window.startWebRTC(true, window.currentTargetUser.id);
@@ -236,10 +226,19 @@ window.initSignalListener = function() {
     }); 
 };
 
-// --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ ---
+// --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (ВЕРСИЯ 1) ---
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
     
+    const smartLanguages = [
+        { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
+        { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' },
+        { code: 'es', flag: '🇪🇸', lang: 'ES' }, { code: 'fr', flag: '🇫🇷', lang: 'FR' },
+        { code: 'de', flag: '🇩🇪', lang: 'DE' }, { code: 'it', flag: '🇮🇹', lang: 'IT' },
+        { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'sa', flag: '🇸🇦', lang: 'AR' },
+        { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'in', flag: '🇮🇳', lang: 'HI' }
+    ];
+
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
        <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="window.openPersonalLangModal()"></video>
@@ -248,21 +247,48 @@ window.initConference = function() {
         <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">➔ [AUTO] Связь защищена</div></div>
     </div>`;
     
-    let usersToRender = [];
-    
+    let activeUsers = [];
     if (window.currentRoomId === 'global' || window.currentRoomId === 'video_room_global') {
-        usersToRender = (window.participants || []).filter(p => p.id !== 'ai'); 
+        activeUsers = (window.participants || []).filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id); 
     } else if (window.currentTargetUser) {
-        usersToRender = [window.currentTargetUser];
+        activeUsers = [window.currentTargetUser];
     }
 
-    usersToRender.forEach(p => {
+    smartLanguages.forEach(langArea => {
+        let usersInThisLang = activeUsers.filter(p => p.flagCode === langArea.code);
+        
+        if (usersInThisLang.length > 0) {
+            usersInThisLang.forEach(p => {
+                let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
+                confHtml += `
+                <div class="video-frame">
+                    <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
+                    <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
+                    <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
+                    <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
+                </div>`;
+            });
+        } else {
+            confHtml += `
+            <div class="video-frame opacity-50">
+                <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#0b141a]">
+                    <span class="text-4xl mb-2">${langArea.flag}</span>
+                    <span class="text-xs text-[#8696a0]">Ожидание (${langArea.lang})</span>
+                </div>
+                <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 20s;">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
+            </div>`;
+        }
+    });
+
+    let otherUsers = activeUsers.filter(p => !smartLanguages.some(l => l.code === p.flagCode));
+    otherUsers.forEach(p => {
+        let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
         confHtml += `
         <div class="video-frame">
             <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
             <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
             <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
-            <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">${p.flag} Собеседник в сети...</div></div>
+            <div class="translation-bar"><div class="conf-marquee-text" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
         </div>`;
     });
 
