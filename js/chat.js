@@ -172,10 +172,12 @@ window.switchChatRoom = function(targetId) {
         let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio}`;
         window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, window.myProfileInfo.phone || "");
     } else {
-        const targetUser = window.participants.find(p => p.id === targetId);
+        const searchId = String(targetId);
+        const targetUser = window.participants.find(p => String(p.id) === searchId);
         if(targetUser) {
             window.currentTargetUser = targetUser;
-            let id1 = String(window.myProfileInfo.id); let id2 = String(targetUser.id);
+            let id1 = String(window.myProfileInfo.id); 
+            let id2 = String(targetUser.id);
             window.currentRoomId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
             headerTitle = (targetUser.name || 'User').split(' ')[0] + " " + targetUser.flag; headerRoomId = "Private Encrypted";
             let targetBio = targetUser.profileBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${targetUser.profileBio}</span>` : ""; 
@@ -210,9 +212,10 @@ window.sendFirebaseMsg = async function() {
 
     if (isConfTab) {
         inputId = 'conf-chat-input';
-        targetDbRoom = 'video_room_global'; 
+        targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global'; 
     } else if (isVoiceTab) {
         inputId = 'voice-chat-input';
+        targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
     }
 
     const inputField = document.getElementById(inputId);
@@ -370,7 +373,14 @@ window.handleNewMessage = async function(snapshot) {
         bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
     }
 
-    if (!data.isVoiceRoomMsg && !data.isConfMsg) {
+    let shouldRenderInChat = false;
+    if (window.currentRoomId !== 'global' && window.currentRoomId !== 'video_room_global') {
+        shouldRenderInChat = true; 
+    } else if (!data.isVoiceRoomMsg && !data.isConfMsg) {
+        shouldRenderInChat = true; 
+    }
+
+    if (shouldRenderInChat) {
         msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
         messageGroup.appendChild(msgWrapper);
         if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
@@ -782,9 +792,13 @@ window.startUniversalMic = async function(mode) {
     
     let isVoiceTab = window.currentIndex === 1;
     let isConfTab = window.currentIndex === 2;
-    let targetDbRoom = window.currentRoomId || 'global';
     
-    if (isConfTab) targetDbRoom = 'video_room_global';
+    let targetDbRoom = window.currentRoomId || 'global';
+    if (isConfTab) {
+        targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
+    } else if (isVoiceTab) {
+        targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
+    }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
