@@ -7,7 +7,7 @@ window.peerConnection = null;
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 
-// --- 0. ЗВУКОВОЙ ДВИЖОК (Читаем файлы прямо из корня, как у тебя на GitHub) ---
+// --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
 window.sndCash = new Audio('cash.mp3.wav');
 window.sndEmail = new Audio('email.mp3.wav'); 
@@ -25,15 +25,16 @@ window.playSafeSound = function(audioElement, vibratePattern) {
     if (playPromise !== undefined) {
         playPromise.catch(error => { console.warn("Звук заблокирован до клика по экрану."); });
     }
+    // Вибрация сработает только на Android (Apple аппаратно блокирует её в Safari)
     if (vibratePattern && "vibrate" in navigator) {
-        navigator.vibrate(vibratePattern);
+        try { navigator.vibrate(vibratePattern); } catch(e){}
     }
 };
 
 window.stopAllRings = function() {
     if(window.sndRing) { window.sndRing.pause(); window.sndRing.currentTime = 0; }
     if(window.sndCallOut) { window.sndCallOut.pause(); window.sndCallOut.currentTime = 0; }
-    if ("vibrate" in navigator) navigator.vibrate(0);
+    if ("vibrate" in navigator) { try { navigator.vibrate(0); } catch(e){} }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -49,11 +50,20 @@ window.startWebRTC = async function(isCaller, targetId) {
     try {
         window.localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
     } catch (e) {
-        alert("Для общения нужен доступ к микрофону!");
+        alert("Для общения нужен доступ к микрофону! Убедитесь, что сайт открыт по HTTPS.");
         return;
     }
     
-    const servers = { iceServers: [ { urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] } ] };
+    // РАСШИРЕННЫЙ ПУЛ STUN-СЕРВЕРОВ ДЛЯ МОБИЛЬНЫХ СЕТЕЙ
+    const servers = { 
+        iceServers: [ 
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' }
+        ] 
+    };
     window.peerConnection = new RTCPeerConnection(servers);
     
     window.localStream.getTracks().forEach(track => window.peerConnection.addTrack(track, window.localStream));
@@ -196,6 +206,23 @@ window.declineCall = function() {
     window.endWebRTCCall();
 };
 
+// НОВАЯ ФУНКЦИЯ ДЛЯ КРАСНОЙ КНОПКИ ОТБОЯ АКТИВНОГО ЗВОНКА
+window.hangUpCall = function() {
+    window.stopAllRings();
+    window.endWebRTCCall();
+    
+    // Если мы знаем, с кем говорили, отправляем ему сигнал отбоя
+    if (window.currentTargetUser) {
+        db.ref('signals/' + window.currentTargetUser.id).push({ type: 'reject', callerName: window.myUsername });
+    }
+    
+    if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+    if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
+    
+    // Возвращаем пользователя обратно в чаты
+    if (window.switchTab) window.switchTab(0);
+};
+
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
     db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
@@ -211,6 +238,7 @@ window.initSignalListener = function() {
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             window.endWebRTCCall();
+            if (window.switchTab) window.switchTab(0);
         }
         else if (sig.type === 'answered') {
             window.stopAllRings(); 
@@ -312,7 +340,7 @@ window.toggleMyCamera = async function(btn) {
             window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
             if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
             btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
-        } catch(e) { alert("Доступ к камере запрещен!"); } 
+        } catch(e) { alert("Доступ к камере запрещен! Убедитесь, что сайт открыт по HTTPS."); } 
     } 
 };
 
