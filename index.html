@@ -471,7 +471,7 @@ if (window.OneSignalDeferred) {
             </div>
             
             <div id="universal-mic-popup" onclick="event.stopPropagation();">
-                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.handleSmartCall()"><i class="fa-solid fa-phone mic-opt-call"></i> <span data-i18n="call_user">Call User</span></button>
+                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startInAppCall()"><i class="fa-solid fa-phone mic-opt-call"></i><span data-i18n="call_user">Call User</span></button>
                 <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('ai-audio')"><i class="fa-solid fa-robot mic-opt-ai"></i> <span data-i18n="voice_msg_ai">Voice Message (AI)</span></button>
                 <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('text')"><i class="fa-solid fa-microphone mic-opt-text"></i> <span data-i18n="voice_text">Voice Text</span></button>
             </div>
@@ -530,7 +530,13 @@ if (window.OneSignalDeferred) {
                                 <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover border-2 border-[#2a3942] shadow-lg">
                                 <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-xl bg-[#111b21] rounded-full p-1 shadow">🌐</span>
                             </div>
-                            <h3 id="voice-friend-name" class="text-[#8696a0] font-bold text-sm text-center truncate w-full max-w-[100px]" data-i18n="select_contact">Select Contact</h3>
+                          <div class="flex items-center justify-center gap-2 mt-2">
+    <h3 id="voice-friend-name" class="text-white font-bold text-sm text-center truncate max-w-[100px]" data-i18n="select_contact">Select Contact</h3>
+    
+    <button onclick="window.hangUpCall()" class="bg-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all shrink-0">
+        <i class="fa-solid fa-phone-slash text-white text-xs"></i>
+    </button>
+</div>
                         </div>
                         <div class="flex gap-1.5 text-[#00a884] shrink-0 mb-6">
                             <div class="w-1.5 h-6 bg-[#00a884] rounded-full animate-bounce"></div><div class="w-1.5 h-10 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-6 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
