@@ -1,11 +1,13 @@
 // ==========================================
-// MODULE: CALLS, VIDEO & WebRTC ENGINE
+// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL)
 // ==========================================
 
 window.localStream = null;
 window.peerConnection = null;
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
+window.currentIncomingCallType = 'voice'; 
+window.myLastOutgoingCallType = 'voice';
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
@@ -20,6 +22,7 @@ window.sndCallOut.loop = true;
 
 window.playSafeSound = function(audioElement, vibratePattern) {
     if (!audioElement) return;
+    audioElement.muted = false;
     audioElement.currentTime = 0; 
     let playPromise = audioElement.play();
     if (playPromise !== undefined) {
@@ -44,12 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { once: true });
 });
 
-// --- 1. ПЕРЕДАЧА ГОЛОСА (WebRTC) ---
-window.startWebRTC = async function(isCaller, targetId) {
+// --- 1. ПЕРЕДАЧА ГОЛОСА И ВИДЕО (WebRTC) ---
+window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
-        window.localStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        window.localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
     } catch (e) {
-        alert("Для общения нужен доступ к микрофону! Убедитесь, что сайт открыт по HTTPS.");
+        alert("Нет доступа к микрофону/камере! Убедитесь, что дано разрешение.");
         return;
     }
     
@@ -58,8 +61,7 @@ window.startWebRTC = async function(isCaller, targetId) {
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
             { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' }
+            { urls: 'stun:stun3.l.google.com:19302' }
         ] 
     };
     window.peerConnection = new RTCPeerConnection(servers);
@@ -67,19 +69,30 @@ window.startWebRTC = async function(isCaller, targetId) {
     window.localStream.getTracks().forEach(track => window.peerConnection.addTrack(track, window.localStream));
 
     window.peerConnection.ontrack = (event) => {
-        let remoteAudio = document.getElementById('remote-audio-player');
-        if (!remoteAudio) {
-            remoteAudio = document.createElement('audio');
-            remoteAudio.id = 'remote-audio-player';
-            remoteAudio.autoplay = true;
-            remoteAudio.playsInline = true;
-            document.body.appendChild(remoteAudio);
+        if (isVideo) {
+            let remoteVideo = document.getElementById('remote-video-player');
+            if (!remoteVideo) {
+                remoteVideo = document.createElement('video');
+                remoteVideo.id = 'remote-video-player';
+                remoteVideo.autoplay = true;
+                remoteVideo.playsInline = true;
+                // Видео собеседника поверх всего экрана
+                remoteVideo.className = "fixed inset-0 w-full h-full object-cover z-[9999] bg-black";
+                document.body.appendChild(remoteVideo);
+            }
+            remoteVideo.srcObject = event.streams[0];
+        } else {
+            let remoteAudio = document.getElementById('remote-audio-player');
+            if (!remoteAudio) {
+                remoteAudio = document.createElement('audio');
+                remoteAudio.id = 'remote-audio-player';
+                remoteAudio.autoplay = true;
+                remoteAudio.playsInline = true;
+                document.body.appendChild(remoteAudio);
+            }
+            remoteAudio.srcObject = event.streams[0];
+            remoteAudio.onloadedmetadata = () => { remoteAudio.play().catch(e => {}); };
         }
-        remoteAudio.srcObject = event.streams[0];
-        
-        remoteAudio.onloadedmetadata = () => {
-            remoteAudio.play().catch(e => {});
-        };
     };
 
     const callRoomId = isCaller ? (window.myProfileInfo.id + '_' + targetId) : (targetId + '_' + window.myProfileInfo.id);
@@ -92,20 +105,18 @@ window.startWebRTC = async function(isCaller, targetId) {
     };
 
     if (isCaller) {
-        await callDoc.remove(); 
         const offer = await window.peerConnection.createOffer();
         await window.peerConnection.setLocalDescription(offer);
         await callDoc.child('offer').set({ type: offer.type, sdp: offer.sdp });
 
-        callDoc.child('answer').on('value', snap => {
+        callDoc.child('answer').on('value', async snap => {
             const answer = snap.val();
             if (answer && !window.peerConnection.currentRemoteDescription) {
-                window.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                await window.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                callDoc.child('calleeCandidates').on('child_added', snap => {
+                    if(snap.val()) window.peerConnection.addIceCandidate(new RTCIceCandidate(snap.val())).catch(e=>{});
+                });
             }
-        });
-
-        callDoc.child('calleeCandidates').on('child_added', snap => {
-            window.peerConnection.addIceCandidate(new RTCIceCandidate(snap.val()));
         });
     } else {
         callDoc.child('offer').on('value', async snap => {
@@ -115,11 +126,10 @@ window.startWebRTC = async function(isCaller, targetId) {
                 const answer = await window.peerConnection.createAnswer();
                 await window.peerConnection.setLocalDescription(answer);
                 await callDoc.child('answer').set({ type: answer.type, sdp: answer.sdp });
+                callDoc.child('callerCandidates').on('child_added', snap => {
+                    if(snap.val()) window.peerConnection.addIceCandidate(new RTCIceCandidate(snap.val())).catch(e=>{});
+                });
             }
-        });
-
-        callDoc.child('callerCandidates').on('child_added', snap => {
-            window.peerConnection.addIceCandidate(new RTCIceCandidate(snap.val()));
         });
     }
 };
@@ -127,30 +137,43 @@ window.startWebRTC = async function(isCaller, targetId) {
 window.endWebRTCCall = function() {
     if (window.peerConnection) { window.peerConnection.close(); window.peerConnection = null; }
     if (window.localStream) { window.localStream.getTracks().forEach(t => t.stop()); window.localStream = null; }
+    
     const remoteAudio = document.getElementById('remote-audio-player'); if (remoteAudio) remoteAudio.remove();
+    const remoteVideo = document.getElementById('remote-video-player'); if (remoteVideo) remoteVideo.remove();
 };
 
-// --- 2. ЛОГИКА ЗВОНКОВ ---
+// --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
 window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
-window.startInAppCall = function() { 
+window.startInAppCall = function(callType = 'voice') { 
     if (!window.currentTargetUser) { 
         alert("Выберите контакт для звонка!"); window.closePhoneChoiceModal(); return; 
     } 
     const target = window.currentTargetUser; 
     window.closePhoneChoiceModal(); 
     
+    window.myLastOutgoingCallType = callType;
+    db.ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
+
     let callRef = db.ref('signals/' + target.id).push();
-    callRef.set({ type: 'call', callerId: window.myProfileInfo.id, callerName: window.myUsername, callerPhoto: window.myProfileInfo.photo, timestamp: firebase.database.ServerValue.TIMESTAMP }); 
+    callRef.set({ 
+        type: 'call', 
+        callType: callType,
+        callerId: window.myProfileInfo.id, 
+        callerName: window.myUsername, 
+        callerPhoto: window.myProfileInfo.photo, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    }); 
     
-    if(window.sendPushToUser) window.sendPushToUser(target.id, "Входящий вызов 📞", `${window.myUsername} звонит вам!`); 
+    let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
+    if(window.sendPushToUser) window.sendPushToUser(target.id, pushTitle, `${window.myUsername} звонит вам!`); 
     
     const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
     
     window.voiceFriend = target; 
-    if (window.switchTab) window.switchTab(1); 
+    if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
     window.playSafeSound(window.sndCallOut);
@@ -162,17 +185,26 @@ window.startInAppCall = function() {
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
+        
+        let missedTitle = callType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
+        if(window.sendPushToUser) window.sendPushToUser(target.id, missedTitle, `Вы пропустили вызов от ${window.myUsername}`); 
     }, 30000);
 };
 
-window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey) { 
+window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey, callType) { 
     window.currentIncomingSignalKey = signalKey; 
     window.currentCallerId = callerId; 
-    const nameEl = document.getElementById('incoming-call-name'); const photoEl = document.getElementById('incoming-call-photo');
+    window.currentIncomingCallType = callType || 'voice';
+
+    const nameEl = document.getElementById('incoming-call-name'); 
+    const photoEl = document.getElementById('incoming-call-photo');
+    const typeLabel = document.getElementById('incoming-call-type');
+
     if(nameEl) nameEl.innerText = callerName || 'User'; 
     if(photoEl) photoEl.src = callerPhoto || 'https://ui-avatars.com/api/?name=U'; 
+    if(typeLabel) typeLabel.innerText = callType === 'video' ? '📹 Входящий видеозвонок' : '📞 Входящий аудиозвонок';
+
     document.getElementById('incoming-call-modal').classList.add('active'); 
-    
     window.playSafeSound(window.sndRing, [1000, 500, 1000, 500, 1000, 500, 1000]);
 };
 
@@ -190,9 +222,9 @@ window.acceptCall = function() {
         
         window.voiceFriend = target; 
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
-        if (window.switchTab) window.switchTab(1); 
+        if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 2 : 1); 
         
-        window.startWebRTC(false, window.currentCallerId); 
+        window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); 
     } 
 };
 
@@ -224,7 +256,7 @@ window.initSignalListener = function() {
         const sig = snap.val(); if (!sig) return; 
         
         if (sig.type === 'call') { 
-            if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key); 
+            if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType); 
             else db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
         } 
         else if (sig.type === 'reject') {
@@ -239,7 +271,7 @@ window.initSignalListener = function() {
             window.stopAllRings(); 
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-            window.startWebRTC(true, window.currentTargetUser.id);
+            window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
         }
         else if (sig.type === 'missed') {
             window.stopAllRings();
@@ -253,7 +285,6 @@ window.initSignalListener = function() {
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
     
-    // Получаем язык текущего слушателя (умное определение)
     let myReadLang = window.getLangPref(false, true); 
     let myReadFlag = window.myProfileInfo.flag || '🌐';
     
@@ -266,7 +297,6 @@ window.initConference = function() {
         { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
     ];
 
-    // Ваше главное окно (Speaker)
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
        <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="window.openPersonalLangModal()"></video>
@@ -282,7 +312,6 @@ window.initConference = function() {
         activeUsers = [window.currentTargetUser];
     }
 
-    // Отрисовка 12 каналов стран
     smartLanguages.forEach(langArea => {
         let usersInThisLang = activeUsers.filter(p => p.flagCode === langArea.code);
         
@@ -309,7 +338,6 @@ window.initConference = function() {
         }
     });
 
-    // Пользователи вне основных 12 языков
     let otherUsers = activeUsers.filter(p => !smartLanguages.some(l => l.code === p.flagCode));
     otherUsers.forEach(p => {
         let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
@@ -335,7 +363,7 @@ window.toggleMyCamera = async function(btn) {
     const videoEl = document.getElementById('my-live-video'); 
     if (window.myVideoStream) { 
         window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
+        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); } 
         btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
     } else { 
         try { 
