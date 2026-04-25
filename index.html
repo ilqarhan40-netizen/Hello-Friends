@@ -619,21 +619,62 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-       <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
-                <div class="page-container">
-                    <div class="flex justify-between items-center px-2 mb-6 mt-2">
-                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Data Center</span></h2>
-                        <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mb-6 px-1">
-                        <div onclick="window.switchArchiveTab('docs')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition shadow-lg text-center"><i class="fa-solid fa-folder-open text-2xl text-[#a29bfe] mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="docs">Docs</span></div>
-                        <div onclick="window.switchArchiveTab('media')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition shadow-lg text-center"><i class="fa-solid fa-photo-film text-2xl text-green-400 mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="media">Media</span></div>
-                        <div onclick="window.switchArchiveTab('mail')" class="bg-[#202c33] p-3 rounded-2xl border border-[#00a884] flex flex-col items-center justify-center cursor-pointer hover:bg-[#00a884]/10 transition shadow-lg text-center relative"><span id="mail-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse hidden"></span><i class="fa-solid fa-envelope text-2xl text-[#00a884] mb-1"></i><span class="text-white font-bold text-[0.7rem]">Mail</span></div>
-                    </div>
-                    <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2">Saved Backups</h3>
-                    <div id="archive-list" class="flex flex-col gap-3 px-1 pb-20"><p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4" data-i18n="repo_empty">Repository is empty.</p></div>
+   <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
+    <div class="page-container flex flex-col h-full">
+        <div class="flex justify-between items-center px-2 mb-6 mt-2">
+            <h2 class="text-xl font-bold text-white">
+                <i class="fa-solid fa-server text-blue-400 mr-2"></i> 
+                <span data-i18n="cloud_repo">Data Center</span>
+            </h2>
+            <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-6 px-1 shrink-0">
+            <div onclick="window.switchArchiveTab('docs')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-[#00a884] transition">
+                <i class="fa-solid fa-file-lines text-[#8696a0] text-xl mb-1"></i>
+                <span class="text-[0.65rem] text-white font-bold uppercase">Docs</span>
+            </div>
+            <div onclick="window.switchArchiveTab('media')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-[#00a884] transition">
+                <i class="fa-solid fa-image text-[#8696a0] text-xl mb-1"></i>
+                <span class="text-[0.65rem] text-white font-bold uppercase">Media</span>
+            </div>
+            <div onclick="window.switchArchiveTab('mail')" class="bg-[#202c33] p-3 rounded-2xl border border-[#00a884] flex flex-col items-center justify-center cursor-pointer hover:border-[#00a884] transition relative">
+                <i class="fa-solid fa-envelope text-[#00a884] text-xl mb-1"></i>
+                <span class="text-[0.65rem] text-white font-bold uppercase">Mail</span>
+                <div id="mail-badge" class="hidden absolute top-2 right-2 w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+            </div>
+        </div>
+
+        <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2 shrink-0">Corporate Mailbox</h3>
+
+        <div id="email-list-view" class="flex-grow overflow-y-auto w-full px-1">
+            <div id="archive-list" class="flex flex-col gap-2 pb-20">
+                <p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4">Repository is empty.</p>
+            </div>
+        </div>
+
+        <div id="email-reader-view" class="hidden flex-col flex-grow w-full pb-20">
+            <button onclick="window.backToEmailList()" class="back-btn mb-4 text-[#00a884] flex items-center gap-2 hover:text-white transition px-2">
+                <i class="fa-solid fa-arrow-left"></i> Назад
+            </button>
+            <div class="bg-[#202c33] rounded-xl p-4 border border-[#2a3942] flex-grow overflow-y-auto relative flex flex-col">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 id="email-read-subject" class="text-white font-bold text-lg pr-8">Тема</h3>
+                    <button id="email-read-action-btn" class="text-[#8696a0] hover:text-white text-xl p-1">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center border-b border-[#2a3942] pb-3 mb-3">
+                    <span id="email-read-from" class="text-sm text-[#8696a0]">От кого</span>
+                    <span id="email-read-date" class="text-xs text-[#8696a0]">Дата</span>
+                </div>
+                <div id="email-read-body" class="text-[#e9edef] text-sm whitespace-pre-wrap flex-grow">
+                    Текст письма...
                 </div>
             </div>
+        </div>
+    </div>
+</div>
         </main>
 
         <div class="bottom-nav-container">
