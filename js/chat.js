@@ -57,7 +57,7 @@ setTimeout(() => {
 }, 1000);
 
 window.getSmartLang = function(userData) {
-    if (!userData) return 'en'; 
+    if (!userData) return navigator.language ? navigator.language.slice(0, 2) : 'en'; 
     
     let rawPhone = typeof userData === 'object' ? userData.phone : userData;
     let flag = (typeof userData === 'object' && userData.flagCode) ? userData.flagCode : "un";
@@ -79,9 +79,10 @@ window.getSmartLang = function(userData) {
     if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
     if (phone.startsWith('+971')) return 'ar';
 
-    const flagToLang = { 'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar' };
+    const flagToLang = { 'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr' };
     if (flagToLang[flag]) return flagToLang[flag];
-    return 'en';
+    
+    return navigator.language ? navigator.language.slice(0, 2) : 'en';
 };
 
 window.getLangKey = function(isVoice, isConf) {
@@ -373,17 +374,14 @@ window.handleNewMessage = async function(snapshot) {
         bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
     }
 
-    let shouldRenderInChat = false;
-    if (window.currentRoomId !== 'global' && window.currentRoomId !== 'video_room_global') {
-        shouldRenderInChat = true; 
-    } else if (!data.isVoiceRoomMsg && !data.isConfMsg) {
-        shouldRenderInChat = true; 
-    }
+    const isCurrentRoom = snapshot.ref.parent.key === window.currentRoomId;
 
-    if (shouldRenderInChat) {
-        msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
-        messageGroup.appendChild(msgWrapper);
-        if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
+    if (isCurrentRoom || (!data.isVoiceRoomMsg && !data.isConfMsg)) {
+        if (!data.isVoiceRoomMsg && !data.isConfMsg) {
+            msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
+            messageGroup.appendChild(msgWrapper);
+            if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
+        }
     }
 
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
@@ -439,20 +437,34 @@ window.handleNewMessage = async function(snapshot) {
         let originalText = data.originalText || data.text;
         let myPersonalLang = window.getLangPref(true, false);
         
-        let senderPhoto, senderFlag, senderLang, senderName;
-        let receiverPhoto, receiverFlag, receiverLang, receiverName;
+        let senderPhoto, senderFlag, senderLangV, senderName;
+        let receiverPhoto, receiverFlag, receiverLangV, receiverName;
 
         if (isMe) {
-            senderPhoto = window.myProfileInfo.photo; senderFlag = window.myProfileInfo.flag; senderLang = myPersonalLang; senderName = window.myUsername;
-            receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U'; receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐'; receiverLang = window.currentTargetUser ? window.currentTargetUser.langCode : 'en'; receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
+            senderPhoto = window.myProfileInfo.photo; 
+            senderFlag = window.myProfileInfo.flag; 
+            senderLangV = data.langCode || myPersonalLang; 
+            senderName = window.myUsername;
+            
+            receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U'; 
+            receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐'; 
+            receiverLangV = window.currentTargetUser ? (window.currentTargetUser.langCode || window.getSmartLang(window.currentTargetUser)) : 'en'; 
+            receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
         } else {
-            senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; senderFlag = data.flag || '🌐'; senderLang = data.langCode || 'en'; senderName = (data.name || 'User').split(' ')[0];
-            receiverPhoto = window.myProfileInfo.photo; receiverFlag = window.myProfileInfo.flag; receiverLang = myPersonalLang; receiverName = window.myUsername;
+            senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
+            senderFlag = data.flag || '🌐'; 
+            senderLangV = data.langCode || 'en'; 
+            senderName = (data.name || 'User').split(' ')[0];
+            
+            receiverPhoto = window.myProfileInfo.photo; 
+            receiverFlag = window.myProfileInfo.flag; 
+            receiverLangV = myPersonalLang; 
+            receiverName = window.myUsername;
         }
 
         Promise.all([
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${senderLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${receiverLang}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLangV}&tl=${senderLangV}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLangV}&tl=${receiverLangV}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
         ]).then(results => {
             const vMarquee = document.getElementById('voice-info-marquee');
             if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
