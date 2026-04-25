@@ -249,25 +249,30 @@ window.initSignalListener = function() {
     }); 
 };
 
-// --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (ВЕРСИЯ 1) ---
+// --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (12 СТРАН) ---
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
+    
+    // Получаем язык текущего слушателя (умное определение)
+    let myReadLang = window.getLangPref(false, true); 
+    let myReadFlag = window.myProfileInfo.flag || '🌐';
     
     const smartLanguages = [
         { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
         { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' },
         { code: 'es', flag: '🇪🇸', lang: 'ES' }, { code: 'fr', flag: '🇫🇷', lang: 'FR' },
         { code: 'de', flag: '🇩🇪', lang: 'DE' }, { code: 'it', flag: '🇮🇹', lang: 'IT' },
-        { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'sa', flag: '🇸🇦', lang: 'AR' },
-        { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'in', flag: '🇮🇳', lang: 'HI' }
+        { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'ae', flag: '🇦🇪', lang: 'AR' },
+        { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
     ];
 
+    // Ваше главное окно (Speaker)
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
        <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="window.openPersonalLangModal()"></video>
         <div class="video-overlay">${window.myUsername}</div>
         <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode || 'un'}.png" class="w-6 rounded-sm"></div>
-        <div class="translation-bar"><div id="speaker-marquee" class="conf-marquee-text conf-listener-marquee" data-lang="${window.getSmartLang(window.myProfileInfo)}" data-flag="${window.myProfileInfo.flag || '🌐'}" style="animation-duration: 15s;">➔ [AUTO] Связь защищена</div></div>
+        <div class="translation-bar"><div id="speaker-marquee" class="conf-marquee-text conf-listener-marquee" data-lang="${myReadLang}" data-flag="${myReadFlag}" style="animation-duration: 30s;">➔ [AUTO] Связь защищена...</div></div>
     </div>`;
     
     let activeUsers = [];
@@ -277,6 +282,7 @@ window.initConference = function() {
         activeUsers = [window.currentTargetUser];
     }
 
+    // Отрисовка 12 каналов стран
     smartLanguages.forEach(langArea => {
         let usersInThisLang = activeUsers.filter(p => p.flagCode === langArea.code);
         
@@ -288,7 +294,7 @@ window.initConference = function() {
                     <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
                     <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
                     <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
-                    <div class="translation-bar"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode || window.getSmartLang(p)}" data-flag="${p.flag || '🌐'}" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
+                    <div class="translation-bar"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${myReadLang}" data-flag="${myReadFlag}" style="animation-duration: 30s;">${p.flag || '🌐'} Канал ${userLangStr} активен...</div></div>
                 </div>`;
             });
         } else {
@@ -298,11 +304,12 @@ window.initConference = function() {
                     <span class="text-4xl mb-2">${langArea.flag}</span>
                     <span class="text-xs text-[#8696a0]">Ожидание (${langArea.lang})</span>
                 </div>
-                <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${langArea.code}" data-flag="${langArea.flag}" style="animation-duration: 20s;">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
+                <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${langArea.code}" data-flag="${langArea.flag}" style="animation-duration: 40s;">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
             </div>`;
         }
     });
 
+    // Пользователи вне основных 12 языков
     let otherUsers = activeUsers.filter(p => !smartLanguages.some(l => l.code === p.flagCode));
     otherUsers.forEach(p => {
         let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
@@ -311,7 +318,7 @@ window.initConference = function() {
             <div class="absolute inset-0 flex items-center justify-center bg-[#111b21]"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
             <div class="video-overlay">${(p.name||'User').split(' ')[0]}</div>
             <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
-            <div class="translation-bar"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${p.langCode || window.getSmartLang(p)}" data-flag="${p.flag || '🌐'}" style="animation-duration: 15s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
+            <div class="translation-bar"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${myReadLang}" data-flag="${myReadFlag}" style="animation-duration: 30s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
         </div>`;
     });
 
@@ -328,14 +335,14 @@ window.toggleMyCamera = async function(btn) {
     const videoEl = document.getElementById('my-live-video'); 
     if (window.myVideoStream) { 
         window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); } 
+        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
         btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
     } else { 
         try { 
             window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
             if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
             btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
-        } catch(e) { alert("Доступ к камере запрещен! Убедитесь, что сайт открыт по HTTPS."); } 
+        } catch(e) { alert("Доступ к камере запрещен!"); } 
     } 
 };
 
