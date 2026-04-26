@@ -379,3 +379,16 @@ window.toggleMeetMarquee = function() {
     window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; 
     document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
 };
+// Вызывай это из HTML: onclick="window.makeCallFromContact('${user.id}', 'voice')"
+window.makeCallFromContact = function(userId, type = 'voice') {
+    const target = (window.participants || []).find(p => p.id === userId);
+    if (!target) return console.error("Юзер не найден");
+
+    window.currentTargetUser = target; // Фиксируем, кому звоним
+
+    // СРАЗУ запускаем вибрацию и гудки, не дожидаясь Firebase
+    if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
+    window.playSafeSound(window.sndCallOut);
+
+    window.startInAppCall(type);
+};
