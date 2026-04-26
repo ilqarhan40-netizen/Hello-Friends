@@ -1611,28 +1611,38 @@ if (window.OneSignalDeferred) {
                 } catch(e) {}
             };
 
-            window.sendPushToUser = function(targetUserId, title, body) {
-                const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
-                const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
+       window.sendPushToUser = function(targetUserId, title, body, customData = null) {
+    const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
+    const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
 
-                const notification = {
-                    app_id: ONESIGNAL_APP_ID,
-                    include_aliases: { "external_id": [targetUserId] }, 
-                    headings: { "en": title, "ru": title, "az": title },
-                    contents: { "en": body, "ru": body, "az": body },
-                    android_channel_id: "b455502c-7b2a-4318-8422-921c172d1f94",
-                    data: { type: "incoming_call" } 
-                };
+    let notification = {
+        app_id: ONESIGNAL_APP_ID,
+        include_aliases: { "external_id": [targetUserId] }, 
+        headings: { "en": title, "ru": title, "az": title },
+        contents: { "en": body, "ru": body, "az": body },
+        priority: 10 // МАКСИМАЛЬНЫЙ приоритет (обязательно для фона!)
+    };
 
-                fetch('https://onesignal.com/api/v1/notifications', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
-                    },
-                    body: JSON.stringify(notification)
-                }).catch(e => console.error("OneSignal Error:", e));
-            };
+    // Если мы передали данные о звонке из calls.js
+    if (customData) {
+        // Зашиваем данные (имя звонящего, тип вызова), чтобы Service Worker их прочитал
+        notification.data = customData; 
+        
+        // Включаем твой жесткий вибро-канал ТОЛЬКО для входящих звонков
+        if (customData.type === 'call' || customData.type === 'incoming_call') {
+            notification.android_channel_id = "b455502c-7b2a-4318-8422-921c172d1f94";
+        }
+    }
+
+    fetch('https://onesignal.com/api/v1/notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
+        },
+        body: JSON.stringify(notification)
+    }).catch(e => console.error("OneSignal Error:", e));
+};
 
             let activeUserId = localStorage.getItem('hf_active_user');
             window.isGuest = !activeUserId; 
