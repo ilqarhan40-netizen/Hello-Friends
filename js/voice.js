@@ -87,12 +87,27 @@ window.startUniversalMic = async function(mode) {
     
     rec.onresult = async (e) => { 
         window.speechRecognizedText = e.results[0][0].transcript; 
-        let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
+        
+        // 1. ОПРЕДЕЛЯЕМ ЯЗЫК ПЕРЕВОДА И ОЗВУЧКИ
+        let targetLang = 'en'; 
+        
+        if (selectedMicLang !== 'auto') {
+            // Если юзер ВРУЧНУЮ выбрал язык микрофона — жестко переводим на него!
+            targetLang = selectedMicLang.split('-')[0]; 
+        } else {
+            // Иначе работает умная логика (на язык собеседника)
+            if (window.currentTargetUser && window.currentRoomId !== 'global') {
+                targetLang = window.getSmartLang(window.currentTargetUser);
+            } else {
+                targetLang = window.appLang || window.getSmartLang(window.myProfileInfo);
+            }
+        }
 
         if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = window.speechRecognizedText;
         
         try { 
+            // Переводим на нужный язык (targetLang)
             const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
             const data = await res.json(); 
             if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
@@ -101,10 +116,11 @@ window.startUniversalMic = async function(mode) {
         let isVoice = window.currentMicInputTarget === 'voice-chat-input';
         let isConf = window.currentMicInputTarget === 'conf-chat-input';
 
+        // 2. ОТПРАВЛЯЕМ targetLang В БАЗУ (чтобы акцент совпадал с языком)
         if (mode === 'text') {
-            firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+            firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: targetLang, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
         } else if (mode === 'ai-audio') {
-            firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: window.myProfileInfo.langCode, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
+            firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: targetLang, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
         }
     };
     try { rec.start(); } catch(e){}
