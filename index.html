@@ -1594,18 +1594,23 @@ if (window.OneSignalDeferred) {
                 } catch(e) {}
             };
 
-       window.sendPushToUser = function(targetUserId, title, body, customData = null) {
+window.sendPushToUser = function(targetUserId, title, body, customData = null) {
     const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
     const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
+
+    // Упаковываем скрытые данные (тип звонка, кто звонит)
+    let notificationData = customData ? { a: customData } : {};
 
     let notification = {
         app_id: ONESIGNAL_APP_ID,
         include_aliases: { "external_id": [targetUserId] }, 
         headings: { "en": title, "ru": title, "az": title },
         contents: { "en": body, "ru": body, "az": body },
-        priority: 10 // МАКСИМАЛЬНЫЙ приоритет (обязательно для фона!)
+        priority: 10, // МАКСИМАЛЬНЫЙ приоритет (обязательно для фона!)
+        data: notificationData // <--- ДОБАВЛЕНО: Передаем данные в фоновый режим!
     };
-// ПРОБИВАЕМ CORS ЧЕРЕЗ ПРОКСИ (ДЛЯ ТЕСТОВ)
+
+    // ПРОБИВАЕМ CORS ЧЕРЕЗ ПРОКСИ (ДЛЯ ТЕСТОВ)
     fetch('https://corsproxy.io/?https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: {
@@ -1614,6 +1619,7 @@ if (window.OneSignalDeferred) {
         },
         body: JSON.stringify(notification)
     }).catch(e => console.error("OneSignal Proxy Error:", e));
+};
        };
             let activeUserId = localStorage.getItem('hf_active_user');
             window.isGuest = !activeUserId; 
