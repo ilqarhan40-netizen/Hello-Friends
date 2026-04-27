@@ -1584,7 +1584,7 @@ if (window.OneSignalDeferred) {
                 if(emptyState) emptyState.style.display = 'none';
             };
 
-            window.initFCM = function() {
+     window.initFCM = function() {
                 try {
                     const messaging = firebase.messaging();
                     messaging.getToken({ vapidKey: "BMMHmREmqUdec5j8SnGKw6Lh3PFNiidZAalJRpSdtet-iWyhYTjGdUJT7KzHHeVmRoIzi9Sllbg97ZoQa0yP0Vs" }).then((currentToken) => {
@@ -1594,35 +1594,35 @@ if (window.OneSignalDeferred) {
                 } catch(e) {}
             };
 
-window.sendPushToUser = function(targetUserId, title, body, customData = null) {
-    const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
-    const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
+        window.sendPushToUser = function(targetUserId, title, body, customData = null) {
+            const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
+            const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
 
-    // Упаковываем скрытые данные (тип звонка, кто звонит)
-    let notificationData = customData ? { a: customData } : {};
+            // Упаковываем скрытые данные (тип звонка, кто звонит)
+            let notificationData = customData ? { a: customData } : {};
 
-    let notification = {
-        app_id: ONESIGNAL_APP_ID,
-        include_aliases: { "external_id": [targetUserId] }, 
-        headings: { "en": title, "ru": title, "az": title },
-        contents: { "en": body, "ru": body, "az": body },
-        priority: 10, // МАКСИМАЛЬНЫЙ приоритет (обязательно для фона!)
-        data: notificationData // <--- ДОБАВЛЕНО: Передаем данные в фоновый режим!
-    };
+            let notification = {
+                app_id: ONESIGNAL_APP_ID,
+                include_aliases: { "external_id": [targetUserId] }, 
+                headings: { "en": title, "ru": title, "az": title },
+                contents: { "en": body, "ru": body, "az": body },
+                priority: 10, // МАКСИМАЛЬНЫЙ приоритет (обязательно для фона!)
+                data: notificationData // <--- ДОБАВЛЕНО: Передаем данные в фоновый режим!
+            };
 
-    // ПРОБИВАЕМ CORS ЧЕРЕЗ ПРОКСИ (ДЛЯ ТЕСТОВ)
-    fetch('https://corsproxy.io/?https://onesignal.com/api/v1/notifications', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
-        },
-        body: JSON.stringify(notification)
-    }).catch(e => console.error("OneSignal Proxy Error:", e));
-};
-       };
-            let activeUserId = localStorage.getItem('hf_active_user');
-            window.isGuest = !activeUserId; 
+            // ПРОБИВАЕМ CORS ЧЕРЕЗ ПРОКСИ (ДЛЯ ТЕСТОВ)
+            fetch('https://corsproxy.io/?https://onesignal.com/api/v1/notifications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
+                },
+                body: JSON.stringify(notification)
+            }).catch(e => console.error("OneSignal Proxy Error:", e));
+        };
+
+        let activeUserId = localStorage.getItem('hf_active_user');
+        window.isGuest = !activeUserId;
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
