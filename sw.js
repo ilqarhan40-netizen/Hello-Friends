@@ -1,4 +1,7 @@
-const CACHE_NAME = 'hf-chat-v3'; // ВАЖНО: Сменили v2 на v3! Это даст команду браузерам обновиться.
+// 0. ПОДКЛЮЧАЕМ ONESIGNAL В САМОМ НАЧАЛЕ
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+
+const CACHE_NAME = 'hf-chat-v4'; // Подняли версию, чтобы точно обновить
 
 const urlsToCache = [
   './',
@@ -8,16 +11,13 @@ const urlsToCache = [
 
 // 1. Установка Service Worker и кэширование файлов
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Заставляет воркер активироваться немедленно
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// 2. Активация и бронебойное УДАЛЕНИЕ старого кэша
+// 2. Активация и УДАЛЕНИЕ старого кэша
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -29,7 +29,7 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    }).then(() => self.clients.claim()) // Захват управления вкладками
+    }).then(() => self.clients.claim())
   );
 });
 
@@ -37,24 +37,18 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return; 
 
-  // Игнорируем запросы к Firebase API, чтобы чат летал в реальном времени
   if (event.request.url.includes('firebaseio.com') || event.request.url.includes('googleapis.com')) {
       return;
   }
 
   event.respondWith(
-    // СНАЧАЛА идем в интернет за свежим кодом (например, на GitHub)
     fetch(event.request)
       .then(response => {
-        // Если скачали успешно - параллельно обновляем кэш
         const clonedResponse = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, clonedResponse);
-        });
-        return response; // Отдаем свежую версию юзеру
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clonedResponse));
+        return response;
       })
       .catch(() => {
-        // ЕСЛИ ИНТЕРНЕТА НЕТ (оффлайн) - только тогда берем из кэша
         return caches.match(event.request).then(cachedResponse => {
             if (cachedResponse) {
                 console.log('Оффлайн режим: загружено из кэша', event.request.url);
@@ -63,4 +57,44 @@ self.addEventListener('fetch', event => {
         });
       })
   );
+});
+
+// ==============================================================
+// 4. ЛОГИКА ФОНОВЫХ ЗВОНКОВ И ВИБРАЦИИ (ONESIGNAL)
+// ==============================================================
+self.addEventListener('push', function(event) {
+    if (!(self.Notification && self.Notification.permission === 'granted')) return;
+
+    const data = event.data ? event.data.json() : {};
+    const payload = data.custom?.a || {}; // Те самые customData из calls.js
+
+    // А. ВХОДЯЩИЙ ЗВОНОК
+    if (payload.type === 'call') {
+        const callOptions = {
+            body: `Входящий вызов от ${payload.callerName || 'контакта'}`,
+            icon: '/img/logo.png',
+            tag: 'incoming-call',
+            renotify: true,
+            requireInteraction: true, // Уведомление висит, пока не ответишь
+            vibrate: [500, 200, 500, 200, 500, 200, 800], // Будит телефон!
+            data: { url: '/?index=1' } 
+        };
+        event.waitUntil(self.registration.showNotification('📞 Входящий Звонок', callOptions));
+    }
+
+    // Б. ПРОПУЩЕННЫЙ ЗВОНОК
+    if (payload.type === 'missed') {
+        // Прячем уведомление о текущем звонке
+        self.registration.getNotifications({tag: 'incoming-call'}).then(notifications => {
+            notifications.forEach(n => n.close());
+        });
+
+        const missedOptions = {
+            body: `Пропущенный вызов от ${payload.callerName || 'контакта'}`,
+            icon: '/img/logo.png',
+            vibrate: [200, 100, 200], // Короткая вибрация отбоя
+            tag: 'missed-call'
+        };
+        event.waitUntil(self.registration.showNotification('📵 Пропущенный', missedOptions));
+    }
 });
