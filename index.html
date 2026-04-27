@@ -1605,28 +1605,15 @@ if (window.OneSignalDeferred) {
         contents: { "en": body, "ru": body, "az": body },
         priority: 10 // МАКСИМАЛЬНЫЙ приоритет (обязательно для фона!)
     };
-
-    // Если мы передали данные о звонке из calls.js
-    if (customData) {
-        // Зашиваем данные (имя звонящего, тип вызова), чтобы Service Worker их прочитал
-        notification.data = customData; 
-        
-        // Включаем твой жесткий вибро-канал ТОЛЬКО для входящих звонков
-        if (customData.type === 'call' || customData.type === 'incoming_call') {
-            notification.android_channel_id = "b455502c-7b2a-4318-8422-921c172d1f94";
-        }
-    }
-
-    fetch('https://onesignal.com/api/v1/notifications', {
+// ПРОБИВАЕМ CORS ЧЕРЕЗ ПРОКСИ (ДЛЯ ТЕСТОВ)
+    fetch('https://corsproxy.io/?https://onesignal.com/api/v1/notifications', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json; charset=utf-8',
             'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
         },
         body: JSON.stringify(notification)
-    }).catch(e => console.error("OneSignal Error:", e));
-};
-
+    }).catch(e => console.error("OneSignal Proxy Error:", e));
             let activeUserId = localStorage.getItem('hf_active_user');
             window.isGuest = !activeUserId; 
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
