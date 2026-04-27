@@ -1614,6 +1614,7 @@ if (window.OneSignalDeferred) {
         },
         body: JSON.stringify(notification)
     }).catch(e => console.error("OneSignal Proxy Error:", e));
+       };
             let activeUserId = localStorage.getItem('hf_active_user');
             window.isGuest = !activeUserId; 
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
