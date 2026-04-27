@@ -33,12 +33,14 @@
 <script src="js/archive.js?v=999"></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
-    });
-    OneSignal.Notifications.requestPermission();
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+    serviceWorkerParam: { scope: '/' },
+    serviceWorkerPath: 'sw.js' // ВАЖНО: Указываем на наш объединенный файл
   });
+  OneSignal.Notifications.requestPermission();
+});
 </script>
     <script>
     const firebaseConfig = { 
@@ -207,18 +209,7 @@
 <meta http-equiv="Expires" content="0" />
 
 <script>
-    // 1. УБИЙЦА PWA-ОБЕРТКИ И СЕРВИС-ВОРКЕРОВ (Удаляет старый кэш)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-                registration.unregister().then(function(boolean) {
-                    // Если старый воркер удален, принудительно перезагружаем страницу
-                    if(boolean) window.location.reload(true); 
-                });
-            }
-        });
-    }
-
+ 
     // 2. БЛОКИРОВКА IFRAME-ОБЕРТКИ (Защита от встраивания твоего сайта в чужие окна)
     if (window.top !== window.self) {
         window.top.location = window.self.location;
@@ -1793,15 +1784,7 @@ if (window.OneSignalDeferred) {
         </div>
     </div>
     
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA SW Registered!', reg.scope))
-                    .catch(err => console.log('PWA SW Failed!', err));
-            });
-        }
-    </script>
+
     
     <div id="qr-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
         <div class="app-modal-content flex flex-col items-center text-center">
