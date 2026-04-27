@@ -200,7 +200,7 @@ window.switchChatRoom = function(targetId) {
 };
 
 // ==========================================
-// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
+// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ (ФИКС ПЕРЕВОДА В КОНФЕРЕНЦИИ)
 // ==========================================
 window.isGeminiWaiting = false;
 
@@ -231,6 +231,7 @@ window.sendFirebaseMsg = async function() {
     }
     inputField.value = '';
 
+    // Определяем, на каком языке ты пишешь (берем из селектора или авто)
     let myActiveLang = window.getLangPref(isVoiceTab, isConfTab) || 'en';
 
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
@@ -243,20 +244,22 @@ window.sendFirebaseMsg = async function() {
     if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
 
     let myBaseText = rawText;
-    try {
-        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`);
-        const data1 = await res1.json();
-        if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
-    } catch (e) {}
-
-    let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
+    
+    // ВАЖНО: Мы больше не пытаемся перевести перед отправкой в глобалке/конференции. 
+    // Отправляем оригинал, а слушатель переведет его каждому индивидуально.
     let textToShip = myBaseText;
-    if (targetSendLang !== myActiveLang && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
-        try {
-            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang}&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`);
-            const data2 = await res2.json();
-            if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
-        } catch (e) {}
+    let targetSendLang = myActiveLang;
+
+    // Переводим текст перед отправкой ТОЛЬКО если мы в приватном чате
+    if (window.currentTargetUser && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
+        targetSendLang = window.getSmartLang(window.currentTargetUser);
+        if (targetSendLang !== myActiveLang) {
+            try {
+                const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang}&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`);
+                const data2 = await res2.json();
+                if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
+            } catch (e) {}
+        }
     }
 
     try {
@@ -475,19 +478,31 @@ window.handleNewMessage = async function(snapshot) {
         });
     }
 
+    // ----------------------------------------------------
+    // 🔥 ФИКС БЕГУЩЕЙ СТРОКИ ДЛЯ ВИДЕОКОНФЕРЕНЦИИ 🔥
+    // ----------------------------------------------------
     if (data.isConfMsg) {
         let originalText = data.originalText || data.text;
         let senderLangCode = data.langCode || 'auto'; 
-        let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
-        let speakerMarquee = document.getElementById(senderMarqueeId);
         
-        if (speakerMarquee) {
+        // ВСЕГДА обновляем свой собственный 'speaker-marquee', даже если пишет другой юзер (чтобы видеть общий лог)
+        let speakerMarquee = document.getElementById('speaker-marquee');
+        if (speakerMarquee && isMe) {
             speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
             speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
         }
 
+        // Обновляем бегущие строки остальных участников
         document.querySelectorAll('.conf-listener-marquee').forEach(listenerMarquee => {
-            if (listenerMarquee.id === senderMarqueeId) return; 
+            // Пропускаем свою же строку, если мы отправитель
+            if (isMe && listenerMarquee.id === 'speaker-marquee') return; 
+            // Пропускаем чужую строку, если отправитель - этот самый чужой
+            if (!isMe && listenerMarquee.id === `conf-marquee-${data.userId}`) {
+                listenerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
+                listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
+                return;
+            }
+
             let targetLang = listenerMarquee.getAttribute('data-lang') || 'en'; 
             let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
             
