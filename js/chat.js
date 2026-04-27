@@ -200,7 +200,7 @@ window.switchChatRoom = function(targetId) {
 };
 
 // ==========================================
-// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ (ЖЕСТКИЙ ПЕРЕВОД В ОБЕ СТОРОНЫ)
+// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
 // ==========================================
 window.isGeminiWaiting = false;
 
@@ -231,9 +231,7 @@ window.sendFirebaseMsg = async function() {
     }
     inputField.value = '';
 
-    // 1. ПОЛУЧАЕМ АКТУАЛЬНЫЙ ЯЗЫК (Авто или Ручной выбор)
     let myActiveLang = window.getLangPref(isVoiceTab, isConfTab) || 'en';
-    let baseLangForFlag = myActiveLang.substring(0,2);
 
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
     let safeName = window.myUsername || 'User';
@@ -241,50 +239,41 @@ window.sendFirebaseMsg = async function() {
     let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
     let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
-    // Меняем флаг под выбранный вручную язык
     const langMap = { 'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
-    if (langMap[baseLangForFlag]) { activeFlagCode = langMap[baseLangForFlag][0]; activeFlag = langMap[baseLangForFlag][1]; }
+    if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
 
-    if (window.showToast) window.showToast("Translating...", "Processing text...", "", "");
-
-    let textToShip = rawText;
-
-    // 2. ПЕРЕВОДИМ ТО ЧТО ТЫ НАПЕЧАТАЛ НА ТВОЙ ВЫБРАННЫЙ ЯЗЫК ПЕРЕД ОТПРАВКОЙ
+    let myBaseText = rawText;
     try {
-        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${baseLangForFlag}&dt=t&q=${encodeURIComponent(rawText)}`);
+        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`);
         const data1 = await res1.json();
-        if (data1 && data1[0] && data1[0][0][0]) textToShip = data1[0][0][0];
+        if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
     } catch (e) {}
 
-    // Если это ПРИВАТНЫЙ чат - финально переводим на язык собеседника
-    if (window.currentTargetUser && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
-        let targetSendLang = window.getSmartLang(window.currentTargetUser);
-        if (targetSendLang.substring(0,2) !== baseLangForFlag) {
-            try {
-                const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${baseLangForFlag}&tl=${targetSendLang.substring(0,2)}&dt=t&q=${encodeURIComponent(textToShip)}`);
-                const data2 = await res2.json();
-                if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
-            } catch (e) {}
-        }
+    let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
+    let textToShip = myBaseText;
+    if (targetSendLang !== myActiveLang && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
+        try {
+            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang}&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`);
+            const data2 = await res2.json();
+            if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
+        } catch (e) {}
     }
 
-    // 3. ОТПРАВЛЯЕМ В БАЗУ (langCode теперь строго равен выбранному языку)
     try {
         firebase.database().ref(targetDbRoom).push({
-            userId: safeId, name: safeName, text: textToShip, originalText: textToShip,
+            userId: safeId, name: safeName, text: textToShip || "Error", originalText: myBaseText || "Error",
             sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: safePhoto, flag: activeFlag, flagCode: activeFlagCode, langCode: baseLangForFlag,
+            photo: safePhoto, flag: activeFlag, flagCode: activeFlagCode, langCode: myActiveLang,
             isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
         });
     } catch(err) {
-        alert("Ошибка отправки: " + err.message);
+        alert("Ошибка отправки в базу: " + err.message);
     }
 
     const chatMsgs = document.getElementById('chat-messages'); 
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
     if (window.currentTargetUser && !isConfTab && !isVoiceTab && window.sendPushToUser) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
-    // Логика Gemini...
     if (targetDbRoom === 'private_ai_bot') {
         window.isGeminiWaiting = true;
         const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
@@ -486,48 +475,43 @@ window.handleNewMessage = async function(snapshot) {
         });
     }
 
-    // ----------------------------------------------------
-    // 🔥 ФИКС: ПЕРЕВОД КОНФЕРЕНЦИИ "В ОБРАТНУЮ СТОРОНУ" 🔥
-    // ----------------------------------------------------
     if (data.isConfMsg) {
         let originalText = data.originalText || data.text;
-        let senderLangCode = data.langCode || 'en'; 
+        let senderLangCode = data.langCode || 'auto'; 
+        let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
+        let speakerMarquee = document.getElementById(senderMarqueeId);
         
-        let speakerMarquee = document.getElementById('speaker-marquee');
-        if (speakerMarquee && isMe) {
+        if (speakerMarquee) {
             speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
             speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
         }
 
-        // ЖЕСТКО получаем актуальный язык, выбранный ТОБОЙ прямо сейчас!
-        let liveTargetLang = window.getLangPref(false, true);
-        if (!liveTargetLang) liveTargetLang = window.getSmartLang(window.myProfileInfo);
-        liveTargetLang = liveTargetLang.substring(0,2);
-
         document.querySelectorAll('.conf-listener-marquee').forEach(listenerMarquee => {
-            if (isMe && listenerMarquee.id === 'speaker-marquee') return; 
-            if (!isMe && listenerMarquee.id === `conf-marquee-${data.userId}`) {
-                listenerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
-                listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
-                return;
+            if (listenerMarquee.id === senderMarqueeId) return; 
+            
+            let targetLang = 'en'; 
+            let targetFlag = '🌐';
+            
+            let match = listenerMarquee.id.match(/conf-marquee-(.+)/);
+            if (match) {
+                let pId = match[1];
+                let part = window.participants.find(x => x.id === pId);
+                if (part) { targetLang = window.getSmartLang(part); targetFlag = part.flag || '🌐'; }
+            } else if (listenerMarquee.id === 'speaker-marquee') {
+                targetLang = window.getLangPref(false, true); targetFlag = window.myProfileInfo.flag || '🌐';
             }
-
-            // Переводим текст ОТПРАВИТЕЛЯ на ТВОЙ актуальный язык
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLangCode}&tl=${liveTargetLang}&dt=t&q=${encodeURIComponent(originalText)}`)
+            
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLangCode.substring(0,2)}&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(originalText)}`)
                 .then(r => r.json())
                 .then(resData => {
                     let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
-                    
-                    // Ставим флаг, соответствующий твоему выбранному языку
-                    const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-                    let localFlag = revLangMap[liveTargetLang] || '🌐';
-
-                    listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${localFlag} ${translatedText}</span>`;
+                    listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
                     listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
                 }).catch(e => console.log('Meet Translate Error'));
         });
     }
 };
+
 // ==========================================
 // 4. МЕНЮ ФАЙЛОВ АРХИВА, ТРЕШ И ЭМОДЗИ
 // ==========================================
@@ -841,13 +825,15 @@ window.startUniversalMic = async function(mode) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
     
-    let sourceTranslateLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
-    if (sourceTranslateLang === 'auto') {
-        sourceTranslateLang = window.getSmartLang(window.myProfileInfo);
-    }
+    // Мой язык для распознавания
+    let mySpokenLang = window.getSmartLang(window.myProfileInfo);
+
+    // Ручной выбор микрофона
+    let manualMicLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
 
     const rec = new SpeechRecognition();
-    rec.lang = sourceTranslateLang || 'en';
+    // Если ручной выбор не авто - слушаем на ручном языке, иначе на родном
+    rec.lang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
 
@@ -856,13 +842,24 @@ window.startUniversalMic = async function(mode) {
 
     rec.onresult = async (e) => { 
         window.speechRecognizedText = e.results[0][0].transcript; 
-        let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : window.getSmartLang(window.myProfileInfo);
+        
+        // Определяем язык ПЕРЕВОДА И ОЗВУЧКИ
+        let targetLang = 'en';
+        if (manualMicLang !== 'auto') {
+            targetLang = manualMicLang; // Жесткий ручной выбор
+        } else {
+            if (window.currentTargetUser && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
+                targetLang = window.getSmartLang(window.currentTargetUser); // Авто-перевод на язык собеседника
+            } else {
+                targetLang = window.getSmartLang(window.myProfileInfo); // Авто-перевод на свой
+            }
+        }
         
         if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = window.speechRecognizedText;
         
         try { 
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceTranslateLang}&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
             const data = await res.json(); 
             if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
         } catch (err) {}
@@ -871,10 +868,12 @@ window.startUniversalMic = async function(mode) {
         let safeName = window.myUsername || 'User';
         let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
 
+        // ВАЖНО: langCode = targetLang, чтобы озвучка была с нужным акцентом
         let msgPayload = { 
             userId: safeId, name: safeName, text: textToShip || "...", originalText: window.speechRecognizedText || "...", 
             sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP, photo: safePhoto, 
-            flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', langCode: sourceTranslateLang || 'en',
+            flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', 
+            langCode: targetLang.substring(0,2),
             isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab 
         };
 
