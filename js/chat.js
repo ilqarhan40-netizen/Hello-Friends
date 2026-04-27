@@ -440,46 +440,38 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    if (data.isVoiceRoomMsg) {
-        let originalText = data.originalText || data.text;
-        let myPersonalLang = window.getLangPref(true, false);
-        
-        let senderPhoto, senderFlag, senderLangV, senderName;
-        let receiverPhoto, receiverFlag, receiverLangV, receiverName;
+if (data.isVoiceRoomMsg) {
+        let senderPhoto, senderFlag, senderName, senderText;
+        let receiverPhoto, receiverFlag, receiverName, receiverText;
+
+        // Берем готовый перевод прямо из отправленных данных (без лишних запросов)
+        senderText = data.originalText || data.text;
+        receiverText = data.text || data.originalText;
 
         if (isMe) {
             senderPhoto = window.myProfileInfo.photo; 
-            senderFlag = window.myProfileInfo.flag; 
-            senderLangV = data.langCode || myPersonalLang; 
+            // Берем флаг из сообщения (поддерживает ручной выбор микрофона)
+            senderFlag = data.flag || window.myProfileInfo.flag || '🌐'; 
             senderName = window.myUsername;
             
             receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U'; 
             receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐'; 
-            receiverLangV = window.currentTargetUser ? (window.currentTargetUser.langCode || window.getSmartLang(window.currentTargetUser)) : 'en'; 
             receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
         } else {
             senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
             senderFlag = data.flag || '🌐'; 
-            senderLangV = data.langCode || 'en'; 
             senderName = (data.name || 'User').split(' ')[0];
             
             receiverPhoto = window.myProfileInfo.photo; 
             receiverFlag = window.myProfileInfo.flag; 
-            receiverLangV = myPersonalLang; 
             receiverName = window.myUsername;
         }
 
-        Promise.all([
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLangV}&tl=${senderLangV}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null),
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLangV}&tl=${receiverLangV}&dt=t&q=${encodeURIComponent(originalText)}`).then(r => r.json()).catch(e => null)
-        ]).then(results => {
-            const vMarquee = document.getElementById('voice-info-marquee');
-            if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
-                let senderText = (results[0] && results[0][0]) ? results[0][0][0][0] : originalText; let receiverText = (results[1] && results[1][0]) ? results[1][0][0][0] : originalText;
-                vMarquee.innerHTML = `<div class="flex items-center"><img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm"><span class="text-white font-bold mr-1">${senderName}:</span><span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]"><span class="text-white font-bold mr-1">${receiverName}:</span><span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span></div>`;
-                vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
-            }
-        });
+        const vMarquee = document.getElementById('voice-info-marquee');
+        if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
+            vMarquee.innerHTML = `<div class="flex items-center"><img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm"><span class="text-white font-bold mr-1">${senderName}:</span><span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]"><span class="text-white font-bold mr-1">${receiverName}:</span><span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span></div>`;
+            vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
+        }
     }
 
     if (data.isConfMsg) {
