@@ -1,5 +1,5 @@
 // ==========================================
-// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL)
+// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL ASSEMBLED)
 // ==========================================
 
 window.localStream = null;
@@ -76,7 +76,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
                 remoteVideo.id = 'remote-video-player';
                 remoteVideo.autoplay = true;
                 remoteVideo.playsInline = true;
-                // Видео собеседника поверх всего экрана
                 remoteVideo.className = "fixed inset-0 w-full h-full object-cover z-[9999] bg-black";
                 document.body.appendChild(remoteVideo);
             }
@@ -167,7 +166,9 @@ window.startInAppCall = function(callType = 'voice') {
     }); 
     
     let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
-    if(window.sendPushToUser) window.sendPushToUser(target.id, pushTitle, `${window.myUsername} звонит вам!`); 
+    
+    // ТЕ САМЫЕ ПАРАМЕТРЫ ДЛЯ ФОНОВОЙ ВИБРАЦИИ
+    if(window.sendPushToUser) window.sendPushToUser(target.id, pushTitle, `${window.myUsername} звонит вам!`, { type: 'call', callerName: window.myUsername }); 
     
     const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
@@ -187,7 +188,9 @@ window.startInAppCall = function(callType = 'voice') {
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
         
         let missedTitle = callType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
-        if(window.sendPushToUser) window.sendPushToUser(target.id, missedTitle, `Вы пропустили вызов от ${window.myUsername}`); 
+        
+        // ТЕ САМЫЕ ПАРАМЕТРЫ ДЛЯ СБРОСА ФОНОВОГО ЗВОНКА
+        if(window.sendPushToUser) window.sendPushToUser(target.id, missedTitle, `Вы пропустили вызов от ${window.myUsername}`, { type: 'missed', callerName: window.myUsername }); 
     }, 30000);
 };
 
@@ -363,7 +366,7 @@ window.toggleMyCamera = async function(btn) {
     const videoEl = document.getElementById('my-live-video'); 
     if (window.myVideoStream) { 
         window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); } 
+        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
         btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
     } else { 
         try { 
@@ -379,16 +382,34 @@ window.toggleMeetMarquee = function() {
     window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; 
     document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
 };
-// Вызывай это из HTML: onclick="window.makeCallFromContact('${user.id}', 'voice')"
+
+// --- ВЫЗОВ ИЗ КОНТАКТОВ ---
 window.makeCallFromContact = function(userId, type = 'voice') {
     const target = (window.participants || []).find(p => p.id === userId);
     if (!target) return console.error("Юзер не найден");
 
-    window.currentTargetUser = target; // Фиксируем, кому звоним
+    window.currentTargetUser = target;
 
-    // СРАЗУ запускаем вибрацию и гудки, не дожидаясь Firebase
     if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
     window.playSafeSound(window.sndCallOut);
 
     window.startInAppCall(type);
 };
+
+// --- ФИКС ЗВУКА ОТПРАВКИ СООБЩЕНИЙ ВО ВСЕХ ЧАТАХ ---
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (window.sendFirebaseMsg) {
+            const originalSend = window.sendFirebaseMsg;
+            window.sendFirebaseMsg = function() {
+                const inputId = window.currentMicInputTarget || 'chat-input';
+                const inputEl = document.getElementById(inputId);
+                
+                if (inputEl && inputEl.value.trim() !== "") {
+                    window.playSafeSound(window.sndMsg);
+                }
+                originalSend(); 
+            };
+        }
+    }, 2000);
+});
