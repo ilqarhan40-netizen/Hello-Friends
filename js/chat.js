@@ -479,8 +479,8 @@ window.handleNewMessage = async function(snapshot) {
         let originalText = data.originalText || data.text;
         let senderLangCode = data.langCode || 'auto'; 
         let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
+
         let speakerMarquee = document.getElementById(senderMarqueeId);
-        
         if (speakerMarquee) {
             speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
             speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
@@ -489,19 +489,27 @@ window.handleNewMessage = async function(snapshot) {
         document.querySelectorAll('.conf-listener-marquee').forEach(listenerMarquee => {
             if (listenerMarquee.id === senderMarqueeId) return; 
             
-            let targetLang = 'en'; 
-            let targetFlag = '🌐';
+            let targetLang = listenerMarquee.getAttribute('data-lang') || 'en'; 
+            let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
             
-            let match = listenerMarquee.id.match(/conf-marquee-(.+)/);
-            if (match) {
-                let pId = match[1];
-                let part = window.participants.find(x => x.id === pId);
-                if (part) { targetLang = window.getSmartLang(part); targetFlag = part.flag || '🌐'; }
-            } else if (listenerMarquee.id === 'speaker-marquee') {
-                targetLang = window.getLangPref(false, true); targetFlag = window.myProfileInfo.flag || '🌐';
+            if (listenerMarquee.id) {
+                let match = listenerMarquee.id.match(/conf-marquee-(.+)/);
+                if (match) {
+                    let pId = match[1];
+                    let part = window.participants.find(x => x.id === pId);
+                    if (part) {
+                        targetLang = window.getSmartLang(part);
+                        targetFlag = part.flag || '🌐';
+                    }
+                } else if (listenerMarquee.id === 'speaker-marquee') {
+                    targetLang = window.getLangPref(false, true) || window.getSmartLang(window.myProfileInfo);
+                    const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+                    let baseL = targetLang.substring(0,2);
+                    if (revLangMap[baseL]) targetFlag = revLangMap[baseL];
+                }
             }
             
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLangCode.substring(0,2)}&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(originalText)}`)
+            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(originalText)}`)
                 .then(r => r.json())
                 .then(resData => {
                     let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
@@ -811,10 +819,10 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
 
 window.startUniversalMic = async function(mode) {
     if (window.closeAllMenus) window.closeAllMenus();
-    
+
     let isVoiceTab = window.currentIndex === 1;
     let isConfTab = window.currentIndex === 2;
-    
+
     let targetDbRoom = window.currentRoomId || 'global';
     if (isConfTab) {
         targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
@@ -824,15 +832,11 @@ window.startUniversalMic = async function(mode) {
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
-    
-    // Мой язык для распознавания
-    let mySpokenLang = window.getSmartLang(window.myProfileInfo);
 
-    // Ручной выбор микрофона
+    let mySpokenLang = window.getSmartLang(window.myProfileInfo);
     let manualMicLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
 
     const rec = new SpeechRecognition();
-    // Если ручной выбор не авто - слушаем на ручном языке, иначе на родном
     rec.lang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
@@ -840,44 +844,57 @@ window.startUniversalMic = async function(mode) {
     rec.onstart = () => { if(window.showToast) window.showToast("Mic Active", "Говорите...", "", ""); };
     rec.onerror = (e) => { if(window.showToast) window.showToast("Mic Error", e.error, "", ""); };
 
-    rec.onresult = async (e) => { 
-        window.speechRecognizedText = e.results[0][0].transcript; 
-        
-        // Определяем язык ПЕРЕВОДА И ОЗВУЧКИ
+    rec.onresult = async (e) => {
+        window.speechRecognizedText = e.results[0][0].transcript;
+
         let targetLang = 'en';
         if (manualMicLang !== 'auto') {
-            targetLang = manualMicLang; // Жесткий ручной выбор
+            targetLang = manualMicLang; // ЖЕСТКИЙ ПЕРЕХВАТ
         } else {
-            if (window.currentTargetUser && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
-                targetLang = window.getSmartLang(window.currentTargetUser); // Авто-перевод на язык собеседника
+            if (isConfTab) {
+                targetLang = mySpokenLang; // В конфе отправляем оригинал
+            } else if (window.currentTargetUser && targetDbRoom !== 'global') {
+                targetLang = window.getSmartLang(window.currentTargetUser);
             } else {
-                targetLang = window.getSmartLang(window.myProfileInfo); // Авто-перевод на свой
+                targetLang = mySpokenLang;
             }
         }
-        
+
         if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = window.speechRecognizedText;
-        
-        try { 
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
-            const data = await res.json(); 
-            if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
-        } catch (err) {}
+
+        if (targetLang.substring(0,2) !== rec.lang.substring(0,2)) {
+            try {
+                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`);
+                const data = await res.json();
+                if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0];
+            } catch (err) {}
+        }
 
         let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
         let safeName = window.myUsername || 'User';
         let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
 
-        // ВАЖНО: langCode = targetLang, чтобы озвучка была с нужным акцентом
-        let msgPayload = { 
-            userId: safeId, name: safeName, text: textToShip || "...", originalText: window.speechRecognizedText || "...", 
-            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP, photo: safePhoto, 
-            flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', 
+        let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+        let activeFlag = window.myProfileInfo.flag || '🌐';
+
+        if (manualMicLang !== 'auto') {
+            const revLangMap = { 'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
+            if (revLangMap[targetLang.substring(0,2)]) {
+                activeFlagCode = revLangMap[targetLang.substring(0,2)][0];
+                activeFlag = revLangMap[targetLang.substring(0,2)][1];
+            }
+        }
+
+        let msgPayload = {
+            userId: safeId, name: safeName, text: textToShip || "...", originalText: window.speechRecognizedText || "...",
+            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP, photo: safePhoto,
+            flag: activeFlag, flagCode: activeFlagCode,
             langCode: targetLang.substring(0,2),
-            isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab 
+            isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
         };
 
-        if (mode === 'text') { firebase.database().ref(targetDbRoom).push(msgPayload); } 
+        if (mode === 'text') { firebase.database().ref(targetDbRoom).push(msgPayload); }
         else if (mode === 'ai-audio') { msgPayload.isAIAudio = true; firebase.database().ref(targetDbRoom).push(msgPayload); }
     };
     try { rec.start(); } catch(e){}
