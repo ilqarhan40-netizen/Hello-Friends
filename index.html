@@ -1350,20 +1350,12 @@ if (window.OneSignalDeferred) {
         };
         window.closeContactsModal = function() { document.getElementById('contacts-modal').classList.remove('active'); };
 
-        window.startDirectAppCall = function(id) {
-            window.closeContactsModal(); 
-            let target = window.participants.find(p => p.id === id);
-            if(target) { 
-                window.currentTargetUser = target; 
-                document.getElementById('voice-friend-photo').src = target.photo; 
-                document.getElementById('voice-friend-flag').innerText = target.flag; 
-                document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; 
-                window.voiceFriend = target; 
-                
-                if (window.switchChatRoom) window.switchChatRoom(target.id);
-                if (window.switchTab) window.switchTab(1); 
-            }
-        };
+      window.startDirectAppCall = function(id) {
+    window.closeContactsModal(); 
+    if (window.makeCallFromContact) {
+        window.makeCallFromContact(id, 'voice');
+    }
+};
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
 
@@ -1409,9 +1401,9 @@ if (window.OneSignalDeferred) {
                         <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(1); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg
                         </button>
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchChatRoom('${p.id}'); if(window.startInAppCall) window.startInAppCall();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                            <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
-                        </button>
+                      <button onclick="window.closeAvatarModal(); window.switchChatRoom('${p.id}'); if(window.makeCallFromContact) window.makeCallFromContact('${p.id}', 'voice');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+    <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
+</button>
                         <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video
                         </button>
