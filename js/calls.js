@@ -68,11 +68,10 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     
     window.localStream.getTracks().forEach(track => window.peerConnection.addTrack(track, window.localStream));
 
-    // Если звонок с видео, показываем себя в камере сразу
     if (isVideo) {
         let myVideo = document.getElementById('my-live-video');
         if (myVideo) {
-            myVideo.src = ""; // Убираем плейсхолдер
+            myVideo.src = ""; 
             myVideo.srcObject = window.localStream;
             myVideo.play().catch(e=>{});
         }
@@ -80,15 +79,12 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
     window.peerConnection.ontrack = (event) => {
         if (isVideo) {
-            // Ищем ячейку видео этого конкретного пользователя в сетке Meet
             let gridVideo = document.getElementById(`remote-video-${targetId}`);
             
             if (gridVideo) {
-                // Если ячейка найдена (мы во вкладке Meet), пускаем видео туда
                 gridVideo.srcObject = event.streams[0];
                 gridVideo.classList.remove('hidden');
             } else {
-                // Если пользователь ответил не переходя во вкладку Meet - делаем фуллскрин фолбек
                 let remoteVideo = document.getElementById('remote-video-player');
                 if (!remoteVideo) {
                     remoteVideo = document.createElement('video');
@@ -115,7 +111,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     };
 
     const callRoomId = isCaller ? (window.myProfileInfo.id + '_' + targetId) : (targetId + '_' + window.myProfileInfo.id);
-    const callDoc = db.ref('calls/' + callRoomId);
+    const callDoc = firebase.database().ref('calls/' + callRoomId);
 
     window.peerConnection.onicecandidate = event => {
         if (event.candidate) {
@@ -157,11 +153,9 @@ window.endWebRTCCall = function() {
     if (window.peerConnection) { window.peerConnection.close(); window.peerConnection = null; }
     if (window.localStream) { window.localStream.getTracks().forEach(t => t.stop()); window.localStream = null; }
     
-    // Удаляем фуллскрин фолбеки
     const remoteAudio = document.getElementById('remote-audio-player'); if (remoteAudio) remoteAudio.remove();
     const remoteVideo = document.getElementById('remote-video-player'); if (remoteVideo) remoteVideo.remove();
     
-    // Сбрасываем видео в сетке Meet и возвращаем заглушки
     document.querySelectorAll('[id^="remote-video-"]').forEach(v => {
         v.srcObject = null;
         v.classList.add('hidden');
@@ -186,9 +180,9 @@ window.startInAppCall = function(callType = 'voice') {
     window.closePhoneChoiceModal(); 
     
     window.myLastOutgoingCallType = callType;
-    db.ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
+    firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
 
-    let callRef = db.ref('signals/' + target.id).push();
+    let callRef = firebase.database().ref('signals/' + target.id).push();
     callRef.set({ 
         type: 'call', 
         callType: callType,
@@ -199,7 +193,6 @@ window.startInAppCall = function(callType = 'voice') {
     }); 
     
     let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
-    
     if(window.sendPushToUser) window.sendPushToUser(target.id, pushTitle, `${window.myUsername} звонит вам!`, { type: 'call', callerName: window.myUsername }); 
     
     const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
@@ -214,14 +207,13 @@ window.startInAppCall = function(callType = 'voice') {
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
-        db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
+        firebase.database().ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
         callRef.remove(); window.callTimeout = null;
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
         
         let missedTitle = callType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
-        
         if(window.sendPushToUser) window.sendPushToUser(target.id, missedTitle, `Вы пропустили вызов от ${window.myUsername}`, { type: 'missed', callerName: window.myUsername }); 
     }, 30000);
 };
@@ -248,8 +240,8 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey,
 window.acceptCall = function() { 
     window.stopAllRings();
     document.getElementById('incoming-call-modal').classList.remove('active'); 
-    db.ref('signals/' + window.currentCallerId).push({ type: 'answered' });
-    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    firebase.database().ref('signals/' + window.currentCallerId).push({ type: 'answered' });
+    firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
 
     let target = window.participants.find(p => p.id === window.currentCallerId); 
     if(target) { 
@@ -268,8 +260,8 @@ window.acceptCall = function() {
 window.declineCall = function() { 
     window.stopAllRings();
     document.getElementById('incoming-call-modal').classList.remove('active'); 
-    db.ref('signals/' + window.currentCallerId).push({ type: 'reject', callerName: window.myUsername });
-    db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
+    firebase.database().ref('signals/' + window.currentCallerId).push({ type: 'reject', callerName: window.myUsername });
+    firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
     window.endWebRTCCall();
 };
 
@@ -278,7 +270,7 @@ window.hangUpCall = function() {
     window.endWebRTCCall();
     
     if (window.currentTargetUser) {
-        db.ref('signals/' + window.currentTargetUser.id).push({ type: 'reject', callerName: window.myUsername });
+        firebase.database().ref('signals/' + window.currentTargetUser.id).push({ type: 'reject', callerName: window.myUsername });
     }
     
     if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
@@ -289,34 +281,47 @@ window.hangUpCall = function() {
 
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
-    db.ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
+    
+    // Предотвращаем двойной запуск слушателя
+    if (window.isSignalListenerActive) return;
+    window.isSignalListenerActive = true;
+
+    firebase.database().ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
         const sig = snap.val(); if (!sig) return; 
         
         if (sig.type === 'call') { 
             if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType); 
-            else db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            else firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
         } 
         else if (sig.type === 'reject') {
             window.stopAllRings();
             window.playSafeSound(window.sndMissed, [200, 100, 200]);
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
-            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             window.endWebRTCCall();
             if (window.switchTab) window.switchTab(0);
         }
         else if (sig.type === 'answered') {
             window.stopAllRings(); 
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
-            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
         }
         else if (sig.type === 'missed') {
             window.stopAllRings();
             document.getElementById('incoming-call-modal').classList.remove('active');
-            db.ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
         }
     }); 
 };
+
+// --- АВТОМАТИЧЕСКИЙ ЗАПУСК ПРИЕМА ЗВОНКОВ ---
+let signalInitCheck = setInterval(() => {
+    if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
+        window.initSignalListener();
+        clearInterval(signalInitCheck);
+    }
+}, 1000);
 
 // --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (12 СТРАН) ---
 window.initConference = function() {
