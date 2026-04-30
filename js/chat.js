@@ -197,6 +197,10 @@ window.switchChatRoom = function(targetId) {
     window.renderSidebar();
     
     window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
+    // Сброс памяти языка для новой комнаты
+    localStorage.removeItem(window.getLangKey(false, false));
+    localStorage.removeItem(window.getMicLangKey());
+    if (typeof window.syncMicLangUI === 'function') window.syncMicLangUI();
 };
 
 // ==========================================
@@ -391,8 +395,11 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        let targetUsers = []; let processedLangs = new Set();
+ // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
+    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
+        let targetUsers = []; 
+        let neededLangs = new Set(); 
+        
         let myFanFlag = window.myProfileInfo.flag || '🌐';
         const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
         
@@ -400,35 +407,41 @@ window.handleNewMessage = async function(snapshot) {
         if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
 
         if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
-            processedLangs.add(myReadLang.substring(0,2));
-            targetUsers.push({ code: myReadLang, flag: myFanFlag, photo: window.myProfileInfo.photo });
+            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: window.myProfileInfo.photo });
+            neededLangs.add(myReadLang.substring(0,2));
         }
 
         window.participants.filter(part => part.id !== 'ai').forEach(member => {
             let memberLang = window.getSmartLang(member);
             if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
-                if (!processedLangs.has(memberLang.substring(0,2))) {
-                    processedLangs.add(memberLang.substring(0,2)); targetUsers.push({ code: memberLang, flag: member.flag, photo: member.photo });
-                }
+                targetUsers.push({ code: memberLang.substring(0,2), flag: member.flag, photo: member.photo });
+                neededLangs.add(memberLang.substring(0,2));
             }
         });
 
         if (targetUsers.length > 0) {
             try {
-                const fetchPromises = targetUsers.map(u => 
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                    .then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: data.originalText || data.text })) 
+                let transCache = {};
+                const fetchPromises = Array.from(neededLangs).map(langCode => 
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                    .then(res => res.json())
+                    .then(resData => { transCache[langCode] = resData[0][0][0]; })
+                    .catch(e => { transCache[langCode] = data.originalText || data.text; }) 
                 );
-                const translationsRes = await Promise.all(fetchPromises);
+                
+                await Promise.all(fetchPromises);
+
                 const transContainer = document.createElement('div');
                 transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
                 let marqueeTextStr = '';
 
-                translationsRes.forEach(t => {
+                targetUsers.forEach(u => {
+                    let translatedText = transCache[u.code] || data.originalText || data.text;
                     const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
-                    transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`;
-                    marqueeTextStr += `${t.user.flag} ${t.text}        `;
+                    transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${translatedText}</div></div>`;
+                    marqueeTextStr += `${u.flag} ${translatedText}        `;
                 });
+                
                 messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
 
                 const mText = document.getElementById('chat-info-marquee');
@@ -439,6 +452,7 @@ window.handleNewMessage = async function(snapshot) {
             } catch (e) {}
         }
     }
+    // === КОНЕЦ БЛОКА ===
 
 if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
