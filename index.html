@@ -225,20 +225,50 @@ OneSignalDeferred.push(async function(OneSignal) {
             <p style="color: #8696a0; font-size: 0.85rem; margin-top: 8px;">Connecting to Secure Cloud...</p>
         </div>
 
-        <div id="auth-login-box" style="display: none; flex-direction: column; align-items: center;">
-            <div style="width: 70px; height: 70px; border-radius: 50%; background: #ffffff; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; margin-bottom: 20px; box-shadow: 0 0 20px rgba(255,255,255,0.2);">
-                <i class="fa-brands fa-google" style="color: #DB4437;"></i>
-            </div>
-            <h2 style="color: white; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin-bottom: 8px; letter-spacing: 2px;">HELLO FRIENDS</h2>
-            <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 35px; text-transform: uppercase; letter-spacing: 1px;">Secure Cloud Network</p>
+    <div id="auth-login-box" style="display: none; flex-direction: column; align-items: center; width: 100%; max-width: 340px; background: #202c33; padding: 32px; border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); z-index: 50;">
             
-            <button onclick="window.signInWithGoogle()" style="background: #ffffff; color: #757575; border: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px;" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 22px;">
-                Sign in with Google
+            <div class="w-16 h-16 bg-[#111b21] rounded-full mb-4 flex items-center justify-center shadow-inner">
+                <i class="fa-solid fa-shield-halved text-2xl text-[#00a884]"></i>
+            </div>
+            
+            <h2 class="text-xl font-bold text-white mb-1 text-center">Welcome</h2>
+            <p class="text-[10px] text-[#8696a0] font-bold uppercase tracking-widest mb-8 text-center">HELLO FRIENDS</p>
+
+            <div class="w-full space-y-3 flex flex-col w-full">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-[#8696a0] text-sm"></i>
+                    <input type="email" id="auth-email" placeholder="Email Address" 
+                        class="w-full bg-[#111b21] border border-transparent rounded-xl pl-11 pr-4 py-3.5 text-sm outline-none focus:border-[#00a884] transition-colors text-white font-medium box-border block">
+                </div>
+                
+                <div class="relative w-full mt-3">
+                    <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-[#8696a0] text-sm"></i>
+                    <input type="password" id="auth-password" placeholder="Password" 
+                        class="w-full bg-[#111b21] border border-transparent rounded-xl pl-11 pr-4 py-3.5 text-sm outline-none focus:border-[#00a884] transition-colors text-white font-medium box-border block">
+                </div>
+                
+                <button onclick="window.loginWithEmail()" 
+                    class="w-full bg-[#00a884] active:scale-95 text-[#111b21] font-bold py-3.5 rounded-xl transition-all mt-5 shadow-[0_0_15px_rgba(0,168,132,0.3)] border-none cursor-pointer">
+                    Sign In
+                </button>
+                
+                <button onclick="window.registerWithEmail()" 
+                    class="w-full bg-transparent text-[#8696a0] font-bold py-2 mt-2 text-xs active:text-white transition-colors border-none cursor-pointer">
+                    Create New Account
+                </button>
+            </div>
+
+            <div class="w-full flex items-center gap-3 my-6">
+                <div class="h-px bg-[#2a3942] flex-1"></div>
+                <span class="text-[10px] text-[#8696a0] uppercase tracking-widest">Social Login</span>
+                <div class="h-px bg-[#2a3942] flex-1"></div>
+            </div>
+
+            <button onclick="window.signInWithGoogle()" 
+                class="w-full bg-white text-gray-800 font-bold py-3.5 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-3 text-sm shadow-md border-none cursor-pointer">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"> Google Account
             </button>
         </div>
-    </div>
-
  <script>
       
         window.requestPushPermissions = function() {
@@ -255,28 +285,45 @@ OneSignalDeferred.push(async function(OneSignal) {
             }
         }
 
-window.signInWithGoogle = function() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-
+window.loginWithEmail = function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            if (!email || !password) return alert("Введите почту и пароль!");
             const spinner = document.getElementById('auth-spinner');
             const loginBox = document.getElementById('auth-login-box');
-            
-            spinner.style.display = 'flex';
-            loginBox.style.display = 'none';
+            spinner.style.display = 'flex'; loginBox.style.display = 'none';
+            firebase.auth().signInWithEmailAndPassword(email, password).catch((err) => {
+                alert("Ошибка: " + err.message); spinner.style.display = 'none'; loginBox.style.display = 'flex';
+            });
+        };
 
-            firebase.auth().signInWithPopup(provider).then(() => {
-            }).catch((error) => {
+        window.registerWithEmail = function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            if (!email || password.length < 6) return alert("Почта и пароль (минимум 6 символов)!");
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            spinner.style.display = 'flex'; loginBox.style.display = 'none';
+            firebase.auth().createUserWithEmailAndPassword(email, password).catch((err) => {
+                alert("Ошибка: " + err.message); spinner.style.display = 'none'; loginBox.style.display = 'flex';
+            });
+        };
+
+        window.signInWithGoogle = function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            spinner.style.display = 'flex'; loginBox.style.display = 'none';
+            firebase.auth().signInWithPopup(provider).catch((error) => {
                 if (error.code === 'auth/popup-blocked') {
-                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна для этого сайта.");
+                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна.");
                 } else {
                     alert("Auth Error: " + error.message);
                 }
-                spinner.style.display = 'none';
-                loginBox.style.display = 'flex';
+                spinner.style.display = 'none'; loginBox.style.display = 'flex';
             });
         };
-        
 window.addEventListener('load', () => {
     const savedUid = localStorage.getItem('hf_active_user');
     const lockScreen = document.getElementById('security-lock');
@@ -682,21 +729,22 @@ if (window.OneSignalDeferred) {
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
                     
-                    <select id="plus-mic-lang" onchange="window.saveRoomMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
-                        <option value="auto" selected>🤖 Auto (Profile)</option>
-                        <option value="en-US">🇬🇧 English</option>
-                        <option value="ru-RU">🇷🇺 Русский</option>
-                        <option value="az-AZ">🇦🇿 Azərbaycanca</option>
-                        <option value="de-DE">🇩🇪 Deutsch</option>
-                        <option value="tr-TR">🇹🇷 Türkçe</option>
-                        <option value="ar-AE">🇦🇪 العربية</option>
-                        <option value="it-IT">🇮🇹 Italiano</option>
-                        <option value="es-ES">🇪🇸 Español</option>
-                        <option value="fr-FR">🇫🇷 Français</option>
-                        <option value="pt-PT">🇵🇹 Português</option>
-                        <option value="ja-JP">🇯🇵 日本語</option>
-                        <option value="zh-CN">🇨🇳 中文</option>
-                    </select>
+                <select id="plus-mic-lang" onchange="window.saveRoomMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+    <option value="auto" selected>🤖 Auto (Profile)</option>
+    <option value="en-US">🇬🇧 English</option>
+    <option value="kk-KZ">🇰🇿 Қазақша</option>
+    <option value="pt-PT">🇵🇹 Português</option>
+    <option value="ru-RU">🇷🇺 Русский</option>
+    <option value="az-AZ">🇦🇿 Azərbaycanca</option>
+    <option value="de-DE">🇩🇪 Deutsch</option>
+    <option value="tr-TR">🇹🇷 Türkçe</option>
+    <option value="ar-AE">🇦🇪 العربية</option>
+    <option value="it-IT">🇮🇹 Italiano</option>
+    <option value="es-ES">🇪🇸 Español</option>
+    <option value="fr-FR">🇫🇷 Français</option>
+    <option value="ja-JP">🇯🇵 日本語</option>
+    <option value="zh-CN">🇨🇳 中文</option>
+</select>
 
                     <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
                         <i class="fa-solid fa-video"></i>
@@ -812,9 +860,10 @@ if (window.OneSignalDeferred) {
                     <label class="form-label" data-i18n="reg_country">Country</label>
                     <div class="relative w-full h-[42px] bg-[#111b21] border border-[#202c33] rounded-xl flex items-center px-2 focus-within:border-[#00a884] transition">
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-6 h-4 rounded-sm object-cover mr-2 shrink-0">
-                        <select id="edit-country-select" class="bg-transparent text-white w-full outline-none text-[0.8rem] appearance-none cursor-pointer" onchange="window.handleCountryChange(this)">
+                  <select id="edit-country-select" class="bg-transparent text-white w-full outline-none text-[0.8rem] appearance-none cursor-pointer" onchange="window.handleCountryChange(this)">
                             <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">🌐 Global</option>
                             <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">🇦🇿 Azerbaijan</option>
+                            <option value="kz" data-name="Kazakhstan" data-emoji="🇰🇿" data-lang="kk">🇰🇿 Kazakhstan</option>
                             <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">🇷🇺 Russia</option>
                             <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">🇹🇷 Turkey</option>
                             <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">🇬🇧 UK</option>
@@ -894,9 +943,10 @@ if (window.OneSignalDeferred) {
                             <div class="pl-4 pr-2 flex items-center bg-[#2a3942]/30 h-full border-r border-[#2a3942]/50 relative z-20">
                                 <img id="cv-edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-5 h-3.5 object-cover rounded-sm">
                             </div>
-                         <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full pl-3 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
+    <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full pl-3 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
     <option value="un" class="bg-[#202c33] text-[#e9edef]" data-name="Global" data-i18n="select_country">Select Country</option>
     <option value="az" class="bg-[#202c33] text-[#e9edef]" data-name="Azerbaijan">🇦🇿 Azerbaijan</option>
+    <option value="kz" class="bg-[#202c33] text-[#e9edef]" data-name="Kazakhstan">🇰🇿 Kazakhstan</option>
     <option value="ru" class="bg-[#202c33] text-[#e9edef]" data-name="Russia">🇷🇺 Russia</option>
     <option value="tr" class="bg-[#202c33] text-[#e9edef]" data-name="Turkey">🇹🇷 Turkey</option>
     <option value="gb" class="bg-[#202c33] text-[#e9edef]" data-name="United Kingdom">🇬🇧 United Kingdom</option>
