@@ -83,60 +83,90 @@ window.handleCountryChange = function(sel) {
 };
 
 window.saveProfileData = function() {
-    let nameVal = document.getElementById('edit-name').value.trim(); 
-    let phoneVal = document.getElementById('edit-phone').value.trim();
-    
-    if (!nameVal || nameVal === 'User') { alert("Please enter your Real Name!"); return; }
-    if (!phoneVal || phoneVal.length < 5) { alert("Please enter your Phone Number!"); return; }
-    
-    const countrySel = document.getElementById('edit-country-select');
-    const selectedOption = countrySel.options[countrySel.selectedIndex];
+    try {
+        const btn = document.querySelector('#edit-profile-modal .btn-primary');
+        const originalText = btn ? btn.innerHTML : 'Save';
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
-    let smartLangCode = window.countryData[countrySel.value] ? window.countryData[countrySel.value].lang : 'en';
-
-    let updatedP = { id: window.myProfileInfo.id,
-        name: nameVal, 
-        photo: document.getElementById('edit-preview-photo').src, 
-        flagCode: countrySel.value, 
-        phone: phoneVal, 
-        email: document.getElementById('edit-email').value.trim(),
-        profileLangs: document.getElementById('edit-profile-langs').value.trim(),
-        profileBio: document.getElementById('edit-profile-bio').value.trim(),
-        country: selectedOption ? selectedOption.getAttribute('data-name') : 'Global',
-        flag: selectedOption ? selectedOption.getAttribute('data-emoji') : '🌐',
-        langCode: smartLangCode 
-    };
-    
-    window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
-    window.myUsername = nameVal.split(' ')[0];
-    
-    localStorage.setItem('hf_personal_lang', 'auto');
-    if (window.autoSetMicLang) window.autoSetMicLang();
-    
-    try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
-
-    const btn = document.querySelector('#edit-profile-modal .btn-primary');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-    db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
-        btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
-        if(window.applyTranslations) window.applyTranslations();
-        document.getElementById('edit-profile-modal').classList.remove('active'); 
-        if(window.showToast) window.showToast("Success", "Profile updated and synced!", updatedP.photo, "");
-
-        const myVoicePhoto = document.getElementById('voice-me-photo'); 
-        const myVoiceFlag = document.getElementById('voice-me-flag'); 
-        const myVoiceName = document.getElementById('voice-me-name'); 
-        if(myVoicePhoto) myVoicePhoto.src = updatedP.photo; 
-        if(myVoiceFlag) myVoiceFlag.innerText = updatedP.flag; 
-        if(myVoiceName) myVoiceName.innerText = window.myUsername;
+        let nameVal = document.getElementById('edit-name').value.trim(); 
+        let phoneVal = document.getElementById('edit-phone').value.trim();
         
-    }).catch(err => {
-        btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>'; 
-        if(window.applyTranslations) window.applyTranslations();
-        alert("Sync Error: " + err.message);
-    });
+        if (!nameVal || nameVal === 'User') { 
+            alert("Please enter your Real Name!"); 
+            if (btn) btn.innerHTML = originalText;
+            return; 
+        }
+        if (!phoneVal || phoneVal.length < 5) { 
+            alert("Please enter your Phone Number!"); 
+            if (btn) btn.innerHTML = originalText;
+            return; 
+        }
+        
+        const countrySel = document.getElementById('edit-country-select');
+        let selectedOption = null;
+        let flagCode = 'un';
+        let countryName = 'Global';
+        let flagEmoji = '🌐';
+
+        if (countrySel && countrySel.selectedIndex >= 0) {
+            selectedOption = countrySel.options[countrySel.selectedIndex];
+            flagCode = countrySel.value;
+            countryName = selectedOption.getAttribute('data-name') || 'Global';
+            flagEmoji = selectedOption.getAttribute('data-emoji') || '🌐';
+        }
+
+        let smartLangCode = (window.countryData && window.countryData[flagCode]) ? window.countryData[flagCode].lang : 'en';
+
+        let updatedP = { 
+            id: window.myProfileInfo.id,
+            name: nameVal, 
+            photo: document.getElementById('edit-preview-photo').src, 
+            flagCode: flagCode, 
+            phone: phoneVal, 
+            email: document.getElementById('edit-email').value.trim(),
+            profileLangs: document.getElementById('edit-profile-langs').value.trim(),
+            profileBio: document.getElementById('edit-profile-bio').value.trim(),
+            country: countryName,
+            flag: flagEmoji,
+            langCode: smartLangCode 
+        };
+        
+        window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
+        window.myUsername = nameVal.split(' ')[0];
+        
+        localStorage.setItem('hf_personal_lang', 'auto');
+        if (window.autoSetMicLang) window.autoSetMicLang();
+        
+        try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
+
+        db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
+            if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
+            if(window.applyTranslations) window.applyTranslations();
+            
+            const modal = document.getElementById('edit-profile-modal');
+            if (modal) modal.classList.remove('active'); 
+            
+            if(window.showToast) window.showToast("Success", "Profile updated and synced!", updatedP.photo, "");
+
+            const myVoicePhoto = document.getElementById('voice-me-photo'); 
+            const myVoiceFlag = document.getElementById('voice-me-flag'); 
+            const myVoiceName = document.getElementById('voice-me-name'); 
+            if(myVoicePhoto) myVoicePhoto.src = updatedP.photo; 
+            if(myVoiceFlag) myVoiceFlag.innerText = updatedP.flag; 
+            if(myVoiceName) myVoiceName.innerText = window.myUsername;
+            
+        }).catch(err => {
+            if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>'; 
+            if(window.applyTranslations) window.applyTranslations();
+            alert("Sync Error: " + err.message);
+        });
+
+    } catch (e) {
+        console.error("Critical Error during save: ", e);
+        const btn = document.querySelector('#edit-profile-modal .btn-primary');
+        if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
+        alert("System error. Please reload the page and try again.");
+    }
 };
 
 // --- МОЕ CV (Резюме - Строгая Изоляция) ---
@@ -165,7 +195,6 @@ window.openEditCV = function() {
         cvSelect.innerHTML = mainSelect.innerHTML;
     }
 
-    // СЕКРЕТ: Заставляем приложение всегда брать САМЫЕ свежие данные!
     let p = window.myProfileInfo;
     try {
         const storedData = localStorage.getItem('hf_custom_' + p.id);
@@ -213,7 +242,6 @@ window.saveCVData = function() {
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
     
-    // СЕКРЕТ 2: Железно вшиваем новые данные в глобальную переменную
     window.myProfileInfo = Object.assign(window.myProfileInfo || {}, cvData);
     
     try { 
@@ -271,7 +299,6 @@ window.openAvatarModal = function(id, fromSidebar = false) {
         if (id === 'ai') { 
             actionButtons.style.display = 'none'; 
         } else {
-            // Адаптировано под светлую/темную тему
             actionButtons.innerHTML = `
             <div class="grid grid-cols-2 gap-2 w-full mt-1">
                 <button onclick="window.closeAvatarModal(); window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-gray-100 dark:bg-[#202c33] border border-transparent dark:border-[#2a3942] text-gray-900 dark:text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
@@ -290,7 +317,7 @@ window.openAvatarModal = function(id, fromSidebar = false) {
                     <i class="fa-solid fa-video text-pink-400 text-lg"></i> <span data-i18n="app_video">App Video</span>
                 </button>
                 
-                <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-gray-100 dark:bg-[#202c33] border border-transparent dark:border-[#2a3942] text-gray-900 dark:text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-gray-100 dark:bg-[#202c33] border border-transparent dark:border-[#2a3942] text-gray-900 dark:text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                     <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> <span data-i18n="phone_call">Phone Call</span>
                 </button>
             </div>`;
@@ -405,7 +432,7 @@ window.openViewCVModal = function(id) {
                 <i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span>
             </button>`;
         } else {
-            let smsAction = displayPhone !== '—' ? `window.location.href='sms:${displayPhone.replace(/\\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
+            let smsAction = displayPhone !== '—' ? `window.location.href='sms:${displayPhone.replace(/\s+/g, '')}'` : "if(window.showToast) window.showToast('Error', 'User has no business phone', '', '');";
             let mailAction = displayEmail !== '—' ? `if(window.openDirectEmail) window.openDirectEmail('${displayEmail}'); else window.location.href='mailto:${displayEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
 
             actionButtons.innerHTML = `
