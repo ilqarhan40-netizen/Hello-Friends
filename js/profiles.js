@@ -84,12 +84,23 @@ window.handleCountryChange = function(sel) {
 
 window.saveProfileData = function() {
     try {
-        const btn = document.querySelector('#edit-profile-modal .btn-primary');
+        const btn = document.querySelector('#edit-profile-modal .btn-primary') || document.querySelector('#edit-profile-modal button');
         const originalText = btn ? btn.innerHTML : 'Save';
         if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
-        let nameVal = document.getElementById('edit-name').value.trim(); 
-        let phoneVal = document.getElementById('edit-phone').value.trim();
+        let nameEl = document.getElementById('edit-name');
+        let phoneEl = document.getElementById('edit-phone');
+        let emailEl = document.getElementById('edit-email');
+        let langsEl = document.getElementById('edit-profile-langs');
+        let bioEl = document.getElementById('edit-profile-bio');
+        let photoEl = document.getElementById('edit-preview-photo');
+
+        let nameVal = nameEl ? nameEl.value.trim() : 'User'; 
+        let phoneVal = phoneEl ? phoneEl.value.trim() : '';
+        let emailVal = emailEl ? emailEl.value.trim() : '';
+        let langsVal = langsEl ? langsEl.value.trim() : '';
+        let bioVal = bioEl ? bioEl.value.trim() : '';
+        let photoVal = photoEl ? photoEl.src : '';
         
         if (!nameVal || nameVal === 'User') { 
             alert("Please enter your Real Name!"); 
@@ -115,24 +126,29 @@ window.saveProfileData = function() {
             flagEmoji = selectedOption.getAttribute('data-emoji') || '🌐';
         }
 
-        // === ИСПРАВЛЕНИЕ ЗДЕСЬ: ЖЕЛЕЗОБЕТОННЫЙ LANG CODE ===
-        let smartLangCode = 'en'; // По умолчанию всегда English, чтобы Firebase не падал
+        let smartLangCode = 'en'; 
         if (window.countryData && window.countryData[flagCode] && window.countryData[flagCode].lang) {
             smartLangCode = window.countryData[flagCode].lang;
+        }
+
+        if (!window.myProfileInfo || !window.myProfileInfo.id) {
+            alert("Ошибка: не найден ID пользователя. Пожалуйста, перезайдите в аккаунт.");
+            if (btn) btn.innerHTML = originalText;
+            return;
         }
 
         let updatedP = { 
             id: window.myProfileInfo.id,
             name: nameVal, 
-            photo: document.getElementById('edit-preview-photo').src, 
+            photo: photoVal, 
             flagCode: flagCode, 
             phone: phoneVal, 
-            email: document.getElementById('edit-email').value.trim(),
-            profileLangs: document.getElementById('edit-profile-langs').value.trim(),
-            profileBio: document.getElementById('edit-profile-bio').value.trim(),
+            email: emailVal,
+            profileLangs: langsVal,
+            profileBio: bioVal,
             country: countryName,
             flag: flagEmoji,
-            langCode: smartLangCode // Теперь тут 100% строка, а не undefined
+            langCode: smartLangCode
         };
         
         window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
@@ -169,26 +185,9 @@ window.saveProfileData = function() {
         console.error("Critical Error during save: ", e);
         const btn = document.querySelector('#edit-profile-modal .btn-primary');
         if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
-        alert("System error. Please reload the page and try again.");
+        alert("JS Error: " + e.message);
     }
 };
-// --- МОЕ CV (Резюме - Строгая Изоляция) ---
-window.handleCVCountryChange = function(sel, isAutoLoad = false) {
-    const flagCode = sel.value;
-    const flagImg = document.getElementById('cv-edit-flag-icon');
-    if(flagImg) flagImg.src = `https://flagcdn.com/w40/${flagCode}.png`;
-    if (typeof window.countryData !== 'undefined') {
-        const cData = window.countryData[flagCode] || window.countryData['un'];
-        const phoneInput = document.getElementById('cv-edit-phone');
-        if (phoneInput && cData && cData.phone) {
-            if (!isAutoLoad || phoneInput.value.trim() === '') {
-                phoneInput.value = cData.phone + " ";
-                if (!isAutoLoad) phoneInput.focus();
-            }
-        }
-    }
-};
-
 window.openEditCV = function() {
     if (window.closeDropdown) window.closeDropdown();
     const cvSelect = document.getElementById('cv-edit-country-select');
