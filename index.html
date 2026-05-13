@@ -25,6 +25,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script src="js/language.js?v=999"></script>
+  <script src="js/search.js?v=1"></script>  
 <script src="js/ecosystem.js?v=999"></script>
 <script src="js/profiles.js?v=999"></script>
 <script src="js/calls.js?v=5.0"></script>
@@ -998,34 +999,7 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
         </div>
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
-        
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> <span data-i18n="global_search">Global Search</span></h2>
-                <div class="relative w-full mb-4 shrink-0">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
-                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" data-i18n-placeholder="search_placeholder" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
-                </div>
-                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block" data-i18n="global_news">Global News</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> <span data-i18n="news_breaking">Breaking</span></button>
-                        <button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> <span data-i18n="news_tech">IT & Tech</span></button>
-                        <button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> <span data-i18n="news_crypto">Crypto</span></button>
-                        <button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> <span data-i18n="news_sports">Sports</span></button>
-                    </div>
-                </div>
-                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold" data-i18n="people_skills">People & Skills</p>
-                    <div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button><button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button></div>
-                </div>
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
-                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> <span data-i18n="search_web">Search Web</span></button>
-            </div>
-        </div>
-
+     
         <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
