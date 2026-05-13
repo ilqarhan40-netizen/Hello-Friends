@@ -95,12 +95,8 @@ window.saveProfileData = function() {
         let bioEl = document.getElementById('edit-profile-bio');
         let photoEl = document.getElementById('edit-preview-photo');
 
-        let nameVal = nameEl ? nameEl.value.trim() : 'User'; 
-        let phoneVal = phoneEl ? phoneEl.value.trim() : '';
-        let emailVal = emailEl ? emailEl.value.trim() : '';
-        let langsVal = langsEl ? langsEl.value.trim() : '';
-        let bioVal = bioEl ? bioEl.value.trim() : '';
-        let photoVal = photoEl ? photoEl.src : '';
+        let nameVal = nameEl && nameEl.value ? nameEl.value.trim() : 'User'; 
+        let phoneVal = phoneEl && phoneEl.value ? phoneEl.value.trim() : '';
         
         if (!nameVal || nameVal === 'User') { 
             alert("Please enter your Real Name!"); 
@@ -114,51 +110,68 @@ window.saveProfileData = function() {
         }
         
         const countrySel = document.getElementById('edit-country-select');
-        let selectedOption = null;
         let flagCode = 'un';
         let countryName = 'Global';
         let flagEmoji = '🌐';
 
         if (countrySel && countrySel.selectedIndex >= 0) {
-            selectedOption = countrySel.options[countrySel.selectedIndex];
-            flagCode = countrySel.value;
-            countryName = selectedOption.getAttribute('data-name') || 'Global';
-            flagEmoji = selectedOption.getAttribute('data-emoji') || '🌐';
-        }
-
-        let smartLangCode = 'en'; 
-        if (window.countryData && window.countryData[flagCode] && window.countryData[flagCode].lang) {
-            smartLangCode = window.countryData[flagCode].lang;
+            const opt = countrySel.options[countrySel.selectedIndex];
+            flagCode = countrySel.value || 'un';
+            countryName = opt.getAttribute('data-name') || 'Global';
+            flagEmoji = opt.getAttribute('data-emoji') || '🌐';
         }
 
         if (!window.myProfileInfo || !window.myProfileInfo.id) {
-            alert("Ошибка: не найден ID пользователя. Пожалуйста, перезайдите в аккаунт.");
+            alert("Ошибка: не найден ID. Перезагрузите страницу.");
             if (btn) btn.innerHTML = originalText;
             return;
         }
 
-        let updatedP = { 
-            id: window.myProfileInfo.id,
-            name: nameVal, 
-            photo: photoVal, 
-            flagCode: flagCode, 
-            phone: phoneVal, 
-            email: emailVal,
-            profileLangs: langsVal,
-            profileBio: bioVal,
-            country: countryName,
-            flag: flagEmoji,
-            langCode: smartLangCode
-        };
+        // === УМНАЯ МУЛЬТИЯЗЫЧНОСТЬ ===
+        // 1. Берем текущий язык пользователя (если был)
+        let smartLangCode = window.myProfileInfo.langCode || ''; 
         
-        window.myProfileInfo = { ...window.myProfileInfo, ...updatedP }; 
+        // 2. Если выбрана страна, приоритет отдаем языку страны (kz -> kk, ru -> ru и т.д.)
+        if (window.countryData && window.countryData[flagCode] && window.countryData[flagCode].lang) {
+            smartLangCode = window.countryData[flagCode].lang;
+        }
+        
+        // 3. Резервный вариант: язык приложения или браузера (чтобы БД не упала от undefined)
+        if (!smartLangCode) {
+            smartLangCode = window.appLang || navigator.language.slice(0, 2) || 'en';
+        }
+        // ===================================
+
+        // ЖЕЛЕЗОБЕТОННЫЙ ПАКЕТ ДАННЫХ
+        let updatedP = { 
+            id: window.myProfileInfo.id || 'unknown',
+            name: nameVal || 'User', 
+            photo: photoEl ? (photoEl.src || '') : '', 
+            flagCode: flagCode || 'un', 
+            phone: phoneVal || '', 
+            email: emailEl ? (emailEl.value.trim() || '') : '',
+            profileLangs: langsEl ? (langsEl.value.trim() || '') : '',
+            profileBio: bioEl ? (bioEl.value.trim() || '') : '',
+            country: countryName || 'Global',
+            flag: flagEmoji || '🌐',
+            langCode: smartLangCode // Теперь тут правильный динамический язык
+        };
+
+        // Зачистка: если вдруг хоть где-то проскочил undefined, меняем на пустую строку
+        Object.keys(updatedP).forEach(key => {
+            if (updatedP[key] === undefined) {
+                updatedP[key] = '';
+            }
+        });
+        
+        window.myProfileInfo = Object.assign(window.myProfileInfo, updatedP);
         window.myUsername = nameVal.split(' ')[0];
         
         localStorage.setItem('hf_personal_lang', 'auto');
         if (window.autoSetMicLang) window.autoSetMicLang();
-        
         try { localStorage.setItem('hf_custom_' + window.myProfileInfo.id, JSON.stringify(window.myProfileInfo)); } catch(e){}
 
+        // Отправка в базу 
         db.ref('users/' + window.myProfileInfo.id).update(updatedP).then(() => {
             if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
             if(window.applyTranslations) window.applyTranslations();
@@ -166,8 +179,8 @@ window.saveProfileData = function() {
             const modal = document.getElementById('edit-profile-modal');
             if (modal) modal.classList.remove('active'); 
             
-            if(window.showToast) window.showToast("Success", "Profile updated and synced!", updatedP.photo, "");
-
+            if(window.showToast) window.showToast("Success", "Profile saved!", updatedP.photo, "");
+            
             const myVoicePhoto = document.getElementById('voice-me-photo'); 
             const myVoiceFlag = document.getElementById('voice-me-flag'); 
             const myVoiceName = document.getElementById('voice-me-name'); 
@@ -177,15 +190,14 @@ window.saveProfileData = function() {
             
         }).catch(err => {
             if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>'; 
-            if(window.applyTranslations) window.applyTranslations();
-            alert("Sync Error: " + err.message);
+            alert("Firebase Error: " + err.message);
         });
 
     } catch (e) {
-        console.error("Critical Error during save: ", e);
+        console.error(e);
         const btn = document.querySelector('#edit-profile-modal .btn-primary');
-        if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
-        alert("JS Error: " + e.message);
+        if (btn) btn.innerHTML = 'Save Profile';
+        alert("JS Ошибка: " + e.message);
     }
 };
 window.openEditCV = function() {
