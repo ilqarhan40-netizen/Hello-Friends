@@ -24,30 +24,34 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script src="js/language.js"></script>
-<script src="js/ecosystem.js"></script>
-<script src="js/profiles.js?v=7"></script>
-<script src="js/calls.js"></script>
-<script src="js/voice.js?v=6"></script>
-<script src="js/chat.js?v=6"></script>
-<script src="js/archive.js?v=7"></script>
+<script src="js/language.js?v=999"></script>
+  <script src="js/search.js?v=1"></script>  
+<script src="js/ecosystem.js?v=999"></script>
+<script src="js/profiles.js?v=999"></script>
+<script src="js/calls.js?v=5.0"></script>
+<script src="js/voice.js?v=999"></script>
+<script src="js/chat.js?v=999"></script>
+<script src="js/archive.js?v=999"></script>
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
-    });
-    OneSignal.Notifications.requestPermission();
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+    serviceWorkerParam: { scope: '/' },
+    serviceWorkerPath: 'sw.js' // ВАЖНО: Указываем на наш объединенный файл
   });
+  OneSignal.Notifications.requestPermission();
+});
 </script>
     <script>
-        const firebaseConfig = { 
+    const firebaseConfig = { 
             apiKey: "AIzaSyCVFkMsqelcnjjeIwGnAKmn1CFhDGc7kR0", 
             authDomain: "hello-friends-p8p3i7.firebaseapp.com", 
             databaseURL: "https://hello-friends-p8p3i7-default-rtdb.europe-west1.firebasedatabase.app", 
             projectId: "hello-friends-p8p3i7", 
-            messagingSenderId: "367351601053", 
-            appId: "1:367351601053:web:7852c0326db9cc233d44ba" 
+            storageBucket: "hello-friends-p8p3i7.firebasestorage.app",
+            messagingSenderId: "518434765438", 
+            appId: "1:518434765438:web:78a3e7f7bc4ad32dd1362f" 
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig); 
         const db = firebase.database();
@@ -81,7 +85,7 @@
         .chat-contact-name { font-size: 0.6rem; color: var(--wa-text-muted); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; max-width: 65px; text-align: center; }
         .chat-contact.active-room .chat-contact-name { color: var(--wa-green); font-weight: bold; }
         .chat-info-marquee-container { width: 100%; background: var(--wa-panel); overflow: hidden; padding: 6px 10px; border-bottom: 1px solid var(--wa-border); display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
-        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 8s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
+        .chat-info-marquee-text { display: inline-block; padding-left: 100%; animation: scroll-text 15s linear infinite; font-size: 0.75rem; color: var(--wa-green); font-weight: bold; white-space: nowrap; }
         .chat-messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 16px; gap: 4px; scroll-behavior: smooth; }
         .chat-bubble-wrapper { display: flex; flex-direction: column; max-width: 90%; }
         .chat-bubble { padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
@@ -201,36 +205,73 @@
             color: #e9edef !important;
         }
     </style>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
+<script>
+ 
+    // 2. БЛОКИРОВКА IFRAME-ОБЕРТКИ (Защита от встраивания твоего сайта в чужие окна)
+    if (window.top !== window.self) {
+        window.top.location = window.self.location;
+    }
+</script>
 </head>
 <body>
 
-    <div id="security-lock" style="position: fixed; inset: 0; background: #0b141a; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.4s ease;">
+ <div id="security-lock" style="position: fixed; inset: 0; background: #0b141a; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.4s ease;">
         <div id="auth-spinner" style="display: flex; flex-direction: column; align-items: center;">
             <i class="fa-solid fa-circle-notch fa-spin text-[#00a884] text-5xl mb-6"></i>
             <h2 style="color: white; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; letter-spacing: 2px;">HELLO FRIENDS</h2>
             <p style="color: #8696a0; font-size: 0.85rem; margin-top: 8px;">Connecting to Secure Cloud...</p>
         </div>
 
-        <div id="auth-login-box" style="display: none; flex-direction: column; align-items: center;">
-            <div style="width: 70px; height: 70px; border-radius: 50%; background: #ffffff; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; margin-bottom: 20px; box-shadow: 0 0 20px rgba(255,255,255,0.2);">
-                <i class="fa-brands fa-google" style="color: #DB4437;"></i>
+        <div id="auth-login-box" style="display: none; flex-direction: column; align-items: center; width: 100%; max-width: 340px; background: #202c33; padding: 32px; border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); z-index: 50;">
+            <div class="w-16 h-16 bg-[#111b21] rounded-full mb-4 flex items-center justify-center shadow-inner">
+                <i class="fa-solid fa-shield-halved text-2xl text-[#00a884]"></i>
             </div>
-            <h2 style="color: white; font-family: 'Orbitron', sans-serif; font-size: 1.5rem; margin-bottom: 8px; letter-spacing: 2px;">HELLO FRIENDS</h2>
-            <p style="color: #8696a0; font-size: 0.85rem; margin-bottom: 35px; text-transform: uppercase; letter-spacing: 1px;">Secure Cloud Network</p>
             
-            <button onclick="window.signInWithGoogle()" style="background: #ffffff; color: #757575; border: none; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px;" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 22px;">
-                Sign in with Google
+            <h2 class="text-xl font-bold text-white mb-1 text-center">Welcome</h2>
+            <p class="text-[10px] text-[#8696a0] font-bold uppercase tracking-widest mb-8 text-center">HELLO FRIENDS</p>
+
+            <div class="w-full space-y-3 flex flex-col w-full">
+                <div class="relative w-full">
+                    <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-[#8696a0] text-sm"></i>
+                    <input type="email" id="auth-email" placeholder="Email Address" 
+                        class="w-full bg-[#111b21] border border-transparent rounded-xl pl-11 pr-4 py-3.5 text-sm outline-none focus:border-[#00a884] transition-colors text-white font-medium box-border block">
+                </div>
+                
+                <div class="relative w-full mt-3">
+                    <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-[#8696a0] text-sm"></i>
+                    <input type="password" id="auth-password" placeholder="Password" 
+                        class="w-full bg-[#111b21] border border-transparent rounded-xl pl-11 pr-4 py-3.5 text-sm outline-none focus:border-[#00a884] transition-colors text-white font-medium box-border block">
+                </div>
+                
+                <button onclick="window.loginWithEmail()" 
+                    class="w-full bg-[#00a884] active:scale-95 text-[#111b21] font-bold py-3.5 rounded-xl transition-all mt-5 shadow-[0_0_15px_rgba(0,168,132,0.3)] border-none cursor-pointer">
+                    Sign In
+                </button>
+                
+                <button onclick="window.registerWithEmail()" 
+                    class="w-full bg-transparent text-[#8696a0] font-bold py-2 mt-2 text-xs active:text-white transition-colors border-none cursor-pointer">
+                    Create New Account
+                </button>
+            </div>
+
+            <div class="w-full flex items-center gap-3 my-6">
+                <div class="h-px bg-[#2a3942] flex-1"></div>
+                <span class="text-[10px] text-[#8696a0] uppercase tracking-widest">Social Login</span>
+                <div class="h-px bg-[#2a3942] flex-1"></div>
+            </div>
+
+            <button onclick="window.signInWithGoogle()" 
+                class="w-full bg-white text-gray-800 font-bold py-3.5 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-3 text-sm shadow-md border-none cursor-pointer">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5"> Google Account
             </button>
         </div>
     </div>
-
  <script>
-        window.sndMsg = new Audio('https://actions.google.com/sounds/v1/ui/message_notification.ogg');
-        window.sndCash = new Audio('https://actions.google.com/sounds/v1/foley/cash_register.ogg');
-        window.sndRing = new Audio('https://actions.google.com/sounds/v1/ringtones/phone_ringing.ogg');
-        window.sndRing.loop = true;
-
+      
         window.requestPushPermissions = function() {
             if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
                 Notification.requestPermission();
@@ -245,28 +286,45 @@
             }
         }
 
-window.signInWithGoogle = function() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
-
+window.loginWithEmail = function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            if (!email || !password) return alert("Введите почту и пароль!");
             const spinner = document.getElementById('auth-spinner');
             const loginBox = document.getElementById('auth-login-box');
-            
-            spinner.style.display = 'flex';
-            loginBox.style.display = 'none';
+            spinner.style.display = 'flex'; loginBox.style.display = 'none';
+            firebase.auth().signInWithEmailAndPassword(email, password).catch((err) => {
+                alert("Ошибка: " + err.message); spinner.style.display = 'none'; loginBox.style.display = 'flex';
+            });
+        };
 
-            firebase.auth().signInWithPopup(provider).then(() => {
-            }).catch((error) => {
+        window.registerWithEmail = function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            if (!email || password.length < 6) return alert("Почта и пароль (минимум 6 символов)!");
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            spinner.style.display = 'flex'; loginBox.style.display = 'none';
+            firebase.auth().createUserWithEmailAndPassword(email, password).catch((err) => {
+                alert("Ошибка: " + err.message); spinner.style.display = 'none'; loginBox.style.display = 'flex';
+            });
+        };
+
+        window.signInWithGoogle = function() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            const spinner = document.getElementById('auth-spinner');
+            const loginBox = document.getElementById('auth-login-box');
+            spinner.style.display = 'flex'; loginBox.style.display = 'none';
+            firebase.auth().signInWithPopup(provider).catch((error) => {
                 if (error.code === 'auth/popup-blocked') {
-                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна для этого сайта.");
+                    alert("Браузер заблокировал окно входа. Пожалуйста, разрешите всплывающие окна.");
                 } else {
                     alert("Auth Error: " + error.message);
                 }
-                spinner.style.display = 'none';
-                loginBox.style.display = 'flex';
+                spinner.style.display = 'none'; loginBox.style.display = 'flex';
             });
         };
-        
 window.addEventListener('load', () => {
     const savedUid = localStorage.getItem('hf_active_user');
     const lockScreen = document.getElementById('security-lock');
@@ -323,10 +381,13 @@ if (window.OneSignalDeferred) {
                         window.myProfileInfo = { ...window.myProfileInfo, ...newUser };
                         setTimeout(() => { if(window.openMyProfile) window.openMyProfile(); }, 1000);
                     });
-                } else {
+              } else {
                     window.myProfileInfo = { ...window.myProfileInfo, ...data, id: actualUid };
                     window.myUsername = data.name.split(' ')[0];
                     db.ref('users/' + actualUid).update({ status: 'online', id: actualUid });
+                    
+                    // Заставляем интерфейс мгновенно перевестись под загруженный номер телефона!
+                    if (window.applyTranslations) window.applyTranslations();
                 }
             });
 
@@ -449,7 +510,7 @@ if (window.OneSignalDeferred) {
             </div>
             
             <div id="universal-mic-popup" onclick="event.stopPropagation();">
-                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.handleSmartCall()"><i class="fa-solid fa-phone mic-opt-call"></i> <span data-i18n="call_user">Call User</span></button>
+                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startInAppCall()"><i class="fa-solid fa-phone mic-opt-call"></i><span data-i18n="call_user">Call User</span></button>
                 <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('ai-audio')"><i class="fa-solid fa-robot mic-opt-ai"></i> <span data-i18n="voice_msg_ai">Voice Message (AI)</span></button>
                 <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('text')"><i class="fa-solid fa-microphone mic-opt-text"></i> <span data-i18n="voice_text">Voice Text</span></button>
             </div>
@@ -508,7 +569,13 @@ if (window.OneSignalDeferred) {
                                 <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover border-2 border-[#2a3942] shadow-lg">
                                 <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-xl bg-[#111b21] rounded-full p-1 shadow">🌐</span>
                             </div>
-                            <h3 id="voice-friend-name" class="text-[#8696a0] font-bold text-sm text-center truncate w-full max-w-[100px]" data-i18n="select_contact">Select Contact</h3>
+                          <div class="flex items-center justify-center gap-2 mt-2">
+    <h3 id="voice-friend-name" class="text-white font-bold text-sm text-center truncate max-w-[100px]" data-i18n="select_contact">Select Contact</h3>
+    
+    <button onclick="window.hangUpCall()" class="bg-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all shrink-0">
+        <i class="fa-solid fa-phone-slash text-white text-xs"></i>
+    </button>
+</div>
                         </div>
                         <div class="flex gap-1.5 text-[#00a884] shrink-0 mb-6">
                             <div class="w-1.5 h-6 bg-[#00a884] rounded-full animate-bounce"></div><div class="w-1.5 h-10 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-6 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
@@ -591,21 +658,62 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-       <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
-                <div class="page-container">
-                    <div class="flex justify-between items-center px-2 mb-6 mt-2">
-                        <h2 class="text-xl font-bold text-white"><i class="fa-solid fa-server text-blue-400 mr-2"></i> <span data-i18n="cloud_repo">Data Center</span></h2>
-                        <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mb-6 px-1">
-                        <div onclick="window.switchArchiveTab('docs')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition shadow-lg text-center"><i class="fa-solid fa-folder-open text-2xl text-[#a29bfe] mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="docs">Docs</span></div>
-                        <div onclick="window.switchArchiveTab('media')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-green-400 transition shadow-lg text-center"><i class="fa-solid fa-photo-film text-2xl text-green-400 mb-1"></i><span class="text-white font-bold text-[0.7rem]" data-i18n="media">Media</span></div>
-                        <div onclick="window.switchArchiveTab('mail')" class="bg-[#202c33] p-3 rounded-2xl border border-[#00a884] flex flex-col items-center justify-center cursor-pointer hover:bg-[#00a884]/10 transition shadow-lg text-center relative"><span id="mail-badge" class="absolute top-2 right-2 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse hidden"></span><i class="fa-solid fa-envelope text-2xl text-[#00a884] mb-1"></i><span class="text-white font-bold text-[0.7rem]">Mail</span></div>
-                    </div>
-                    <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2">Saved Backups</h3>
-                    <div id="archive-list" class="flex flex-col gap-3 px-1 pb-20"><p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4" data-i18n="repo_empty">Repository is empty.</p></div>
+   <div id="archive" class="page-content h-full bg-[#0b141a] relative z-10">
+    <div class="page-container flex flex-col h-full">
+        <div class="flex justify-between items-center px-2 mb-6 mt-2">
+            <h2 class="text-xl font-bold text-white">
+                <i class="fa-solid fa-server text-blue-400 mr-2"></i> 
+                <span data-i18n="cloud_repo">Data Center</span>
+            </h2>
+            <span class="text-[#8696a0] text-xs font-mono bg-[#202c33] px-2 py-1 rounded-lg border border-[#2a3942]">1.2 GB / 15 GB</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-6 px-1 shrink-0">
+            <div onclick="window.switchArchiveTab('docs')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-[#00a884] transition">
+                <i class="fa-solid fa-file-lines text-[#8696a0] text-xl mb-1"></i>
+                <span class="text-[0.65rem] text-white font-bold uppercase">Docs</span>
+            </div>
+            <div onclick="window.switchArchiveTab('media')" class="bg-[#202c33] p-3 rounded-2xl border border-[#2a3942] flex flex-col items-center justify-center cursor-pointer hover:border-[#00a884] transition">
+                <i class="fa-solid fa-image text-[#8696a0] text-xl mb-1"></i>
+                <span class="text-[0.65rem] text-white font-bold uppercase">Media</span>
+            </div>
+            <div onclick="window.switchArchiveTab('mail')" class="bg-[#202c33] p-3 rounded-2xl border border-[#00a884] flex flex-col items-center justify-center cursor-pointer hover:border-[#00a884] transition relative">
+                <i class="fa-solid fa-envelope text-[#00a884] text-xl mb-1"></i>
+                <span class="text-[0.65rem] text-white font-bold uppercase">Mail</span>
+                <div id="mail-badge" class="hidden absolute top-2 right-2 w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+            </div>
+        </div>
+
+        <h3 id="archive-section-title" class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 px-2 shrink-0">Corporate Mailbox</h3>
+
+        <div id="email-list-view" class="flex-grow overflow-y-auto w-full px-1">
+            <div id="archive-list" class="flex flex-col gap-2 pb-20">
+                <p id="empty-archive" class="text-center text-sm text-[#8696a0] mt-4">Repository is empty.</p>
+            </div>
+        </div>
+
+        <div id="email-reader-view" class="hidden flex-col flex-grow w-full pb-20">
+            <button onclick="window.backToEmailList()" class="back-btn mb-4 text-[#00a884] flex items-center gap-2 hover:text-white transition px-2">
+                <i class="fa-solid fa-arrow-left"></i> Назад
+            </button>
+            <div class="bg-[#202c33] rounded-xl p-4 border border-[#2a3942] flex-grow overflow-y-auto relative flex flex-col">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 id="email-read-subject" class="text-white font-bold text-lg pr-8">Тема</h3>
+                    <button id="email-read-action-btn" class="text-[#8696a0] hover:text-white text-xl p-1">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center border-b border-[#2a3942] pb-3 mb-3">
+                    <span id="email-read-from" class="text-sm text-[#8696a0]">От кого</span>
+                    <span id="email-read-date" class="text-xs text-[#8696a0]">Дата</span>
+                </div>
+                <div id="email-read-body" class="text-[#e9edef] text-sm whitespace-pre-wrap flex-grow">
+                    Текст письма...
                 </div>
             </div>
+        </div>
+    </div>
+</div>
         </main>
 
         <div class="bottom-nav-container">
@@ -622,21 +730,22 @@ if (window.OneSignalDeferred) {
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
                     <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
                     
-                    <select id="plus-mic-lang" onchange="window.saveRoomMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
-                        <option value="auto" selected>🤖 Auto (Profile)</option>
-                        <option value="en-US">🇬🇧 English</option>
-                        <option value="ru-RU">🇷🇺 Русский</option>
-                        <option value="az-AZ">🇦🇿 Azərbaycanca</option>
-                        <option value="de-DE">🇩🇪 Deutsch</option>
-                        <option value="tr-TR">🇹🇷 Türkçe</option>
-                        <option value="ar-AE">🇦🇪 العربية</option>
-                        <option value="it-IT">🇮🇹 Italiano</option>
-                        <option value="es-ES">🇪🇸 Español</option>
-                        <option value="fr-FR">🇫🇷 Français</option>
-                        <option value="pt-PT">🇵🇹 Português</option>
-                        <option value="ja-JP">🇯🇵 日本語</option>
-                        <option value="zh-CN">🇨🇳 中文</option>
-                    </select>
+                <select id="plus-mic-lang" onchange="window.saveRoomMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
+    <option value="auto" selected>🤖 Auto (Profile)</option>
+    <option value="en-US">🇬🇧 English</option>
+    <option value="kk-KZ">🇰🇿 Қазақша</option>
+    <option value="pt-PT">🇵🇹 Português</option>
+    <option value="ru-RU">🇷🇺 Русский</option>
+    <option value="az-AZ">🇦🇿 Azərbaycanca</option>
+    <option value="de-DE">🇩🇪 Deutsch</option>
+    <option value="tr-TR">🇹🇷 Türkçe</option>
+    <option value="ar-AE">🇦🇪 العربية</option>
+    <option value="it-IT">🇮🇹 Italiano</option>
+    <option value="es-ES">🇪🇸 Español</option>
+    <option value="fr-FR">🇫🇷 Français</option>
+    <option value="ja-JP">🇯🇵 日本語</option>
+    <option value="zh-CN">🇨🇳 中文</option>
+</select>
 
                     <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
                         <i class="fa-solid fa-video"></i>
@@ -752,9 +861,10 @@ if (window.OneSignalDeferred) {
                     <label class="form-label" data-i18n="reg_country">Country</label>
                     <div class="relative w-full h-[42px] bg-[#111b21] border border-[#202c33] rounded-xl flex items-center px-2 focus-within:border-[#00a884] transition">
                         <img id="edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-6 h-4 rounded-sm object-cover mr-2 shrink-0">
-                        <select id="edit-country-select" class="bg-transparent text-white w-full outline-none text-[0.8rem] appearance-none cursor-pointer" onchange="window.handleCountryChange(this)">
+                  <select id="edit-country-select" class="bg-transparent text-white w-full outline-none text-[0.8rem] appearance-none cursor-pointer" onchange="window.handleCountryChange(this)">
                             <option value="un" data-name="Global" data-emoji="🌐" data-lang="en">🌐 Global</option>
                             <option value="az" data-name="Azerbaijan" data-emoji="🇦🇿" data-lang="az">🇦🇿 Azerbaijan</option>
+                            <option value="kz" data-name="Kazakhstan" data-emoji="🇰🇿" data-lang="kk">🇰🇿 Kazakhstan</option>
                             <option value="ru" data-name="Russia" data-emoji="🇷🇺" data-lang="ru">🇷🇺 Russia</option>
                             <option value="tr" data-name="Turkey" data-emoji="🇹🇷" data-lang="tr">🇹🇷 Turkey</option>
                             <option value="gb" data-name="United Kingdom" data-emoji="🇬🇧" data-lang="en">🇬🇧 UK</option>
@@ -834,9 +944,10 @@ if (window.OneSignalDeferred) {
                             <div class="pl-4 pr-2 flex items-center bg-[#2a3942]/30 h-full border-r border-[#2a3942]/50 relative z-20">
                                 <img id="cv-edit-flag-icon" src="https://flagcdn.com/w40/un.png" class="w-5 h-3.5 object-cover rounded-sm">
                             </div>
-                         <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full pl-3 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
+    <select id="cv-edit-country-select" onchange="window.handleCVCountryChange(this)" class="bg-transparent text-[#e9edef] w-full h-full pl-3 pr-8 outline-none text-[0.85rem] cursor-pointer appearance-none relative z-10">
     <option value="un" class="bg-[#202c33] text-[#e9edef]" data-name="Global" data-i18n="select_country">Select Country</option>
     <option value="az" class="bg-[#202c33] text-[#e9edef]" data-name="Azerbaijan">🇦🇿 Azerbaijan</option>
+    <option value="kz" class="bg-[#202c33] text-[#e9edef]" data-name="Kazakhstan">🇰🇿 Kazakhstan</option>
     <option value="ru" class="bg-[#202c33] text-[#e9edef]" data-name="Russia">🇷🇺 Russia</option>
     <option value="tr" class="bg-[#202c33] text-[#e9edef]" data-name="Turkey">🇹🇷 Turkey</option>
     <option value="gb" class="bg-[#202c33] text-[#e9edef]" data-name="United Kingdom">🇬🇧 United Kingdom</option>
@@ -888,34 +999,7 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
         </div>
-        <div id="search-modal" class="app-modal" onclick="if(event.target===this) window.closeSearchModal();">
-        
-            <div class="app-modal-content h-[85vh]" onclick="event.stopPropagation();">
-                <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold text-white mb-4 mt-4"><i class="fa-solid fa-magnifying-glass text-[#00a884] mr-2"></i> <span data-i18n="global_search">Global Search</span></h2>
-                <div class="relative w-full mb-4 shrink-0">
-                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
-                    <input type="text" id="global-search-input" onkeyup="window.performLiveSearch()" data-i18n-placeholder="search_placeholder" placeholder="Find people, skills, web..." class="form-input-box !pl-12 !mb-0 w-full bg-[#0b141a]">
-                </div>
-                <div id="news-categories" class="hidden shrink-0 flex-col mb-4 bg-[#111b21] p-3 rounded-2xl border border-[#2a3942]">
-                    <span class="text-[0.7rem] text-[#00a884] uppercase font-bold mb-3 block" data-i18n="global_news">Global News</span>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="window.doNewsSearch('Top Breaking World News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> <span data-i18n="news_breaking">Breaking</span></button>
-                        <button onclick="window.doNewsSearch('IT and Technology News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-laptop-code text-blue-400"></i> <span data-i18n="news_tech">IT & Tech</span></button>
-                        <button onclick="window.doNewsSearch('Cryptocurrency News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-brands fa-bitcoin text-yellow-500"></i> <span data-i18n="news_crypto">Crypto</span></button>
-                        <button onclick="window.doNewsSearch('Global Sports News')" class="bg-[#202c33] text-white p-2 rounded-xl text-xs font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-futbol text-green-400"></i> <span data-i18n="news_sports">Sports</span></button>
-                    </div>
-                </div>
-                <div class="w-full shrink-0 mb-2 overflow-y-auto" id="search-suggestions" style="max-height: 25vh;">
-                    <p class="text-[0.7rem] text-[#8696a0] mb-2 uppercase font-bold" data-i18n="people_skills">People & Skills</p>
-                    <div class="flex flex-wrap gap-2 mb-4"><button onclick="window.handleSmartSearch('Engineer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">💻 Engineer</button><button onclick="window.handleSmartSearch('Designer', 'text')" class="px-4 py-2 bg-[#202c33] rounded-full text-sm text-[#e9edef] hover:bg-[#00a884] hover:text-[#111b21] transition border border-[#2a3942]">🎨 Designer</button></div>
-                </div>
-                <div class="w-full flex-grow overflow-y-auto flex flex-col gap-3 pr-1 pt-2" id="search-results-area"></div>
-                <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[#2a3942] bg-white hidden shrink-0" src="about:blank"></iframe>
-                <button onclick="window.doGoogleSearch()" class="btn-primary !bg-[#202c33] !text-white mt-4 shrink-0 border border-[#2a3942]"><i class="fa-brands fa-searchengin text-blue-400 mr-2"></i> <span data-i18n="search_web">Search Web</span></button>
-            </div>
-        </div>
-
+     
         <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
@@ -1113,30 +1197,35 @@ if (window.OneSignalDeferred) {
             }
         };
 
-        window.getSmartLang = function(userProfile) {
-            if (!userProfile) return 'en'; 
-            let phone = userProfile.phone || "";
-            let flag = userProfile.flagCode || "un";
+ window.getSmartLang = function(phone, flagCode) {
+    // БРОНЯ: Если передали целый объект пользователя, достаем из него нужные данные
+    if (typeof phone === 'object' && phone !== null) {
+        flagCode = phone.flagCode;
+        phone = phone.phone;
+    }
+    
+    // Теперь безопасно удаляем пробелы
+    let p = (phone && typeof phone === 'string') ? phone.replace(/\s+/g, '') : "";
+    let f = flagCode || "un";
             
-            if (phone.startsWith('+7')) return 'ru';
-            if (phone.startsWith('+994')) return 'az';
-            if (phone.startsWith('+39')) return 'it';
-            if (phone.startsWith('+49')) return 'de';
-            if (phone.startsWith('+33')) return 'fr';
-            if (phone.startsWith('+81')) return 'ja';
-            if (phone.startsWith('+34')) return 'es';
-            if (phone.startsWith('+86')) return 'zh';
-            if (phone.startsWith('+351')) return 'pt';
-            if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
-            if (phone.startsWith('+971')) return 'ar';
+            if (p.startsWith('+7')) return 'ru';
+            if (p.startsWith('+994')) return 'az';
+            if (p.startsWith('+90')) return 'tr';
+            if (p.startsWith('+39')) return 'it';
+            if (p.startsWith('+49')) return 'de';
+            if (p.startsWith('+33')) return 'fr';
+            if (p.startsWith('+81')) return 'ja';
+            if (p.startsWith('+34')) return 'es';
+            if (p.startsWith('+86')) return 'zh';
+            if (p.startsWith('+351')) return 'pt';
+            if (p.startsWith('+1') || p.startsWith('+44')) return 'en';
+            if (p.startsWith('+971')) return 'ar';
 
             const flagToLang = {
                 'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 
-                'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar'
+                'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr'
             };
-            if (flagToLang[flag]) return flagToLang[flag];
-            
-            return userProfile.langCode || 'en';
+            return flagToLang[f] || 'en'; // Умный откат на флаг, если телефон не распознан
         };
 
         window.playAIVoice = function(encodedText, langCode) {
@@ -1285,20 +1374,12 @@ if (window.OneSignalDeferred) {
         };
         window.closeContactsModal = function() { document.getElementById('contacts-modal').classList.remove('active'); };
 
-        window.startDirectAppCall = function(id) {
-            window.closeContactsModal(); 
-            let target = window.participants.find(p => p.id === id);
-            if(target) { 
-                window.currentTargetUser = target; 
-                document.getElementById('voice-friend-photo').src = target.photo; 
-                document.getElementById('voice-friend-flag').innerText = target.flag; 
-                document.getElementById('voice-friend-name').innerText = (target.name||'User').split(' ')[0]; 
-                window.voiceFriend = target; 
-                
-                if (window.switchChatRoom) window.switchChatRoom(target.id);
-                if (window.switchTab) window.switchTab(1); 
-            }
-        };
+      window.startDirectAppCall = function(id) {
+    window.closeContactsModal(); 
+    if (window.makeCallFromContact) {
+        window.makeCallFromContact(id, 'voice');
+    }
+};
 
         window.closeAvatarModal = function() { document.getElementById('avatar-modal').classList.remove('active'); };
 
@@ -1344,9 +1425,9 @@ if (window.OneSignalDeferred) {
                         <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(1); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> Voice Msg
                         </button>
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchChatRoom('${p.id}'); if(window.startInAppCall) window.startInAppCall();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                            <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
-                        </button>
+                      <button onclick="window.closeAvatarModal(); window.switchChatRoom('${p.id}'); if(window.makeCallFromContact) window.makeCallFromContact('${p.id}', 'voice');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+    <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> App Audio
+</button>
                         <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-video text-pink-400 text-lg"></i> App Video
                         </button>
@@ -1429,12 +1510,28 @@ if (window.OneSignalDeferred) {
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            if(localStorage.getItem('hf_god_mode') === 'true') { const adminBtn = document.getElementById('admin-menu-btn'); if(adminBtn) adminBtn.style.display = 'flex'; }
-            window.countryData = { "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } };
+        
+     window.countryData = { 
+                "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." }, 
+                "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan — The Land of Fire." }, 
+                "kz": { phone: "+7", pop: "19.8M", seas: "Caspian, Aral Sea", desc: "The ninth-largest country in the world." },
+                "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." }, 
+                "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." }, 
+                "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." }, 
+                "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." }, 
+                "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." }, 
+                "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." }, 
+                "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." }, 
+                "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." }, 
+                "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." }, 
+                "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." }, 
+                "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." } 
+            };
             
             const i18n = { 
                 en: { menu: "Settings", chat: "Chat", voice: "Voice", meet: "Meet", cv: "CV", social: "Social", profile: "My Profile", wallet: "Wallet", theme: "Theme", export: "Export Data", import: "Import Data", logout: "Log Out", delete_acc: "Delete Account", welcome_empty: "Welcome to Hello Friends!", global_smart_net: "Global Smart Network", app_creator_greet: "Creator of Hello Friends", reg_title: "Welcome!", reg_subtitle: "Complete Registration", reg_name: "Full Name", reg_country: "Country", reg_phone: "Phone Number", reg_email: "Email", reg_save: "Save Profile", edit_title: "My Profile", edit_subtitle: "Basic Info", global_chat: "Global Chat", news: "News", contacts: "Contacts", msg_placeholder: "Message...", voice_room_title: "Voice Room", waiting_voice: "Waiting for voice input...", select_contact: "Select Contact", conference_title: "CONFERENCE", meet_msg_placeholder: "Message Conference...", global_talents: "Global Talents", edit_my_cv: "Edit My CV", prof_cv: "Professional CV", business_contacts: "Business contact details", profession: "Profession", languages_spoken: "Languages", business_location: "Business Location", select_country: "Select Country", business_phone: "Business Phone", business_email: "Business Email", core_skills: "Core Skills", work_exp: "Work Experience", education: "Education", about_cv: "About Me (CV)", save_cv: "Save CV", social_hub: "Social Hub", invite_whatsapp: "Invite via WhatsApp", cloud_repo: "Cloud Repository", docs: "Documents", media: "Media", saved_backups: "Saved Backups", repo_empty: "Repository is empty.", global_search: "Global Search", search_placeholder: "Find people, skills, web...", global_news: "Global News", news_breaking: "Breaking", news_tech: "IT & Tech", news_crypto: "Crypto", news_sports: "Sports", people_skills: "People & Skills", search_web: "Search Web", about_me: "About Me", lang_placeholder: "e.g. English, Русский...", bio_placeholder: "Tell us about yourself...", skills_placeholder: "e.g. JavaScript, Design...", exp_placeholder: "2020 - Present: Corp...", edu_placeholder: "BSc in Computer Science...", cv_bio_placeholder: "Professional summary...", cv_empty: "This user hasn't filled out their CV yet.", call_user: "Call User", voice_msg_ai: "Voice Message (AI)", voice_text: "Voice Text", chat_lang: "Chat Language", attach_file: "Attach File", attach_photo: "Photo / Image", attach_loc: "Share Location", attach_doc: "Document", ai_trans_active: "AI Translation System Active..." },
                 ru: { menu: "Настройки", chat: "Чат", voice: "Голос", meet: "Видео", cv: "Резюме", social: "Соцсети", profile: "Мой профиль", wallet: "Кошелек", theme: "Тема", export: "Экспорт", import: "Импорт", logout: "Выйти", delete_acc: "Удалить Аккаунт", welcome_empty: "Добро пожаловать в Hello Friends!", global_smart_net: "Глобальная Смарт-Сеть", app_creator_greet: "Создатель Hello Friends", reg_title: "Добро пожаловать!", reg_subtitle: "Завершите регистрацию", reg_name: "Полное имя", reg_country: "Страна", reg_phone: "Номер телефона", reg_email: "Email", reg_save: "Сохранить", edit_title: "Мой профиль", edit_subtitle: "Основная информация", global_chat: "Глобальный Чат", news: "Новости", contacts: "Контакты", msg_placeholder: "Сообщение...", voice_room_title: "Голосовая", waiting_voice: "Ожидание голоса...", select_contact: "Выберите контакт", conference_title: "КОНФЕРЕНЦИЯ", meet_msg_placeholder: "Сообщение в конференцию...", global_talents: "Глобальные Таланты", edit_my_cv: "Изменить Резюме", prof_cv: "Проф. Резюме", business_contacts: "Деловые контакты", profession: "Профессия", languages_spoken: "Языки", business_location: "Локация", select_country: "Выберите страну", business_phone: "Рабочий Телефон", business_email: "Рабочий Email", core_skills: "Ключевые навыки", work_exp: "Опыт работы", education: "Образование", about_cv: "Обо мне (CV)", save_cv: "Сохранить Резюме", social_hub: "Социальный Хаб", invite_whatsapp: "Пригласить через WhatsApp", cloud_repo: "Облачное Хранилище", docs: "Документы", media: "Медиа", saved_backups: "Резервные копии", repo_empty: "Хранилище пусто.", global_search: "Глобальный Поиск", search_placeholder: "Поиск людей, навыков...", global_news: "Мировые Новости", news_breaking: "Срочные", news_tech: "IT и Технологии", news_crypto: "Крипто", news_sports: "Спорт", people_skills: "Люди и Навыки", search_web: "Искать в Сети", about_me: "Обо мне", lang_placeholder: "напр. English, Русский...", bio_placeholder: "Расскажите о себе...", skills_placeholder: "напр. JavaScript, Дизайн...", exp_placeholder: "2020 - Н.В.: Компания...", edu_placeholder: "Бакалавр Компьютерных Наук...", cv_bio_placeholder: "Профессиональное резюме...", cv_empty: "Этот пользователь еще не заполнил резюме.", call_user: "Позвонить", voice_msg_ai: "Голосовое (AI)", voice_text: "Текст голосом", chat_lang: "Язык Чата", attach_file: "Прикрепить", attach_photo: "Фото / Картинка", attach_loc: "Поделиться локацией", attach_doc: "Документ", ai_trans_active: "Система AI-перевода активна..." },
+                kk: { menu: "Параметрлер", chat: "Чат", voice: "Дауыс", meet: "Видео", cv: "Түйіндеме", social: "Әлеуметтік", profile: "Менің профилім", wallet: "Әмиян", theme: "Тақырып", export: "Экспорт", import: "Импорт", logout: "Шығу", delete_acc: "Аккаунтты өшіру", welcome_empty: "Hello Friends-ке қош келдіңіз!", global_smart_net: "Ғаламдық Smart-Желі", app_creator_greet: "Hello Friends жасаушысы", reg_title: "Қош келдіңіз!", reg_subtitle: "Тіркелуді аяқтаңыз", reg_name: "Толық аты-жөні", reg_country: "Ел", reg_phone: "Телефон нөмірі", reg_email: "Email", reg_save: "Сақтау", edit_title: "Менің профилім", edit_subtitle: "Негізгі ақпарат", global_chat: "Ғаламдық чат", news: "Жаңалықтар", contacts: "Контактілер", msg_placeholder: "Хабарлама...", voice_room_title: "Дауыстық бөлме", waiting_voice: "Дауыс күтілуде...", select_contact: "Контактіні таңдаңыз", conference_title: "КОНФЕРЕНЦИЯ", meet_msg_placeholder: "Конференция хабарламасы...", global_talents: "Ғаламдық Таланттар", edit_my_cv: "Түйіндемені өңдеу", prof_cv: "Кәсіби түйіндеме", business_contacts: "Бизнес байланыстар", profession: "Мамандық", languages_spoken: "Тілдер", business_location: "Бизнес орны", select_country: "Елді таңдаңыз", business_phone: "Жұмыс телефоны", business_email: "Жұмыс Email", core_skills: "Негізгі дағдылар", work_exp: "Жұмыс тәжірибесі", education: "Білім", about_cv: "Мен туралы (CV)", save_cv: "Түйіндемені сақтау", social_hub: "Әлеуметтік Хаб", invite_whatsapp: "WhatsApp арқылы шақыру", cloud_repo: "Бұлтты қойма", docs: "Құжаттар", media: "Медиа", saved_backups: "Сақталған көшірмелер", repo_empty: "Қойма бос.", global_search: "Ғаламдық іздеу", search_placeholder: "Адамдарды, дағдыларды іздеу...", global_news: "Әлем жаңалықтары", news_breaking: "Шұғыл", news_tech: "IT және Технологиялар", news_crypto: "Крипто", news_sports: "Спорт", people_skills: "Адамдар және Дағдылар", search_web: "Желіден іздеу", about_me: "Мен туралы", lang_placeholder: "мыс. English, Қазақша...", bio_placeholder: "Өзіңіз туралы айтып беріңіз...", skills_placeholder: "мыс. JavaScript, Дизайн...", exp_placeholder: "2020 - Қазіргі уақытқа дейін...", edu_placeholder: "Бакалавр дәрежесі...", cv_bio_placeholder: "Кәсіби қысқаша мәлімет...", cv_empty: "Бұл пайдаланушы түйіндемесін әлі толтырмаған.", call_user: "Қоңырау шалу", voice_msg_ai: "Дауыстық хабарлама (AI)", voice_text: "Дауыстық мәтін", chat_lang: "Чат тілі", attach_file: "Файлды тіркеу", attach_photo: "Фото / Сурет", attach_loc: "Орналасқан жерді бөлісу", attach_doc: "Құжат", ai_trans_active: "AI-аударма жүйесі белсенді..." },
                 az: { menu: "Tənzimləmələr", chat: "Çat", voice: "Səs", meet: "Video", cv: "CV", social: "Sosial", profile: "Profilim", wallet: "Cüzdan", theme: "Mövzu", export: "İxrac et", import: "İdxal et", logout: "Çıxış", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends-ə Xoş Gəldiniz!", global_smart_net: "Qlobal Smart Şəbəkə", app_creator_greet: "Hello Friends Yaradıcısı", reg_title: "Xoş gəldiniz!", reg_subtitle: "Qeydiyyatı tamamlayın", reg_name: "Tam adınız", reg_country: "Ölkə", reg_phone: "Telefon nömrəsi", reg_email: "E-poçt", reg_save: "Yadda saxla", edit_title: "Profilim", edit_subtitle: "Əsas məlumatlar", global_chat: "Qlobal Çat", news: "Xəbərlər", contacts: "Əlaqələr", msg_placeholder: "Mesaj...", voice_room_title: "Səs Otağı", waiting_voice: "Səs gözlənilir...", select_contact: "Əlaqə seçin", conference_title: "KONFRANS", meet_msg_placeholder: "Konfrans Mesajı...", global_talents: "Qlobal İstedadlar", edit_my_cv: "CV-ni Redaktə et", prof_cv: "Peşəkar CV", business_contacts: "Biznes əlaqələri", profession: "Peşə", languages_spoken: "Dillər", business_location: "Biznes Məkanı", select_country: "Ölkə Seçin", business_phone: "Biznes Telefonu", business_email: "Biznes E-poçtu", core_skills: "Əsas Bacarıqlar", work_exp: "İş Təcrübəsi", education: "Təhsil", about_cv: "Haqqımda (CV)", save_cv: "CV Yadda Saxla", social_hub: "Sosial Mərkəz", invite_whatsapp: "WhatsApp ilə Dəvət", cloud_repo: "Bulud Anbarı", docs: "Sənədlər", media: "Media", saved_backups: "Yadda saxlanılanlar", repo_empty: "Anbar boşdur.", global_search: "Qlobal Axtarış", search_placeholder: "İnsanları, bacarıqları tapın...", global_news: "Dünya Xəbərləri", news_breaking: "Təcili", news_tech: "İT və Texnologiya", news_crypto: "Kripto", news_sports: "İdman", people_skills: "İnsanlar və Bacarıqlar", search_web: "Şəbəkədə Axtar", about_me: "Haqqımda", lang_placeholder: "məs. English, Русский...", bio_placeholder: "Özünüz haqqında danışın...", skills_placeholder: "məs. JavaScript, Dizayn...", exp_placeholder: "2020 - İndi: Şirkət...", edu_placeholder: "Kompüter Elmləri üzrə Bakalavr...", cv_bio_placeholder: "Peşəkar xülasə...", cv_empty: "Bu istifadəçi hələ CV-sini doldurmayıb.", call_user: "Zəng et", voice_msg_ai: "Səsli Mesaj (AI)", voice_text: "Səsli Mətn", chat_lang: "Çat Dili", attach_file: "Fayl Əlavə et", attach_photo: "Foto / Şəkil", attach_loc: "Məkanı Paylaş", attach_doc: "Sənəd", ai_trans_active: "AI Tərcümə Sistemi aktivdir..." },
                 de: { menu: "Einstellungen", chat: "Chat", voice: "Sprache", meet: "Treffen", cv: "Lebenslauf", social: "Sozial", profile: "Mein Profil", wallet: "Brieftasche", theme: "Thema", export: "Exportieren", import: "Importieren", logout: "Abmelden", delete_acc: "Konto Löschen", welcome_empty: "Willkommen bei Hello Friends!", global_smart_net: "Globales Smart-Netzwerk", app_creator_greet: "Ersteller von Hello Friends", reg_title: "Willkommen!", reg_subtitle: "Registrierung abschließen", reg_name: "Vollständiger Name", reg_country: "Land", reg_phone: "Telefonnummer", reg_email: "E-Mail", reg_save: "Speichern", edit_title: "Mein Profil", edit_subtitle: "Grundlegende Info", global_chat: "Globaler Chat", news: "Nachrichten", contacts: "Kontakte", msg_placeholder: "Nachricht...", voice_room_title: "Sprachraum", waiting_voice: "Warten auf Spracheingabe...", select_contact: "Kontakt auswählen", conference_title: "KONFERENZ", meet_msg_placeholder: "Konferenznachricht...", global_talents: "Globale Talente", edit_my_cv: "Lebenslauf bearbeiten", prof_cv: "Beruflicher Lebenslauf", business_contacts: "Geschäftskontakte", profession: "Beruf", languages_spoken: "Sprachen", business_location: "Geschäftsstandort", select_country: "Land auswählen", business_phone: "Geschäftstelefon", business_email: "Geschäfts-E-Mail", core_skills: "Kernkompetenzen", work_exp: "Berufserfahrung", education: "Bildung", about_cv: "Über mich (CV)", save_cv: "Lebenslauf speichern", social_hub: "Social Hub", invite_whatsapp: "Über WhatsApp einladen", cloud_repo: "Cloud-Speicher", docs: "Dokumente", media: "Medien", saved_backups: "Gespeicherte Backups", repo_empty: "Speicher ist leer.", global_search: "Globale Suche", search_placeholder: "Personen, Fähigkeiten finden...", global_news: "Globale Nachrichten", news_breaking: "Eilmeldungen", news_tech: "IT & Tech", news_crypto: "Krypto", news_sports: "Sport", people_skills: "Personen & Fähigkeiten", search_web: "Im Web suchen", about_me: "Über mich", lang_placeholder: "z.B. English, Deutsch...", bio_placeholder: "Erzähl uns von dir...", skills_placeholder: "z.B. JavaScript, Design...", exp_placeholder: "2020 - Heute: Firma...", edu_placeholder: "BSc in Informatik...", cv_bio_placeholder: "Berufliche Zusammenfassung...", cv_empty: "Dieser Benutzer hat seinen Lebenslauf noch nicht ausgefüllt.", call_user: "Anrufen", voice_msg_ai: "Sprachnachricht (AI)", voice_text: "Sprachtext", chat_lang: "Chat-Sprache", attach_file: "Datei anhängen", attach_photo: "Foto / Bild", attach_loc: "Standort teilen", attach_doc: "Dokument", ai_trans_active: "AI-Übersetzungssystem aktiv..." },
                 tr: { menu: "Ayarlar", chat: "Sohbet", voice: "Ses", meet: "Toplantı", cv: "Özgeçmiş", social: "Sosyal", profile: "Profilim", wallet: "Cüzdan", theme: "Tema", export: "Dışa Aktar", import: "İçe Aktar", logout: "Çıkış Yap", delete_acc: "Hesabı Sil", welcome_empty: "Hello Friends'e Hoş Geldiniz!", global_smart_net: "Küresel Akıllı Ağ", app_creator_greet: "Hello Friends Yaratıcısı", reg_title: "Hoş Geldiniz!", reg_subtitle: "Kaydı Tamamla", reg_name: "Ad Soyad", reg_country: "Ülke", reg_phone: "Telefon Numarası", reg_email: "E-posta", reg_save: "Kaydet", edit_title: "Profilim", edit_subtitle: "Temel Bilgiler", global_chat: "Küresel Sohbet", news: "Haberler", contacts: "Kişiler", msg_placeholder: "Mesaj...", voice_room_title: "Ses Odası", waiting_voice: "Ses girişi bekleniyor...", select_contact: "Kişi Seç", conference_title: "KONFERANS", meet_msg_placeholder: "Konferans Mesajı...", global_talents: "Küresel Yetenekler", edit_my_cv: "Özgeçmişimi Düzenle", prof_cv: "Profesyonel Özgeçmiş", business_contacts: "İş iletişim bilgileri", profession: "Meslek", languages_spoken: "Diller", business_location: "İş Konumu", select_country: "Ülke Seç", business_phone: "İş Telefonu", business_email: "İş E-postası", core_skills: "Temel Beceriler", work_exp: "İş Deneyimi", education: "Eğitim", about_cv: "Hakkımda (CV)", save_cv: "Özgeçmişi Kaydet", social_hub: "Sosial Merkez", invite_whatsapp: "WhatsApp ile Davet Et", cloud_repo: "Bulut Deposu", docs: "Belgeler", media: "Medya", saved_backups: "Kaydedilen Yedekler", repo_empty: "Depo boş.", global_search: "Küresel Arama", search_placeholder: "Kişileri, becerileri bulun...", global_news: "Dünya Haberleri", news_breaking: "Son Dakika", news_tech: "BT ve Teknoloji", news_crypto: "Kripto", news_sports: "Spor", people_skills: "Kişiler ve Beceriler", search_web: "Web'de Ara", about_me: "Hakkımda", lang_placeholder: "örn. English, Türkçe...", bio_placeholder: "Bize kendinden bahset...", skills_placeholder: "örn. JavaScript, Tasarım...", exp_placeholder: "2020 - Günümüz: Şirket...", edu_placeholder: "Bilgisayar Bilimleri Lisans...", cv_bio_placeholder: "Profesyonel özet...", cv_empty: "Bu kullanıcı henüz özgeçmişini doldurmadı.", call_user: "Ara", voice_msg_ai: "Sesli Mesaj (AI)", voice_text: "Sesli Metin", chat_lang: "Sohbet Dili", attach_file: "Dosya Ekle", attach_photo: "Fotoğraf / Resim", attach_loc: "Konum Paylaş", attach_doc: "Belge", ai_trans_active: "Yapay Zeka Çeviri Sistemi Aktif..." },
@@ -1446,16 +1543,25 @@ if (window.OneSignalDeferred) {
                 ja: { menu: "設定", chat: "チャット", voice: "音声", meet: "ビデオ", cv: "履歴書", social: "ソーシャル", profile: "プロフィール", wallet: "ウォレット", theme: "テーマ", export: "出力", import: "入力", logout: "ログアウト", delete_acc: "アカウント削除", welcome_empty: "Hello Friendsへようこそ！", global_smart_net: "グローバルスマートネットワーク", app_creator_greet: "Hello Friendsの作成者", reg_title: "ようこそ！", reg_subtitle: "登録を完了する", reg_name: "氏名", reg_country: "国", reg_phone: "電話番号", reg_email: "メール", reg_save: "保存", edit_title: "プロフィール", edit_subtitle: "基本情報", global_chat: "グローバルチャット", news: "ニュース", contacts: "連絡先", msg_placeholder: "メッセージ...", voice_room_title: "ボイスルーム", waiting_voice: "音声入力を待っています...", select_contact: "連絡先を選択", conference_title: "会議", meet_msg_placeholder: "会議メッセージ...", global_talents: "グローバルタレント", edit_my_cv: "履歴書を編集", prof_cv: "プロフェッショナル履歴書", business_contacts: "ビジネスの連絡先詳細", profession: "職業", languages_spoken: "言語", business_location: "勤務地", select_country: "国を選択", business_phone: "ビジネス電話", business_email: "ビジネスメール", core_skills: "コアスキル", work_exp: "職歴", education: "教育", about_cv: "私について（履歴書）", save_cv: "履歴書を保存", social_hub: "ソーシャルハブ", invite_whatsapp: "WhatsAppで招待", cloud_repo: "クラウド リポジトリ", docs: "ドキュメント", media: "メディア", saved_backups: "保存されたバックアップ", repo_empty: "リポジトリは空です。", global_search: "グローバル検索", search_placeholder: "人、スキル、ウェブを検索...", global_news: "グローバルニュース", news_breaking: "最新ニュース", news_tech: "ITとテクノロジー", news_crypto: "暗号通貨", news_sports: "スポーツ", people_skills: "人物とスキル", search_web: "ウェブ検索", about_me: "私について", lang_placeholder: "例: English, 日本語...", bio_placeholder: "あなたについて教えてください...", skills_placeholder: "例: JavaScript, デザイン...", exp_placeholder: "2020 - 現在: 会社...", edu_placeholder: "コンピュータサイエンスの学士号...", cv_bio_placeholder: "プロフェッショナルサマリー...", cv_empty: "このユーザーはまだ履歴書を記入していません。", call_user: "電話をかける", voice_msg_ai: "音声メッセージ (AI)", voice_text: "音声テキスト", chat_lang: "チャット言語", attach_file: "ファイルを添付", attach_photo: "写真/画像", attach_loc: "場所を共有", attach_doc: "ドキュメント", ai_trans_active: "AI翻訳システムが有効..." },
                 zh: { menu: "设置", chat: "聊天", voice: "语音", meet: "视频", cv: "简历", social: "社交", profile: "我的资料", wallet: "钱包", theme: "主题", export: "导出", import: "导入", logout: "登出", delete_acc: "删除帐户", welcome_empty: "欢迎来到 Hello Friends！", global_smart_net: "全球智能网络", app_creator_greet: "Hello Friends 创建者", reg_title: "欢迎！", reg_subtitle: "完成注册", reg_name: "全名", reg_country: "国家", reg_phone: "电话号码", reg_email: "电子邮件", reg_save: "保存", edit_title: "我的资料", edit_subtitle: "基本信息", global_chat: "全球聊天", news: "新闻", contacts: "联系人", msg_placeholder: "信息...", voice_room_title: "语音室", waiting_voice: "等待语音输入...", select_contact: "选择联系人", conference_title: "会议", meet_msg_placeholder: "会议信息...", global_talents: "全球人才", edit_my_cv: "编辑我的简历", prof_cv: "专业简历", business_contacts: "商业联系方式", profession: "职业", languages_spoken: "语言", business_location: "营业地点", select_country: "选择国家", business_phone: "商业电话", business_email: "商业电邮", core_skills: "核心技能", work_exp: "工作经验", education: "教育", about_cv: "关于我 (简历)", save_cv: "保存简历", social_hub: "社交中心", invite_whatsapp: "通过 WhatsApp 邀请", cloud_repo: "云存储库", docs: "文件", media: "媒体", saved_backups: "保存的备份", repo_empty: "存储库为空。", global_search: "全球搜索", search_placeholder: "寻找人、技能、网络...", global_news: "全球新闻", news_breaking: "突发新闻", news_tech: "IT与科技", news_crypto: "加密货币", news_sports: "体育", people_skills: "人员与技能", search_web: "搜索网络", about_me: "关于我", lang_placeholder: "例如: English, 中文...", bio_placeholder: "介绍一下你自己...", skills_placeholder: "例如: JavaScript, 设计...", exp_placeholder: "2020 - 至今: 公司...", edu_placeholder: "计算机科学学士...", cv_bio_placeholder: "专业摘要...", cv_empty: "该用户尚未填写简历。", call_user: "打电话", voice_msg_ai: "语音信息 (AI)", voice_text: "语音文本", chat_lang: "聊天语言", attach_file: "附加文件", attach_photo: "照片 / 图像", attach_loc: "分享位置", attach_doc: "文件", ai_trans_active: "AI翻译系统已激活..." }
             };
-            let sysLang = navigator.language.slice(0, 2); let defLang = i18n[sysLang] ? sysLang : 'en'; window.appLang = localStorage.getItem('hf_app_lang') || defLang;
-            
-            window.changeAppLanguage = function(langCode) { 
-                window.appLang = langCode; 
-                localStorage.setItem('hf_app_lang', window.appLang); 
-                window.applyTranslations(); 
-                window.closeDropdown(); 
-            };
-            
+        // --- УМНАЯ ЛОГИКА ЯЗЫКА (БЕЗ ЖЕСТКОГО ENGLISH) ---
             window.applyTranslations = function() { 
+                let savedLang = localStorage.getItem('hf_app_lang') || 'auto';
+                let activeLang = savedLang;
+
+                // Если стоит Auto — система сама вычисляет язык по телефону или флагу
+                if (savedLang === 'auto') {
+                    if (window.myProfileInfo && window.myProfileInfo.phone) {
+                        activeLang = window.getSmartLang(window.myProfileInfo.phone, window.myProfileInfo.flagCode);
+                    } else if (window.myProfileInfo && window.myProfileInfo.flagCode && window.myProfileInfo.flagCode !== 'un') {
+                        activeLang = window.getSmartLang(null, window.myProfileInfo.flagCode);
+                    } else {
+                        // Резерв на крайний случай - язык системы устройства
+                        let sysLang = navigator.language.slice(0, 2);
+                        activeLang = i18n[sysLang] ? sysLang : 'en';
+                    }
+                }
+                
+                window.appLang = activeLang;
                 const dict = i18n[window.appLang] || i18n['en']; 
                 
                 document.querySelectorAll('[data-i18n]').forEach(el => { 
@@ -1469,11 +1575,16 @@ if (window.OneSignalDeferred) {
                 });
 
                 const langSelect = document.getElementById('app-lang-select'); 
-                if(langSelect) langSelect.value = window.appLang; 
+                if(langSelect) langSelect.value = savedLang; 
             };
             
-            window.applyTranslations();
+            window.changeAppLanguage = function(langCode) { 
+                localStorage.setItem('hf_app_lang', langCode); 
+                window.applyTranslations(); 
+                window.closeDropdown(); 
+            };
 
+            window.applyTranslations();
             window.switchTab = function(index) { 
                 const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
                 const pages = document.querySelectorAll('.page-content'); 
@@ -1513,7 +1624,7 @@ if (window.OneSignalDeferred) {
                 if(emptyState) emptyState.style.display = 'none';
             };
 
-            window.initFCM = function() {
+     window.initFCM = function() {
                 try {
                     const messaging = firebase.messaging();
                     messaging.getToken({ vapidKey: "BMMHmREmqUdec5j8SnGKw6Lh3PFNiidZAalJRpSdtet-iWyhYTjGdUJT7KzHHeVmRoIzi9Sllbg97ZoQa0yP0Vs" }).then((currentToken) => {
@@ -1523,31 +1634,35 @@ if (window.OneSignalDeferred) {
                 } catch(e) {}
             };
 
-            window.sendPushToUser = function(targetUserId, title, body) {
-                const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
-                const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
+        window.sendPushToUser = function(targetUserId, title, body, customData = null) {
+            const ONESIGNAL_APP_ID = "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1";
+            const ONESIGNAL_REST_KEY = "y2ksieuhcuil4dnra3fssnwnt";
 
-                const notification = {
-                    app_id: ONESIGNAL_APP_ID,
-                    include_aliases: { "external_id": [targetUserId] }, 
-                    headings: { "en": title, "ru": title, "az": title },
-                    contents: { "en": body, "ru": body, "az": body },
-                    android_channel_id: "b455502c-7b2a-4318-8422-921c172d1f94",
-                    data: { type: "incoming_call" } 
-                };
+            // Упаковываем скрытые данные (тип звонка, кто звонит)
+            let notificationData = customData ? { a: customData } : {};
 
-                fetch('https://onesignal.com/api/v1/notifications', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
-                    },
-                    body: JSON.stringify(notification)
-                }).catch(e => console.error("OneSignal Error:", e));
+            let notification = {
+                app_id: ONESIGNAL_APP_ID,
+                include_aliases: { "external_id": [targetUserId] }, 
+                headings: { "en": title, "ru": title, "az": title },
+                contents: { "en": body, "ru": body, "az": body },
+                priority: 10, // МАКСИМАЛЬНЫЙ приоритет (обязательно для фона!)
+                data: notificationData // <--- ДОБАВЛЕНО: Передаем данные в фоновый режим!
             };
 
-            let activeUserId = localStorage.getItem('hf_active_user');
-            window.isGuest = !activeUserId; 
+            // ПРОБИВАЕМ CORS ЧЕРЕЗ ПРОКСИ (ДЛЯ ТЕСТОВ)
+            fetch('https://corsproxy.io/?https://onesignal.com/api/v1/notifications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8',
+                    'Authorization': `Basic ${ONESIGNAL_REST_KEY}`
+                },
+                body: JSON.stringify(notification)
+            }).catch(e => console.error("OneSignal Proxy Error:", e));
+        };
+
+        let activeUserId = localStorage.getItem('hf_active_user');
+        window.isGuest = !activeUserId;
             window.currentRoomId = "global"; window.activeChatListener = null; window.mySessionId = Math.random().toString(36).substring(2, 15); window.currentTargetUser = null; 
 
             const aiBot = { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', profession: 'AI Core', email: 'ai@hf.com', phone: 'API', flag: '🤖', flagCode: 'un', langCode: 'en', country: 'Cloud', pop: 'Infinite', seas: 'Data', desc: 'Powered by Gemini.', languages: 'All', video: '' };
@@ -1695,15 +1810,7 @@ if (window.OneSignalDeferred) {
         </div>
     </div>
     
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA SW Registered!', reg.scope))
-                    .catch(err => console.log('PWA SW Failed!', err));
-            });
-        }
-    </script>
+
     
     <div id="qr-modal" class="app-modal" onclick="if(event.target===this) this.classList.remove('active');">
         <div class="app-modal-content flex flex-col items-center text-center">
