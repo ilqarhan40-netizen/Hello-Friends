@@ -499,11 +499,23 @@ window.openViewCVModal = function(id) {
 
 // --- ОТРИСОВКА ВКЛАДКИ "GLOBAL TALENTS" ---
 window.renderProfessionList = function() { 
-    const profContainer = document.getElementById('profession-list'); if (!profContainer) return; 
-    const allUsers = [window.myProfileInfo, ...window.participants.filter(p => p.id !== 'ai')]; 
-    const validUsers = allUsers.filter(p => p.id === window.myProfileInfo.id || !p.id.startsWith('guest')); 
-    let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
+    const profContainer = document.getElementById('profession-list'); 
+    if (!profContainer) return; 
     
+    // Берем текущего юзера и всех участников, загруженных из базы
+    const allUsers = [
+        window.myProfileInfo, 
+        ...(window.participants || []).filter(p => p && p.id && p.id !== 'ai')
+    ]; 
+    
+    // Фильтруем гостей, дубликаты и неизвестных
+    const validUsers = allUsers.filter((p, index, self) => 
+        p && p.id && 
+        (p.id === window.myProfileInfo.id || (!p.id.startsWith('guest') && p.id !== 'unknown')) &&
+        index === self.findIndex((t) => t.id === p.id)
+    ); 
+    
+    let cardsHTML = `<div class="grid grid-cols-2 gap-3">`; 
     let dict = (typeof i18n !== 'undefined' && window.appLang) ? (i18n[window.appLang] || i18n['en']) : {};
 
     validUsers.forEach((p) => { 
@@ -513,19 +525,59 @@ window.renderProfessionList = function() {
         
         let btnText = isMe ? (dict['edit_my_cv'] || 'Edit My CV') : (dict['view_cv'] || 'View CV'); 
         
-        let nameTxt = (p.name||'User').split(' ')[0]; 
+        let nameTxt = (p.name || 'User').split(' ')[0]; 
         let borderColor = isMe ? 'border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.2)]' : 'border-gray-200 dark:border-[#2a3942]'; 
+        let displayProf = p.cvProfession || p.profession || 'User';
         
         cardsHTML += `
         <div class="bg-white dark:bg-[#111b21] p-4 rounded-3xl border ${borderColor} flex flex-col items-center shadow-sm relative overflow-hidden transition-colors">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00a884] to-[#005c4b]"></div>
-            <img src="${p.photo}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2 cursor-pointer shadow-sm" onclick="${avatarClick}">
+            <img src="${p.photo || 'https://ui-avatars.com/api/?name=U'}" class="w-16 h-16 rounded-full border-2 border-[#00a884] mb-2 object-cover mt-2 cursor-pointer shadow-sm" onclick="${avatarClick}">
             <h3 class="text-gray-900 dark:text-white font-bold text-sm text-center mb-0.5">${nameTxt}</h3>
-            <p class="text-gray-500 dark:text-[#8696a0] text-xs text-center mb-3 flex items-center justify-center gap-1"><img src="https://flagcdn.com/w20/${p.flagCode || 'un'}.png" class="w-3.5 rounded-sm"> <span class="truncate w-16">${p.cvProfession || p.profession || 'User'}</span></p>
+            <p class="text-gray-500 dark:text-[#8696a0] text-xs text-center mb-3 flex items-center justify-center gap-1"><img src="https://flagcdn.com/w20/${p.flagCode || 'un'}.png" class="w-3.5 rounded-sm"> <span class="truncate w-16">${displayProf}</span></p>
             <button onclick="${cvClick}" class="w-full mt-auto bg-gray-50 dark:bg-[#202c33] text-[#00a884] py-2 rounded-xl text-xs font-bold border border-gray-200 dark:border-[#2a3942] hover:bg-[#00a884] hover:text-white dark:hover:text-[#111b21] transition shadow-sm">${btnText}</button>
         </div>`; 
     }); 
+    
     profContainer.innerHTML = cardsHTML + `</div>`; 
     
     if(window.applyTranslations) window.applyTranslations();
 };
+
+// --- ГЛОБАЛЬНАЯ АВТОЗАГРУЗКА ВСЕХ CV ПРИ СТАРТЕ ПРИЛОЖЕНИЯ ---
+(function startAutoUsersSync() {
+    function connectUsersListener() {
+        if (typeof db === 'undefined') {
+            setTimeout(connectUsersListener, 300);
+            return;
+        }
+
+        // Подключаемся к базе при запуске и слушаем изменения 24/7
+        db.ref('users').on('value', (snapshot) => {
+            const dbUsers = snapshot.val();
+            if (!dbUsers) return;
+
+            if (!window.participants) window.participants = [];
+
+            Object.values(dbUsers).forEach(u => {
+                if (!u || !u.id || u.id === 'ai') return;
+
+                let existingIdx = window.participants.findIndex(p => p.id === u.id);
+                if (existingIdx === -1) {
+                    window.participants.push(u);
+                } else {
+                    window.participants[existingIdx] = { ...window.participants[existingIdx], ...u };
+                }
+            });
+
+            // Как только сервер прислал списки — моментально обновляем экран
+            window.renderProfessionList();
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', connectUsersListener);
+    } else {
+        connectUsersListener();
+    }
+})();
