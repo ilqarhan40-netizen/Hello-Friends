@@ -6,6 +6,7 @@ window.personalLangs = [
     { val: 'auto', label: '🤖 Auto (Profile)' },
     { val: 'en', label: '🇬🇧 English' },
     { val: 'ru', label: '🇷🇺 Русский' },
+    { val: 'kk', label: '🇰🇿 Қазақша' }, // Добавлен казахский язык
     { val: 'az', label: '🇦🇿 Azərbaycanca' },
     { val: 'de', label: '🇩🇪 Deutsch' },
     { val: 'tr', label: '🇹🇷 Türkçe' },
