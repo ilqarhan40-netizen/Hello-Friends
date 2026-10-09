@@ -193,7 +193,14 @@ window.startInAppCall = function(callType = 'voice') {
     }); 
     
     let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
-    if(window.sendPushToUser) window.sendPushToUser(target.id, pushTitle, `${window.myUsername} звонит вам!`, { type: 'call', callerName: window.myUsername }); 
+    if (window.sendPushNotification) {
+        window.sendPushNotification(
+            target.id, 
+            { type: 'call', callerName: window.myUsername, callType: callType }, 
+            pushTitle, 
+            `${window.myUsername} звонит вам!`
+        );
+    }
     
     const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
@@ -214,7 +221,14 @@ window.startInAppCall = function(callType = 'voice') {
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
         
         let missedTitle = callType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
-        if(window.sendPushToUser) window.sendPushToUser(target.id, missedTitle, `Вы пропустили вызов от ${window.myUsername}`, { type: 'missed', callerName: window.myUsername }); 
+        if (window.sendPushNotification) {
+            window.sendPushNotification(
+                target.id, 
+                { type: 'missed', callerName: window.myUsername }, 
+                missedTitle, 
+                `Вы пропустили вызов от ${window.myUsername}`
+            );
+        }
     }, 30000);
 };
 
