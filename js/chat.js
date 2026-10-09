@@ -995,201 +995,244 @@ let checkProfileForOneSignal = setInterval(() => {
         clearInterval(checkProfileForOneSignal);
     }
 }, 1000);
-
 // ==========================================
-// 9. УМНЫЙ БУФЕР ОБМЕНА (ВНУТРЕННИЙ + СИСТЕМНЫЙ)
+// 9. МЕНЮ ЧЕРЕЗ КНОПКУ-КВАДРАТИК НА СООБЩЕНИЯХ
 // ==========================================
 
+window.appInternalClipboard = null; 
 let activePopupBubble = null;
-window.appInternalClipboard = null; // Внутренняя память для пересылки внутри приложения
 
-// Закрываем меню при клике в пустую область
+// 1. Закрываем меню по клику в любом другом месте или при прокрутке
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.inline-action-popup')) {
+    if (!e.target.closest('.inline-action-popup') && !e.target.closest('.side-menu-btn')) {
         closeAllInlinePopups();
     }
 });
+document.addEventListener('scroll', closeAllInlinePopups, { passive: true });
 
 function closeAllInlinePopups() {
     document.querySelectorAll('.inline-action-popup').forEach(el => el.remove());
     activePopupBubble = null;
 }
 
-// Вызов меню (Долгое нажатие или правый клик)
-document.addEventListener('contextmenu', function(e) {
-    const bubble = e.target.closest('.chat-bubble') || e.target.closest('.message-content');
-    const wrapper = e.target.closest('[data-id]'); 
-    
-    if (!bubble && !wrapper) return;
+// 2. АВТОМАТИЧЕСКОЕ ДОБАВЛЕНИЕ КВАДРАТИКА КО ВСЕМ СООБЩЕНИЯМ
+function attachMenuButtons() {
+    // Ищем все пузырьки сообщений
+    document.querySelectorAll('.chat-bubble').forEach(bubble => {
+        // Если кнопки еще нет - добавляем
+        if (!bubble.querySelector('.side-menu-btn')) {
+            const btn = document.createElement('div');
+            // Дизайн квадратика (полупрозрачный, в углу)
+            btn.className = 'side-menu-btn absolute top-1 right-1 w-7 h-7 bg-black/40 hover:bg-black/70 rounded-md flex items-center justify-center text-white cursor-pointer opacity-40 hover:opacity-100 backdrop-blur-sm z-10 transition border border-white/10 shadow-sm';
+            btn.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'; 
+            
+            // По клику на квадратик - открываем меню
+            btn.onclick = (e) => { 
+                e.stopPropagation(); 
+                showSideMenu(e, bubble); 
+            };
+            
+            bubble.style.position = 'relative';
+            bubble.appendChild(btn);
+        }
+    });
+}
 
-    e.preventDefault(); 
+// Автоматически проверяем новые сообщения каждую секунду и вешаем на них квадратик
+setInterval(attachMenuButtons, 1000);
+setTimeout(attachMenuButtons, 300);
+
+// 3. ОТРИСОВКА ВЫПАДАЮЩЕГО МЕНЮ
+function showSideMenu(e, bubble) {
     closeAllInlinePopups(); 
-
-    activePopupBubble = wrapper || bubble;
+    activePopupBubble = bubble;
 
     const popup = document.createElement('div');
-    popup.className = 'inline-action-popup absolute z-50 bg-[#202c33] border border-[#2a3942] rounded-xl shadow-2xl flex items-center gap-1 p-1 text-white animate-fade-in';
+    popup.className = 'inline-action-popup fixed z-[10000] bg-[#202c33] border border-[#2a3942] rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.5)] flex flex-col p-1.5 text-white min-w-[170px] animate-fade-in';
     
-    popup.style.top = '-40px'; 
-    popup.style.left = '50%';
-    popup.style.transform = 'translateX(-50%)';
-    popup.style.whiteSpace = 'nowrap';
+    // Если в буфере что-то есть, показываем кнопку "Вставить"
+    let pasteBtnHtml = window.appInternalClipboard ? 
+        `<button onclick="window.actionPasteSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-paste text-yellow-400 w-4"></i> Вставить сюда</button>` : '';
 
+    // Пункты меню
     popup.innerHTML = `
-        <button onclick="window.actionCopyBubble()" class="flex items-center gap-1 px-3 py-1.5 hover:bg-[#2a3942] rounded-lg text-xs transition" title="Копировать">
-            <i class="fa-solid fa-copy text-[#00a884]"></i> Копировать
-        </button>
-        <button onclick="window.actionCutBubble()" class="flex items-center gap-1 px-3 py-1.5 hover:bg-[#2a3942] rounded-lg text-xs transition" title="Вырезать">
-            <i class="fa-solid fa-scissors text-yellow-400"></i> Вырезать
-        </button>
-        <button onclick="window.actionDeleteBubble()" class="flex items-center gap-1 px-3 py-1.5 hover:bg-[#2a3942] rounded-lg text-xs text-red-400 transition" title="Удалить">
-            <i class="fa-solid fa-trash"></i> Удалить
-        </button>
+        <button onclick="window.actionCopySide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-copy text-[#00a884] w-4"></i> Копировать</button>
+        ${pasteBtnHtml}
+        <button onclick="window.actionForwardSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-share text-blue-400 w-4"></i> Отправить</button>
+        <button onclick="window.actionSaveSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-download text-green-400 w-4"></i> Сохранить</button>
+        <div class="h-[1px] bg-[#2a3942] my-1 w-full"></div>
+        <button onclick="window.actionDeleteSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left text-red-400 transition"><i class="fa-solid fa-trash w-4"></i> Удалить</button>
     `;
 
-    const attachTarget = bubble || wrapper;
-    attachTarget.style.position = 'relative';
-    attachTarget.appendChild(popup);
-});
+    document.body.appendChild(popup);
+    
+    // Позиционируем меню ровно под кнопкой-квадратиком
+    const rect = e.currentTarget.getBoundingClientRect();
+    let topPos = rect.bottom + 5;
+    let leftPos = rect.left - 130; 
 
-// 1. ДЕЙСТВИЕ: КОПИРОВАТЬ ВО ВНУТРЕННИЙ И СИСТЕМНЫЙ БУФЕР
-window.actionCopyBubble = async function() {
+    // Защита от вылета за экран снизу
+    if (topPos + 240 > window.innerHeight) topPos = rect.top - popup.offsetHeight - 5; 
+    if (leftPos < 10) leftPos = 10;
+
+    popup.style.top = topPos + 'px';
+    popup.style.left = leftPos + 'px';
+}
+
+// ==========================================
+// ЛОГИКА КНОПОК МЕНЮ
+// ==========================================
+
+// КОПИРОВАТЬ
+window.actionCopySide = async function() {
     if (!activePopupBubble) return;
     
-    // --- ЧАСТЬ 1: ВНУТРЕННИЙ БУФЕР (Для пересылки внутри приложения) ---
-    const msgId = activePopupBubble.getAttribute('data-id');
-    let extractedText = "";
+    const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble;
+    const msgId = wrapper.getAttribute('data-id');
+    const targetRoom = window.currentRoomId || 'global';
 
-    // Очищаем текст от кнопок меню перед копированием
     let clone = activePopupBubble.cloneNode(true);
-    let p = clone.querySelector('.inline-action-popup');
-    if (p) p.remove();
-    extractedText = clone.innerText.trim();
-    
-    if (msgId && window.currentRoomId) {
-        // Копируем всю структуру сообщения из Firebase
-        firebase.database().ref(window.currentRoomId).child(msgId).once('value', snapshot => {
+    let btnToRemove = clone.querySelector('.side-menu-btn');
+    if (btnToRemove) btnToRemove.remove(); // Убираем кнопку из копируемого текста
+    let extractedText = clone.innerText.trim();
+
+    // 1. Копируем во Внутренний буфер (идеально для фото/видео)
+    if (msgId && targetRoom) {
+        firebase.database().ref(targetRoom).child(msgId).once('value', snapshot => {
             if (snapshot.val()) {
                 window.appInternalClipboard = snapshot.val();
-                showPasteFloatingButton();
+                showPasteFloatingButton(); // Показываем зеленую кнопку-напоминание
+                showToastMsg("Скопировано", "Нажмите 'Вставить' в нужном чате");
             }
         });
     } else {
-        // Запасной внутренний буфер (если нет ID)
         window.appInternalClipboard = { text: extractedText }; 
         showPasteFloatingButton();
+        showToastMsg("Скопировано", "Текст скопирован");
     }
 
-    // --- ЧАСТЬ 2: СИСТЕМНЫЙ БУФЕР (Для WhatsApp, Telegram, Заметок) ---
-    const img = activePopupBubble.querySelector('img') || (activePopupBubble.tagName === 'IMG' ? activePopupBubble : null);
+    // 2. Копируем в Системный буфер телефона (без иероглифов)
+    const img = activePopupBubble.querySelector('img');
     const video = activePopupBubble.querySelector('video');
-    const audio = activePopupBubble.querySelector('audio');
-    const link = activePopupBubble.querySelector('a');
 
     try {
-        if (img && img.src && !img.src.includes('ui-avatars')) {
-            // Пытаемся скопировать саму картинку как файл
-            try {
-                const response = await fetch(img.src);
-                const blob = await response.blob();
-                const item = new ClipboardItem({ [blob.type]: blob });
-                await navigator.clipboard.write([item]);
-            } catch (err) {
-                // Если сервер не дал скачать файл (CORS), копируем ссылку на картинку
-                await navigator.clipboard.writeText(img.src);
-            }
+        if (img && !img.src.includes('ui-avatars')) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(async (blob) => {
+                try {
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    await navigator.clipboard.write([item]);
+                } catch (e) {}
+            }, 'image/png');
         } 
-        else if (video || audio || link) {
-            // Видео и файлы браузер не дает класть в буфер ОС, поэтому копируем ссылку
-            const mediaSrc = video ? video.src : (audio ? audio.src : link.href);
-            await navigator.clipboard.writeText(mediaSrc);
+        else if (video && !video.src.startsWith('data:')) {
+            await navigator.clipboard.writeText(video.src);
         } 
         else if (extractedText) {
-            // Копируем обычный текст
             await navigator.clipboard.writeText(extractedText);
         }
-    } catch (err) {
-        console.error("Ошибка записи в системный буфер", err);
-    }
+    } catch (err) {}
 
-    showToastMsg("Скопировано", "Доступно для вставки здесь и в других приложениях!");
     closeAllInlinePopups();
 };
 
-// 2. ПЛАВАЮЩАЯ КНОПКА "ВСТАВИТЬ" (Для приложения)
-function showPasteFloatingButton() {
-    let oldBtn = document.getElementById('floating-paste-btn');
-    if (oldBtn) oldBtn.remove();
+// ОТПРАВИТЬ (Работает так же, как копировать, но пишет другой текст)
+window.actionForwardSide = function() {
+    window.actionCopySide(); 
+    setTimeout(() => {
+        showToastMsg("Готово к отправке", "Перейдите в другой чат и выберите 'Вставить'");
+    }, 500);
+};
 
-    if (!window.appInternalClipboard) return;
-
-    const btn = document.createElement('div');
-    btn.id = 'floating-paste-btn';
-    btn.className = 'fixed bottom-24 right-4 z-[9999] bg-[#00a884] text-white px-5 py-3 rounded-full shadow-2xl cursor-pointer flex items-center gap-2 hover:bg-[#008f6f] transition animate-bounce border-2 border-[#128C7E]';
-    btn.innerHTML = `<i class="fa-solid fa-paste"></i> <span class="font-bold text-sm">Вставить в этот чат</span>`;
-    
-    btn.onclick = function() {
-        window.actionPasteAndSend();
-    };
-
-    document.body.appendChild(btn);
-}
-
-// 3. ДЕЙСТВИЕ: ВСТАВИТЬ И ОТПРАВИТЬ ФАЙЛ ВО ВНУТРЕННИЙ ЧАТ
-window.actionPasteAndSend = function() {
+// ВСТАВИТЬ
+window.actionPasteSide = function() {
     const targetRoom = window.currentRoomId || 'global';
     if (!window.appInternalClipboard || !targetRoom) return;
 
-    // Клонируем оригинальное сообщение
     const newMessage = { ...window.appInternalClipboard };
-    
-    // Обновляем данные на текущего пользователя
+    // Меняем отправителя на нас
     newMessage.userId = window.myProfileInfo ? window.myProfileInfo.id : "guest";
     newMessage.name = window.myUsername || "User";
     newMessage.photo = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
     newMessage.timestamp = firebase.database.ServerValue.TIMESTAMP;
     newMessage.sessionId = window.mySessionId || 'sess';
-    
-    // Удаляем старые идентификаторы
     delete newMessage.id; 
     
-    // Отправляем прямо в базу текущего открытого чата
+    // Отправляем
     firebase.database().ref(targetRoom).push(newMessage).then(() => {
-        showToastMsg("Отправлено", "Успешно отправлено в текущий чат!");
-        
-        // Скрываем кнопку вставки и очищаем буфер
-        window.appInternalClipboard = null; 
+        showToastMsg("Отправлено", "Файл успешно вставлен!");
+        window.appInternalClipboard = null; // Очищаем буфер после отправки
         const btn = document.getElementById('floating-paste-btn');
-        if (btn) btn.remove();
-        
-    }).catch(err => console.error("Ошибка при отправке", err));
+        if (btn) btn.remove(); // Прячем зеленую кнопку
+    });
+    closeAllInlinePopups();
 };
 
-// ДЕЙСТВИЕ: ВЫРЕЗАТЬ
-window.actionCutBubble = async function() {
-    await window.actionCopyBubble(); 
-    setTimeout(() => window.actionDeleteBubble(), 300);
-};
-
-// ДЕЙСТВИЕ: УДАЛИТЬ
-window.actionDeleteBubble = function() {
+// СОХРАНИТЬ (Скачать на устройство)
+window.actionSaveSide = async function() {
     if (!activePopupBubble) return;
+    const img = activePopupBubble.querySelector('img');
+    const video = activePopupBubble.querySelector('video');
+    const link = activePopupBubble.querySelector('a');
     
-    const wrapper = activePopupBubble.closest('.flex.flex-col.w-full') || activePopupBubble.closest('.chat-message') || activePopupBubble;
+    let url = img ? img.src : (video ? video.src : (link ? link.href : null));
+    
+    if (url && !url.includes('ui-avatars')) {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = "Файл_" + Date.now();
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(blobUrl);
+            showToastMsg("Сохранено", "Файл загружен на ваше устройство");
+        } catch(e) {
+            window.open(url, '_blank'); // Если браузер блокирует прямое скачивание - открываем в новой вкладке
+        }
+    } else {
+        showToastMsg("Ошибка", "Здесь нет файла для сохранения");
+    }
+    closeAllInlinePopups();
+};
+
+// УДАЛИТЬ
+window.actionDeleteSide = function() {
+    if (!activePopupBubble) return;
+    const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble.closest('.chat-message') || activePopupBubble;
     const msgId = wrapper.getAttribute('data-id');
     const targetRoom = window.currentRoomId || 'global';
     
-    if (msgId && targetRoom) {
-        firebase.database().ref(targetRoom).child(msgId).remove();
-    }
-    
+    if (msgId && targetRoom) firebase.database().ref(targetRoom).child(msgId).remove();
     wrapper.remove();
     showToastMsg("Удалено", "Сообщение стерто");
     closeAllInlinePopups();
 };
 
+// Плавающая зеленая кнопка "Вставить" внизу экрана
+function showPasteFloatingButton() {
+    let oldBtn = document.getElementById('floating-paste-btn');
+    if (oldBtn) oldBtn.remove();
+    if (!window.appInternalClipboard) return;
+
+    const btn = document.createElement('div');
+    btn.id = 'floating-paste-btn';
+    btn.className = 'fixed bottom-24 right-4 z-[9999] bg-[#00a884] text-white px-5 py-3 rounded-full shadow-[0_5px_15px_rgba(0,168,132,0.5)] cursor-pointer flex items-center gap-2 hover:bg-[#008f6f] transition animate-bounce border-2 border-[#111b21]';
+    btn.innerHTML = `<i class="fa-solid fa-share"></i> <span class="font-bold text-sm">Вставить скопированное</span>`;
+    
+    btn.onclick = function() { window.actionPasteSide(); };
+    document.body.appendChild(btn);
+}
+
 function showToastMsg(title, desc) {
     if (window.showToast) window.showToast(title, desc, "", "");
-    else alert(`${title}\n${desc}`);
+    else alert(`${title}: ${desc}`);
 }
- 
+
