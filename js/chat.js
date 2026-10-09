@@ -939,7 +939,7 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
                 'Content-Type': 'application/json; charset=utf-8'
             },
             body: JSON.stringify({
-                app_id: "ВАШ_ONESIGNAL_APP_ID", // ⚠️ Не забудьте указать ваш App ID из OneSignal
+                app_id: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
                 include_player_ids: [targetPlayerId],
                 data: {
                     custom: {
@@ -952,3 +952,4 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
         }).catch(err => console.error("Ошибка отправки Push:", err));
     });
 };
+
