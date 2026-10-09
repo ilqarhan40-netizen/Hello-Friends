@@ -921,3 +921,34 @@ window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
+// ==========================================
+// 7. ОТПРАВКА PUSH-УВЕДОМЛЕНИЙ ЧЕРЕЗ ONESIGNAL
+// ==========================================
+window.sendPushNotification = function(targetUserId, pushData, titleText, bodyText) {
+    if (!targetUserId || targetUserId === 'ai' || targetUserId === 'guest') return;
+
+    // 1. Извлекаем onesignal_id получателя из Firebase
+    firebase.database().ref('users/' + targetUserId + '/onesignal_id').once('value').then(snapshot => {
+        const targetPlayerId = snapshot.val();
+        if (!targetPlayerId) return; // У получателя нет токена OneSignal
+
+        // 2. Отправляем Push через REST API OneSignal
+        fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify({
+                app_id: "ВАШ_ONESIGNAL_APP_ID", // ⚠️ Не забудьте указать ваш App ID из OneSignal
+                include_player_ids: [targetPlayerId],
+                data: {
+                    custom: {
+                        a: pushData
+                    }
+                },
+                headings: { "en": titleText },
+                contents: { "en": bodyText }
+            })
+        }).catch(err => console.error("Ошибка отправки Push:", err));
+    });
+};
