@@ -953,3 +953,45 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
     });
 };
 
+// ==========================================
+// 8. ИНИЦИАЛИЗАЦИЯ ONESIGNAL И РЕГИСТРАЦИЯ УСТРОЙСТВА
+// ==========================================
+window.initOneSignalNotifications = function() {
+    if (!window.OneSignal) return;
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.init({
+            appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+            notifyButton: { enable: false }
+        });
+
+        OneSignal.Notifications.requestPermission();
+
+        // Обновление токена при изменении подписки
+        OneSignal.User.PushSubscription.addEventListener("change", function(event) {
+            const subscriptionId = event.current.id;
+            if (subscriptionId && window.myProfileInfo && window.myProfileInfo.id) {
+                firebase.database().ref('users/' + window.myProfileInfo.id).update({
+                    onesignal_id: subscriptionId
+                });
+            }
+        });
+
+        // Запись текущего токена при входе
+        const currentSubId = OneSignal.User.PushSubscription.id;
+        if (currentSubId && window.myProfileInfo && window.myProfileInfo.id) {
+            firebase.database().ref('users/' + window.myProfileInfo.id).update({
+                onesignal_id: currentSubId
+            });
+        }
+    });
+};
+
+// Автоматический запуск после загрузки профиля
+let checkProfileForOneSignal = setInterval(() => {
+    if (window.myProfileInfo && window.myProfileInfo.id) {
+        window.initOneSignalNotifications();
+        clearInterval(checkProfileForOneSignal);
+    }
+}, 1000);
