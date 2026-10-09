@@ -997,12 +997,13 @@ let checkProfileForOneSignal = setInterval(() => {
 }, 1000);
 
 // ==========================================
-// 9. УМНОЕ МЕНЮ НА СООБЩЕНИИ (ТЕКСТ, ФОТО И ФАЙЛЫ)
+// 9. УМНЫЙ БУФЕР ОБМЕНА (ВНУТРЕННИЙ + СИСТЕМНЫЙ)
 // ==========================================
 
 let activePopupBubble = null;
+window.appInternalClipboard = null; // Внутренняя память для пересылки внутри приложения
 
-// Закрываем меню при клике в любое другое место
+// Закрываем меню при клике в пустую область
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.inline-action-popup')) {
         closeAllInlinePopups();
@@ -1014,28 +1015,26 @@ function closeAllInlinePopups() {
     activePopupBubble = null;
 }
 
-// Отслеживаем долгое нажатие (телефон) или правый клик (ПК)
+// Вызов меню (Долгое нажатие или правый клик)
 document.addEventListener('contextmenu', function(e) {
-    // Ищем само сообщение (текст) или картинку/файл внутри него
     const bubble = e.target.closest('.chat-bubble') || e.target.closest('.message-content');
-    if (!bubble) return;
+    const wrapper = e.target.closest('[data-id]'); 
+    
+    if (!bubble && !wrapper) return;
 
-    e.preventDefault(); // Отключаем системное меню браузера
-    closeAllInlinePopups(); // Закрываем старые менюшки
+    e.preventDefault(); 
+    closeAllInlinePopups(); 
 
-    activePopupBubble = bubble;
+    activePopupBubble = wrapper || bubble;
 
-    // Создаем панель меню
     const popup = document.createElement('div');
     popup.className = 'inline-action-popup absolute z-50 bg-[#202c33] border border-[#2a3942] rounded-xl shadow-2xl flex items-center gap-1 p-1 text-white animate-fade-in';
     
-    // Позиционируем меню по центру над сообщением
     popup.style.top = '-40px'; 
     popup.style.left = '50%';
     popup.style.transform = 'translateX(-50%)';
     popup.style.whiteSpace = 'nowrap';
 
-    // Кнопки: Копировать, Вырезать, Удалить
     popup.innerHTML = `
         <button onclick="window.actionCopyBubble()" class="flex items-center gap-1 px-3 py-1.5 hover:bg-[#2a3942] rounded-lg text-xs transition" title="Копировать">
             <i class="fa-solid fa-copy text-[#00a884]"></i> Копировать
@@ -1048,72 +1047,149 @@ document.addEventListener('contextmenu', function(e) {
         </button>
     `;
 
-    // Делаем родительский блок relative, чтобы меню позиционировалось ровно над ним
-    bubble.style.position = 'relative';
-    bubble.appendChild(popup);
+    const attachTarget = bubble || wrapper;
+    attachTarget.style.position = 'relative';
+    attachTarget.appendChild(popup);
 });
 
-// Действие: КОПИРОВАТЬ (Умное распознавание фото/файла/текста)
+// 1. ДЕЙСТВИЕ: КОПИРОВАТЬ ВО ВНУТРЕННИЙ И СИСТЕМНЫЙ БУФЕР
 window.actionCopyBubble = async function() {
     if (!activePopupBubble) return;
     
-    let contentToCopy = '';
+    // --- ЧАСТЬ 1: ВНУТРЕННИЙ БУФЕР (Для пересылки внутри приложения) ---
+    const msgId = activePopupBubble.getAttribute('data-id');
+    let extractedText = "";
+
+    // Очищаем текст от кнопок меню перед копированием
+    let clone = activePopupBubble.cloneNode(true);
+    let p = clone.querySelector('.inline-action-popup');
+    if (p) p.remove();
+    extractedText = clone.innerText.trim();
     
-    // 1. Проверяем, есть ли внутри картинка
+    if (msgId && window.currentRoomId) {
+        // Копируем всю структуру сообщения из Firebase
+        firebase.database().ref(window.currentRoomId).child(msgId).once('value', snapshot => {
+            if (snapshot.val()) {
+                window.appInternalClipboard = snapshot.val();
+                showPasteFloatingButton();
+            }
+        });
+    } else {
+        // Запасной внутренний буфер (если нет ID)
+        window.appInternalClipboard = { text: extractedText }; 
+        showPasteFloatingButton();
+    }
+
+    // --- ЧАСТЬ 2: СИСТЕМНЫЙ БУФЕР (Для WhatsApp, Telegram, Заметок) ---
     const img = activePopupBubble.querySelector('img') || (activePopupBubble.tagName === 'IMG' ? activePopupBubble : null);
-    // 2. Проверяем, есть ли внутри ссылка на файл (документ, аудио)
+    const video = activePopupBubble.querySelector('video');
+    const audio = activePopupBubble.querySelector('audio');
     const link = activePopupBubble.querySelector('a');
 
-    if (img) {
-        contentToCopy = img.src; // Если фото — копируем ссылку на фото
-    } else if (link && link.href) {
-        contentToCopy = link.href; // Если файл — копируем ссылку на файл
-    } else {
-        // Если это просто текст
-        // Клонируем элемент, чтобы удалить из него текст самого меню (чтобы он не скопировался)
-        const clone = activePopupBubble.cloneNode(true);
-        const popupToRemove = clone.querySelector('.inline-action-popup');
-        if (popupToRemove) popupToRemove.remove();
-        
-        contentToCopy = clone.innerText.trim();
+    try {
+        if (img && img.src && !img.src.includes('ui-avatars')) {
+            // Пытаемся скопировать саму картинку как файл
+            try {
+                const response = await fetch(img.src);
+                const blob = await response.blob();
+                const item = new ClipboardItem({ [blob.type]: blob });
+                await navigator.clipboard.write([item]);
+            } catch (err) {
+                // Если сервер не дал скачать файл (CORS), копируем ссылку на картинку
+                await navigator.clipboard.writeText(img.src);
+            }
+        } 
+        else if (video || audio || link) {
+            // Видео и файлы браузер не дает класть в буфер ОС, поэтому копируем ссылку
+            const mediaSrc = video ? video.src : (audio ? audio.src : link.href);
+            await navigator.clipboard.writeText(mediaSrc);
+        } 
+        else if (extractedText) {
+            // Копируем обычный текст
+            await navigator.clipboard.writeText(extractedText);
+        }
+    } catch (err) {
+        console.error("Ошибка записи в системный буфер", err);
     }
 
-    if (contentToCopy) {
-        try {
-            await navigator.clipboard.writeText(contentToCopy);
-            if (window.showToast) window.showToast("Скопировано", "Скопировано в буфер обмена", "", "");
-            else console.log("Скопировано:", contentToCopy);
-        } catch (err) {
-            console.error("Ошибка при копировании", err);
-        }
-    }
-    
+    showToastMsg("Скопировано", "Доступно для вставки здесь и в других приложениях!");
     closeAllInlinePopups();
 };
 
-// Действие: ВЫРЕЗАТЬ (Копирует + Удаляет)
-window.actionCutBubble = async function() {
-    await window.actionCopyBubble(); // Сначала вызываем функцию копирования
-    window.actionDeleteBubble();     // Затем удаляем
+// 2. ПЛАВАЮЩАЯ КНОПКА "ВСТАВИТЬ" (Для приложения)
+function showPasteFloatingButton() {
+    let oldBtn = document.getElementById('floating-paste-btn');
+    if (oldBtn) oldBtn.remove();
+
+    if (!window.appInternalClipboard) return;
+
+    const btn = document.createElement('div');
+    btn.id = 'floating-paste-btn';
+    btn.className = 'fixed bottom-24 right-4 z-[9999] bg-[#00a884] text-white px-5 py-3 rounded-full shadow-2xl cursor-pointer flex items-center gap-2 hover:bg-[#008f6f] transition animate-bounce border-2 border-[#128C7E]';
+    btn.innerHTML = `<i class="fa-solid fa-paste"></i> <span class="font-bold text-sm">Вставить в этот чат</span>`;
+    
+    btn.onclick = function() {
+        window.actionPasteAndSend();
+    };
+
+    document.body.appendChild(btn);
+}
+
+// 3. ДЕЙСТВИЕ: ВСТАВИТЬ И ОТПРАВИТЬ ФАЙЛ ВО ВНУТРЕННИЙ ЧАТ
+window.actionPasteAndSend = function() {
+    const targetRoom = window.currentRoomId || 'global';
+    if (!window.appInternalClipboard || !targetRoom) return;
+
+    // Клонируем оригинальное сообщение
+    const newMessage = { ...window.appInternalClipboard };
+    
+    // Обновляем данные на текущего пользователя
+    newMessage.userId = window.myProfileInfo ? window.myProfileInfo.id : "guest";
+    newMessage.name = window.myUsername || "User";
+    newMessage.photo = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+    newMessage.timestamp = firebase.database.ServerValue.TIMESTAMP;
+    newMessage.sessionId = window.mySessionId || 'sess';
+    
+    // Удаляем старые идентификаторы
+    delete newMessage.id; 
+    
+    // Отправляем прямо в базу текущего открытого чата
+    firebase.database().ref(targetRoom).push(newMessage).then(() => {
+        showToastMsg("Отправлено", "Успешно отправлено в текущий чат!");
+        
+        // Скрываем кнопку вставки и очищаем буфер
+        window.appInternalClipboard = null; 
+        const btn = document.getElementById('floating-paste-btn');
+        if (btn) btn.remove();
+        
+    }).catch(err => console.error("Ошибка при отправке", err));
 };
 
-// Действие: УДАЛИТЬ
+// ДЕЙСТВИЕ: ВЫРЕЗАТЬ
+window.actionCutBubble = async function() {
+    await window.actionCopyBubble(); 
+    setTimeout(() => window.actionDeleteBubble(), 300);
+};
+
+// ДЕЙСТВИЕ: УДАЛИТЬ
 window.actionDeleteBubble = function() {
     if (!activePopupBubble) return;
     
-    // Ищем главный контейнер сообщения, чтобы удалить его целиком
     const wrapper = activePopupBubble.closest('.flex.flex-col.w-full') || activePopupBubble.closest('.chat-message') || activePopupBubble;
-    
-    // Получаем ID из Firebase (если ты добавил атрибут data-id к сообщениям)
     const msgId = wrapper.getAttribute('data-id');
-    if (msgId && window.currentChatId) {
-        // Удаляем из базы данных Firebase (убедись, что путь к базе верный)
-        firebase.database().ref(`messages/${window.currentChatId}/${msgId}`).remove();
+    const targetRoom = window.currentRoomId || 'global';
+    
+    if (msgId && targetRoom) {
+        firebase.database().ref(targetRoom).child(msgId).remove();
     }
     
-    // Удаляем с экрана
     wrapper.remove();
-    
-    if (window.showToast) window.showToast("Удалено", "Сообщение удалено", "", "");
+    showToastMsg("Удалено", "Сообщение стерто");
     closeAllInlinePopups();
 };
+
+function showToastMsg(title, desc) {
+    if (window.showToast) window.showToast(title, desc, "", "");
+    else alert(`${title}\n${desc}`);
+}
+ 
