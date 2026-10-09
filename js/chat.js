@@ -995,3 +995,125 @@ let checkProfileForOneSignal = setInterval(() => {
         clearInterval(checkProfileForOneSignal);
     }
 }, 1000);
+
+// ==========================================
+// 9. УМНОЕ МЕНЮ НА СООБЩЕНИИ (ТЕКСТ, ФОТО И ФАЙЛЫ)
+// ==========================================
+
+let activePopupBubble = null;
+
+// Закрываем меню при клике в любое другое место
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.inline-action-popup')) {
+        closeAllInlinePopups();
+    }
+});
+
+function closeAllInlinePopups() {
+    document.querySelectorAll('.inline-action-popup').forEach(el => el.remove());
+    activePopupBubble = null;
+}
+
+// Отслеживаем долгое нажатие (телефон) или правый клик (ПК)
+document.addEventListener('contextmenu', function(e) {
+    // Ищем само сообщение (текст) или картинку/файл внутри него
+    const bubble = e.target.closest('.chat-bubble') || e.target.closest('.message-content');
+    if (!bubble) return;
+
+    e.preventDefault(); // Отключаем системное меню браузера
+    closeAllInlinePopups(); // Закрываем старые менюшки
+
+    activePopupBubble = bubble;
+
+    // Создаем панель меню
+    const popup = document.createElement('div');
+    popup.className = 'inline-action-popup absolute z-50 bg-[#202c33] border border-[#2a3942] rounded-xl shadow-2xl flex items-center gap-1 p-1 text-white animate-fade-in';
+    
+    // Позиционируем меню по центру над сообщением
+    popup.style.top = '-40px'; 
+    popup.style.left = '50%';
+    popup.style.transform = 'translateX(-50%)';
+    popup.style.whiteSpace = 'nowrap';
+
+    // Кнопки: Копировать, Вырезать, Удалить
+    popup.innerHTML = `
+        <button onclick="window.actionCopyBubble()" class="flex items-center gap-1 px-3 py-1.5 hover:bg-[#2a3942] rounded-lg text-xs transition" title="Копировать">
+            <i class="fa-solid fa-copy text-[#00a884]"></i> Копировать
+        </button>
+        <button onclick="window.actionCutBubble()" class="flex items-center gap-1 px-3 py-1.5 hover:bg-[#2a3942] rounded-lg text-xs transition" title="Вырезать">
+            <i class="fa-solid fa-scissors text-yellow-400"></i> Вырезать
+        </button>
+        <button onclick="window.actionDeleteBubble()" class="flex items-center gap-1 px-3 py-1.5 hover:bg-[#2a3942] rounded-lg text-xs text-red-400 transition" title="Удалить">
+            <i class="fa-solid fa-trash"></i> Удалить
+        </button>
+    `;
+
+    // Делаем родительский блок relative, чтобы меню позиционировалось ровно над ним
+    bubble.style.position = 'relative';
+    bubble.appendChild(popup);
+});
+
+// Действие: КОПИРОВАТЬ (Умное распознавание фото/файла/текста)
+window.actionCopyBubble = async function() {
+    if (!activePopupBubble) return;
+    
+    let contentToCopy = '';
+    
+    // 1. Проверяем, есть ли внутри картинка
+    const img = activePopupBubble.querySelector('img') || (activePopupBubble.tagName === 'IMG' ? activePopupBubble : null);
+    // 2. Проверяем, есть ли внутри ссылка на файл (документ, аудио)
+    const link = activePopupBubble.querySelector('a');
+
+    if (img) {
+        contentToCopy = img.src; // Если фото — копируем ссылку на фото
+    } else if (link && link.href) {
+        contentToCopy = link.href; // Если файл — копируем ссылку на файл
+    } else {
+        // Если это просто текст
+        // Клонируем элемент, чтобы удалить из него текст самого меню (чтобы он не скопировался)
+        const clone = activePopupBubble.cloneNode(true);
+        const popupToRemove = clone.querySelector('.inline-action-popup');
+        if (popupToRemove) popupToRemove.remove();
+        
+        contentToCopy = clone.innerText.trim();
+    }
+
+    if (contentToCopy) {
+        try {
+            await navigator.clipboard.writeText(contentToCopy);
+            if (window.showToast) window.showToast("Скопировано", "Скопировано в буфер обмена", "", "");
+            else console.log("Скопировано:", contentToCopy);
+        } catch (err) {
+            console.error("Ошибка при копировании", err);
+        }
+    }
+    
+    closeAllInlinePopups();
+};
+
+// Действие: ВЫРЕЗАТЬ (Копирует + Удаляет)
+window.actionCutBubble = async function() {
+    await window.actionCopyBubble(); // Сначала вызываем функцию копирования
+    window.actionDeleteBubble();     // Затем удаляем
+};
+
+// Действие: УДАЛИТЬ
+window.actionDeleteBubble = function() {
+    if (!activePopupBubble) return;
+    
+    // Ищем главный контейнер сообщения, чтобы удалить его целиком
+    const wrapper = activePopupBubble.closest('.flex.flex-col.w-full') || activePopupBubble.closest('.chat-message') || activePopupBubble;
+    
+    // Получаем ID из Firebase (если ты добавил атрибут data-id к сообщениям)
+    const msgId = wrapper.getAttribute('data-id');
+    if (msgId && window.currentChatId) {
+        // Удаляем из базы данных Firebase (убедись, что путь к базе верный)
+        firebase.database().ref(`messages/${window.currentChatId}/${msgId}`).remove();
+    }
+    
+    // Удаляем с экрана
+    wrapper.remove();
+    
+    if (window.showToast) window.showToast("Удалено", "Сообщение удалено", "", "");
+    closeAllInlinePopups();
+};
