@@ -921,3 +921,73 @@ window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
+
+// ==========================================
+// 7. ОТПРАВКА PUSH-УВЕДОМЛЕНИЙ ЧЕРЕЗ ONESIGNAL
+// ==========================================
+window.sendPushNotification = function(targetUserId, pushData, titleText, bodyText) {
+    if (!targetUserId || targetUserId === 'ai' || targetUserId === 'guest') return;
+
+    firebase.database().ref('users/' + targetUserId + '/onesignal_id').once('value').then(snapshot => {
+        const targetPlayerId = snapshot.val();
+        if (!targetPlayerId) return; 
+
+        fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify({
+                app_id: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+                include_player_ids: [targetPlayerId],
+                data: {
+                    custom: {
+                        a: pushData
+                    }
+                },
+                headings: { "en": titleText },
+                contents: { "en": bodyText }
+            })
+        }).catch(err => console.error("Ошибка отправки Push:", err));
+    });
+};
+
+// ==========================================
+// 8. ИНИЦИАЛИЗАЦИЯ ONESIGNAL И РЕГИСТРАЦИЯ УСТРОЙСТВА
+// ==========================================
+window.initOneSignalNotifications = function() {
+    if (!window.OneSignal) return;
+
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.init({
+            appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+            notifyButton: { enable: false }
+        });
+
+        OneSignal.Notifications.requestPermission();
+
+        OneSignal.User.PushSubscription.addEventListener("change", function(event) {
+            const subscriptionId = event.current.id;
+            if (subscriptionId && window.myProfileInfo && window.myProfileInfo.id) {
+                firebase.database().ref('users/' + window.myProfileInfo.id).update({
+                    onesignal_id: subscriptionId
+                });
+            }
+        });
+
+        const currentSubId = OneSignal.User.PushSubscription.id;
+        if (currentSubId && window.myProfileInfo && window.myProfileInfo.id) {
+            firebase.database().ref('users/' + window.myProfileInfo.id).update({
+                onesignal_id: currentSubId
+            });
+        }
+    });
+};
+
+let checkProfileForOneSignal = setInterval(() => {
+    if (window.myProfileInfo && window.myProfileInfo.id) {
+        window.initOneSignalNotifications();
+        clearInterval(checkProfileForOneSignal);
+    }
+}, 1000);
