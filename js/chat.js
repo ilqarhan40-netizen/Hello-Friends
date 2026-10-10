@@ -203,7 +203,7 @@ window.switchChatRoom = function(targetId) {
 };
 
 // ==========================================
-// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
+// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ (ЧИСТЫЙ ОРИГИНАЛ)
 // ==========================================
 window.isGeminiWaiting = false;
 
@@ -325,14 +325,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    const messageGroup = document.createElement('div'); 
-    messageGroup.className = "flex flex-col w-full mt-3 mb-2";
-    
-    // БЕЗОПАСНОЕ НАЗНАЧЕНИЕ ID (чтобы удаление работало навсегда)
-    if (snapshot && snapshot.key) {
-        messageGroup.setAttribute('data-id', snapshot.key);
-    }
-
+    const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
@@ -1070,37 +1063,16 @@ function showSquareMenu(e, bubble) {
 window.actionCopySquareMenu = async function() {
     if (!activePopupBubble) return;
     
-    const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble;
-    const msgId = wrapper.getAttribute('data-id');
-    const targetRoom = window.currentRoomId || 'global';
+    let clone = activePopupBubble.cloneNode(true);
+    let bRem = clone.querySelector('.square-action-btn');
+    if (bRem) bRem.remove();
+    let extractedText = clone.innerText.trim();
 
-    if (msgId && targetRoom) {
-        firebase.database().ref(targetRoom).child(msgId).once('value', snapshot => {
-            const data = snapshot.val();
-            if (data) {
-                window.appInternalClipboard = data; 
-                showToastMsg("Скопировано", "Теперь вы можете нажать 'Вставить' в любом чате");
-            }
-        });
-    } else {
-        let clone = activePopupBubble.cloneNode(true);
-        let bRem = clone.querySelector('.square-action-btn');
-        if (bRem) bRem.remove();
-        window.appInternalClipboard = { text: clone.innerText.trim() }; 
-        showToastMsg("Скопировано", "Текст сохранен");
-    }
-
-    const img = activePopupBubble.querySelector('img');
-    const video = activePopupBubble.querySelector('video');
-    let cloneText = activePopupBubble.cloneNode(true);
-    let bRem2 = cloneText.querySelector('.square-action-btn');
-    if (bRem2) bRem2.remove();
-    let textOnly = cloneText.innerText.trim();
+    window.appInternalClipboard = { text: extractedText }; 
+    showToastMsg("Скопировано", "Текст сохранен");
 
     try {
-        if (!img && !video && textOnly) {
-            await navigator.clipboard.writeText(textOnly);
-        }
+        await navigator.clipboard.writeText(extractedText);
     } catch (err) {}
 
     closeAllInlinePopups();
@@ -1123,7 +1095,6 @@ window.actionPasteSquareMenu = function() {
     newMessage.photo = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
     newMessage.timestamp = firebase.database.ServerValue.TIMESTAMP;
     newMessage.sessionId = window.mySessionId || 'sess';
-    delete newMessage.id; 
     
     firebase.database().ref(targetRoom).push(newMessage).then(() => {
         showToastMsg("Отправлено", "Сообщение успешно вставлено!");
@@ -1164,17 +1135,9 @@ window.actionSaveSquareMenu = async function() {
 
 window.actionDeleteSquareMenu = function() {
     if (!activePopupBubble) return;
-    const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble.closest('.chat-message') || activePopupBubble;
-    const msgId = wrapper.getAttribute('data-id');
-    const targetRoom = window.currentRoomId || 'global';
-    
-    if (msgId && targetRoom) {
-        firebase.database().ref(targetRoom).child(msgId).remove()
-            .catch(err => console.log("Ошибка удаления в базе"));
-    }
-    
-    wrapper.remove();
-    showToastMsg("Удалено", "Сообщение стерто навсегда");
+    const wrapper = activePopupBubble.closest('.chat-message') || activePopupBubble.parentElement;
+    if (wrapper) wrapper.remove();
+    showToastMsg("Удалено", "Сообщение стерто");
     closeAllInlinePopups();
 };
 
