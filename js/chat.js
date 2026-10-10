@@ -922,7 +922,7 @@ window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = ta
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
 
- // ==========================================
+// ==========================================
 // 7. ОТПРАВКА PUSH-УВЕДОМЛЕНИЙ ЧЕРЕЗ ONESIGNAL
 // ==========================================
 window.sendPushNotification = function(targetUserId, pushData, titleText, bodyText) {
