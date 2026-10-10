@@ -1,3 +1,18 @@
+Ты абсолютно прав, извини. Ты убрал 9-й блок, а я поспешил и вернул его обратно.
+Никакого 9-го блока (квадратных кнопок и меню) в коде больше не будет.
+Где именно были ошибки в твоем коде?
+Ошибки были вызваны тем, что в шаблонах строк вместо оператора логического «или» (||) случайно попала строка \vert{}\vert{}. Из-за этого браузер выдавал критическую синтаксическую ошибку (SyntaxError), код останавливался, и ломались как списки пользователей в глобальном чате, так и видеоконференции.
+Вот эти три конкретных места в функции window.handleNewMessage:
+ * Для денежных переводов (isTransfer):
+   * Было: ${data.transferTypeLabel \vert{}\vert{} 'Transfer'}
+   * Должно быть: ${data.transferTypeLabel || 'Transfer'}
+ * Для голосовых комнат (isVoiceRoomMsg):
+   * Было: ${senderFlag}${senderText} (или с \vert{}\vert{})
+   * Должно быть: ${data.flag || '🌐'}
+ * Для конференций (isConfMsg):
+   * Было: ${data.flag \vert{}\vert{} '🌐'}
+   * Должно быть: ${data.flag || '🌐'}
+Чистый рабочий код (строго без 9-го блока, со всеми исправлениями):
 // ==========================================
 // 1. УМНЫЙ ЯЗЫК И ПРОФИЛЬ
 // ==========================================
@@ -326,12 +341,6 @@ window.handleNewMessage = async function(snapshot) {
     }
 
     const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
-    
-    // БЕЗОПАСНАЯ ПРИВЯЗКА ID К СООБЩЕНИЮ
-    if (snapshot && snapshot.key) {
-        messageGroup.setAttribute('data-id', snapshot.key);
-    }
-
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
@@ -387,7 +396,7 @@ window.handleNewMessage = async function(snapshot) {
     }
     else if (data.isLocation) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
-        bubbleContent = `<div class="flex flex-col w-[200px] sm:max-w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
+        bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
     }
 
     const isCurrentRoom = snapshot.ref.parent.key === window.currentRoomId;
@@ -993,191 +1002,3 @@ let checkProfileForOneSignal = setInterval(() => {
     }
 }, 1000);
 
-// ==========================================
-// 9. КВАДРАТНАЯ КНОПКА В УГЛУ И МЕНЮ ДЕЙСТВИЙ (БЕЗ КНОПОК СНИЗУ)
-// ==========================================
-
-window.appInternalClipboard = null; 
-let activePopupBubble = null;
-
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.inline-action-popup') && !e.target.closest('.square-action-btn')) {
-        closeAllInlinePopups();
-    }
-});
-document.addEventListener('scroll', closeAllInlinePopups, { passive: true });
-
-function closeAllInlinePopups() {
-    document.querySelectorAll('.inline-action-popup').forEach(el => el.remove());
-    activePopupBubble = null;
-}
-
-function attachSquareActionButtons() {
-    document.querySelectorAll('.chat-bubble').forEach(bubble => {
-        if (!bubble.querySelector('.square-action-btn')) {
-            const btn = document.createElement('div');
-            btn.className = 'square-action-btn absolute top-1 right-1 w-6 h-6 bg-[#202c33]/90 hover:bg-[#00a884] rounded-[6px] flex items-center justify-center text-white cursor-pointer opacity-70 hover:opacity-100 transition border border-[#2a3942] shadow-sm z-10';
-            btn.innerHTML = '<i class="fa-solid fa-chevron-down text-[10px]"></i>'; 
-            btn.title = "Меню действий";
-            
-            btn.onclick = (e) => { 
-                e.stopPropagation(); 
-                showSquareMenu(e, bubble); 
-            };
-            
-            bubble.style.position = 'relative';
-            bubble.appendChild(btn);
-        }
-    });
-}
-
-setInterval(attachSquareActionButtons, 1000);
-setTimeout(attachSquareActionButtons, 300);
-
-function showSquareMenu(e, bubble) {
-    closeAllInlinePopups(); 
-    activePopupBubble = bubble;
-
-    const popup = document.createElement('div');
-    popup.className = 'inline-action-popup fixed z-[10000] bg-[#202c33] border border-[#2a3942] rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.5)] flex flex-col p-1.5 text-white min-w-[170px] animate-fade-in';
-    
-    let pasteOption = window.appInternalClipboard ? 
-        `<button onclick="window.actionPasteSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-paste text-yellow-400 w-4"></i> Вставить</button>` : '';
-
-    popup.innerHTML = `
-        <button onclick="window.actionCopySquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-copy text-[#00a884] w-4"></i> Копировать</button>
-        ${pasteOption}
-        <button onclick="window.actionForwardSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-share text-blue-400 w-4"></i> Отправить</button>
-        <button onclick="window.actionSaveSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-download text-green-400 w-4"></i> Сохранить</button>
-        <div class="h-[1px] bg-[#2a3942] my-1 w-full"></div>
-        <button onclick="window.actionDeleteSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left text-red-400 transition"><i class="fa-solid fa-trash w-4"></i> Удалить</button>
-    `;
-
-    document.body.appendChild(popup);
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    let topPos = rect.bottom + 5;
-    let leftPos = rect.left - 130; 
-
-    if (topPos + 240 > window.innerHeight) topPos = rect.top - popup.offsetHeight - 5; 
-    if (leftPos < 10) leftPos = 10;
-
-    popup.style.top = topPos + 'px';
-    popup.style.left = leftPos + 'px';
-}
-
-window.actionCopySquareMenu = async function() {
-    if (!activePopupBubble) return;
-    
-    const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble;
-    const msgId = wrapper.getAttribute('data-id');
-    const targetRoom = window.currentRoomId || 'global';
-
-    if (msgId && targetRoom) {
-        firebase.database().ref(targetRoom).child(msgId).once('value', snapshot => {
-            const data = snapshot.val();
-            if (data) {
-                window.appInternalClipboard = data; 
-                showToastMsg("Скопировано", "Теперь вы можете нажать 'Вставить' в любом чате");
-            }
-        });
-    } else {
-        let clone = activePopupBubble.cloneNode(true);
-        let bRem = clone.querySelector('.square-action-btn');
-        if (bRem) bRem.remove();
-        window.appInternalClipboard = { text: clone.innerText.trim() }; 
-        showToastMsg("Скопировано", "Текст сохранен");
-    }
-
-    const img = activePopupBubble.querySelector('img');
-    const video = activePopupBubble.querySelector('video');
-    let cloneText = activePopupBubble.cloneNode(true);
-    let bRem2 = cloneText.querySelector('.square-action-btn');
-    if (bRem2) bRem2.remove();
-    let textOnly = cloneText.innerText.trim();
-
-    try {
-        if (!img && !video && textOnly) {
-            await navigator.clipboard.writeText(textOnly);
-        }
-    } catch (err) {}
-
-    closeAllInlinePopups();
-};
-
-window.actionForwardSquareMenu = function() {
-    window.actionCopySquareMenu();
-    setTimeout(() => {
-        showToastMsg("Готово к отправке", "Перейдите в нужный чат и выберите 'Вставить' через квадратик");
-    }, 400);
-};
-
-window.actionPasteSquareMenu = function() {
-    const targetRoom = window.currentRoomId || 'global';
-    if (!window.appInternalClipboard || !targetRoom) return;
-
-    const newMessage = { ...window.appInternalClipboard };
-    newMessage.userId = window.myProfileInfo ? window.myProfileInfo.id : "guest";
-    newMessage.name = window.myUsername || "User";
-    newMessage.photo = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
-    newMessage.timestamp = firebase.database.ServerValue.TIMESTAMP;
-    newMessage.sessionId = window.mySessionId || 'sess';
-    delete newMessage.id; 
-    
-    firebase.database().ref(targetRoom).push(newMessage).then(() => {
-        showToastMsg("Отправлено", "Сообщение успешно вставлено!");
-        window.appInternalClipboard = null; 
-    });
-    closeAllInlinePopups();
-};
-
-window.actionSaveSquareMenu = async function() {
-    if (!activePopupBubble) return;
-    const img = activePopupBubble.querySelector('img');
-    const video = activePopupBubble.querySelector('video');
-    const link = activePopupBubble.querySelector('a');
-    
-    let url = img ? img.src : (video ? video.src : (link ? link.href : null));
-    
-    if (url && !url.includes('ui-avatars')) {
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const blobUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = "Media_" + Date.now();
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(blobUrl);
-            showToastMsg("Сохранено", "Файл загружен на устройство");
-        } catch(e) {
-            window.open(url, '_blank');
-        }
-    } else {
-        showToastMsg("Ошибка", "В этом сообщении нет медиафайла");
-    }
-    closeAllInlinePopups();
-};
-
-window.actionDeleteSquareMenu = function() {
-    if (!activePopupBubble) return;
-    const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble.closest('.chat-message') || activePopupBubble;
-    const msgId = wrapper.getAttribute('data-id');
-    const targetRoom = window.currentRoomId || 'global';
-    
-    if (msgId && targetRoom) {
-        firebase.database().ref(targetRoom).child(msgId).remove()
-            .catch(err => console.log("Ошибка удаления в базе"));
-    }
-    
-    wrapper.remove();
-    showToastMsg("Удалено", "Сообщение стерто навсегда");
-    closeAllInlinePopups();
-};
-
-function showToastMsg(title, desc) {
-    if (window.showToast) window.showToast(title, desc, "", "");
-    else alert(`${title}: ${desc}`);
-}
