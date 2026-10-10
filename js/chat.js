@@ -992,60 +992,7 @@ let checkProfileForOneSignal = setInterval(() => {
     }
 }, 1000);
 
-// ==========================================
-// 9. КВАДРАТНАЯ КНОПКА И МЕНЮ (КОПИРОВАНИЕ, СОХРАНЕНИЕ, УДАЛЕНИЕ)
-// ==========================================
-
-// Закрываем меню при клике мимо
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('#msg-square-menu') && !e.target.closest('.msg-square-btn')) {
-        const m = document.getElementById('msg-square-menu');
-        if (m) m.remove();
-    }
-});
-
-// Добавляем квадратик во все баблы при их появлении
-document.addEventListener('mouseover', attachSquareButtons, { passive: true });
-document.addEventListener('touchstart', attachSquareButtons, { passive: true });
-
-function attachSquareButtons() {
-    document.querySelectorAll('.chat-bubble').forEach(bubble => {
-        if (!bubble.querySelector('.msg-square-btn')) {
-            bubble.style.position = 'relative';
-            
-            const btn = document.createElement('div');
-            btn.className = 'msg-square-btn absolute top-1 right-1 w-5 h-5 bg-[#2a3942]/80 hover:bg-[#00a884] rounded flex items-center justify-center text-white text-[10px] cursor-pointer transition shadow-sm z-10';
-            btn.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
-            btn.title = "Опции";
-
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                openSquareMenu(e, bubble);
-            };
-
-            bubble.appendChild(btn);
-        }
-    });
-}
-
-// Запускаем первичную привязку
-setTimeout(attachSquareButtons, 500);
-
-function openSquareMenu(e, bubble) {
-    let oldMenu = document.getElementById('msg-square-menu');
-    if (oldMenu) oldMenu.remove();
-
-    const menu = document.createElement('div');
-    menu.id = 'msg-square-menu';
-    menu.className = 'fixed z-[10000] bg-[#202c33] border border-[#2a3942] rounded-xl shadow-2xl flex flex-col p-1.5 text-white min-w-[150px]';
-
-    menu.innerHTML = `
-        <button id="sq-copy" class="px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left flex items-center gap-2 text-white transition">
-            <i class="fa-solid fa-copy text-[#00a884]"></i> Копировать
-        </button>
-        <button id="sq-save" class="px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left flex items-center gap-2 text-blue-400 transition">
-            <i class="fa-solid fa-download"></i> Сохранить
-        </button>
+/>
         <div class="h-[1px] bg-[#2a3942] my-1 w-full"></div>
         <button id="sq-delete" class="px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left flex items-center gap-2 text-red-400 transition">
             <i class="fa-solid fa-trash"></i> Удалить
@@ -1112,6 +1059,171 @@ function openSquareMenu(e, bubble) {
         }
         wrapper.remove();
         if (window.showToast) window.showToast("Удалено", "Сообщение стерто", "", "");
+        menu.remove();
+    };
+}
+
+// ==========================================
+// 9. ФИНАЛЬНОЕ МЕНЮ (КОПИРОВАНИЕ, СОХРАНЕНИЕ, ОТПРАВКА, УДАЛЕНИЕ)
+// ==========================================
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#msg-square-menu') && !e.target.closest('.msg-square-btn')) {
+        const m = document.getElementById('msg-square-menu');
+        if (m) m.remove();
+    }
+});
+
+document.addEventListener('mouseover', attachSquareButtons, { passive: true });
+document.addEventListener('touchstart', attachSquareButtons, { passive: true });
+
+function attachSquareButtons() {
+    document.querySelectorAll('.chat-bubble').forEach(bubble => {
+        if (!bubble.querySelector('.msg-square-btn')) {
+            bubble.style.position = 'relative';
+            
+            const btn = document.createElement('div');
+            btn.className = 'msg-square-btn absolute top-1 right-1 w-5 h-5 bg-[#2a3942]/80 hover:bg-[#00a884] rounded flex items-center justify-center text-white text-[10px] cursor-pointer transition shadow-sm z-10';
+            btn.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+            btn.title = "Опции";
+
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                openSquareMenu(e, bubble);
+            };
+
+            bubble.appendChild(btn);
+        }
+    });
+}
+
+setTimeout(attachSquareButtons, 500);
+
+function openSquareMenu(e, bubble) {
+    let oldMenu = document.getElementById('msg-square-menu');
+    if (oldMenu) oldMenu.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'msg-square-menu';
+    menu.className = 'fixed z-[10000] bg-[#202c33] border border-[#2a3942] rounded-xl shadow-2xl flex flex-col p-1.5 text-white min-w-[160px]';
+
+    menu.innerHTML = `
+        <button id="sq-copy" class="px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left flex items-center gap-2 text-white transition">
+            <i class="fa-solid fa-copy text-[#00a884]"></i> Копировать
+        </button>
+        <button id="sq-save" class="px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left flex items-center gap-2 text-blue-400 transition">
+            <i class="fa-solid fa-download"></i> Сохранить медиа
+        </button>
+        <button id="sq-send" class="px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left flex items-center gap-2 text-yellow-400 transition">
+            <i class="fa-solid fa-paper-plane"></i> Отправить (Переслать)
+        </button>
+        <div class="h-[1px] bg-[#2a3942] my-1 w-full"></div>
+        <button id="sq-delete" class="px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left flex items-center gap-2 text-red-400 transition">
+            <i class="fa-solid fa-trash"></i> Удалить
+        </button>
+    `;
+
+    document.body.appendChild(menu);
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    let x = rect.left - 130;
+    let y = rect.bottom + 5;
+
+    if (x < 10) x = 10;
+    if (y + 160 > window.innerHeight) y = rect.top - 160;
+
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+
+    // 1. КОПИРОВАТЬ (Текст или Картинку как объект в буфер)
+    document.getElementById('sq-copy').onclick = async () => {
+        const img = bubble.querySelector('img');
+        if (img && img.src) {
+            try {
+                const response = await fetch(img.src);
+                const blob = await response.blob();
+                await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+                if (window.showToast) window.showToast("Скопировано", "Картинка скопирована в буфер", "", "");
+            } catch (err) {
+                navigator.clipboard.writeText(img.src);
+                if (window.showToast) window.showToast("Скопировано", "Ссылка на картинку скопирована", "", "");
+            }
+        } else {
+            let clone = bubble.cloneNode(true);
+            let sq = clone.querySelector('.msg-square-btn');
+            if (sq) sq.remove();
+            let text = clone.innerText.trim();
+            if (text) {
+                navigator.clipboard.writeText(text);
+                if (window.showToast) window.showToast("Скопировано", text.slice(0, 25) + "...", "", "");
+            }
+        }
+        menu.remove();
+    };
+
+    // 2. СОХРАНИТЬ МЕДИА
+    document.getElementById('sq-save').onclick = async () => {
+        const media = bubble.querySelector('img, video');
+        if (media && media.src) {
+            try {
+                const res = await fetch(media.src);
+                const blob = await res.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'Media_' + Date.now();
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                if (window.showToast) window.showToast("Сохранено", "Файл загружен", "", "");
+            } catch (err) {
+                window.open(media.src, '_blank');
+            }
+        } else {
+            if (window.showToast) window.showToast("Информация", "В сообщении нет медиафайла", "", "");
+        }
+        menu.remove();
+    };
+
+    // 3. ОТПРАВИТЬ (ПЕРЕСЛАТЬ) В ВВОД
+    document.getElementById('sq-send').onclick = () => {
+        let clone = bubble.cloneNode(true);
+        let sq = clone.querySelector('.msg-square-btn');
+        if (sq) sq.remove();
+        let text = clone.innerText.trim();
+
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput && text) {
+            chatInput.value = text;
+            chatInput.focus();
+            if (window.showToast) window.showToast("Пересылка", "Текст скопирован в строку ввода", "", "");
+        }
+        menu.remove();
+    };
+
+    // 4. УДАЛИТЬ НАДЕЖНО ИЗ FIREBASE И UI
+    document.getElementById('sq-delete').onclick = () => {
+        // Ищем элемент с ключом базы данных наверх по дереву
+        let msgNode = bubble.closest('[data-id]');
+        let msgId = msgNode ? msgNode.getAttribute('data-id') : null;
+        
+        const targetRoom = window.currentRoomId || 'global';
+
+        if (msgId && targetRoom && window.firebase) {
+            firebase.database().ref(targetRoom).child(msgId).remove()
+                .then(() => {
+                    if (msgNode) msgNode.remove();
+                    else bubble.remove();
+                    if (window.showToast) window.showToast("Удалено", "Сообщение стерто", "", "");
+                })
+                .catch(err => {
+                    // Резервное удаление визуальной части, если нет прав в базе
+                    bubble.remove();
+                });
+        } else {
+            // Если ключ не найден, просто стираем со страницы
+            bubble.closest('.flex.flex-col.w-full')?.remove() || bubble.remove();
+            if (window.showToast) window.showToast("Удалено", "Сообщение скрыто", "", "");
+        }
         menu.remove();
     };
 }
