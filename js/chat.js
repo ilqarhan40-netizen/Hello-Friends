@@ -276,7 +276,7 @@ window.sendFirebaseMsg = async function() {
     const chatMsgs = document.getElementById('chat-messages'); 
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
 
-    // Вызов PUSH-уведомления
+    // ИСПРАВЛЕННЫЙ ВЫЗОВ ПУШ-УВЕДОМЛЕНИЙ ЧЕРЕЗ ONESIGNAL
     if (window.currentTargetUser && !isConfTab && !isVoiceTab && window.sendPushNotification) { 
         window.sendPushNotification(window.currentTargetUser.id, { roomId: targetDbRoom }, "Сообщение | " + safeName, textToShip); 
     }
@@ -329,14 +329,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    const messageGroup = document.createElement('div'); 
-    messageGroup.className = "flex flex-col w-full mt-3 mb-2 cursor-pointer";
-    if (snapshot && snapshot.key) {
-        messageGroup.setAttribute('data-id', snapshot.key);
-    }
-    // Безопасный вызов меню действий (по правому клику или долгому тапу)
-    messageGroup.oncontextmenu = (e) => window.openMsgMenu(e, messageGroup);
-
+    const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
@@ -997,108 +990,3 @@ let checkProfileForOneSignal = setInterval(() => {
         clearInterval(checkProfileForOneSignal);
     }
 }, 1000);
-
-// ==========================================
-// 9. КОНТЕКСТНОЕ МЕНЮ (КОПИРОВАНИЕ, УДАЛЕНИЕ, СКАЧИВАНИЕ МЕДИА)
-// ==========================================
-window.activeMessageContext = null;
-
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('#msg-context-menu')) {
-        window.closeMsgContextMenu();
-    }
-});
-
-window.openMsgMenu = function(e, element) {
-    if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-    }
-    
-    window.activeMessageContext = element.closest('[data-id]') || element.closest('.chat-bubble') || element;
-    
-    let existingMenu = document.getElementById('msg-context-menu');
-    if (existingMenu) existingMenu.remove();
-
-    const menu = document.createElement('div');
-    menu.id = 'msg-context-menu';
-    menu.className = 'fixed z-[10000] bg-[#202c33] border border-[#2a3942] rounded-xl shadow-2xl flex flex-col p-1.5 text-white min-w-[160px]';
-
-    menu.innerHTML = `
-        <button onclick="window.copyMsgContent()" class="flex items-center gap-3 px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left transition">
-            <i class="fa-solid fa-copy text-[#00a884] w-4"></i> Копировать
-        </button>
-        <button onclick="window.saveMsgMedia()" class="flex items-center gap-3 px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left transition">
-            <i class="fa-solid fa-download text-blue-400 w-4"></i> Скачать медиа
-        </button>
-        <div class="h-[1px] bg-[#2a3942] my-1 w-full"></div>
-        <button onclick="window.deleteMsgContent()" class="flex items-center gap-3 px-3 py-2 hover:bg-[#2a3942] rounded-lg text-xs text-left text-red-400 transition">
-            <i class="fa-solid fa-trash w-4"></i> Удалить
-        </button>
-    `;
-
-    document.body.appendChild(menu);
-
-    let x = e.clientX || e.touches?.[0]?.clientX || 100;
-    let y = e.clientY || e.touches?.[0]?.clientY || 100;
-
-    if (x + 170 > window.innerWidth) x = window.innerWidth - 180;
-    if (y + 150 > window.innerHeight) y = window.innerHeight - 160;
-
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-};
-
-window.closeMsgContextMenu = function() {
-    const menu = document.getElementById('msg-context-menu');
-    if (menu) menu.remove();
-    window.activeMessageContext = null;
-};
-
-window.copyMsgContent = function() {
-    if (!window.activeMessageContext) return;
-    let text = window.activeMessageContext.innerText.trim();
-    if (text) {
-        navigator.clipboard.writeText(text).then(() => {
-            if (window.showToast) window.showToast("Скопировано", "Текст скопирован в буфер", "", "");
-        });
-    }
-    window.closeMsgContextMenu();
-};
-
-window.saveMsgMedia = async function() {
-    if (!window.activeMessageContext) return;
-    const media = window.activeMessageContext.querySelector('img, video');
-    if (media && media.src) {
-        try {
-            const res = await fetch(media.src);
-            const blob = await res.blob();
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'Media_' + Date.now();
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            if (window.showToast) window.showToast("Сохранено", "Файл загружен", "", "");
-        } catch (e) {
-            window.open(media.src, '_blank');
-        }
-    } else {
-        if (window.showToast) window.showToast("Ошибка", "Медиафайл не найден", "", "");
-    }
-    window.closeMsgContextMenu();
-};
-
-window.deleteMsgContent = function() {
-    if (!window.activeMessageContext) return;
-    const targetRoom = window.currentRoomId || 'global';
-    const msgId = window.activeMessageContext.getAttribute('data-id');
-
-    if (msgId && targetRoom) {
-        firebase.database().ref(targetRoom).child(msgId).remove().catch(e => {});
-    }
-
-    window.activeMessageContext.remove();
-    if (window.showToast) window.showToast("Удалено", "Сообщение удалено", "", "");
-    window.closeMsgContextMenu();
-};
