@@ -327,6 +327,8 @@ window.handleNewMessage = async function(snapshot) {
     }
 
     const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
+    messageGroup.setAttribute('data-id', snapshot.key); // <--- ВОТ ЭТУ СТРОЧКУ ОБЯЗАТЕЛЬНО ДОБАВЬ
+    
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
@@ -979,7 +981,7 @@ window.initOneSignalNotifications = function() {
         });
 
         // Запись текущего токена при входе
-        const currentSubId = OneSignal.User.PushSubscription.id;
+        constб currentSubId = OneSignal.User.PushSubscription.id;
         if (currentSubId && window.myProfileInfo && window.myProfileInfo.id) {
             firebase.database().ref('users/' + window.myProfileInfo.id).update({
                 onesignal_id: currentSubId
@@ -995,16 +997,17 @@ let checkProfileForOneSignal = setInterval(() => {
         clearInterval(checkProfileForOneSignal);
     }
 }, 1000);
+
 // ==========================================
-// 9. МЕНЮ ЧЕРЕЗ КНОПКУ-КВАДРАТИК НА СООБЩЕНИЯХ
+// 9. КВАДРАТНАЯ КНОПКА В УГЛУ И МЕНЮ ДЕЙСТВИЙ (БЕЗ КНОПОК СНИЗУ)
 // ==========================================
 
 window.appInternalClipboard = null; 
 let activePopupBubble = null;
 
-// 1. Закрываем меню по клику в любом другом месте или при прокрутке
+// Закрываем меню по клику в пустую область или при скролле
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.inline-action-popup') && !e.target.closest('.side-menu-btn')) {
+    if (!e.target.closest('.inline-action-popup') && !e.target.closest('.square-action-btn')) {
         closeAllInlinePopups();
     }
 });
@@ -1015,21 +1018,19 @@ function closeAllInlinePopups() {
     activePopupBubble = null;
 }
 
-// 2. АВТОМАТИЧЕСКОЕ ДОБАВЛЕНИЕ КВАДРАТИКА КО ВСЕМ СООБЩЕНИЯМ
-function attachMenuButtons() {
-    // Ищем все пузырьки сообщений
+// 1. АВТОМАТИЧЕСКОЕ ДОБАВЛЕНИЕ КВАДРАТНОЙ КНОПКИ В УГОЛ СООБЩЕНИЯ
+function attachSquareActionButtons() {
     document.querySelectorAll('.chat-bubble').forEach(bubble => {
-        // Если кнопки еще нет - добавляем
-        if (!bubble.querySelector('.side-menu-btn')) {
+        if (!bubble.querySelector('.square-action-btn')) {
             const btn = document.createElement('div');
-            // Дизайн квадратика (полупрозрачный, в углу)
-            btn.className = 'side-menu-btn absolute top-1 right-1 w-7 h-7 bg-black/40 hover:bg-black/70 rounded-md flex items-center justify-center text-white cursor-pointer opacity-40 hover:opacity-100 backdrop-blur-sm z-10 transition border border-white/10 shadow-sm';
-            btn.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'; 
+            // Аккуратный квадратик в правом верхнем углу
+            btn.className = 'square-action-btn absolute top-1 right-1 w-6 h-6 bg-[#202c33]/90 hover:bg-[#00a884] rounded-[6px] flex items-center justify-center text-white cursor-pointer opacity-70 hover:opacity-100 transition border border-[#2a3942] shadow-sm z-10';
+            btn.innerHTML = '<i class="fa-solid fa-chevron-down text-[10px]"></i>'; 
+            btn.title = "Меню действий";
             
-            // По клику на квадратик - открываем меню
             btn.onclick = (e) => { 
                 e.stopPropagation(); 
-                showSideMenu(e, bubble); 
+                showSquareMenu(e, bubble); 
             };
             
             bubble.style.position = 'relative';
@@ -1038,40 +1039,36 @@ function attachMenuButtons() {
     });
 }
 
-// Автоматически проверяем новые сообщения каждую секунду и вешаем на них квадратик
-setInterval(attachMenuButtons, 1000);
-setTimeout(attachMenuButtons, 300);
+setInterval(attachSquareActionButtons, 1000);
+setTimeout(attachSquareActionButtons, 300);
 
-// 3. ОТРИСОВКА ВЫПАДАЮЩЕГО МЕНЮ
-function showSideMenu(e, bubble) {
+// 2. ВЫПАДАЮЩЕЕ МЕНЮ ПО КЛИКУ НА КВАДРАТИК
+function showSquareMenu(e, bubble) {
     closeAllInlinePopups(); 
     activePopupBubble = bubble;
 
     const popup = document.createElement('div');
     popup.className = 'inline-action-popup fixed z-[10000] bg-[#202c33] border border-[#2a3942] rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.5)] flex flex-col p-1.5 text-white min-w-[170px] animate-fade-in';
     
-    // Если в буфере что-то есть, показываем кнопку "Вставить"
-    let pasteBtnHtml = window.appInternalClipboard ? 
-        `<button onclick="window.actionPasteSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-paste text-yellow-400 w-4"></i> Вставить сюда</button>` : '';
+    // Показываем кнопку "Вставить" только если в буфере что-то есть
+    let pasteOption = window.appInternalClipboard ? 
+        `<button onclick="window.actionPasteSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-paste text-yellow-400 w-4"></i> Вставить</button>` : '';
 
-    // Пункты меню
     popup.innerHTML = `
-        <button onclick="window.actionCopySide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-copy text-[#00a884] w-4"></i> Копировать</button>
-        ${pasteBtnHtml}
-        <button onclick="window.actionForwardSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-share text-blue-400 w-4"></i> Отправить</button>
-        <button onclick="window.actionSaveSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-download text-green-400 w-4"></i> Сохранить</button>
+        <button onclick="window.actionCopySquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-copy text-[#00a884] w-4"></i> Копировать</button>
+        ${pasteOption}
+        <button onclick="window.actionForwardSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-share text-blue-400 w-4"></i> Отправить</button>
+        <button onclick="window.actionSaveSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left transition"><i class="fa-solid fa-download text-green-400 w-4"></i> Сохранить</button>
         <div class="h-[1px] bg-[#2a3942] my-1 w-full"></div>
-        <button onclick="window.actionDeleteSide()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left text-red-400 transition"><i class="fa-solid fa-trash w-4"></i> Удалить</button>
+        <button onclick="window.actionDeleteSquareMenu()" class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#2a3942] rounded-lg text-sm text-left text-red-400 transition"><i class="fa-solid fa-trash w-4"></i> Удалить</button>
     `;
 
     document.body.appendChild(popup);
     
-    // Позиционируем меню ровно под кнопкой-квадратиком
     const rect = e.currentTarget.getBoundingClientRect();
     let topPos = rect.bottom + 5;
     let leftPos = rect.left - 130; 
 
-    // Защита от вылета за экран снизу
     if (topPos + 240 > window.innerHeight) topPos = rect.top - popup.offsetHeight - 5; 
     if (leftPos < 10) leftPos = 10;
 
@@ -1080,81 +1077,64 @@ function showSideMenu(e, bubble) {
 }
 
 // ==========================================
-// ЛОГИКА КНОПОК МЕНЮ
+// 3. ЛОГИКА ДЕЙСТВИЙ МЕНЮ
 // ==========================================
 
-// КОПИРОВАТЬ
-window.actionCopySide = async function() {
+// КОПИРОВАТЬ (Забирает оригинальную карточку со всеми медиа из Firebase)
+window.actionCopySquareMenu = async function() {
     if (!activePopupBubble) return;
     
     const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble;
     const msgId = wrapper.getAttribute('data-id');
     const targetRoom = window.currentRoomId || 'global';
 
-    let clone = activePopupBubble.cloneNode(true);
-    let btnToRemove = clone.querySelector('.side-menu-btn');
-    if (btnToRemove) btnToRemove.remove(); // Убираем кнопку из копируемого текста
-    let extractedText = clone.innerText.trim();
-
-    // 1. Копируем во Внутренний буфер (идеально для фото/видео)
     if (msgId && targetRoom) {
         firebase.database().ref(targetRoom).child(msgId).once('value', snapshot => {
-            if (snapshot.val()) {
-                window.appInternalClipboard = snapshot.val();
-                showPasteFloatingButton(); // Показываем зеленую кнопку-напоминание
-                showToastMsg("Скопировано", "Нажмите 'Вставить' в нужном чате");
+            const data = snapshot.val();
+            if (data) {
+                window.appInternalClipboard = data; // Сохраняем карточку целиком (фото/видео не потеряются)
+                showToastMsg("Скопировано", "Теперь вы можете нажать 'Вставить' в любом чате");
             }
         });
     } else {
-        window.appInternalClipboard = { text: extractedText }; 
-        showPasteFloatingButton();
-        showToastMsg("Скопировано", "Текст скопирован");
+        let clone = activePopupBubble.cloneNode(true);
+        let bRem = clone.querySelector('.square-action-btn');
+        if (bRem) bRem.remove();
+        window.appInternalClipboard = { text: clone.innerText.trim() }; 
+        showToastMsg("Скопировано", "Текст сохранен");
     }
 
-    // 2. Копируем в Системный буфер телефона (без иероглифов)
+    // Дублируем чистый текст в системный буфер (если это текст)
     const img = activePopupBubble.querySelector('img');
     const video = activePopupBubble.querySelector('video');
+    let cloneText = activePopupBubble.cloneNode(true);
+    let bRem2 = cloneText.querySelector('.square-action-btn');
+    if (bRem2) bRem2.remove();
+    let textOnly = cloneText.innerText.trim();
 
     try {
-        if (img && !img.src.includes('ui-avatars')) {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width;
-            canvas.height = img.naturalHeight || img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            canvas.toBlob(async (blob) => {
-                try {
-                    const item = new ClipboardItem({ 'image/png': blob });
-                    await navigator.clipboard.write([item]);
-                } catch (e) {}
-            }, 'image/png');
-        } 
-        else if (video && !video.src.startsWith('data:')) {
-            await navigator.clipboard.writeText(video.src);
-        } 
-        else if (extractedText) {
-            await navigator.clipboard.writeText(extractedText);
+        if (!img && !video && textOnly) {
+            await navigator.clipboard.writeText(textOnly);
         }
     } catch (err) {}
 
     closeAllInlinePopups();
 };
 
-// ОТПРАВИТЬ (Работает так же, как копировать, но пишет другой текст)
-window.actionForwardSide = function() {
-    window.actionCopySide(); 
+// ОТПРАВИТЬ (Пересылка)
+window.actionForwardSquareMenu = function() {
+    window.actionCopySquareMenu();
     setTimeout(() => {
-        showToastMsg("Готово к отправке", "Перейдите в другой чат и выберите 'Вставить'");
-    }, 500);
+        showToastMsg("Готово к отправке", "Перейдите в нужный чат и выберите 'Вставить' через квадратик");
+    }, 400);
 };
 
-// ВСТАВИТЬ
-window.actionPasteSide = function() {
+// ВСТАВИТЬ (Отправляет сохраненную карточку в текущий чат)
+window.actionPasteSquareMenu = function() {
     const targetRoom = window.currentRoomId || 'global';
     if (!window.appInternalClipboard || !targetRoom) return;
 
     const newMessage = { ...window.appInternalClipboard };
-    // Меняем отправителя на нас
     newMessage.userId = window.myProfileInfo ? window.myProfileInfo.id : "guest";
     newMessage.name = window.myUsername || "User";
     newMessage.photo = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
@@ -1162,18 +1142,15 @@ window.actionPasteSide = function() {
     newMessage.sessionId = window.mySessionId || 'sess';
     delete newMessage.id; 
     
-    // Отправляем
     firebase.database().ref(targetRoom).push(newMessage).then(() => {
-        showToastMsg("Отправлено", "Файл успешно вставлен!");
-        window.appInternalClipboard = null; // Очищаем буфер после отправки
-        const btn = document.getElementById('floating-paste-btn');
-        if (btn) btn.remove(); // Прячем зеленую кнопку
+        showToastMsg("Отправлено", "Сообщение успешно вставлено!");
+        window.appInternalClipboard = null; 
     });
     closeAllInlinePopups();
 };
 
-// СОХРАНИТЬ (Скачать на устройство)
-window.actionSaveSide = async function() {
+// СОХРАНИТЬ (Скачивание файла)
+window.actionSaveSquareMenu = async function() {
     if (!activePopupBubble) return;
     const img = activePopupBubble.querySelector('img');
     const video = activePopupBubble.querySelector('video');
@@ -1188,51 +1165,39 @@ window.actionSaveSide = async function() {
             const blobUrl = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = blobUrl;
-            a.download = "Файл_" + Date.now();
+            a.download = "Media_" + Date.now();
             document.body.appendChild(a);
             a.click();
             a.remove();
             window.URL.revokeObjectURL(blobUrl);
-            showToastMsg("Сохранено", "Файл загружен на ваше устройство");
+            showToastMsg("Сохранено", "Файл загружен на устройство");
         } catch(e) {
-            window.open(url, '_blank'); // Если браузер блокирует прямое скачивание - открываем в новой вкладке
+            window.open(url, '_blank');
         }
     } else {
-        showToastMsg("Ошибка", "Здесь нет файла для сохранения");
+        showToastMsg("Ошибка", "В этом сообщении нет медиафайла");
     }
     closeAllInlinePopups();
 };
 
-// УДАЛИТЬ
-window.actionDeleteSide = function() {
+// УДАЛИТЬ (Стирает навсегда из базы и с экрана без возвратов)
+window.actionDeleteSquareMenu = function() {
     if (!activePopupBubble) return;
     const wrapper = activePopupBubble.closest('[data-id]') || activePopupBubble.closest('.chat-message') || activePopupBubble;
     const msgId = wrapper.getAttribute('data-id');
     const targetRoom = window.currentRoomId || 'global';
     
-    if (msgId && targetRoom) firebase.database().ref(targetRoom).child(msgId).remove();
+    if (msgId && targetRoom) {
+        firebase.database().ref(targetRoom).child(msgId).remove()
+            .catch(err => console.log("Ошибка удаления в базе"));
+    }
+    
     wrapper.remove();
-    showToastMsg("Удалено", "Сообщение стерто");
+    showToastMsg("Удалено", "Сообщение стерто навсегда");
     closeAllInlinePopups();
 };
-
-// Плавающая зеленая кнопка "Вставить" внизу экрана
-function showPasteFloatingButton() {
-    let oldBtn = document.getElementById('floating-paste-btn');
-    if (oldBtn) oldBtn.remove();
-    if (!window.appInternalClipboard) return;
-
-    const btn = document.createElement('div');
-    btn.id = 'floating-paste-btn';
-    btn.className = 'fixed bottom-24 right-4 z-[9999] bg-[#00a884] text-white px-5 py-3 rounded-full shadow-[0_5px_15px_rgba(0,168,132,0.5)] cursor-pointer flex items-center gap-2 hover:bg-[#008f6f] transition animate-bounce border-2 border-[#111b21]';
-    btn.innerHTML = `<i class="fa-solid fa-share"></i> <span class="font-bold text-sm">Вставить скопированное</span>`;
-    
-    btn.onclick = function() { window.actionPasteSide(); };
-    document.body.appendChild(btn);
-}
 
 function showToastMsg(title, desc) {
     if (window.showToast) window.showToast(title, desc, "", "");
     else alert(`${title}: ${desc}`);
 }
-
