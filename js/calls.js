@@ -121,3 +121,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 600);
 });
+// Автоматическое обновление сетки при переходе на вкладку Meet (индекс 2)
+const originalSwitchTab = window.switchTab;
+window.switchTab = function(index) {
+    if (originalSwitchTab) originalSwitchTab(index);
+    if (index === 2) {
+        setTimeout(() => {
+            if (typeof window.initConference === 'function') {
+                window.initConference();
+            }
+        }, 50);
+    }
+};
+
