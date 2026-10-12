@@ -1,98 +1,123 @@
-
 // ==========================================
-// ВИДЕОКОНФЕРЕНЦИЯ, СЕТКА И УМНЫЙ ПЕРЕВОД (CALL.JS)
+// ОРИГИНАЛЬНАЯ ЛОГИКА ВИДЕОКОНФЕРЕНЦИИ (CALL.JS)
+// Отображение всех участников без ограничений
 // ==========================================
 
-window.currentCallActive = false;
-window.localStream = null;
+let myVideoStream = null;
 
-// Отрисовка сетки конференции с именами, флагами и элементами умного перевода
-window.renderVideoConferenceGrid = function() {
-    const gridContainer = document.getElementById('video-conference-grid');
-    if (!gridContainer) return;
+window.initConference = function() {
+    const confGrid = document.getElementById('conference-grid'); 
+    if(!confGrid) return;
 
-    let gridHTML = '';
-
-    // 1. Главный спикер / Локальный участник (Вы)
-    let myPhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+    let myName = (window.myProfileInfo && window.myProfileInfo.name) ? window.myProfileInfo.name.split(' (')[0] : 'You';
     let myFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
-    let myName = window.myUsername || 'You';
+    let myVideoSrc = (window.myProfileInfo && window.myProfileInfo.video) ? window.myProfileInfo.video : '';
 
-    gridHTML += `
-        <div class="relative bg-[#111b21] border border-[#2a3942] rounded-2xl overflow-hidden flex flex-col items-center justify-center aspect-video shadow-lg group">
-            <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover"></video>
-            <div class="absolute bottom-2 left-2 bg-[#111b21]/80 backdrop-blur px-2.5 py-1 rounded-lg flex items-center gap-2 border border-[#2a3942] z-20">
-                <img src="${myPhoto}" class="w-5 h-5 rounded-full object-cover">
-                <span class="text-white text-xs font-bold">${myName}</span>
-                <span class="text-sm">${myFlag}</span>
-            </div>
-            <!-- Бегущая строка главного спикера для синхронизации с chat.js -->
-            <div id="speaker-marquee" class="absolute top-2 left-2 right-2 bg-[#202c33]/90 backdrop-blur text-xs px-3 py-1.5 rounded-lg text-[#00a884] font-bold truncate z-20 hidden">
-                <span class="text-white">Waiting for speech...</span>
-            </div>
-        </div>
-    `;
-
-    // 2. Остальные участники с флагами и бегущими строками для перевода
+    // Главный блок (Вы)
+    let confHtml = `<div class="video-frame main" id="my-video-container"><video id="my-live-video" class="mirror-video" autoplay muted playsinline></video><div class="video-overlay">${myName} (You)</div><div class="flag-overlay">${myFlag}</div><div class="translation-bar"><div class="conf-marquee-text" id="speaker-marquee">➔ [AUTO] Welcome!</div></div></div>`;
+    
+    // Рендерим ВСЕХ участников из массива window.participants без лимитов
     if (window.participants && window.participants.length > 0) {
-        window.participants.filter(p => p.id !== 'ai').forEach(p => {
-            let pPhoto = p.photo || 'https://ui-avatars.com/api/?name=U';
-            let pFlag = p.flag || '🌐';
+        window.participants.forEach(p => {
+            if(p.id === 'ai') return; // Исключаем AI-бота из видеосетки
             let pName = (p.name || 'User').split(' ')[0];
-            let pLang = window.getSmartLang(p);
+            let pFlag = p.flag || '🌐';
+            let pVideo = p.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4';
+            let pLang = p.langCode || 'en';
 
-            gridHTML += `
-                <div class="relative bg-[#111b21] border border-[#2a3942] rounded-2xl overflow-hidden flex flex-col items-center justify-center aspect-video shadow-lg group">
-                    <div class="absolute inset-0 bg-cover bg-center opacity-30 filter blur-sm" style="background-image: url('${pPhoto}');"></div>
-                    <img src="${pPhoto}" class="w-16 h-16 rounded-full object-cover border-2 border-[#00a884] relative z-10 mb-2 shadow-md">
-                    <div class="absolute bottom-2 left-2 bg-[#111b21]/80 backdrop-blur px-2.5 py-1 rounded-lg flex items-center gap-2 border border-[#2a3942] z-20">
-                        <span class="text-white text-xs font-bold">${pName}</span>
-                        <span class="text-sm">${pFlag}</span>
+            confHtml += `
+                <div class="video-frame">
+                    <video autoplay loop muted playsinline>
+                        <source src="${pVideo}">
+                    </video>
+                    <div class="video-overlay">${pName}</div>
+                    <div class="flag-overlay">${pFlag}</div>
+                    <div class="translation-bar">
+                        <div class="conf-marquee-text conf-listener-marquee" data-lang="${pLang}" data-flag="${pFlag}">${pFlag} Ready...</div>
                     </div>
-                    <!-- Бегущая строка слушателя для перевода в реальном времени из chat.js -->
-                    <div id="conf-marquee-${p.id}" class="conf-listener-marquee absolute top-2 left-2 right-2 bg-[#202c33]/90 backdrop-blur text-xs px-3 py-1.5 rounded-lg text-yellow-400 font-bold truncate z-20 hidden" data-lang="${pLang}" data-flag="${pFlag}">
-                        <span class="text-[#8696a0]">Listening...</span>
-                    </div>
-                </div>
-            `;
+                </div>`;
         });
     }
-
-    gridContainer.innerHTML = gridHTML;
-};
-
-// Запуск видео и аудиопотока
-window.startVideoConference = async function() {
-    try {
-        window.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        const localVideo = document.getElementById('local-video');
-        if (localVideo) {
-            localVideo.srcObject = window.localStream;
-        }
-        window.currentCallActive = true;
-        window.renderVideoConferenceGrid();
-        if (window.showToast) window.showToast("Conference Active", "Camera and microphone connected", "", "");
-    } catch (err) {
-        console.error("Camera access error:", err);
-        if (window.showToast) window.showToast("Camera Error", "Could not access media devices", "", "");
+    
+    confGrid.innerHTML = confHtml; 
+    
+    // Инициализация собственного видеопотока
+    const videoEl = document.getElementById('my-live-video');
+    if (videoEl && navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
+        .then(stream => { 
+            myVideoStream = stream; 
+            videoEl.srcObject = stream; 
+            videoEl.muted = true; 
+            videoEl.play(); 
+        })
+        .catch(err => { 
+            videoEl.src = myVideoSrc || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
+            videoEl.loop = true; 
+            videoEl.classList.remove('mirror-video'); 
+        });
+    } else if(videoEl) {
+        videoEl.src = myVideoSrc || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
+        videoEl.loop = true; 
+        videoEl.classList.remove('mirror-video'); 
     }
 };
 
-// Завершение конференции
-window.stopVideoConference = function() {
-    if (window.localStream) {
-        window.localStream.getTracks().forEach(track => track.stop());
-        window.localStream = null;
+window.toggleMyCamera = function(btn) {
+    btn.classList.toggle('bg-[#202c33]'); 
+    btn.classList.toggle('bg-red-500');
+    if (myVideoStream) { 
+        const videoTrack = myVideoStream.getVideoTracks()[0]; 
+        if (videoTrack) { 
+            videoTrack.enabled = !videoTrack.enabled; 
+            const icon = btn.querySelector('i'); 
+            if (icon) icon.className = videoTrack.enabled ? 'fa-solid fa-video' : 'fa-solid fa-video-slash'; 
+        } 
     }
-    window.currentCallActive = false;
-    if (window.showToast) window.showToast("Conference Ended", "Call terminated", "", "");
 };
 
-// Автоматическая отрисовка сетки при загрузке
+window.sendConfMsg = async function() {
+    const inputEl = document.getElementById('conf-chat-input');
+    if (!inputEl) return;
+    const text = inputEl.value.trim();
+    if(!text) return;
+    inputEl.value = '';
+
+    const myMarquee = document.getElementById('speaker-marquee');
+    if(myMarquee) { 
+        myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; 
+        myMarquee.style.animation = 'none'; 
+        void myMarquee.offsetWidth; 
+        myMarquee.style.animation = null;
+    }
+
+    const listenerMarquees = document.querySelectorAll('.conf-listener-marquee');
+    listenerMarquees.forEach(async (el) => {
+        const tLang = el.getAttribute('data-lang') || 'en';
+        const tFlag = el.getAttribute('data-flag') || '🌐';
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
+            const translated = res[0][0][0];
+            el.innerHTML = `<span class="text-white">User:</span> ${tFlag} ${translated}`;
+            el.style.animation = 'none'; 
+            void el.offsetWidth; 
+            el.style.animation = null;
+        } catch(e) {}
+    });
+};
+
+window.isMeetMarqueeEnabled = true;
+window.toggleMeetMarquee = function() {
+    window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled;
+    const bars = document.querySelectorAll('.translation-bar');
+    bars.forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; });
+};
+
+// Автоматический запуск инициализации сетки при загрузке страницы
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
-        if (typeof window.renderVideoConferenceGrid === 'function') {
-            window.renderVideoConferenceGrid();
+        if (typeof window.initConference === 'function') {
+            window.initConference();
         }
-    }, 500);
+    }, 600);
 });
