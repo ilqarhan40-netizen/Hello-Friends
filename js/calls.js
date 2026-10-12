@@ -1,6 +1,6 @@
 // ==========================================
 // MODULE: CALLS, VIDEO & WebRTC ENGINE (CALL.JS)
-// Полная финальная версия: 13 стран, WebRTC, Звуки, Меню языков спикера, Сетка
+// Полная финальная версия: Auto + 13 стран, WebRTC, Звуки, Меню языков спикера, Сетка
 // ==========================================
 
 window.localStream = null;
@@ -148,7 +148,16 @@ window.startInAppCall = function() {
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
     
     window.voiceFriend = target; 
-    if (window.switchTab) window.switchTab(1); 
+    
+    // Переход в голосовую комнату
+    const voiceScreen = document.getElementById('voice-screen') || document.getElementById('audio-call-screen');
+    if (voiceScreen) {
+        document.querySelectorAll('.app-screen, .tab-content').forEach(el => el.classList.remove('active', 'block'));
+        voiceScreen.classList.add('active', 'block');
+    } else if (window.switchTab) {
+        window.switchTab(1); 
+    }
+
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     window.playSafeSound(window.sndCallOut);
     
@@ -185,7 +194,15 @@ window.acceptCall = function() {
         if(pEl) pEl.src = target.photo; if(fEl) fEl.innerText = target.flag; if(nEl) nEl.innerText = target.name.split(' ')[0]; 
         window.voiceFriend = target; 
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
-        if (window.switchTab) window.switchTab(1); 
+        
+        const voiceScreen = document.getElementById('voice-screen') || document.getElementById('audio-call-screen');
+        if (voiceScreen) {
+            document.querySelectorAll('.app-screen, .tab-content').forEach(el => el.classList.remove('active', 'block'));
+            voiceScreen.classList.add('active', 'block');
+        } else if (window.switchTab) {
+            window.switchTab(1); 
+        }
+
         window.startWebRTC(false, window.currentCallerId); 
     } 
 };
@@ -239,8 +256,9 @@ window.initSignalListener = function() {
     }); 
 };
 
-// --- 3. 13 СТРАН И ЯЗЫКОВЫЕ ФУНКЦИИ СПИКЕРА ---
+// --- 3. AUTO + 13 СТРАН И ЯЗЫКОВЫЕ ФУНКЦИИ СПИКЕРА ---
 window.confLanguages = [
+    { code: 'auto', flag: '🌐', name: 'Auto (Авто)', lang: 'auto' },
     { code: 'az', flag: '🇦🇿', name: 'Azərbaycanca', lang: 'az' },
     { code: 'ru', flag: '🇷🇺', name: 'Русский', lang: 'ru' },
     { code: 'us', flag: '🇺🇸', name: 'English', lang: 'en' },
@@ -266,7 +284,7 @@ window.setSpeakerLanguage = function(code, flag, lang) {
     if (window.myProfileInfo) {
         window.myProfileInfo.flagCode = code;
         window.myProfileInfo.flag = flag;
-        window.myProfileInfo.langCode = lang;
+        window.myProfileInfo.langCode = lang; // Сохраняем выбранный язык как источник (sl)
     }
     window.toggleSpeakerLangMenu();
     if (typeof window.initConference === 'function') window.initConference();
@@ -287,17 +305,19 @@ window.initConference = function() {
 
     let myName = (window.myProfileInfo && window.myProfileInfo.name) ? window.myProfileInfo.name.split(' (')[0] : 'You';
     let currentFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+    let currentFlagIcon = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+    let currentLangCode = (window.myProfileInfo && window.myProfileInfo.langCode) ? window.myProfileInfo.langCode.toUpperCase() : 'AUTO';
 
     // Главный блок спикера с выпадающим меню языков
     let confHtml = `
     <div class="video-frame main relative cursor-pointer" id="my-video-container">
         <div onclick="window.toggleSpeakerLangMenu(event)" class="absolute inset-0 z-10"></div>
         <video id="my-live-video" class="mirror-video" playsinline autoplay muted></video>
-        <div class="video-overlay z-20 pointer-events-none">${myName} (Вы)</div>
+        <div class="video-overlay z-20 pointer-events-none">${myName} (${currentFlagIcon} ${currentLangCode})</div>
         <div class="flag-overlay z-20 pointer-events-none" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${currentFlagCode}.png" class="w-6 rounded-sm shadow"></div>
         
-        <!-- Выпадающая панель 13 языков -->
-        <div id="speaker-lang-dropdown" class="absolute top-12 left-3 right-3 bg-[#111b21]/95 border border-[#2a3942] rounded-2xl p-2 shadow-2xl hidden z-50 grid grid-cols-2 gap-1.5 backdrop-blur-md">
+        <!-- Выпадающая панель: Auto + 13 языков -->
+        <div id="speaker-lang-dropdown" class="absolute top-12 left-3 right-3 bg-[#111b21]/95 border border-[#2a3942] rounded-2xl p-2 shadow-2xl hidden z-50 grid grid-cols-2 gap-1.5 backdrop-blur-md max-h-[300px] overflow-y-auto">
             <div class="col-span-2 text-[0.7rem] text-[#00a884] font-bold uppercase px-2 py-1 border-b border-[#2a3942] mb-1">Выберите язык встречи:</div>
     `;
 
@@ -313,11 +333,11 @@ window.initConference = function() {
     confHtml += `
         </div>
         <div class="translation-bar z-20 pointer-events-none">
-            <div class="conf-marquee-text" id="speaker-marquee" style="animation-duration: 15s;">➔ [AUTO] Нажмите на видео для смены языка</div>
+            <div class="conf-marquee-text" id="speaker-marquee" style="animation-duration: 15s;">➔ [${currentLangCode}] Нажмите на видео для смены языка</div>
         </div>
     </div>`;
     
-    // Рендеринг остальных участников конференции по 13 языковым слотам
+    // Рендеринг остальных участников конференции по языковым слотам
     let activeUsers = [];
     if (window.currentRoomId === 'global' || window.currentRoomId === 'video_room_global') {
         activeUsers = (window.participants || []).filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id); 
@@ -325,7 +345,7 @@ window.initConference = function() {
         activeUsers = [window.currentTargetUser];
     }
 
-    window.confLanguages.forEach(langArea => {
+    window.confLanguages.filter(l => l.code !== 'auto').forEach(langArea => {
         let usersInThisLang = activeUsers.filter(p => p.flagCode === langArea.code);
         if (usersInThisLang.length > 0) {
             usersInThisLang.forEach(p => {
@@ -382,9 +402,14 @@ window.sendConfMsg = async function() {
     if(!text) return;
     inputEl.value = '';
 
+    // Берем выбранный в меню язык как источник (sl)
+    const speakerLang = (window.myProfileInfo && window.myProfileInfo.langCode && window.myProfileInfo.langCode !== 'auto') 
+        ? window.myProfileInfo.langCode 
+        : 'auto';
+
     const myMarquee = document.getElementById('speaker-marquee');
     if(myMarquee) { 
-        myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; 
+        myMarquee.innerHTML = `<span class="text-white">You (${speakerLang.toUpperCase() !== 'AUTO' ? speakerLang.toUpperCase() : 'AUTO'}):</span> ${text}`; 
         myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
     }
 
@@ -392,10 +417,12 @@ window.sendConfMsg = async function() {
     listenerMarquees.forEach(async (el) => {
         const tLang = el.getAttribute('data-lang') || 'en';
         const tFlag = el.getAttribute('data-flag') === 'null' ? '🌐' : (el.getAttribute('data-flag') || '🌐');
+        if (tLang === speakerLang) return;
+
         try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${speakerLang}&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
             const translated = res[0][0][0];
-            el.innerHTML = `<span class="text-white">User:</span> ${tFlag} ${translated}`;
+            el.innerHTML = `<span class="text-white">Translate:</span> ${tFlag} ${translated}`;
             el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null;
         } catch(e) {}
     });
