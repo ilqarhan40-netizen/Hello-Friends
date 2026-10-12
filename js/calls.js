@@ -1,12 +1,15 @@
 // ==========================================
 // MODULE: CALLS, VIDEO & WebRTC ENGINE (CALL.JS)
-// Полная финальная версия: Auto + 13 стран, WebRTC, Звуки, Меню языков спикера, Сетка
+// Финальная интегрированная версия без ошибок
 // ==========================================
 
 window.localStream = null;
 window.peerConnection = null;
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
+
+// ИЗОЛЯЦИЯ: Язык встречи хранится отдельно и не влияет на чаты и профиль!
+window.meetSpeakerLang = { code: 'auto', flag: '🌐', name: 'Auto (Авто)', lang: 'auto' };
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
@@ -128,46 +131,61 @@ window.endWebRTCCall = function() {
     const remoteAudio = document.getElementById('remote-audio-player'); if (remoteAudio) remoteAudio.remove();
 };
 
-// --- 2. ЛОГИКА ЗВОНКОВ И СИГНАЛОВ ---
+// --- 2. ЛОГИКА ЗВОНКОВ И СИГНАЛОВ (ГАРАНТИРОВАННЫЙ ПЕРЕХОД В ГОЛОСОВУЮ КОМНАТУ) ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
 window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
 window.startInAppCall = function() { 
     if (!window.currentTargetUser) { 
-        alert("Выберите контакт для звонка!"); window.closePhoneChoiceModal(); return; 
+        alert("Выберите контакт для звонка!"); 
+        if (window.closePhoneChoiceModal) window.closePhoneChoiceModal(); 
+        return; 
     } 
     const target = window.currentTargetUser; 
-    window.closePhoneChoiceModal(); 
+    if (window.closePhoneChoiceModal) window.closePhoneChoiceModal(); 
     
     let callRef = db.ref('signals/' + target.id).push();
-    callRef.set({ type: 'call', callerId: window.myProfileInfo.id, callerName: window.myUsername, callerPhoto: window.myProfileInfo.photo, timestamp: firebase.database.ServerValue.TIMESTAMP }); 
+    callRef.set({ 
+        type: 'call', 
+        callerId: window.myProfileInfo.id, 
+        callerName: window.myUsername, 
+        callerPhoto: window.myProfileInfo.photo, 
+        timestamp: firebase.database.ServerValue.TIMESTAMP 
+    }); 
     
-    if(window.sendPushToUser) window.sendPushToUser(target.id, "Входящий вызов 📞", `${window.myUsername} звонит вам!`); 
+    if (window.sendPushToUser) {
+        window.sendPushToUser(target.id, "Входящий вызов 📞", `${window.myUsername} звонит вам!`); 
+    }
     
-    const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
-    if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
+    const photoEl = document.getElementById('voice-friend-photo'); 
+    const flagEl = document.getElementById('voice-friend-flag'); 
+    const nameEl = document.getElementById('voice-friend-name');
+    
+    if (photoEl) photoEl.src = target.photo; 
+    if (flagEl) flagEl.innerText = target.flag || '🌐'; 
+    if (nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0]; 
     
     window.voiceFriend = target; 
-    
-    // Переход в голосовую комнату
-    const voiceScreen = document.getElementById('voice-screen') || document.getElementById('audio-call-screen');
-    if (voiceScreen) {
-        document.querySelectorAll('.app-screen, .tab-content').forEach(el => el.classList.remove('active', 'block'));
-        voiceScreen.classList.add('active', 'block');
-    } else if (window.switchTab) {
-        window.switchTab(1); 
+
+    // Строгий переход в голосовую комнату (вкладка 1)
+    if (typeof window.switchTab === 'function') {
+        window.switchTab(1);
     }
 
-    if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
+    if (window.showToast) {
+        window.showToast("Звонок...", `Вызываем ${(target.name || 'User').split(' ')[0]}...`, target.photo, ""); 
+    }
+    
     window.playSafeSound(window.sndCallOut);
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
         db.ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
-        callRef.remove(); window.callTimeout = null;
+        callRef.remove(); 
+        window.callTimeout = null;
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
-        if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
+        if (window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
     }, 30000);
 };
 
@@ -175,8 +193,8 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey)
     window.currentIncomingSignalKey = signalKey; 
     window.currentCallerId = callerId; 
     const nameEl = document.getElementById('incoming-call-name'); const photoEl = document.getElementById('incoming-call-photo');
-    if(nameEl) nameEl.innerText = callerName || 'User'; 
-    if(photoEl) photoEl.src = callerPhoto || 'https://ui-avatars.com/api/?name=U'; 
+    if (nameEl) nameEl.innerText = callerName || 'User'; 
+    if (photoEl) photoEl.src = callerPhoto || 'https://ui-avatars.com/api/?name=U'; 
     document.getElementById('incoming-call-modal').classList.add('active'); 
     window.playSafeSound(window.sndRing, [1000, 500, 1000, 500, 1000, 500, 1000]);
 };
@@ -188,18 +206,14 @@ window.acceptCall = function() {
     db.ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove(); 
 
     let target = window.participants.find(p => p.id === window.currentCallerId); 
-    if(target) { 
+    if (target) { 
         window.currentTargetUser = target; 
         const pEl = document.getElementById('voice-friend-photo'); const fEl = document.getElementById('voice-friend-flag'); const nEl = document.getElementById('voice-friend-name');
-        if(pEl) pEl.src = target.photo; if(fEl) fEl.innerText = target.flag; if(nEl) nEl.innerText = target.name.split(' ')[0]; 
+        if (pEl) pEl.src = target.photo; if (fEl) fEl.innerText = target.flag; if (nEl) nEl.innerText = (target.name || 'User').split(' ')[0]; 
         window.voiceFriend = target; 
-        if(window.switchChatRoom) window.switchChatRoom(target.id); 
+        if (window.switchChatRoom) window.switchChatRoom(target.id); 
         
-        const voiceScreen = document.getElementById('voice-screen') || document.getElementById('audio-call-screen');
-        if (voiceScreen) {
-            document.querySelectorAll('.app-screen, .tab-content').forEach(el => el.classList.remove('active', 'block'));
-            voiceScreen.classList.add('active', 'block');
-        } else if (window.switchTab) {
+        if (typeof window.switchTab === 'function') {
             window.switchTab(1); 
         }
 
@@ -256,7 +270,7 @@ window.initSignalListener = function() {
     }); 
 };
 
-// --- 3. AUTO + 13 СТРАН И ЯЗЫКОВЫЕ ФУНКЦИИ СПИКЕРА ---
+// --- 3. AUTO + 13 СТРАН СПИСОК И ИЗОЛИРОВАННОЕ МЕНЮ ЯЗЫКОВ ---
 window.confLanguages = [
     { code: 'auto', flag: '🌐', name: 'Auto (Авто)', lang: 'auto' },
     { code: 'az', flag: '🇦🇿', name: 'Azərbaycanca', lang: 'az' },
@@ -281,14 +295,10 @@ window.toggleSpeakerLangMenu = function(e) {
 };
 
 window.setSpeakerLanguage = function(code, flag, lang) {
-    if (window.myProfileInfo) {
-        window.myProfileInfo.flagCode = code;
-        window.myProfileInfo.flag = flag;
-        window.myProfileInfo.langCode = lang; // Сохраняем выбранный язык как источник (sl)
-    }
+    window.meetSpeakerLang = { code: code, flag: flag, lang: lang };
     window.toggleSpeakerLangMenu();
     if (typeof window.initConference === 'function') window.initConference();
-    if (window.showToast) window.showToast("Язык изменен", `Установлен язык: ${flag} ${lang.toUpperCase()}`, "", "");
+    if (window.showToast) window.showToast("Язык встречи изменен", `Установлен язык: ${flag} ${lang.toUpperCase()}`, "", "");
 };
 
 document.addEventListener('click', () => {
@@ -298,17 +308,17 @@ document.addEventListener('click', () => {
     }
 });
 
-// --- 4. ВИДЕОКОНФЕРЕНЦИЯ С СЕТКОЙ И МЕНЮ СПИКЕРА ---
+// --- 4. ВИДЕОКОНФЕРЕНЦИЯ С СЕТКОЙ И УМНЫМ ПЕРЕВОДОМ ---
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); 
     if(!confGrid) return;
 
     let myName = (window.myProfileInfo && window.myProfileInfo.name) ? window.myProfileInfo.name.split(' (')[0] : 'You';
-    let currentFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
-    let currentFlagIcon = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
-    let currentLangCode = (window.myProfileInfo && window.myProfileInfo.langCode) ? window.myProfileInfo.langCode.toUpperCase() : 'AUTO';
+    
+    let currentFlagCode = (window.meetSpeakerLang && window.meetSpeakerLang.code !== 'auto') ? window.meetSpeakerLang.code : (window.myProfileInfo?.flagCode || 'un');
+    let currentFlagIcon = (window.meetSpeakerLang) ? window.meetSpeakerLang.flag : '🌐';
+    let currentLangCode = (window.meetSpeakerLang) ? window.meetSpeakerLang.lang.toUpperCase() : 'AUTO';
 
-    // Главный блок спикера с выпадающим меню языков
     let confHtml = `
     <div class="video-frame main relative cursor-pointer" id="my-video-container">
         <div onclick="window.toggleSpeakerLangMenu(event)" class="absolute inset-0 z-10"></div>
@@ -337,10 +347,9 @@ window.initConference = function() {
         </div>
     </div>`;
     
-    // Рендеринг остальных участников конференции по языковым слотам
     let activeUsers = [];
     if (window.currentRoomId === 'global' || window.currentRoomId === 'video_room_global') {
-        activeUsers = (window.participants || []).filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id); 
+        activeUsers = (window.participants || []).filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo?.id); 
     } else if (window.currentTargetUser) {
         activeUsers = [window.currentTargetUser];
     }
@@ -374,7 +383,7 @@ window.initConference = function() {
     
     const videoEl = document.getElementById('my-live-video'); 
     let myVideoSrc = (window.myProfileInfo && window.myProfileInfo.video) ? window.myProfileInfo.video : '';
-    if(videoEl) { 
+    if (videoEl) { 
         videoEl.src = myVideoSrc || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
         videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; 
     }
@@ -384,17 +393,18 @@ window.toggleMyCamera = async function(btn) {
     const videoEl = document.getElementById('my-live-video'); 
     if (window.myVideoStream) { 
         window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); } 
+        if (videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo?.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); } 
         btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
     } else { 
         try { 
             window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
-            if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
+            if (videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
             btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
         } catch(e) { alert("Доступ к камере запрещен! Убедитесь, что сайт открыт по HTTPS."); } 
     } 
 };
 
+// Отправка сообщений конференции с исходным текстом спикера и автопереводом для каналов
 window.sendConfMsg = async function() {
     const inputEl = document.getElementById('conf-chat-input');
     if (!inputEl) return;
@@ -402,25 +412,19 @@ window.sendConfMsg = async function() {
     if(!text) return;
     inputEl.value = '';
 
-    // Берем выбранный в меню язык как источник (sl)
-    const speakerLang = (window.myProfileInfo && window.myProfileInfo.langCode && window.myProfileInfo.langCode !== 'auto') 
-        ? window.myProfileInfo.langCode 
-        : 'auto';
-
     const myMarquee = document.getElementById('speaker-marquee');
-    if(myMarquee) { 
-        myMarquee.innerHTML = `<span class="text-white">You (${speakerLang.toUpperCase() !== 'AUTO' ? speakerLang.toUpperCase() : 'AUTO'}):</span> ${text}`; 
+    if (myMarquee) { 
+        myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; 
         myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
     }
 
     const listenerMarquees = document.querySelectorAll('.conf-listener-marquee');
     listenerMarquees.forEach(async (el) => {
         const tLang = el.getAttribute('data-lang') || 'en';
-        const tFlag = el.getAttribute('data-flag') === 'null' ? '🌐' : (el.getAttribute('data-flag') || '🌐');
-        if (tLang === speakerLang) return;
+        const tFlag = el.getAttribute('data-flag') || '🌐';
 
         try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${speakerLang}&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
             const translated = res[0][0][0];
             el.innerHTML = `<span class="text-white">Translate:</span> ${tFlag} ${translated}`;
             el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null;
@@ -434,7 +438,6 @@ window.toggleMeetMarquee = function() {
     document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
 };
 
-// Автоматический пересчет сетки при открытии вкладки Meet
 const originalSwitchTab = window.switchTab;
 window.switchTab = function(index) {
     if (originalSwitchTab) originalSwitchTab(index);
