@@ -383,26 +383,28 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
+    // Чистый рабочий цикл перевода из коммита 30 апреля (без задвоений)
+    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
-        
-        let myFanFlag = myProfile.flag || '🌐';
-        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-        
+        let myFanFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+        const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+
         let manualLang = window.getLangPref(false, false);
         if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
 
         if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
-            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: myProfile.photo });
+            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: (window.myProfileInfo ? window.myProfileInfo.photo : '') });
             neededLangs.add(myReadLang.substring(0,2));
         }
 
         (window.participants || []).filter(part => part && part.id !== 'ai').forEach(member => {
             let memberLang = window.getSmartLang(member);
             if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
-                targetUsers.push({ code: memberLang.substring(0,2), flag: member.flag || '🌐', photo: member.photo || '' });
-                neededLangs.add(memberLang.substring(0,2));
+                if (!neededLangs.has(memberLang.substring(0,2))) {
+                    targetUsers.push({ code: memberLang.substring(0,2), flag: member.flag || '🌐', photo: member.photo || '' });
+                    neededLangs.add(memberLang.substring(0,2));
+                }
             }
         });
 
@@ -424,12 +426,14 @@ window.handleNewMessage = async function(snapshot) {
 
                 targetUsers.forEach(u => {
                     let translatedText = transCache[u.code] || data.originalText || data.text;
-                    const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
+                    const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; 
+                    const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
                     transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${translatedText}</div></div>`;
                     marqueeTextStr += `${u.flag}${translatedText}        `;
                 });
                 
-                messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
+                messageGroup.appendChild(transContainer); 
+                if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
                 const mText = document.getElementById('chat-info-marquee');
                 if (window.isMarqueeEnabled !== false && mText) {
