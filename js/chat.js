@@ -98,7 +98,7 @@ window.getLangPref = function(isVoice, isConf) {
 };
 
 // ==========================================
-// 2. ОТРИСОВКА И ПЕРЕКЛЮЧЕНИЕ ЧАТОВ (ИСПРАВЛЕНО)
+// 2. ОТРИСОВКА И ПЕРЕКЛЮЧЕНИЕ ЧАТОВ
 // ==========================================
 
 window.updateRoomMarquee = function() {
@@ -107,7 +107,7 @@ window.updateRoomMarquee = function() {
     if(window.currentRoomId === 'global' || window.currentRoomId === 'video_room_global') {
         mText.innerText = "🌍 Global Chat • AI Translation System Active...";
     } else if (window.currentTargetUser) {
-        mText.innerText = `🔒 Private Room with ${window.currentTargetUser.name.split(' ')[0]} • AI Translation Active...`;
+        mText.innerText = `🔒 Private Room with ${(window.currentTargetUser.name || 'User').split(' ')[0]} • AI Translation Active...`;
     }
 };
 
@@ -115,7 +115,6 @@ window.renderSidebar = function() {
     const chatSidebar = document.getElementById('chat-sidebar'); 
     if (!chatSidebar) return;
 
-    // Безопасные данные профиля во избежание падений
     const myProfile = window.myProfileInfo || {};
     const myId = String(myProfile.id || 'guest');
     const myPhoto = myProfile.photo || 'https://ui-avatars.com/api/?name=U';
@@ -144,7 +143,6 @@ window.renderSidebar = function() {
         </div>
     `;
 
-    // Безопасная проверка: если window.participants еще не массив, работаем как с пустым массивом
     const participantsList = Array.isArray(window.participants) ? window.participants : [];
 
     participantsList.filter(p => p && p.id !== 'ai').forEach(p => {
@@ -539,7 +537,7 @@ window.renderEmailArchive = function() {
             <div class="flex items-center gap-3 flex-1 overflow-hidden cursor-pointer" onclick="window.viewSpecificEmail('${mail.id}')">
                 <div class="w-10 h-10 shrink-0 rounded-full bg-[#111b21] border border-[#2a3942] flex items-center justify-center text-[#8696a0]"><i class="fa-solid fa-at"></i></div>
                 <div class="flex flex-col flex-1 overflow-hidden">
-                    <div class="flex justify-between items-center w-full"><span class="text-xs text-[#8696a0] truncate max-w-[70%]">${mail.from || 'System'}</span><span class="text-[0.65rem] text-[#8696a0] pr-2">${mail.date}</span></div>
+                    <div class="flex justify-between items-center w-full"><span class="text-xs text-[#8696a0] truncate max-w-[70%]"${mail.from || 'System'}</span><span class="text-[0.65rem] text-[#8696a0] pr-2">${mail.date}</span></div>
                     <span class="${textBold} text-sm truncate w-full mt-0.5">${safeSubject}</span>
                 </div>
                 ${unreadDot}
@@ -748,7 +746,7 @@ window.openPersonalLangModal = function() {
     else if (window.currentRoomId === 'global') roomLabel = '🌍 Global Chat';
     else if (window.currentRoomId === 'private_ai_bot') roomLabel = '🤖 AI Assistant';
     else if (window.currentRoomId && window.currentRoomId.startsWith('private_me')) roomLabel = '📝 My Notes';
-    else if (window.currentTargetUser) roomLabel = '👤 ' + window.currentTargetUser.name.split(' ')[0];
+    else if (window.currentTargetUser) roomLabel = '👤 ' + (window.currentTargetUser.name || 'User').split(' ')[0];
 
     let html = `<div class="text-[0.7rem] text-[#00a884] mb-3 text-center uppercase tracking-widest border-b border-[#2a3942] pb-2">Settings strictly for:<br><b class="text-white text-sm">${roomLabel}</b></div>`;
 
