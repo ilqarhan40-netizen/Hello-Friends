@@ -11,7 +11,7 @@ window.changeAppLanguage = function(langCode) {
             let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
             let flag = window.myProfileInfo.flagCode || "un";
 
-            if (phone.startsWith('+7')) smartLang = 'ru';
+            if (phone.startsWith('+7')) smartLang = flag === 'kz' ? 'kk' : 'ru';
             else if (phone.startsWith('+994')) smartLang = 'az';
             else if (phone.startsWith('+49')) smartLang = 'de';
             else if (phone.startsWith('+90')) smartLang = 'tr';
@@ -24,7 +24,7 @@ window.changeAppLanguage = function(langCode) {
             else if (phone.startsWith('+1') || phone.startsWith('+44')) smartLang = 'en';
             else if (phone.startsWith('+971')) smartLang = 'ar';
             else if (flag !== 'un') {
-                const flagToLang = { 'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr' };
+                const flagToLang = { 'ru': 'ru', 'kz': 'kk', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr' };
                 if (flagToLang[flag]) smartLang = flagToLang[flag];
             }
         }
@@ -67,7 +67,7 @@ window.getSmartLang = function(userData) {
 
     let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
 
-    if (phone.startsWith('+7')) return 'ru';
+    if (phone.startsWith('+7')) return flag === 'kz' ? 'kk' : 'ru';
     if (phone.startsWith('+994')) return 'az';
     if (phone.startsWith('+39')) return 'it';
     if (phone.startsWith('+49')) return 'de';
@@ -79,7 +79,7 @@ window.getSmartLang = function(userData) {
     if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
     if (phone.startsWith('+971')) return 'ar';
 
-    const flagToLang = { 'ru': 'ru', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr' };
+    const flagToLang = { 'ru': 'ru', 'kz': 'kk', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr' };
     if (flagToLang[flag]) return flagToLang[flag];
 
     return navigator.language ? navigator.language.slice(0, 2) : 'en';
@@ -243,7 +243,7 @@ window.sendFirebaseMsg = async function() {
     let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
     let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
-    const langMap = { 'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
+    const langMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
     if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
 
     let myBaseText = rawText;
@@ -395,22 +395,18 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        let targetUsers = []; let processedLangs = new Set();
  // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
-        
+
         let myFanFlag = window.myProfileInfo.flag || '🌐';
-        const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
 
         let manualLang = window.getLangPref(false, false);
         if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
 
         if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
-            processedLangs.add(myReadLang.substring(0,2));
-            targetUsers.push({ code: myReadLang, flag: myFanFlag, photo: window.myProfileInfo.photo });
             targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: window.myProfileInfo.photo });
             neededLangs.add(myReadLang.substring(0,2));
         }
@@ -418,9 +414,6 @@ window.handleNewMessage = async function(snapshot) {
         window.participants.filter(part => part.id !== 'ai').forEach(member => {
             let memberLang = window.getSmartLang(member);
             if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
-                if (!processedLangs.has(memberLang.substring(0,2))) {
-                    processedLangs.add(memberLang.substring(0,2)); targetUsers.push({ code: memberLang, flag: member.flag, photo: member.photo });
-                }
                 targetUsers.push({ code: memberLang.substring(0,2), flag: member.flag, photo: member.photo });
                 neededLangs.add(memberLang.substring(0,2));
             }
@@ -428,9 +421,6 @@ window.handleNewMessage = async function(snapshot) {
 
         if (targetUsers.length > 0) {
             try {
-                const fetchPromises = targetUsers.map(u => 
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                    .then(res => res.json()).then(resData => ({ user: u, text: resData[0][0][0] })).catch(e => ({ user: u, text: data.originalText || data.text })) 
                 let transCache = {};
                 const fetchPromises = Array.from(neededLangs).map(langCode => 
                     fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
@@ -438,24 +428,20 @@ window.handleNewMessage = async function(snapshot) {
                     .then(resData => { transCache[langCode] = resData[0][0][0]; })
                     .catch(e => { transCache[langCode] = data.originalText || data.text; }) 
                 );
-                const translationsRes = await Promise.all(fetchPromises);
-                
+
                 await Promise.all(fetchPromises);
 
                 const transContainer = document.createElement('div');
                 transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
                 let marqueeTextStr = '';
 
-                translationsRes.forEach(t => {
                 targetUsers.forEach(u => {
                     let translatedText = transCache[u.code] || data.originalText || data.text;
                     const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
-                    transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${t.user.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${t.user.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${t.text}</div></div>`;
-                    marqueeTextStr += `${t.user.flag} ${t.text}        `;
                     transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${translatedText}</div></div>`;
                     marqueeTextStr += `${u.flag} ${translatedText}        `;
                 });
-                
+
                 messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
 
                 const mText = document.getElementById('chat-info-marquee');
@@ -530,7 +516,7 @@ if (data.isVoiceRoomMsg) {
                     }
                 } else if (listenerMarquee.id === 'speaker-marquee') {
                     targetLang = window.getLangPref(false, true) || window.getSmartLang(window.myProfileInfo);
-                    const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+                    const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
                     let baseL = targetLang.substring(0,2);
                     if (revLangMap[baseL]) targetFlag = revLangMap[baseL];
                 }
@@ -786,10 +772,13 @@ window.openPersonalLangModal = function() {
     let currentPref = localStorage.getItem(targetKey) || 'auto';
 
     const langs = [
-        {code: 'auto', name: '🤖 Auto (Profile)', flag: '🌐'}, {code: 'en', name: 'English', flag: '🇬🇧'}, {code: 'ru', name: 'Русский', flag: '🇷🇺'},
-        {code: 'az', name: 'Azərbaycanca', flag: '🇦🇿'}, {code: 'de', name: 'Deutsch', flag: '🇩🇪'}, {code: 'tr', name: 'Türkçe', flag: '🇹🇷'},
-        {code: 'ar', name: 'العربية', flag: '🇦🇪'}, {code: 'it', name: 'Italiano', flag: '🇮🇹'}, {code: 'es', name: 'Español', flag: '🇪🇸'},
-        {code: 'fr', name: 'Français', flag: '🇫🇷'}, {code: 'pt', name: 'Português', flag: '🇵🇹'}, {code: 'ja', name: '日本語', flag: '🇯🇵'}, {code: 'zh', name: '中文', flag: '🇨🇳'}
+        {code: 'auto', name: '🤖 Auto (Profile)', flag: '🌐'}, {code: 'en', name: 'English', flag: '🇬🇧'}, 
+        {code: 'kk', name: 'Қазақша', flag: '🇰🇿'}, {code: 'pt', name: 'Português', flag: '🇵🇹'}, // Добавлены КЗ и ПТ
+        {code: 'ru', name: 'Русский', flag: '🇷🇺'}, {code: 'az', name: 'Azərbaycanca', flag: '🇦🇿'}, 
+        {code: 'de', name: 'Deutsch', flag: '🇩🇪'}, {code: 'tr', name: 'Türkçe', flag: '🇹🇷'},
+        {code: 'ar', name: 'العربية', flag: '🇦🇪'}, {code: 'it', name: 'Italiano', flag: '🇮🇹'}, 
+        {code: 'es', name: 'Español', flag: '🇪🇸'}, {code: 'fr', name: 'Français', flag: '🇫🇷'}, 
+        {code: 'ja', name: '日本語', flag: '🇯🇵'}, {code: 'zh', name: '中文', flag: '🇨🇳'}
     ];
 
     let roomLabel = 'Chat Room';
@@ -904,7 +893,7 @@ window.startUniversalMic = async function(mode) {
 
         let spokenLangCode = rec.lang.substring(0,2);
         if (manualMicLang !== 'auto') {
-            const revLangMap = { 'en':['gb','🇬🇧'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
+            const revLangMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
             if (revLangMap[spokenLangCode]) {
                 activeFlagCode = revLangMap[spokenLangCode][0];
                 activeFlag = revLangMap[spokenLangCode][1];
@@ -932,3 +921,35 @@ window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
+// ==========================================
+// 7. ОТПРАВКА PUSH-УВЕДОМЛЕНИЙ ЧЕРЕЗ ONESIGNAL
+// ==========================================
+window.sendPushNotification = function(targetUserId, pushData, titleText, bodyText) {
+    if (!targetUserId || targetUserId === 'ai' || targetUserId === 'guest') return;
+
+    // 1. Извлекаем onesignal_id получателя из Firebase
+    firebase.database().ref('users/' + targetUserId + '/onesignal_id').once('value').then(snapshot => {
+        const targetPlayerId = snapshot.val();
+        if (!targetPlayerId) return; // У получателя нет токена OneSignal
+
+        // 2. Отправляем Push через REST API OneSignal
+        fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify({
+                app_id: "ВАШ_ONESIGNAL_APP_ID", // ⚠️ Не забудьте указать ваш App ID из OneSignal
+                app_id: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+                include_player_ids: [targetPlayerId],
+                data: {
+                    custom: {
+                        a: pushData
+                    }
+                },
+                headings: { "en": titleText },
+                contents: { "en": bodyText }
+            })
+        }).catch(err => console.error("Ошибка отправки Push:", err));
+    });
+};
