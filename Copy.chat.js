@@ -991,3 +991,4 @@ let checkProfileForOneSignal = setInterval(() => {
         clearInterval(checkProfileForOneSignal);
     }
 }, 1000);
+
