@@ -932,3 +932,54 @@ window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
+
+    // ==========================================
+// 7. VIDEO GRID MODULE (КОНФЕРЕНЦИЯ И СЕТКА ВИДЕО)
+// ==========================================
+window.renderVideoGrid = function() {
+    const gridContainer = document.getElementById('video-grid') || document.getElementById('conf-grid');
+    if (!gridContainer) return;
+
+    const participantsList = Array.isArray(window.participants) ? window.participants : [];
+    const myProfile = window.myProfileInfo || { id: 'guest', name: 'Me' };
+    const myName = window.myUsername || 'Me';
+
+    // Рендерим плитку локального пользователя
+    let gridHTML = `
+        <div class="video-tile relative bg-[#111b21] rounded-2xl overflow-hidden border border-[#2a3942] flex items-center justify-center aspect-video shadow-lg">
+            <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover"></video>
+            <div class="absolute bottom-2 left-2 bg-black/60 px-2.5 py-1 rounded-lg text-xs text-white font-medium flex items-center gap-1.5 backdrop-blur-sm">
+                <span>${myProfile.flag || '🌐'}</span>
+                <span>${myName} (You)</span>
+            </div>
+        </div>
+    `;
+
+    // Рендерим плитки остальных участников
+    participantsList.filter(p => p && p.id !== myProfile.id && p.id !== 'ai').forEach(p => {
+        gridHTML += `
+            <div class="video-tile relative bg-[#111b21] rounded-2xl overflow-hidden border border-[#2a3942] flex items-center justify-center aspect-video shadow-lg">
+                <video id="remote-video-${p.id}" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute inset-0 flex items-center justify-center bg-[#202c33]/80 fallback-avatar">
+                    <img src="${p.photo || 'https://ui-avatars.com/api/?name=U'}" class="w-16 h-16 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+                </div>
+                <div class="absolute bottom-2 left-2 bg-black/60 px-2.5 py-1 rounded-lg text-xs text-white font-medium flex items-center gap-1.5 backdrop-blur-sm">
+                    <span>${p.flag || '🌐'}</span>
+                    <span>${(p.name || 'User').split(' ')[0]}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    gridContainer.innerHTML = gridHTML;
+};
+
+// Авто-обновление сетки при изменении списка участников или входе в видеокомнату
+setInterval(() => {
+    if (window.currentIndex === 2 || window.currentRoomId === 'video_room_global') {
+        const grid = document.getElementById('video-grid') || document.getElementById('conf-grid');
+        if (grid && grid.children.length === 0) {
+            window.renderVideoGrid();
+        }
+    }
+}, 1000);
