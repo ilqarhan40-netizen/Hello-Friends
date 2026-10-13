@@ -991,34 +991,3 @@ let checkProfileForOneSignal = setInterval(() => {
         clearInterval(checkProfileForOneSignal);
     }
 }, 1000);
-
-// ==========================================
-// 9. МОСТ ДЛЯ ЗВОНКОВ ИЗ ПРОФИЛЯ (ДОП. К CHAT.JS)
-// ==========================================
-
-window.actionModalCall = function() {
-    if (typeof window.closeAvatarModal === 'function') {
-        window.closeAvatarModal();
-    }
-    
-    // Если есть функция выбора типа звонка (аудио / видео), открываем её
-    if (typeof window.openPhoneChoiceModal === 'function') {
-        window.openPhoneChoiceModal();
-    } 
-    // Иначе напрямую запускаем в приложении аудиозвонок
-    else if (typeof window.startInAppCall === 'function') {
-        window.startInAppCall();
-    } else {
-        console.error("Модуль звонков (call.js) не подключен или функции недоступны!");
-    }
-};
-
-// Обработка кнопки аудиовызова из модального окна выбора связи
-window.confirmAudioCall = function() {
-    if (typeof window.closePhoneChoiceModal === 'function') {
-        window.closePhoneChoiceModal();
-    }
-    if (typeof window.startInAppCall === 'function') {
-        window.startInAppCall();
-    }
-};
