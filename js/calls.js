@@ -1,6 +1,6 @@
 // ==========================================
 // MODULE: CALLS, VIDEO & WebRTC ENGINE (CALL.JS)
-// Финальная интегрированная версия без ошибок
+// Финальная исправленная версия: Вибрация звонка + Перевод бегущей строки спикера
 // ==========================================
 
 window.localStream = null;
@@ -8,8 +8,8 @@ window.peerConnection = null;
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 
-// ИЗОЛЯЦИЯ: Язык встречи хранится отдельно и не влияет на чаты и профиль!
-window.meetSpeakerLang = { code: 'auto', flag: '🌐', name: 'Auto (Авто)', lang: 'auto' };
+// ИЗОЛЯЦИЯ И СОХРАНЕНИЕ: Загружаем язык встречи из памяти или ставим auto
+window.meetSpeakerLang = JSON.parse(localStorage.getItem('hf_meet_speaker_lang') || JSON.stringify({ code: 'auto', flag: '🌐', name: 'Auto (Авто)', lang: 'auto' }));
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
@@ -131,7 +131,7 @@ window.endWebRTCCall = function() {
     const remoteAudio = document.getElementById('remote-audio-player'); if (remoteAudio) remoteAudio.remove();
 };
 
-// --- 2. ЛОГИКА ЗВОНКОВ И СИГНАЛОВ (ГАРАНТИРОВАННЫЙ ПЕРЕХОД В ГОЛОСОВУЮ КОМНАТУ) ---
+// --- 2. ЛОГИКА ЗВОНКОВ И СИГНАЛОВ (ЖЕЛЕЗНЫЙ ПЕРЕХОД + ВИБРАЦИЯ) ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
 window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
@@ -167,7 +167,23 @@ window.startInAppCall = function() {
     
     window.voiceFriend = target; 
 
-    // Строгий переход в голосовую комнату (вкладка 1)
+    // Принудительное скрытие чата и открытие голосового экрана
+    const chatScreen = document.getElementById('chat-screen') || document.getElementById('chat-container');
+    if (chatScreen) {
+        chatScreen.classList.remove('active', 'block', 'flex');
+        chatScreen.classList.add('hidden');
+    }
+
+    const voiceScreen = document.getElementById('voice-screen') || document.getElementById('audio-call-screen') || document.getElementById('call-screen');
+    if (voiceScreen) {
+        document.querySelectorAll('.app-screen, .tab-content').forEach(el => {
+            el.classList.remove('active', 'block', 'flex');
+            el.classList.add('hidden');
+        });
+        voiceScreen.classList.remove('hidden');
+        voiceScreen.classList.add('active', 'block', 'flex');
+    }
+
     if (typeof window.switchTab === 'function') {
         window.switchTab(1);
     }
@@ -176,7 +192,8 @@ window.startInAppCall = function() {
         window.showToast("Звонок...", `Вызываем ${(target.name || 'User').split(' ')[0]}...`, target.photo, ""); 
     }
     
-    window.playSafeSound(window.sndCallOut);
+    // Звук гудков + ВИБРАЦИЯ
+    window.playSafeSound(window.sndCallOut, [800, 1200, 800, 1200, 800, 1200]);
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
@@ -270,7 +287,7 @@ window.initSignalListener = function() {
     }); 
 };
 
-// --- 3. AUTO + 13 СТРАН СПИСОК И ИЗОЛИРОВАННОЕ МЕНЮ ЯЗЫКОВ ---
+// --- 3. AUTO + 13 СТРАН СПИСОК И МЕНЮ ЯЗЫКОВ ---
 window.confLanguages = [
     { code: 'auto', flag: '🌐', name: 'Auto (Авто)', lang: 'auto' },
     { code: 'az', flag: '🇦🇿', name: 'Azərbaycanca', lang: 'az' },
@@ -296,6 +313,7 @@ window.toggleSpeakerLangMenu = function(e) {
 
 window.setSpeakerLanguage = function(code, flag, lang) {
     window.meetSpeakerLang = { code: code, flag: flag, lang: lang };
+    localStorage.setItem('hf_meet_speaker_lang', JSON.stringify(window.meetSpeakerLang));
     window.toggleSpeakerLangMenu();
     if (typeof window.initConference === 'function') window.initConference();
     if (window.showToast) window.showToast("Язык встречи изменен", `Установлен язык: ${flag} ${lang.toUpperCase()}`, "", "");
@@ -308,7 +326,7 @@ document.addEventListener('click', () => {
     }
 });
 
-// --- 4. ВИДЕОКОНФЕРЕНЦИЯ С СЕТКОЙ И УМНЫМ ПЕРЕВОДОМ ---
+// --- 4. ВИДЕОКОНФЕРЕНЦИЯ С СЕТКОЙ И ПЕРЕВОДОМ ---
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); 
     if(!confGrid) return;
@@ -317,7 +335,7 @@ window.initConference = function() {
     
     let currentFlagCode = (window.meetSpeakerLang && window.meetSpeakerLang.code !== 'auto') ? window.meetSpeakerLang.code : (window.myProfileInfo?.flagCode || 'un');
     let currentFlagIcon = (window.meetSpeakerLang) ? window.meetSpeakerLang.flag : '🌐';
-    let currentLangCode = (window.meetSpeakerLang) ? window.meetSpeakerLang.lang.toUpperCase() : 'AUTO';
+    let currentLangCode = (window.meetSpeakerLang && window.meetSpeakerLang.lang) ? window.meetSpeakerLang.lang.toUpperCase() : 'AUTO';
 
     let confHtml = `
     <div class="video-frame main relative cursor-pointer" id="my-video-container">
@@ -326,7 +344,6 @@ window.initConference = function() {
         <div class="video-overlay z-20 pointer-events-none">${myName} (${currentFlagIcon} ${currentLangCode})</div>
         <div class="flag-overlay z-20 pointer-events-none" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${currentFlagCode}.png" class="w-6 rounded-sm shadow"></div>
         
-        <!-- Выпадающая панель: Auto + 13 языков -->
         <div id="speaker-lang-dropdown" class="absolute top-12 left-3 right-3 bg-[#111b21]/95 border border-[#2a3942] rounded-2xl p-2 shadow-2xl hidden z-50 grid grid-cols-2 gap-1.5 backdrop-blur-md max-h-[300px] overflow-y-auto">
             <div class="col-span-2 text-[0.7rem] text-[#00a884] font-bold uppercase px-2 py-1 border-b border-[#2a3942] mb-1">Выберите язык встречи:</div>
     `;
@@ -404,7 +421,7 @@ window.toggleMyCamera = async function(btn) {
     } 
 };
 
-// Отправка сообщений конференции с исходным текстом спикера и автопереводом для каналов
+// Отправка сообщений конференции с переводом бегущей строки спикера на выбранный в меню язык
 window.sendConfMsg = async function() {
     const inputEl = document.getElementById('conf-chat-input');
     if (!inputEl) return;
@@ -412,9 +429,25 @@ window.sendConfMsg = async function() {
     if(!text) return;
     inputEl.value = '';
 
+    const speakerLang = (window.meetSpeakerLang && window.meetSpeakerLang.lang && window.meetSpeakerLang.lang !== 'auto') 
+        ? window.meetSpeakerLang.lang 
+        : 'auto';
+    const speakerFlag = (window.meetSpeakerLang && window.meetSpeakerLang.flag) ? window.meetSpeakerLang.flag : '🌐';
+
+    // Переводим текст для бегущей строки спикера НА ВЫБРАННЫЙ ЯЗЫК
+    let displayText = text;
+    if (speakerLang !== 'auto') {
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${speakerLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
+            if (res && res[0] && res[0][0] && res[0][0][0]) {
+                displayText = res[0][0][0];
+            }
+        } catch(e) {}
+    }
+
     const myMarquee = document.getElementById('speaker-marquee');
     if (myMarquee) { 
-        myMarquee.innerHTML = `<span class="text-white">You:</span> ${text}`; 
+        myMarquee.innerHTML = `<span class="text-white">You (${speakerLang.toUpperCase()}):</span> ${speakerFlag} ${displayText}`; 
         myMarquee.style.animation = 'none'; void myMarquee.offsetWidth; myMarquee.style.animation = null;
     }
 
@@ -422,10 +455,12 @@ window.sendConfMsg = async function() {
     listenerMarquees.forEach(async (el) => {
         const tLang = el.getAttribute('data-lang') || 'en';
         const tFlag = el.getAttribute('data-flag') || '🌐';
+        if (tLang === speakerLang) return;
 
         try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
-            const translated = res[0][0][0];
+            const slParam = speakerLang !== 'auto' ? speakerLang : 'auto';
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${slParam}&tl=${tLang}&dt=t&q=${encodeURIComponent(text)}`).then(r => r.json());
+            const translated = (res && res[0] && res[0][0] && res[0][0][0]) ? res[0][0][0] : text;
             el.innerHTML = `<span class="text-white">Translate:</span> ${tFlag} ${translated}`;
             el.style.animation = 'none'; void el.offsetWidth; el.style.animation = null;
         } catch(e) {}
