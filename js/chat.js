@@ -772,7 +772,7 @@ window.actionDeleteForever = function() {
     }
 };
 
-// ==========================================
+/ ==========================================
 // 5. ПАНЕЛЬ ЯЗЫКОВ И МИКРОФОН
 // ==========================================
 window.openPersonalLangModal = function() {
@@ -933,11 +933,12 @@ window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = ta
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
 
-    // ==========================================
-// 7. VIDEO GRID MODULE (КОНФЕРЕНЦИЯ И СЕТКА ВИДЕО)
+// ==========================================
+// 7. VIDEO GRID MODULE (КОНФЕРЕНЦИЯ И СЕТКА ВИДЕО) - ИСПРАВЛЕНО
 // ==========================================
 window.renderVideoGrid = function() {
-    const gridContainer = document.getElementById('video-grid') || document.getElementById('conf-grid');
+    // Добавлен поиск 'conference-grid', чтобы контейнер гарантированно находился
+    const gridContainer = document.getElementById('conference-grid') || document.getElementById('video-grid') || document.getElementById('conf-grid');
     if (!gridContainer) return;
 
     const participantsList = Array.isArray(window.participants) ? window.participants : [];
@@ -977,9 +978,46 @@ window.renderVideoGrid = function() {
 // Авто-обновление сетки при изменении списка участников или входе в видеокомнату
 setInterval(() => {
     if (window.currentIndex === 2 || window.currentRoomId === 'video_room_global') {
-        const grid = document.getElementById('video-grid') || document.getElementById('conf-grid');
+        const grid = document.getElementById('conference-grid') || document.getElementById('video-grid') || document.getElementById('conf-grid');
         if (grid && grid.children.length === 0) {
             window.renderVideoGrid();
         }
     }
 }, 1000);
+
+// ==========================================
+// 8. ОТРИСОВКА БОКОВОЙ ПАНЕЛИ (RENDER SIDEBAR) - ДОБАВЛЕНО
+// ==========================================
+window.renderSidebar = function() {
+    const chatSidebar = document.getElementById('chat-sidebar');
+    if (!chatSidebar) return;
+
+    const myProfile = window.myProfileInfo || {};
+    const myId = String(myProfile.id || 'guest');
+
+    let sidebarHTML = `
+        <div class="chat-contact ${window.currentRoomId === 'global' ? 'active-room' : ''}" onclick="window.switchChatRoom('global')">
+            <div class="chat-contact-icon bg-[#005c4b] text-white flex justify-center items-center text-xl">🌍</div>
+            <span class="chat-contact-name text-white">Global</span>
+        </div>
+        <div class="chat-contact ${window.currentRoomId === 'ai' ? 'active-room' : ''}" onclick="window.switchChatRoom('ai')">
+            <div class="chat-contact-icon bg-purple-900 text-white flex justify-center items-center text-xl">🤖</div>
+            <span class="chat-contact-name text-[#a29bfe]">AI Bot</span>
+        </div>
+    `;
+
+    const participantsList = Array.isArray(window.participants) ? window.participants : [];
+
+    participantsList.filter(p => p && p.id !== 'ai' && p.id !== myId).forEach(p => {
+        sidebarHTML += `
+            <div class="chat-contact ${window.currentRoomId === p.id ? 'active-room' : ''}" onclick="window.switchChatRoom('${p.id}')">
+                <div class="chat-contact-icon relative" style="background-image: url('${p.photo || ''}'); background-size: cover; background-position: center;">
+                    <img src="https://flagcdn.com/w20/${p.flagCode || 'un'}.png" class="absolute -bottom-1 -right-1 w-5 h-3.5 rounded-sm object-cover border border-[#111b21]">
+                </div>
+                <span class="chat-contact-name text-white">${(p.name || 'User').split(' ')[0]}</span>
+            </div>
+        `;
+    });
+
+    chatSidebar.innerHTML = sidebarHTML;
+};
