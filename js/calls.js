@@ -332,7 +332,15 @@ let signalInitCheck = setInterval(() => {
 }, 1000);
 
 // --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (12 СТРАН) ---
-window.initConference = function() {
+    window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; 
+    document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
+};
+
+window.makeCallFromContact = function(userId, type = 'voice') {
+    const target = (window.participants || []).find(p => p.id === userId);
+    if (!target) return console.error("Юзер не найден");
+
+    window.currentTargewindow.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
 
     let myReadLang = window.getLangPref(false, true); 
@@ -388,14 +396,79 @@ window.initConference = function() {
             </div>`;
         }
     });
+// --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (12 СТРАН) ---
+window.initConference = function() {
+    const confGrid = document.getElementById('conference-grid'); 
+    if (!confGrid) return;
 
-    let otherUsers = activeUsers.filter(p => !smartLanguages.some(l => l.code === p.flagCode));
+    const myProfile = window.myProfileInfo || { id: 'guest', flag: '🌐', flagCode: 'un', video: '' };
+    const myName = window.myUsername || (myProfile.name ? myProfile.name.split(' ')[0] : 'You');
+    let myReadLang = (typeof window.getLangPref === 'function') ? window.getLangPref(false, true) : (myProfile.langCode || 'en'); 
+    let myReadFlag = myProfile.flag || '🌐';
+
+    const smartLanguages = [
+        { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
+        { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' },
+        { code: 'es', flag: '🇪🇸', lang: 'ES' }, { code: 'fr', flag: '🇫🇷', lang: 'FR' },
+        { code: 'de', flag: '🇩🇪', lang: 'DE' }, { code: 'it', flag: '🇮🇹', lang: 'IT' },
+        { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'ae', flag: '🇦🇪', lang: 'AR' },
+        { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
+    ];
+
+    let confHtml = `
+    <div class="video-frame main" id="my-video-container">
+       <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="if(window.openPersonalLangModal) window.openPersonalLangModal()"></video>
+        <div class="video-overlay">${myName} (You)</div>
+        <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${myProfile.flagCode || 'un'}.png" class="w-6 rounded-sm"></div>
+        <div class="translation-bar"><div id="speaker-marquee" class="conf-marquee-text conf-listener-marquee" data-lang="${myReadLang}" data-flag="${myReadFlag}" style="animation-duration: 30s;">➔ [AUTO] Связь защищена...</div></div>
+    </div>`;
+
+    const fakeIds = ['klaus', 'marinella'];
+    let activeUsers = [];
+    if (!window.currentRoomId || window.currentRoomId === 'global' || window.currentRoomId === 'video_room_global') {
+        activeUsers = (window.participants || []).filter(p => p && p.id !== 'ai' && String(p.id) !== String(myProfile.id) && !fakeIds.includes(String(p.id).toLowerCase())); 
+    } else if (window.currentTargetUser) {
+        activeUsers = [window.currentTargetUser];
+    }
+
+    smartLanguages.forEach(langArea => {
+        let usersInThisLang = activeUsers.filter(p => p && p.flagCode === langArea.code);
+
+        if (usersInThisLang.length > 0) {
+            usersInThisLang.forEach(p => {
+                let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
+                confHtml += `
+                <div class="video-frame cursor-pointer" onclick="if(window.openAvatarModal) window.openAvatarModal('${p.id}', true)">
+                    <video id="remote-video-${p.id}" class="absolute inset-0 w-full h-full object-cover z-20 hidden" autoplay playsinline></video>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#111b21] z-10">
+                        <img src="${p.photo || 'https://ui-avatars.com/api/?name=U'}" class="w-14 h-14 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+                    </div>
+                    <div class="video-overlay z-30">${(p.name||'User').split(' ')[0]}</div>
+                    <div class="flag-overlay z-30" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
+                    <div class="translation-bar z-30"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${myReadLang}" data-flag="${myReadFlag}" style="animation-duration: 30s;">${p.flag || '🌐'} Канал ${userLangStr} активен...</div></div>
+                </div>`;
+            });
+        } else {
+            confHtml += `
+            <div class="video-frame opacity-50">
+                <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#0b141a]">
+                    <span class="text-4xl mb-2">${langArea.flag}</span>
+                    <span class="text-xs text-[#8696a0]">Ожидание (${langArea.lang})</span>
+                </div>
+                <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${langArea.code}" data-flag="${langArea.flag}" style="animation-duration: 40s;">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
+            </div>`;
+        }
+    });
+
+    let otherUsers = activeUsers.filter(p => p && !smartLanguages.some(l => l.code === p.flagCode));
     otherUsers.forEach(p => {
         let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
         confHtml += `
-        <div class="video-frame">
+        <div class="video-frame cursor-pointer" onclick="if(window.openAvatarModal) window.openAvatarModal('${p.id}', true)">
             <video id="remote-video-${p.id}" class="absolute inset-0 w-full h-full object-cover z-20 hidden" autoplay playsinline></video>
-            <div class="absolute inset-0 flex items-center justify-center bg-[#111b21] z-10"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#111b21] z-10">
+                <img src="${p.photo || 'https://ui-avatars.com/api/?name=U'}" class="w-14 h-14 rounded-full object-cover border-2 border-[#00a884] shadow-md">
+            </div>
             <div class="video-overlay z-30">${(p.name||'User').split(' ')[0]}</div>
             <div class="flag-overlay z-30" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
             <div class="translation-bar z-30"><div id="conf-marquee-${p.id}" class="conf-marquee-text conf-listener-marquee" data-lang="${myReadLang}" data-flag="${myReadFlag}" style="animation-duration: 30s;">${p.flag || '🌐'} Перевод с ${userLangStr} активен...</div></div>
@@ -405,8 +478,8 @@ window.initConference = function() {
     confGrid.innerHTML = confHtml; 
 
     const videoEl = document.getElementById('my-live-video'); 
-    if(videoEl) { 
-        videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
+    if (videoEl && !window.myVideoStream) { 
+        videoEl.src = myProfile.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
         videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; 
     }
 };
@@ -415,12 +488,12 @@ window.toggleMyCamera = async function(btn) {
     const videoEl = document.getElementById('my-live-video'); 
     if (window.myVideoStream) { 
         window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
+        if (videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo?.video || ''; videoEl.play().catch(e=>{}); } 
         btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
     } else { 
         try { 
             window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
-            if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
+            if (videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play().catch(e=>{}); } 
             btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
         } catch(e) { alert("Доступ к камере запрещен!"); } 
     } 
@@ -433,24 +506,21 @@ window.toggleMeetMarquee = function() {
 };
 
 window.makeCallFromContact = function(userId, type = 'voice') {
-    const target = (window.participants || []).find(p => p.id === userId);
+    const target = (window.participants || []).find(p => p && String(p.id) === String(userId));
     if (!target) return console.error("Юзер не найден");
-
     window.currentTargetUser = target;
-
     if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
-
     window.startInAppCall(type);
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => { window.initConference(); }, 600);
     setTimeout(() => {
         if (window.sendFirebaseMsg) {
             const originalSend = window.sendFirebaseMsg;
             window.sendFirebaseMsg = function() {
                 const inputId = window.currentMicInputTarget || 'chat-input';
                 const inputEl = document.getElementById(inputId);
-
                 if (inputEl && inputEl.value.trim() !== "") {
                     window.playSafeSound(window.sndMsg);
                 }
