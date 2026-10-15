@@ -129,6 +129,7 @@ window.updateRoomMarquee = function() {
     }
 };
 
+
 window.renderSidebar = function() {
     const chatSidebar = document.getElementById('chat-sidebar'); 
     if (!chatSidebar) return;
@@ -137,7 +138,7 @@ window.renderSidebar = function() {
     const myId = String(myProfile.id || 'guest');
     const myPhoto = myProfile.photo || 'https://ui-avatars.com/api/?name=U';
     const myFlagCode = myProfile.flagCode || 'un';
-    const myName = window.myUsername || (myProfile.name ? myProfile.name.split(' ')[0] : 'Me');
+    const myName = window.myUsername || (myProfile.name ? myProfile.name.split(' ')[0] : 'You');
 
     const welcomeImg = document.getElementById('welcome-user-photo');
     if (welcomeImg && myProfile.photo) { welcomeImg.src = myProfile.photo; }
@@ -159,9 +160,10 @@ window.renderSidebar = function() {
         </div>
     `;
 
+    const fakeIds = ['klaus', 'marinella'];
     const participantsList = Array.isArray(window.participants) ? window.participants : [];
 
-    participantsList.filter(p => p && p.id !== 'ai' && String(p.id) !== myId).forEach(p => {
+    participantsList.filter(p => p && p.id !== 'ai' && String(p.id) !== myId && !fakeIds.includes(String(p.id).toLowerCase())).forEach(p => {
         let id1 = myId; 
         let id2 = String(p.id);
         let expectedId = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
@@ -175,6 +177,8 @@ window.renderSidebar = function() {
         `;
     });
     chatSidebar.innerHTML = sidebarHTML;
+};
+
 };
 
 window.switchChatRoom = function(targetId) {
