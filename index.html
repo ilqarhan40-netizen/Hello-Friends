@@ -24,14 +24,14 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script src="js/language.js?v=9000"></script>
-    <script src="js/search.js?v=9000"></script>
-    <script src="js/ecosystem.js?v=9000"></script>
-    <script src="js/profiles.js?v=9000"></script>
-    <script src="js/calls.js?v=9000"></script>
-    <script src="js/voice.js?v=9000"></script>
-    <script src="js/chat.js?v=9000"></script>
-    <script src="js/archive.js?v=9000"></script>
+    <script src="js/language.js?v=9500"></script>
+    <script src="js/search.js?v=9500"></script>
+    <script src="js/ecosystem.js?v=9500"></script>
+    <script src="js/profiles.js?v=9500"></script>
+    <script src="js/calls.js?v=9500"></script>
+    <script src="js/voice.js?v=9500"></script>
+    <script src="js/chat.js?v=9500"></script>
+    <script src="js/archive.js?v=9500"></script>
     
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
@@ -1857,10 +1857,13 @@ if (window.OneSignalDeferred) {
             document.body.removeChild(link);
         };
         
-                setTimeout(function() {
-            if (typeof window.renderSidebar === 'function') {
-                window.renderSidebar();
-            }
+            setTimeout(function() {
+    if (typeof window.renderSidebar === 'function') window.renderSidebar();
+    if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
+        window.initConference();
+    }
+}, 1500);
+
             if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
                 window.initConference();
             }
