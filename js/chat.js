@@ -395,54 +395,63 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-     // === ГЛОБАЛЬНЫЙ И ПРИВАТНЫЙ ЧАТ: ИСПРАВЛЕННАЯ ЛОГИКА БЕГУЩЕЙ СТРОКИ И ПЕРЕВОДОВ ===
+        // === ИЗОЛИРОВАННАЯ ЛОГИКА: ВЕЕР ДЛЯ ГЛОБАЛЬНОГО, БЕГУЩАЯ СТРОКА ДЛЯ ОБИХ ЧАТОВ ===
     if (!isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = [];
-        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-
-        let senderLang = data.langCode || 'en';
+        let senderLang = (data.langCode || 'en').substring(0, 2);
         let senderFlag = data.flag || p.flag || '🌐';
+        let senderName = data.name || 'User';
 
         if (window.currentRoomId === 'global') {
+            // Для глобального чата: собираем языки всех участников для веера и бегущей строки
             let allMembers = [
-                { name: window.myUsername, langCode: window.myProfileInfo.langCode || 'en', flag: window.myProfileInfo.flag || '🌐', photo: window.myProfileInfo.photo, id: window.myProfileInfo.id },
-                ...window.participants.filter(part => part.id !== 'ai')
+                { id: 'me', name: window.myUsername, langCode: window.getLangPref(false, false) || window.getSmartLang(window.myProfileInfo), flag: window.myProfileInfo.flag || '🌐', photo: window.myProfileInfo.photo },
+                ...(window.participants || []).filter(part => part && part.id !== 'ai')
             ];
+
+            let neededLangs = new Set();
             allMembers.forEach(member => {
-                let mLang = (String(member.id) === String(window.myProfileInfo.id)) ? (window.myProfileInfo.langCode || 'en') : (member.langCode || window.getSmartLang(member));
-                let mFlag = (String(member.id) === String(window.myProfileInfo.id)) ? (window.myProfileInfo.flag || '🌐') : (member.flag || revLangMap[mLang] || '🌐');
-                
-                // Переводим для всех, у кого язык отличается от языка отправителя
-                if (member.name !== data.name && String(member.id) !== String(data.userId) && mLang && mLang.substring(0,2) !== senderLang.substring(0,2)) {
-                    targetUsers.push({ code: mLang.substring(0,2), flag: mFlag, photo: member.photo });
+                let mId = member.id === 'me' ? 'me' : member.id;
+                if (String(mId) !== String(data.userId) && member.name !== senderName) {
+                    let mLang = (member.langCode || window.getSmartLang(member) || 'en').substring(0, 2);
+                    let mFlag = member.flag || '🌐';
+                    if (mLang !== senderLang && !neededLangs.has(mLang)) {
+                        neededLangs.add(mLang);
+                        targetUsers.push({ code: mLang, flag: mFlag, photo: member.photo || '' });
+                    }
                 }
             });
-        } else if (window.currentRoomId.startsWith('private_') && window.currentRoomId !== 'private_ai_bot' && !window.currentRoomId.startsWith('private_me_')) {
-            // Надежный поиск собеседника в приватном чате (даже если windowcurrentTargetUser сбросился)
+        } else if (window.currentRoomId && window.currentRoomId.startsWith('private_') && !window.currentRoomId.includes('ai_bot') && !window.currentRoomId.includes('private_me')) {
+            // Для приватного чата: бегущая строка должна работать в обе стороны (и входящие, и исходящие)
             let targetUser = window.currentTargetUser;
             if (!targetUser) {
                 let parts = window.currentRoomId.replace('private_', '').split('_');
                 let otherId = parts.find(id => id !== String(window.myProfileInfo.id) && id !== String(window.myUsername).toLowerCase());
                 if (otherId) {
-                    targetUser = window.participants.find(pt => String(pt.id) === String(otherId) || String(pt.name).toLowerCase().includes(otherId));
-                }
-                if (!targetUser) {
-                    targetUser = window.participants.find(pt => pt.id !== 'ai' && pt.id !== window.myProfileInfo.id);
+                    targetUser = (window.participants || []).find(pt => String(pt.id) === String(otherId) || String(pt.name).toLowerCase().includes(otherId));
                 }
             }
 
+            let recipientLang = 'en';
+            let recipientFlag = '🌐';
+            let recipientPhoto = '';
+
             if (isMe) {
+                // Исходящее: переводим для собеседника
                 if (targetUser) {
-                    let targetLang = targetUser.langCode || window.getSmartLang(targetUser);
-                    if (targetLang.substring(0,2) !== senderLang.substring(0,2)) {
-                        targetUsers.push({ code: targetLang.substring(0,2), flag: targetUser.flag || '🌐', photo: targetUser.photo });
-                    }
+                    recipientLang = (targetUser.langCode || window.getSmartLang(targetUser) || 'en').substring(0, 2);
+                    recipientFlag = targetUser.flag || '🌐';
+                    recipientPhoto = targetUser.photo || '';
                 }
             } else {
-                let myLang = window.getLangPref(false, false) || window.getSmartLang(window.myProfileInfo);
-                if (myLang.substring(0,2) !== senderLang.substring(0,2)) {
-                    targetUsers.push({ code: myLang.substring(0,2), flag: window.myProfileInfo.flag || '🌐', photo: window.myProfileInfo.photo });
-                }
+                // Входящее: переводим для меня
+                recipientLang = (window.getLangPref(false, false) || window.getSmartLang(window.myProfileInfo) || 'en').substring(0, 2);
+                recipientFlag = window.myProfileInfo.flag || '🌐';
+                recipientPhoto = window.myProfileInfo.photo || '';
+            }
+
+            if (recipientLang !== senderLang) {
+                targetUsers.push({ code: recipientLang, flag: recipientFlag, photo: recipientPhoto });
             }
         }
 
@@ -450,27 +459,27 @@ window.handleNewMessage = async function(snapshot) {
             try {
                 let transCache = {};
                 const fetchPromises = targetUsers.map(u => 
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${u.code}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
                     .then(res => res.json())
                     .then(resData => { transCache[u.code] = resData[0][0][0]; })
-                    .catch(e => { transCache[u.code] = data.originalText || data.text; }) 
+                    .catch(e => { transCache[u.code] = data.originalText || data.text; })
                 );
 
                 await Promise.all(fetchPromises);
 
-                let marqueeTextStr = ''; 
+                let marqueeTextStr = '';
                 targetUsers.forEach(u => {
                     let translatedText = transCache[u.code] || data.originalText || data.text;
-                    marqueeTextStr += `${u.flag} ${translatedText}        `; 
+                    marqueeTextStr += `${u.flag} ${translatedText}        `;
                 });
 
-                // В глобальном чате также рендерим веер переведенных сообщений под оригиналом
+                // ВЕЕР ПОД СООБЩЕНИЕМ РЕНДЕРИТСЯ СТРОГО В ГЛОБАЛЬНОМ ЧАТЕ
                 if (window.currentRoomId === 'global') {
                     const transContainer = document.createElement('div');
                     transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
                     targetUsers.forEach(u => {
                         let translatedText = transCache[u.code] || data.originalText || data.text;
-                        const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; 
+                        const rowClass = isMe ? 'flex-row-reverse' : 'flex-row';
                         const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
                         transContainer.innerHTML += `
                         <div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}">
@@ -484,21 +493,21 @@ window.handleNewMessage = async function(snapshot) {
                         </div>`;
                     });
                     messageGroup.appendChild(transContainer);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
                 }
 
-                // Обновление бегущей строки для Глобального и Приватного чатов с явным указанием флага отправителя
+                // БЕГУЩАЯ СТРОКА РАБОТАЕТ В ОБИХ РЕЖИМАХ (С ИМЕНЕМ И ФЛАГОМ ОТПРАВИТЕЛЯ)
                 const mText = document.getElementById('chat-info-marquee');
-                if (window.isMarqueeEnabled !== false && mText && marqueeTextStr) { 
-                    mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName} <span class="text-sm">${senderFlag}</span>:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
-                    mText.style.animation = 'none'; 
-                    void mText.offsetWidth; 
-                    mText.style.animation = null; 
-                } 
+                if (window.isMarqueeEnabled !== false && mText && marqueeTextStr) {
+                    mText.innerHTML = `<span class="text-white mr-2">${senderName} <span class="text-sm">${senderFlag}</span>:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
+                    mText.style.animation = 'none';
+                    void mText.offsetWidth; // Сброс анимации бегущей строки
+                    mText.style.animation = null;
+                }
             } catch (e) {}
         }
     }
-    // === КОНЕЦ БЛОКА ===
+     // === КОНЕЦ БЛОКА ===
 
 if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
