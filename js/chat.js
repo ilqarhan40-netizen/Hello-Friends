@@ -395,7 +395,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-            // === ГЛОБАЛЬНЫЙ И ПРИВАТНЫЙ ЧАТ: ИСПРАВЛЕННАЯ ЛОГИКА БЕГУЩЕЙ СТРОКИ И ПЕРЕВОДОВ ===
+        // === ГЛОБАЛЬНЫЙ И ПРИВАТНЫЙ ЧАТ: ИСПРАВЛЕННАЯ ЛОГИКА БЕГУЩЕЙ СТРОКИ И ПЕРЕВОДОВ ===
     if (!isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = [];
         const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
@@ -499,6 +499,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
     // === КОНЕЦ БЛОКА ===
+
 
 
 if (data.isVoiceRoomMsg) {
