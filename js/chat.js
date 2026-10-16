@@ -321,7 +321,7 @@ window.handleNewMessage = async function(snapshot) {
         if(data.isLocation) textPreview = "📍 Shared Location"; 
         if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
 
-                       else if (isMe && data.originalText !== data.text && !data.isAIAudio) {
+                       if (isMe && data.originalText !== data.text && !data.isAIAudio) {
                 bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>`;
             }
             if (!isHistory && window.currentRoomId !== 'global' && !data.isVoiceRoomMsg && !data.isConfMsg && document.getElementById('chat-info-marquee')) {
