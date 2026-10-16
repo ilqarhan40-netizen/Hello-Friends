@@ -321,10 +321,16 @@ window.handleNewMessage = async function(snapshot) {
         if(data.isLocation) textPreview = "📍 Shared Location"; 
         if(data.isTransfer) textPreview = "💸 Money Transfer Received!";
 
-        if (!isAppActiveAndInChat && !data.isConfMsg && !data.isVoiceRoomMsg) {
-            window.showToast("Message | " + senderDisplayName, textPreview, p.photo, "");
+                       else if (isMe && data.originalText !== data.text && !data.isAIAudio) {
+                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>`;
+            }
+            if (!isHistory && window.currentRoomId !== 'global' && !data.isVoiceRoomMsg && !data.isConfMsg && document.getElementById('chat-info-marquee')) {
+                document.getElementById('chat-info-marquee').innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${isMe ? (window.currentTargetUser ? window.currentTargetUser.flag : '🌐') : (window.myProfileInfo.flag || '🌐')} ${isMe ? data.text : finalTranslatedText}</span>`;
+            }
         }
     }
+         
+
 
     const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
@@ -395,7 +401,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
- // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
+    // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
@@ -406,9 +412,11 @@ window.handleNewMessage = async function(snapshot) {
         let manualLang = window.getLangPref(false, false);
         if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
 
-        if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
-            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: window.myProfileInfo.photo });
-            neededLangs.add(myReadLang.substring(0,2));
+        let myLangShort = (myReadLang && myReadLang !== 'un') ? myReadLang.substring(0,2) : 'en';
+        neededLangs.add(myLangShort);
+
+        if (myReadLang && myReadLang !== 'un' && myLangShort !== senderLang.substring(0,2)) {
+            targetUsers.push({ code: myLangShort, flag: myFanFlag, photo: window.myProfileInfo.photo });
         }
 
         window.participants.filter(part => part.id !== 'ai').forEach(member => {
@@ -419,40 +427,40 @@ window.handleNewMessage = async function(snapshot) {
             }
         });
 
-        if (targetUsers.length > 0) {
-            try {
-                let transCache = {};
-                const fetchPromises = Array.from(neededLangs).map(langCode => 
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                    .then(res => res.json())
-                    .then(resData => { transCache[langCode] = resData[0][0][0]; })
-                    .catch(e => { transCache[langCode] = data.originalText || data.text; }) 
-                );
+        try {
+            let transCache = {};
+            const fetchPromises = Array.from(neededLangs).map(langCode => 
+                fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                .then(res => res.json())
+                .then(resData => { transCache[langCode] = resData[0][0][0]; })
+                .catch(e => { transCache[langCode] = data.originalText || data.text; }) 
+            );
 
-                await Promise.all(fetchPromises);
+            await Promise.all(fetchPromises);
 
+            if (targetUsers.length > 0) {
                 const transContainer = document.createElement('div');
                 transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
-                let marqueeTextStr = '';
 
                 targetUsers.forEach(u => {
                     let translatedText = transCache[u.code] || data.originalText || data.text;
                     const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
                     transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${translatedText}</div></div>`;
-                    marqueeTextStr += `${u.flag} ${translatedText}        `;
                 });
 
                 messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
 
-                const mText = document.getElementById('chat-info-marquee');
-                if (window.isMarqueeEnabled !== false && mText) {
-                    mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
-                    mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
-                }
-            } catch (e) {}
-        }
+            let marqueeTextStr = `${myFanFlag} ${transCache[myLangShort] || data.originalText || data.text}`;
+            const mText = document.getElementById('chat-info-marquee');
+            if (window.isMarqueeEnabled !== false && mText) {
+                mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
+                mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
+            }
+        } catch (e) {}
     }
     // === КОНЕЦ БЛОКА ===
+
 
 if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
