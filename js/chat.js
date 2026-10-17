@@ -395,158 +395,65 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-          // === ГЛОБАЛЬНЫЙ И ПРИВАТНЫЙ ЧАТ: ИСПРАВЛЕННАЯ ЛОГИКА БЕГУЩЕЙ СТРОКИ И ПЕРЕВОДОВ ===
-    if (!isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        let targetUsers = [];
-        let usedLangs = new Set();
+        
+// === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
+    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
+        let targetUsers = []; 
+        let neededLangs = new Set(); 
+
+        let myFanFlag = window.myProfileInfo.flag || '🌐';
         const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
 
-        // 1. Определяем наш язык и флаг через твои функции
-        let myFanFlag = window.myProfileInfo.flag || '🌐';
-        let manualLang = (typeof window.getLangPref === 'function') ? window.getLangPref(false, false) : localStorage.getItem('hf_app_lang');
-        if (manualLang && manualLang !== 'auto' && revLangMap[manualLang.substring(0,2)]) { 
-            myFanFlag = revLangMap[manualLang.substring(0,2)]; 
-        }
-        let myReadLang = (manualLang && manualLang !== 'auto' && manualLang !== 'un' && revLangMap[manualLang.substring(0,2)]) 
-            ? manualLang.substring(0,2) 
-            : (typeof window.getSmartLang === 'function' ? window.getSmartLang(window.myProfileInfo) : 'ru');
-        
-        if (myFanFlag === '🌐' && revLangMap[myReadLang]) { myFanFlag = revLangMap[myReadLang]; }
+        let manualLang = window.getLangPref(false, false);
+        if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
 
-        // 2. Определяем язык отправителя (с защитой от 'auto' и 'un')
-        let validDataLang = (data.langCode && data.langCode !== 'auto' && data.langCode !== 'un' && revLangMap[data.langCode.substring(0,2)]) ? data.langCode.substring(0,2) : null;
-        let senderLang = isMe ? myReadLang : (validDataLang || (typeof window.getSmartLang === 'function' ? window.getSmartLang(p || data) : null) || 'en');
-        if (!senderLang || senderLang === 'un' || senderLang === 'auto' || !revLangMap[senderLang.substring(0,2)]) { 
-            senderLang = window.appLang || 'ru'; 
-        }
-        senderLang = senderLang.substring(0,2);
-
-        let senderFlag = isMe ? myFanFlag : (data.flag || (typeof p !== 'undefined' && p && p.flag) || revLangMap[senderLang] || '🌐');
-
-        // 3. Логика для Глобального и Приватного чатов
-        if (window.currentRoomId === 'global') {
-            if (!isMe && myReadLang && myReadLang !== 'un' && myReadLang !== senderLang) {
-                targetUsers.push({ code: myReadLang, flag: myFanFlag, photo: window.myProfileInfo.photo });
-                usedLangs.add(myReadLang);
-            }
-
-            if (Array.isArray(window.participants)) {
-                window.participants.filter(part => part && part.id !== 'ai').forEach(member => {
-                    let isMemberSender = (data.userId && String(member.id) === String(data.userId)) || (data.name && String(member.name) === String(member.name));
-                    let isMemberMe = String(member.id) === String(window.myProfileInfo.id) || (window.myUsername && String(member.name) === String(window.myUsername));
-
-                    if (!isMemberSender && !isMemberMe) {
-                        let validMemberLang = (member.langCode && member.langCode !== 'auto' && member.langCode !== 'un' && revLangMap[member.langCode.substring(0,2)]) ? member.langCode.substring(0,2) : null;
-                        let mLang = validMemberLang || (typeof window.getSmartLang === 'function' ? window.getSmartLang(member) : 'ru');
-                        if (mLang) mLang = mLang.substring(0,2);
-
-                        let mFlag = (member.flag && member.flag !== '🌐') ? member.flag : (revLangMap[mLang] || '🌐');
-
-                        if (mLang && mLang !== 'un' && mLang !== senderLang && !usedLangs.has(mLang)) {
-                            targetUsers.push({ code: mLang, flag: mFlag, photo: member.photo });
-                            usedLangs.add(mLang);
-                        }
-                    }
-                });
-            }
-        } else if (window.currentRoomId && window.currentRoomId.startsWith('private_') && window.currentRoomId !== 'private_ai_bot' && !window.currentRoomId.startsWith('private_me_')) {
-            let targetUser = window.currentTargetUser;
-            if (!targetUser && Array.isArray(window.participants)) {
-                let parts = window.currentRoomId.replace('private_', '').split('_');
-                let myIdStr = String((window.myProfileInfo && window.myProfileInfo.id) || '');
-                let otherId = parts.find(id => id && id !== myIdStr && id !== String(window.myUsername));
-                if (otherId) {
-                    targetUser = window.participants.find(pt => pt && (String(pt.id) === String(otherId) || String(pt.name).toLowerCase().includes(otherId.toLowerCase())));
-                }
-                if (!targetUser && !isMe && typeof p !== 'undefined' && p && p.id !== 'ai') targetUser = p;
-                if (!targetUser) targetUser = window.participants.find(pt => pt && pt.id !== 'ai' && String(pt.id) !== myIdStr);
-            }
-
-            if (isMe) {
-                if (targetUser) {
-                    let validTargetLang = (targetUser.langCode && targetUser.langCode !== 'auto' && targetUser.langCode !== 'un' && revLangMap[targetUser.langCode.substring(0,2)]) ? targetUser.langCode.substring(0,2) : null;
-                    let targetLang = validTargetLang || (typeof window.getSmartLang === 'function' ? window.getSmartLang(targetUser) : 'ru');
-                    if (targetLang) targetLang = targetLang.substring(0,2);
-
-                    let targetFlag = (targetUser.flag && targetUser.flag !== '🌐') ? targetUser.flag : (revLangMap[targetLang] || '🌐');
-
-                    if (targetLang && targetLang !== 'un' && targetLang !== senderLang) {
-                        targetUsers.push({ code: targetLang, flag: targetFlag, photo: targetUser.photo });
-                    }
-                }
-            } else {
-                if (myReadLang && myReadLang !== 'un' && myReadLang !== senderLang) {
-                    targetUsers.push({ code: myReadLang, flag: myFanFlag, photo: window.myProfileInfo.photo });
-                }
-            }
+        if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
+            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: window.myProfileInfo.photo });
+            neededLangs.add(myReadLang.substring(0,2));
         }
 
-        let msgText = String(data.originalText || data.text || data.msg || '').trim();
-        if (msgText) {
+        window.participants.filter(part => part.id !== 'ai').forEach(member => {
+            let memberLang = window.getSmartLang(member);
+            if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
+                targetUsers.push({ code: memberLang.substring(0,2), flag: member.flag, photo: member.photo });
+                neededLangs.add(memberLang.substring(0,2));
+            }
+        });
+
+        if (targetUsers.length > 0) {
             try {
                 let transCache = {};
-                if (targetUsers.length > 0) {
-                    const uniqueCodes = [...new Set(targetUsers.map(u => u.code))];
-                    const fetchPromises = uniqueCodes.map(code => 
-                        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${code}&dt=t&q=${encodeURIComponent(msgText)}`)
-                        .then(res => res.json())
-                        .then(resData => { 
-                            transCache[code] = (resData && Array.isArray(resData[0])) ? resData[0].map(x => x[0] || '').join('').trim() : msgText; 
-                        })
-                        .catch(() => { transCache[code] = msgText; }) 
-                    );
-                    await Promise.all(fetchPromises);
-                }
+                const fetchPromises = Array.from(neededLangs).map(langCode => 
+                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
+                    .then(res => res.json())
+                    .then(resData => { transCache[langCode] = resData[0][0][0]; })
+                    .catch(e => { transCache[langCode] = data.originalText || data.text; }) 
+                );
 
-                // Формируем бегущую строку (если переводов нет, выводим оригинал, чтобы строка не была пустой)
+                await Promise.all(fetchPromises);
+
+                const transContainer = document.createElement('div');
+                transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
                 let marqueeTextStr = '';
-                if (targetUsers.length > 0) {
-                    targetUsers.forEach(u => {
-                        let translatedText = transCache[u.code] || msgText;
-                        marqueeTextStr += `${u.flag} ${translatedText}        `; 
-                    });
-                } else {
-                    marqueeTextStr = `${msgText}        `;
-                }
 
-                // Веер переводов СТРОГО в глобальном чате (в привате выключен по твоему требованию)
-                if (window.currentRoomId === 'global' && targetUsers.length > 0 && typeof messageGroup !== 'undefined' && messageGroup) {
-                    const transContainer = document.createElement('div');
-                    transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
-                    targetUsers.forEach(u => {
-                        let translatedText = transCache[u.code] || msgText;
-                        const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; 
-                        const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
-                        transContainer.innerHTML += `
-                        <div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}">
-                            <div class="relative shrink-0">
-                                <img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]">
-                                <span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span>
-                            </div>
-                            <div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">
-                                ${translatedText}
-                            </div>
-                        </div>`;
-                    });
-                    messageGroup.appendChild(transContainer);
-                    if (typeof chatMessages !== 'undefined' && chatMessages) {
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
-                    }
-                }
+                targetUsers.forEach(u => {
+                    let translatedText = transCache[u.code] || data.originalText || data.text;
+                    const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
+                    transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${translatedText}</div></div>`;
+                    marqueeTextStr += `${u.flag} ${translatedText}        `;
+                });
 
-                // Обновление бегущей строки (и для глобала, и для привата)
+                messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
+
                 const mText = document.getElementById('chat-info-marquee');
-                if (window.isMarqueeEnabled !== false && mText && marqueeTextStr.trim()) { 
-                    mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName} <span class="text-sm">${senderFlag}</span>:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`; 
-                    mText.style.animation = 'none'; 
-                    void mText.offsetWidth; 
-                    mText.style.animation = null; 
-                } 
+                if (window.isMarqueeEnabled !== false && mText) {
+                    mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
+                    mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
+                }
             } catch (e) {}
         }
     }
     // === КОНЕЦ БЛОКА ===
-
     
               
 
