@@ -395,8 +395,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-        
-// === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
+ // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
@@ -454,9 +453,6 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
     // === КОНЕЦ БЛОКА ===
-    
-              
-
 
 if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
@@ -493,7 +489,7 @@ if (data.isVoiceRoomMsg) {
     }
 
     if (data.isConfMsg) {
-        let originalText = data.origiбnalText || data.text;
+        let originalText = data.originalText || data.text;
         let senderLangCode = data.langCode || 'auto'; 
         let senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
 
