@@ -332,32 +332,32 @@ window.handleNewMessage = async function(snapshot) {
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
     let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
 
-    let bubbleContent = data.originalText || data.text;
+        let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
+    // Оставляем эти переменные, они нужны дальше для аудио и глобального чата
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg);
     let senderLang = data.langCode || 'auto'; 
-
     let finalTranslatedText = data.text; 
 
-    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
+    // === УМНЫЕ ДВУХЭТАЖНЫЕ ПУЗЫРИ (Без лишних запросов) ===
+    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
         if (window.currentRoomId !== 'global' || isHistory) {
-            if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
-                try {
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
-                    const resData = await res.json();
-                    finalTranslatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : data.originalText;
-
-                    if (!data.isAIAudio) {
-                        bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${finalTranslatedText}</div>`;
-                    }
-                } catch(e) { bubbleContent = data.originalText; }
-            }
-            else if (isMe && data.originalText !== data.text && !data.isAIAudio) {
-                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>`;
+            // Если текст отправителя (оригинал) и текст для получателя (перевод) отличаются
+            if (data.originalText !== data.text) {
+                bubbleContent = `
+                    <div class="text-[#e9edef]">${data.originalText}</div>
+                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                        ➔ ${data.text}
+                    </div>
+                `;
+            } else {
+                // Если языки одинаковые
+                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div>`;
             }
         }
     }
+
 
     if (data.isAIAudio) {
         let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
