@@ -395,6 +395,30 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
+        // === БЕГУЩАЯ СТРОКА ДЛЯ ПРИВАТНОГО ЧАТА ===
+    if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
+        const mText = document.getElementById('chat-info-marquee');
+        if (mText && window.isMarqueeEnabled !== false) {
+            let senderFlag = p.flag || '🌐';
+            let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
+            let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : (window.myProfileInfo.flag || '🌐');
+            
+            // Первая часть: Отправитель и его оригинальный текст
+            let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${data.originalText}</span>`;
+            
+            // Вторая часть: Получатель и текст перевода (если языки разные)
+            if (data.originalText !== data.text) {
+                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${data.text}</span>`;
+            }
+            
+            mText.innerHTML = marqueeHtml;
+            // Перезапуск анимации бегущей строки
+            mText.style.animation = 'none'; 
+            void mText.offsetWidth; 
+            mText.style.animation = null;
+        }
+    }
+
  // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
