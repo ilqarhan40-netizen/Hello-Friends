@@ -996,4 +996,3 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
         }).catch(err => console.error("Ошибка отправки Push:", err));
     });
 };
-            
