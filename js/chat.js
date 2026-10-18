@@ -996,23 +996,4 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
         }).catch(err => console.error("Ошибка отправки Push:", err));
     });
 };
-            name: safeName, 
-            photo: safePhoto, 
-            flag: activeFlag,
-            text: "Group Video Call Invitation", 
-            originalText: "Group Video Call Invitation",
-            sessionId: window.mySessionId || 'sess', 
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            isConfInvite: true, // Тот самый флаг!
-            confRoomId: window.currentRoomId // Куда им нужно зайти
-        });
-        
-        // Отправляем PUSH-уведомление
-        if (window.firePush) {
-            window.firePush("Incoming Call", `${safeName} invited you to a video conference`, safePhoto);
-        }
-    });
-
-    window.closeGroupConfModal();
-    if (window.showToast) window.showToast("Success", `Invites sent to ${selectedIds.length} users!`, "", "");
-};
+            
