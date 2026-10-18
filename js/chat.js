@@ -399,21 +399,22 @@ window.handleNewMessage = async function(snapshot) {
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
-            let senderFlag = p.flag || '🌐';
+            // 1. ОТПРАВИТЕЛЬ: Строго берем флаг из сообщения! 
+            // Твоя умная система отправки (микрофон или текст) УЖЕ сохранила нужный флаг независимо.
+            let senderFlag = data.flag || p.flag || '🌐'; 
+            
+            // 2. ПОЛУЧАТЕЛЬ: Базовые данные
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
             let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : (window.myProfileInfo.flag || '🌐');
             
-            // --- ПОДТЯГИВАЕМ ФЛАГ ИЗ ВЫБРАННОГО ЯЗЫКА ---
-            let myReadLang = window.getLangPref(false, false);
+            // --- УМНАЯ СИСТЕМА ФЛАГА ПОЛУЧАТЕЛЯ ---
+            // Если пишу я -> язык получателя определяется по его профилю (getSmartLang).
+            // Если пишут мне -> язык получателя (мой язык) определяется по настройке текстовой панели (getLangPref).
             const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+            let receiverLang = isMe ? window.getSmartLang(window.currentTargetUser) : window.getLangPref(false, false);
             
-            if (myReadLang && revLangMap[myReadLang.substring(0,2)]) {
-                let manualFlag = revLangMap[myReadLang.substring(0,2)];
-                if (isMe) {
-                    senderFlag = manualFlag; // Если пишу я и сменил язык себе
-                } else {
-                    receiverFlag = manualFlag; // Если пишут мне и я сменил язык себе
-                }
+            if (receiverLang && revLangMap[receiverLang.substring(0,2)]) {
+                receiverFlag = revLangMap[receiverLang.substring(0,2)];
             }
             // ----------------------------------------------
 
@@ -435,6 +436,7 @@ window.handleNewMessage = async function(snapshot) {
             mText.style.animation = null;
         }
     }
+    
 
  // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
