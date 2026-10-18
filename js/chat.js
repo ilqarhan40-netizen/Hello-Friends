@@ -332,33 +332,17 @@ window.handleNewMessage = async function(snapshot) {
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
     let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
 
-    let bubbleContent = data.originalText || data.text;
         let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
     // Оставляем эти переменные, они нужны дальше для аудио и глобального чата
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg);
     let senderLang = data.langCode || 'auto'; 
-
     let finalTranslatedText = data.text; 
 
-    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation) {
     // === УМНЫЕ ДВУХЭТАЖНЫЕ ПУЗЫРИ (Без лишних запросов) ===
     if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
         if (window.currentRoomId !== 'global' || isHistory) {
-            if (!isMe && !isAI && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
-                try {
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
-                    const resData = await res.json();
-                    finalTranslatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : data.originalText;
-
-                    if (!data.isAIAudio) {
-                        bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${finalTranslatedText}</div>`;
-                    }
-                } catch(e) { bubbleContent = data.originalText; }
-            }
-            else if (isMe && data.originalText !== data.text && !data.isAIAudio) {
-                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${data.text}</div>`;
             // Если текст отправителя (оригинал) и текст для получателя (перевод) отличаются
             if (data.originalText !== data.text) {
                 bubbleContent = `
@@ -415,6 +399,7 @@ window.handleNewMessage = async function(snapshot) {
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
+            let senderFlag = p.flag || '🌐';
             // 1. ОТПРАВИТЕЛЬ: Строго берем флаг из сообщения! 
             // Твоя умная система отправки (микрофон или текст) УЖЕ сохранила нужный флаг независимо.
             let senderFlag = data.flag || p.flag || '🌐'; 
@@ -422,13 +407,22 @@ window.handleNewMessage = async function(snapshot) {
             // 2. ПОЛУЧАТЕЛЬ: Базовые данные
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
             let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : (window.myProfileInfo.flag || '🌐');
-            
+
+            // --- ПОДТЯГИВАЕМ ФЛАГ ИЗ ВЫБРАННОГО ЯЗЫКА ---
+            let myReadLang = window.getLangPref(false, false);
             // --- УМНАЯ СИСТЕМА ФЛАГА ПОЛУЧАТЕЛЯ ---
             // Если пишу я -> язык получателя определяется по его профилю (getSmartLang).
             // Если пишут мне -> язык получателя (мой язык) определяется по настройке текстовой панели (getLangPref).
             const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
             let receiverLang = isMe ? window.getSmartLang(window.currentTargetUser) : window.getLangPref(false, false);
-            
+
+            if (myReadLang && revLangMap[myReadLang.substring(0,2)]) {
+                let manualFlag = revLangMap[myReadLang.substring(0,2)];
+                if (isMe) {
+                    senderFlag = manualFlag; // Если пишу я и сменил язык себе
+                } else {
+                    receiverFlag = manualFlag; // Если пишут мне и я сменил язык себе
+                }
             if (receiverLang && revLangMap[receiverLang.substring(0,2)]) {
                 receiverFlag = revLangMap[receiverLang.substring(0,2)];
             }
@@ -439,12 +433,12 @@ window.handleNewMessage = async function(snapshot) {
 
             // Первая часть: Отправитель и его оригинальный текст
             let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
-            
+
             // Вторая часть: Получатель и текст перевода (если языки разные)
             if (originalText !== translatedText) {
                  marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${translatedText}</span>`;
             }
-            
+
             mText.innerHTML = marqueeHtml;
             // Перезапуск анимации бегущей строки
             mText.style.animation = 'none'; 
@@ -997,4 +991,18 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
             headers: {
                 'Content-Type': 'application/json; charset=utf-8'
             },
-            
+            body: JSON.stringify({
+                app_id: "ВАШ_ONESIGNAL_APP_ID", // ⚠️ Не забудьте указать ваш App ID из OneSignal
+                app_id: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+                include_player_ids: [targetPlayerId],
+                data: {
+                    custom: {
+                        a: pushData
+                    }
+                },
+                headings: { "en": titleText },
+                contents: { "en": bodyText }
+            })
+        }).catch(err => console.error("Ошибка отправки Push:", err));
+    });
+};
