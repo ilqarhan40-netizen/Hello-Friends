@@ -1836,8 +1836,8 @@ if (window.OneSignalDeferred) {
             </p>
         </div>
     </div>
-    
-    <script>
+        
+        <script>
         window.showMyQR = function() {
             const appUrl = "https://hello-friends-p8p3i7.web.app"; 
             const qrImg = document.getElementById('qr-image');
@@ -1857,13 +1857,8 @@ if (window.OneSignalDeferred) {
             document.body.removeChild(link);
         };
         
-            setTimeout(function() {
-    if (typeof window.renderSidebar === 'function') window.renderSidebar();
-    if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
-        window.initConference();
-    }
-}, 1500);
-
+        setTimeout(function() {
+            if (typeof window.renderSidebar === 'function') window.renderSidebar();
             if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
                 window.initConference();
             }
@@ -1871,3 +1866,5 @@ if (window.OneSignalDeferred) {
     </script>
 </body>
 </html>
+
+    
