@@ -301,9 +301,7 @@ window.handleNewMessage = async function(snapshot) {
 
     const chatMessages = document.getElementById('chat-messages');
 
-    if (window.currentRoomId === 'global') {
-        document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
-    }
+    
 
     const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id;
     const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
