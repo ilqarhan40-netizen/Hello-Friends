@@ -170,7 +170,7 @@ window.switchChatRoom = function(targetId) {
         let myBio = window.myProfileInfo.profileBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${window.myProfileInfo.profileBio}</span>` : ""; 
         let myLangs = window.myProfileInfo.profileLangs ? `🗣️ ${window.myProfileInfo.profileLangs}<br>` : "";
         let myEmail = window.myProfileInfo.email ? `✉️ ${window.myProfileInfo.email}<br>` : ""; 
-        let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag}${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio}`;
+        let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${window.myProfileInfo.flag} ${window.myProfileInfo.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${myEmail}${myLangs}</span>${myBio}`;
         window.showToast("My Notes", infoHtml, window.myProfileInfo.photo, window.myProfileInfo.phone || "");
     } else {
         const searchId = String(targetId);
@@ -184,7 +184,7 @@ window.switchChatRoom = function(targetId) {
             let targetBio = targetUser.profileBio ? `<span class="text-[#8696a0] mt-1 block italic border-t border-[#2a3942] pt-1">${targetUser.profileBio}</span>` : ""; 
             let targetLangs = targetUser.profileLangs ? `🗣️ ${targetUser.profileLangs}<br>` : "";
             let targetEmail = targetUser.email ? `✉️ ${targetUser.email}<br>` : ""; 
-            let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag}${targetUser.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}${targetLangs}</span>${targetBio}`;
+            let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${targetUser.flag} ${targetUser.country || 'Global'}</b><br><span class="text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}${targetLangs}</span>${targetBio}`;
             window.showToast((targetUser.name || 'User').split(' ')[0], infoHtml, targetUser.photo, targetUser.phone || "");
             const vPhoto = document.getElementById('voice-friend-photo'); const vFlag = document.getElementById('voice-friend-flag'); const vName = document.getElementById('voice-friend-name');
             if(vPhoto) vPhoto.src = targetUser.photo; if(vFlag) vFlag.innerText = targetUser.flag; if(vName) vName.innerText = (targetUser.name || 'User').split(' ')[0];
@@ -197,6 +197,7 @@ window.switchChatRoom = function(targetId) {
     window.renderSidebar();
 
     window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
+    // Сброс памяти языка для новой комнаты
     localStorage.removeItem(window.getLangKey(false, false));
     localStorage.removeItem(window.getMicLangKey());
     if (typeof window.syncMicLangUI === 'function') window.syncMicLangUI();
@@ -300,6 +301,10 @@ window.handleNewMessage = async function(snapshot) {
 
     const chatMessages = document.getElementById('chat-messages');
 
+    if (window.currentRoomId === 'global') {
+        document.querySelectorAll('.sender-translate-fan').forEach(el => { el.remove(); });
+    }
+
     const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id;
     const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
     let p = isMe ? window.myProfileInfo : (isAI ? { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', flag: '🤖' } : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name=U', langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
@@ -327,36 +332,44 @@ window.handleNewMessage = async function(snapshot) {
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
     let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
 
-    let bubbleContent = data.originalText || data.text;
+        let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
+    // Оставляем эти переменные, они нужны дальше для аудио и глобального чата
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg);
     let senderLang = data.langCode || 'auto'; 
     let finalTranslatedText = data.text; 
 
-    // === ИДЕАЛЬНЫЕ ДВУХЭТАЖНЫЕ ПУЗЫРИ ===
-    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        if (data.originalText !== data.text) {
-            bubbleContent = `
-                <div class="text-[#e9edef] text-[0.95rem] leading-snug">${data.originalText}</div>
-                <div class="mt-1.5 pt-1.5 border-t border-[#3b4a54] text-[0.8rem] text-[#00a884] font-bold tracking-wide">
-                    ➔ ${data.text}
-                </div>
-            `;
-        } else {
-            bubbleContent = `<div class="text-[#e9edef] text-[0.95rem] leading-snug">${data.originalText}</div>`;
+    // === УМНЫЕ ДВУХЭТАЖНЫЕ ПУЗЫРИ (Без лишних запросов) ===
+    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
+        if (window.currentRoomId !== 'global' || isHistory) {
+            // Если текст отправителя (оригинал) и текст для получателя (перевод) отличаются
+            if (data.originalText !== data.text) {
+                bubbleContent = `
+                    <div class="text-[#e9edef]">${data.originalText}</div>
+                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                        ➔ ${data.text}
+                    </div>
+                `;
+            } else {
+                // Если языки одинаковые
+                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div>`;
+            }
         }
     }
+
 
     if (data.isAIAudio) {
         let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
         let textToPlay = isMe ? (data.text || data.originalText) : finalTranslatedText;
+
         let transHtml = '';
         if (!isMe && data.originalText !== finalTranslatedText) {
             transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${finalTranslatedText}</div>`;
         } else if (isMe && data.originalText !== data.text) {
             transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] text-yellow-400 font-bold tracking-wide">➔ Перевод: ${data.text}</div>`;
         }
+
         bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${data.originalText}</div>${transHtml}</div>`;
     }
     else if (data.mediaUrl) { 
@@ -365,7 +378,7 @@ window.handleNewMessage = async function(snapshot) {
     }
     else if (data.isTransfer) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
-        bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel \vert{}\vert{} 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; 
+        bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; 
     }
     else if (data.isLocation) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
@@ -382,35 +395,54 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    // === БЕГУЩАЯ СТРОКА ДЛЯ ПРИВАТНОГО ЧАТА ===
+            // === БЕГУЩАЯ СТРОКА ДЛЯ ПРИВАТНОГО ЧАТА ===
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
+            // 1. ОТПРАВИТЕЛЬ: Строго берем флаг из сообщения! 
+            // Твоя умная система отправки (микрофон или текст) УЖЕ сохранила нужный флаг независимо.
             let senderFlag = data.flag || p.flag || '🌐'; 
+
+            // 2. ПОЛУЧАТЕЛЬ: Базовые данные
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
             let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : (window.myProfileInfo.flag || '🌐');
+
+            // --- УМНАЯ СИСТЕМА ФЛАГА ПОЛУЧАТЕЛЯ ---
+            // Если пишу я -> язык получателя определяется по его профилю (getSmartLang).
+            // Если пишут мне -> язык получателя (мой язык) определяется по настройке текстовой панели (getLangPref).
             const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
             let receiverLang = isMe ? window.getSmartLang(window.currentTargetUser) : window.getLangPref(false, false);
 
-            if (receiverLang && revLangMap[receiverLang.substring(0,2)]) { receiverFlag = revLangMap[receiverLang.substring(0,2)]; }
+            if (receiverLang && revLangMap[receiverLang.substring(0,2)]) {
+                receiverFlag = revLangMap[receiverLang.substring(0,2)];
+            }
+            // ----------------------------------------------
 
             let originalText = data.originalText || data.text;
             let translatedText = data.text;
 
-            let marqueeHtml = `<span class="text-white mr-2">${senderFlag}${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
+            // Первая часть: Отправитель и его оригинальный текст
+            let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
+
+            // Вторая часть: Получатель и текст перевода (если языки разные)
             if (originalText !== translatedText) {
-                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}:${translatedText}</span>`;
+                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${translatedText}</span>`;
             }
 
             mText.innerHTML = marqueeHtml;
-            mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
+            // Перезапуск анимации бегущей строки
+            mText.style.animation = 'none'; 
+            void mText.offsetWidth; 
+            mText.style.animation = null;
         }
     }
 
-    // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
+
+ // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
+
         let myFanFlag = window.myProfileInfo.flag || '🌐';
         const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
 
@@ -450,7 +482,7 @@ window.handleNewMessage = async function(snapshot) {
                     let translatedText = transCache[u.code] || data.originalText || data.text;
                     const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
                     transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${translatedText}</div></div>`;
-                    marqueeTextStr += `${u.flag}${translatedText}        `;
+                    marqueeTextStr += `${u.flag} ${translatedText}        `;
                 });
 
                 messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -463,27 +495,25 @@ window.handleNewMessage = async function(snapshot) {
             } catch (e) {}
         }
     }
+    // === КОНЕЦ БЛОКА ===
 
-    // === ДИНАМИЧЕСКИЙ ПЕРЕВОД ДЛЯ ГОЛОСОВОЙ КОМНАТЫ (SPRACHRAUM) ===
-    if (data.isVoiceRoomMsg) {
+if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
-        let receiverPhoto, receiverFlag, receiverName;
+        let receiverPhoto, receiverFlag, receiverName, receiverText;
 
+        // Берем готовый перевод прямо из отправленных данных (без лишних запросов)
         senderText = data.originalText || data.text;
-        
-        let targetVoiceLang = window.getLangPref(true, false) || 'en';
-        if (isMe && window.currentTargetUser) {
-            targetVoiceLang = window.getSmartLang(window.currentTargetUser);
-        }
+        receiverText = data.text || data.originalText;
 
         if (isMe) {
             senderPhoto = window.myProfileInfo.photo; 
+            // Берем флаг из сообщения (поддерживает ручной выбор микрофона)
             senderFlag = data.flag || window.myProfileInfo.flag || '🌐'; 
             senderName = window.myUsername;
 
             receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U'; 
             receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐'; 
-            receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'Global';
+            receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
         } else {
             senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
             senderFlag = data.flag || '🌐'; 
@@ -494,25 +524,13 @@ window.handleNewMessage = async function(snapshot) {
             receiverName = window.myUsername;
         }
 
-        const updateVoiceUI = (translatedText) => {
-            const vMarquee = document.getElementById('voice-info-marquee');
-            if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
-                vMarquee.innerHTML = `<div class="flex items-center"><img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm"><span class="text-white font-bold mr-1">${senderName}:</span><span class="text-[#e9edef] mr-2">${senderFlag}${senderText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]"><span class="text-white font-bold mr-1">${receiverName}:</span><span class="text-[#00a884] font-bold">${receiverFlag}${translatedText}</span></div>`;
-                vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
-            }
-        };
-
-        if (senderLang.substring(0,2) !== targetVoiceLang.substring(0,2)) {
-            fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${targetVoiceLang.substring(0,2)}&dt=t&q=${encodeURIComponent(senderText)}`)
-                .then(r => r.json())
-                .then(res => updateVoiceUI(res[0][0][0]))
-                .catch(() => updateVoiceUI(senderText));
-        } else {
-            updateVoiceUI(senderText);
+        const vMarquee = document.getElementById('voice-info-marquee');
+        if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
+            vMarquee.innerHTML = `<div class="flex items-center"><img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm"><span class="text-white font-bold mr-1">${senderName}:</span><span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]"><span class="text-white font-bold mr-1">${receiverName}:</span><span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span></div>`;
+            vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
         }
     }
 
-    // === ПЕРЕВОД КОНФЕРЕНЦИИ ===
     if (data.isConfMsg) {
         let originalText = data.originalText || data.text;
         let senderLangCode = data.langCode || 'auto'; 
@@ -520,7 +538,7 @@ window.handleNewMessage = async function(snapshot) {
 
         let speakerMarquee = document.getElementById(senderMarqueeId);
         if (speakerMarquee) {
-            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag \vert{}\vert{} '🌐'} ${originalText}</span>`;
+            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
             speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
         }
 
@@ -551,7 +569,7 @@ window.handleNewMessage = async function(snapshot) {
                 .then(r => r.json())
                 .then(resData => {
                     let translatedText = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : originalText;
-                    listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag}${translatedText}</span>`;
+                    listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
                     listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
                 }).catch(e => console.log('Meet Translate Error'));
         });
@@ -798,7 +816,7 @@ window.openPersonalLangModal = function() {
 
     const langs = [
         {code: 'auto', name: '🤖 Auto (Profile)', flag: '🌐'}, {code: 'en', name: 'English', flag: '🇬🇧'}, 
-        {code: 'kk', name: 'Қазақша', flag: '🇰🇿'}, {code: 'pt', name: 'Português', flag: '🇵🇹'}, 
+        {code: 'kk', name: 'Қазақша', flag: '🇰🇿'}, {code: 'pt', name: 'Português', flag: '🇵🇹'}, // Добавлены КЗ и ПТ
         {code: 'ru', name: 'Русский', flag: '🇷🇺'}, {code: 'az', name: 'Azərbaycanca', flag: '🇦🇿'}, 
         {code: 'de', name: 'Deutsch', flag: '🇩🇪'}, {code: 'tr', name: 'Türkçe', flag: '🇹🇷'},
         {code: 'ar', name: 'العربية', flag: '🇦🇪'}, {code: 'it', name: 'Italiano', flag: '🇮🇹'}, 
@@ -889,6 +907,7 @@ window.startUniversalMic = async function(mode) {
         window.speechRecognizedText = e.results[0][0].transcript;
 
         let targetLang = 'en';
+        // УМНАЯ ЛОГИКА
         if (isConfTab) {
             targetLang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
         } else if (window.currentTargetUser && targetDbRoom !== 'global') {
@@ -945,22 +964,32 @@ window.currentEmojiTargetId = null;
 window.toggleEmojiPicker = function(targetId) { window.currentEmojiTargetId = targetId; const picker = document.getElementById('emoji-picker'); if (!picker) return; if (picker.classList.contains('opacity-0')) { picker.classList.remove('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.add('opacity-100', 'scale-100'); } else { window.closeEmojiPicker(); } };
 window.closeEmojiPicker = function() { const picker = document.getElementById('emoji-picker'); if(picker) { picker.classList.add('opacity-0', 'scale-95', 'pointer-events-none'); picker.classList.remove('opacity-100', 'scale-100'); } };
 window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const input = document.getElementById(window.currentEmojiTargetId); if(input) { input.value += emoji; input.focus(); } } };
-
 // ==========================================
 // 7. ОТПРАВКА PUSH-УВЕДОМЛЕНИЙ ЧЕРЕЗ ONESIGNAL
 // ==========================================
 window.sendPushNotification = function(targetUserId, pushData, titleText, bodyText) {
     if (!targetUserId || targetUserId === 'ai' || targetUserId === 'guest') return;
+
+    // 1. Извлекаем onesignal_id получателя из Firebase
     firebase.database().ref('users/' + targetUserId + '/onesignal_id').once('value').then(snapshot => {
         const targetPlayerId = snapshot.val();
-        if (!targetPlayerId) return; 
+        if (!targetPlayerId) return; // У получателя нет токена OneSignal
+
+        // 2. Отправляем Push через REST API OneSignal
         fetch('https://onesignal.com/api/v1/notifications', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
             body: JSON.stringify({
+                app_id: "ВАШ_ONESIGNAL_APP_ID", // ⚠️ Не забудьте указать ваш App ID из OneSignal
                 app_id: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
                 include_player_ids: [targetPlayerId],
-                data: { custom: { a: pushData } },
+                data: {
+                    custom: {
+                        a: pushData
+                    }
+                },
                 headings: { "en": titleText },
                 contents: { "en": bodyText }
             })
