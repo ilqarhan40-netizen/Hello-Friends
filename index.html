@@ -607,23 +607,16 @@ if (window.OneSignalDeferred) {
             </div>
 
             <div id="conference" class="page-content h-full flex flex-col bg-[#000] relative z-10">
-    <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
-        <span class="font-bold text-[#00a884] tracking-widest text-[1rem] flex items-center gap-2"><i class="fa-solid fa-video"></i> <span data-i18n="conference_title">CONFERENCE</span></span>
-        <div class="flex items-center gap-4"><span class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full animate-pulse text-xs">● REC</span></div>
-    </div>
-    
-    <!-- Вот она, правильная сетка, ровно между шапкой и кнопками -->
-    <div class="flex-grow overflow-y-auto p-2 relative">
-        <div id="conference-grid" class="grid grid-cols-2 gap-3 h-full w-full content-start auto-rows-max"></div>
-    </div>
-    
-    <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0">
-        <button onclick="window.openGroupConfModal()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition"><i class="fa-solid fa-user-plus"></i></button>
-        <button onclick="window.toggleMeetMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition" title="Toggle Video CC"><i class="fa-solid fa-closed-captioning"></i></button>
-        <button id="conf-cam-btn" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-gray-700 transition" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video-slash text-[#8696a0]"></i></button>
-        <button class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
-    </div>
-
+                <div class="flex justify-between items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
+                    <span class="font-bold text-[#00a884] tracking-widest text-[1rem] flex items-center gap-2"><i class="fa-solid fa-video"></i> <span data-i18n="conference_title">CONFERENCE</span></span>
+                    <div class="flex items-center gap-4"><span class="text-red-500 font-bold bg-red-500/10 px-3 py-1 rounded-full animate-pulse text-xs">● REC</span></div>
+                </div>
+                <div class="flex-grow overflow-y-auto p-2 relative"><div class="video-grid" id="conference-grid"></div></div>
+                <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0">
+                    <button onclick="window.toggleMeetMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition" title="Toggle Video CC"><i class="fa-solid fa-closed-captioning"></i></button>
+                    <button id="conf-cam-btn" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-gray-700 transition" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video-slash text-[#8696a0]"></i></button>
+                    <button class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
+                </div>
 
     <button onclick="window.openGroupConfModal()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition"><i class="fa-solid fa-user-plus"></i></button>
     <button onclick="window.toggleMeetMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition" title="Toggle Video CC"><i class="fa-solid fa-closed-captioning"></i></button>
