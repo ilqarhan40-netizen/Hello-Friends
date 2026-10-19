@@ -402,17 +402,17 @@ window.handleNewMessage = async function(snapshot) {
             // 1. ОТПРАВИТЕЛЬ: Строго берем флаг из сообщения! 
             // Твоя умная система отправки (микрофон или текст) УЖЕ сохранила нужный флаг независимо.
             let senderFlag = data.flag || p.flag || '🌐'; 
-            
+
             // 2. ПОЛУЧАТЕЛЬ: Базовые данные
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
             let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : (window.myProfileInfo.flag || '🌐');
-            
+
             // --- УМНАЯ СИСТЕМА ФЛАГА ПОЛУЧАТЕЛЯ ---
             // Если пишу я -> язык получателя определяется по его профилю (getSmartLang).
             // Если пишут мне -> язык получателя (мой язык) определяется по настройке текстовой панели (getLangPref).
             const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
             let receiverLang = isMe ? window.getSmartLang(window.currentTargetUser) : window.getLangPref(false, false);
-            
+
             if (receiverLang && revLangMap[receiverLang.substring(0,2)]) {
                 receiverFlag = revLangMap[receiverLang.substring(0,2)];
             }
@@ -423,12 +423,12 @@ window.handleNewMessage = async function(snapshot) {
 
             // Первая часть: Отправитель и его оригинальный текст
             let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
-            
+
             // Вторая часть: Получатель и текст перевода (если языки разные)
             if (originalText !== translatedText) {
                  marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${translatedText}</span>`;
             }
-            
+
             mText.innerHTML = marqueeHtml;
             // Перезапуск анимации бегущей строки
             mText.style.animation = 'none'; 
@@ -436,7 +436,7 @@ window.handleNewMessage = async function(snapshot) {
             mText.style.animation = null;
         }
     }
-    
+
 
  // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
