@@ -1846,6 +1846,15 @@ if (window.OneSignalDeferred) {
             qrModal.classList.add('active');
         };
 
+            <script>
+        window.showMyQR = function() {
+            const appUrl = "https://hello-friends-p8p3i7.web.app"; 
+            const qrImg = document.getElementById('qr-image');
+            const qrModal = document.getElementById('qr-modal');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
+            qrModal.classList.add('active');
+        };
+
         window.downloadQR = function() {
             const qrImg = document.getElementById('qr-image');
             if (!qrImg.src) return;
@@ -1857,13 +1866,8 @@ if (window.OneSignalDeferred) {
             document.body.removeChild(link);
         };
         
-            setTimeout(function() {
-    if (typeof window.renderSidebar === 'function') window.renderSidebar();
-    if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
-        window.initConference();
-    }
-}, 1500);
-
+        setTimeout(function() {
+            if (typeof window.renderSidebar === 'function') window.renderSidebar();
             if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
                 window.initConference();
             }
