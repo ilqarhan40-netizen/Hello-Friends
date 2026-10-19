@@ -32,7 +32,8 @@
     <script src="js/voice.js?v=2000"></script>
     <script src="js/chat.js?v=2000"></script>
     <script src="js/archive.js?v=2000"></script>
-    
+    <script src="conference.js?v=2000"></script>
+
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
@@ -612,6 +613,8 @@ if (window.OneSignalDeferred) {
                 </div>
                 <div class="flex-grow overflow-y-auto p-2 relative"><div class="video-grid" id="conference-grid"></div></div>
                 <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0">
+                    <button onclick="window.openGroupConfModal()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition"><i class="fa-solid fa-user-plus"></i></button>
+
                     <button onclick="window.toggleMeetMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition" title="Toggle Video CC"><i class="fa-solid fa-closed-captioning"></i></button>
                     <button id="conf-cam-btn" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-gray-700 transition" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video-slash text-[#8696a0]"></i></button>
                     <button class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
