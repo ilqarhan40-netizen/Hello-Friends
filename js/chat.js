@@ -436,7 +436,7 @@ window.handleNewMessage = async function(snapshot) {
     }
 
 
- // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
+     // === ГЛОБАЛЬНЫЙ ЧАТ: РАЗДАЧА ПЕРЕВОДА КАЖДОМУ УЧАСТНИКУ ===
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
@@ -462,15 +462,20 @@ window.handleNewMessage = async function(snapshot) {
 
         if (targetUsers.length > 0) {
             try {
+                // ИСПРАВЛЕННЫЙ БЛОК: Поочередный запрос с задержкой 250мс для обхода блокировки Google
                 let transCache = {};
-                const fetchPromises = Array.from(neededLangs).map(langCode => 
-                    fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`)
-                    .then(res => res.json())
-                    .then(resData => { transCache[langCode] = resData[0][0][0]; })
-                    .catch(e => { transCache[langCode] = data.originalText || data.text; }) 
-                );
-
-                await Promise.all(fetchPromises);
+                for (let langCode of neededLangs) {
+                    try {
+                        let res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`);
+                        let resData = await res.json();
+                        transCache[langCode] = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : (data.originalText || data.text);
+                        
+                        // Искусственная микро-пауза 250 мс перед следующим языком
+                        await new Promise(resolve => setTimeout(resolve, 250));
+                    } catch (e) {
+                        transCache[langCode] = data.originalText || data.text;
+                    }
+                }
 
                 const transContainer = document.createElement('div');
                 transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
@@ -494,6 +499,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
     // === КОНЕЦ БЛОКА ===
+
 
 if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
