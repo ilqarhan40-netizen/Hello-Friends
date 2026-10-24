@@ -1879,5 +1879,22 @@ if (window.OneSignalDeferred) {
             }
         }, 1500);
     </script>
+       <!-- Модальное окно группового приглашения -->
+<div id="group-invite-modal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+    <div class="bg-[#111b21] rounded-2xl w-full max-w-sm flex flex-col overflow-hidden border border-[#2a3942] shadow-2xl relative transition-transform transform scale-95" id="group-invite-content">
+        <div class="flex items-center justify-between p-4 border-b border-[#2a3942] bg-[#202c33]">
+            <h3 class="text-white font-bold text-lg"><i class="fa-solid fa-users text-[#00a884] mr-2"></i>Invite Users</h3>
+            <button onclick="window.closeGroupInviteModal()" class="text-[#8696a0] hover:text-white text-2xl transition">&times;</button>
+        </div>
+        <div class="p-4 flex flex-col gap-3 max-h-[60vh] overflow-y-auto" id="group-invite-list">
+            <!-- Список генерируется через JS -->
+        </div>
+        <div class="p-4 border-t border-[#2a3942] bg-[#202c33] flex justify-between gap-3">
+            <button onclick="window.selectAllForInvite()" class="flex-1 py-2 rounded-xl bg-[#2a3942] text-white font-bold hover:bg-[#3a4a53] transition text-sm">Select All</button>
+            <button onclick="window.sendGroupInvites()" class="flex-1 py-2 rounded-xl bg-[#00a884] text-[#111b21] font-bold hover:bg-[#008f6f] transition text-sm"><i class="fa-solid fa-paper-plane mr-1"></i> Send</button>
+        </div>
+    </div>
+</div>
+ 
 </body>
 </html>
