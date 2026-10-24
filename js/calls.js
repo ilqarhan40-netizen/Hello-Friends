@@ -60,8 +60,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         iceServers: [ 
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' }
+            { urls: 'stun:stun2.l.google.com:19302' }
         ] 
     };
     window.peerConnection = new RTCPeerConnection(servers);
@@ -71,7 +70,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     if (isVideo) {
         let myVideo = document.getElementById('my-live-video');
         if (myVideo) {
-            myVideo.src = ""; 
+            myVideo.src = ""; // Отключаем фейковое видео-заглушку лобби
             myVideo.srcObject = window.localStream;
             myVideo.play().catch(e=>{});
         }
@@ -79,12 +78,15 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
     window.peerConnection.ontrack = (event) => {
         if (isVideo) {
+            // Ищем ячейку собеседника в умной сетке
             let gridVideo = document.getElementById(`remote-video-${targetId}`);
             
             if (gridVideo) {
                 gridVideo.srcObject = event.streams[0];
                 gridVideo.classList.remove('hidden');
+                gridVideo.play().catch(e=>{});
             } else {
+                // Резервный полноэкранный режим, если сетка не прогрузилась
                 let remoteVideo = document.getElementById('remote-video-player');
                 if (!remoteVideo) {
                     remoteVideo = document.createElement('video');
@@ -267,7 +269,10 @@ window.acceptCall = function() {
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
         if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 2 : 1); 
         
-        window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); 
+        // ЗАДЕРЖКА 0.5 сек: даем HTML-сетке время отрисоваться перед тем, как лить в нее видео
+        setTimeout(() => {
+            window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); 
+        }, 500);
     } 
 };
 
@@ -319,7 +324,11 @@ window.initSignalListener = function() {
             window.stopAllRings(); 
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-            window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
+            
+            // ЗАДЕРЖКА 0.5 сек для инициатора звонка
+            setTimeout(() => {
+                window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
+            }, 500);
         }
         else if (sig.type === 'missed') {
             window.stopAllRings();
@@ -353,7 +362,6 @@ window.initConference = function() {
         { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'ae', flag: '🇦🇪', lang: 'AR' },
         { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
     ];
-
 
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
@@ -421,16 +429,33 @@ window.initConference = function() {
 
 window.toggleMyCamera = async function(btn) { 
     const videoEl = document.getElementById('my-live-video'); 
-    if (window.myVideoStream) { 
-        window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
-        btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
+    
+    // Если мы находимся в РЕАЛЬНОМ WebRTC звонке
+    if (window.localStream) {
+        let videoTrack = window.localStream.getVideoTracks()[0];
+        if (videoTrack) {
+            videoTrack.enabled = !videoTrack.enabled; // Физически отключаем отправку кадров
+            if (videoTrack.enabled) {
+                btn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
+                btn.querySelector('i').className = 'fa-solid fa-video text-white';
+            } else {
+                btn.classList.replace('bg-red-500', 'bg-[#202c33]'); 
+                btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]';
+            }
+        }
     } else { 
-        try { 
-            window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
-            if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
-            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
-        } catch(e) { alert("Доступ к камере запрещен!"); } 
+        // Если мы просто сидим в лобби без звонка (фейковая камера)
+        if (window.myVideoStream) { 
+            window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
+            if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); } 
+            btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
+        } else { 
+            try { 
+                window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
+                if(videoEl) { videoEl.src = ""; videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
+                btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
+            } catch(e) { alert("Доступ к камере запрещен!"); } 
+        } 
     } 
 };
 
