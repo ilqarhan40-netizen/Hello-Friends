@@ -1000,3 +1000,55 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
         }).catch(err => console.error("Ошибка отправки Push:", err));
     });
 };
+window.openGroupInviteModal = function() {
+    const list = document.getElementById('group-invite-list');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    window.participants.forEach(p => {
+        if (p.id === window.myProfileInfo.id || p.id === 'ai') return;
+        list.innerHTML += `
+            <label class="flex items-center justify-between p-3 bg-[#202c33] rounded-xl border border-[#2a3942] cursor-pointer hover:border-[#00a884] transition">
+                <div class="flex items-center gap-3">
+                    <img src="${p.photo || 'https://ui-avatars.com/api/?name=U'}" class="w-10 h-10 rounded-full object-cover">
+                    <span class="text-white font-bold">${p.name ? p.name.split(' ')[0] : 'User'}</span>
+                </div>
+                <input type="checkbox" value="${p.id}" class="w-5 h-5 accent-[#00a884] invite-checkbox">
+            </label>
+        `;
+    });
+    
+    const modal = document.getElementById('group-invite-modal');
+    const content = document.getElementById('group-invite-content');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+    setTimeout(() => { content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+};
+
+window.closeGroupInviteModal = function() {
+    const modal = document.getElementById('group-invite-modal');
+    const content = document.getElementById('group-invite-content');
+    content.classList.remove('scale-100'); content.classList.add('scale-95');
+    setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
+};
+
+window.selectAllForInvite = function() {
+    document.querySelectorAll('.invite-checkbox').forEach(cb => cb.checked = true);
+};
+
+window.sendGroupInvites = function() {
+    const selected = Array.from(document.querySelectorAll('.invite-checkbox:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+        if (window.showToast) window.showToast("Error", "Select at least one user", "", "");
+        return;
+    }
+    
+    selected.forEach(userId => {
+        if (window.sendVideoCallPush) {
+            window.sendVideoCallPush(userId, window.currentRoomId, window.myUsername, window.myProfileInfo.photo);
+        }
+    });
+    
+    if (window.showToast) window.showToast("Sent", `Invites sent to ${selected.length} users`, "", "");
+    window.closeGroupInviteModal();
+};
+                 
