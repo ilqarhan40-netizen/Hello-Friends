@@ -1,6 +1,7 @@
 //==========================================
-// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL ASSEMBLED)
+// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL)
 // ==========================================
+alert("✅ СИСТЕМА ВИДЕОЗВОНКОВ ОБНОВЛЕНА (v3000)!"); 
 
 window.localStream = null;
 window.peerConnection = null;
@@ -26,7 +27,7 @@ window.playSafeSound = function(audioElement, vibratePattern) {
     audioElement.currentTime = 0; 
     let playPromise = audioElement.play();
     if (playPromise !== undefined) {
-        playPromise.catch(error => { console.warn("Звук заблокирован до клика по экрану."); });
+        playPromise.catch(error => { console.warn("Звук заблокирован до клика:", error); });
     }
     if (vibratePattern && "vibrate" in navigator) {
         try { navigator.vibrate(vibratePattern); } catch(e){}
@@ -50,20 +51,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- 1. ПЕРЕДАЧА ГОЛОСА И ВИДЕО (WebRTC) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
-        // УМНАЯ ЛОГИКА: Если мы уже включили камеру при гудках, берем её. Иначе запрашиваем.
         if (!window.localStream) {
             window.localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
         }
     } catch (e) {
-        alert("Нет доступа к микрофону/камере! Убедитесь, что дано разрешение.");
+        alert("Ошибка доступа к камере при ответе: " + e.message);
         return;
     }
     
     const servers = { 
         iceServers: [ 
             { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' }
+            { urls: 'stun:stun1.l.google.com:19302' }
         ] 
     };
     window.peerConnection = new RTCPeerConnection(servers);
@@ -202,12 +201,7 @@ window.startInAppCall = function(callType = 'voice') {
     
     let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
     if (window.sendPushNotification) {
-        window.sendPushNotification(
-            target.id, 
-            { type: 'call', callerName: window.myUsername, callType: callType }, 
-            pushTitle, 
-            `${window.myUsername} звонит вам!`
-        );
+        window.sendPushNotification(target.id, { type: 'call', callerName: window.myUsername, callType: callType }, pushTitle, `${window.myUsername} звонит вам!`);
     }
     
     const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
@@ -219,30 +213,34 @@ window.startInAppCall = function(callType = 'voice') {
     if (callType === 'video' && window.initConference) {
         window.initConference();
         
-        // 🔥 СРАЗУ ВРУБАЕМ КАМЕРУ ВО ВРЕМЯ ГУДКОВ 🔥
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-            window.localStream = stream; // Запоминаем поток
-            let myVideo = document.getElementById('my-live-video');
-            if (myVideo) {
-                myVideo.src = "";
-                myVideo.srcObject = window.localStream;
-                myVideo.play().catch(e=>{});
-            }
-            // Делаем кнопку камеры красной (активной)
-            let camBtn = document.getElementById('conf-cam-btn');
-            if(camBtn) {
-                camBtn.classList.replace('bg-[#202c33]', 'bg-red-500');
-                camBtn.querySelector('i').className = 'fa-solid fa-video text-white';
-            }
-        }).catch(e => {
-            console.warn("Камера недоступна до ответа", e);
-        });
+        // Включаем камеру с диагностикой ошибок
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                window.localStream = stream; 
+                let myVideo = document.getElementById('my-live-video');
+                if (myVideo) {
+                    myVideo.src = "";
+                    myVideo.srcObject = window.localStream;
+                    myVideo.play().catch(e=>{});
+                }
+                let camBtn = document.getElementById('conf-cam-btn');
+                if(camBtn) {
+                    camBtn.classList.replace('bg-[#202c33]', 'bg-red-500');
+                    camBtn.querySelector('i').className = 'fa-solid fa-video text-white';
+                }
+            }).catch(e => {
+                alert("Камера заблокирована планшетом: " + e.message);
+            });
+        } else {
+            alert("Ошибка: Камера не работает (нужен протокол HTTPS).");
+        }
     }
     
     if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
+    // Включаем гудки
     window.stopAllRings();
     window.playSafeSound(window.sndCallOut);
     
@@ -253,7 +251,7 @@ window.startInAppCall = function(callType = 'voice') {
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
-        window.endWebRTCCall(); // Выключаем камеру, если не взяли трубку
+        window.endWebRTCCall();
     }, 30000);
 };
 
@@ -327,7 +325,6 @@ window.hangUpCall = function() {
 
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
-    
     if (window.isSignalListenerActive) return;
     window.isSignalListenerActive = true;
 
@@ -374,10 +371,8 @@ let signalInitCheck = setInterval(() => {
     }
 }, 1000);
 
-// --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (12 СТРАН) ---
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
-    
     let myReadLang = window.getLangPref(false, true); 
     let myReadFlag = window.myProfileInfo.flag || '🌐';
     
@@ -408,7 +403,6 @@ window.initConference = function() {
 
     smartLanguages.forEach(langArea => {
         let usersInThisLang = activeUsers.filter(p => p.flagCode === langArea.code);
-        
         if (usersInThisLang.length > 0) {
             usersInThisLang.forEach(p => {
                 let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
@@ -494,7 +488,6 @@ window.toggleMeetMarquee = function() {
 window.makeCallFromContact = function(userId, type = 'voice') {
     const target = (window.participants || []).find(p => p.id === userId);
     if (!target) return console.error("Юзер не найден");
-
     window.currentTargetUser = target;
     if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
     window.startInAppCall(type);
@@ -507,10 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.sendFirebaseMsg = function() {
                 const inputId = window.currentMicInputTarget || 'chat-input';
                 const inputEl = document.getElementById(inputId);
-                
-                if (inputEl && inputEl.value.trim() !== "") {
-                    window.playSafeSound(window.sndMsg);
-                }
+                if (inputEl && inputEl.value.trim() !== "") window.playSafeSound(window.sndMsg);
                 originalSend(); 
             };
         }
