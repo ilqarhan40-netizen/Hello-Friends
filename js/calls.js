@@ -1,5 +1,5 @@
 //==========================================
-// MODULE: CALLS, VIDEO & WebRTC ENGINE (BULLETPROOF)
+// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL & INTEGRATED)
 // ==========================================
 
 window.localStream = null;
@@ -26,7 +26,7 @@ window.playSafeSound = function(audioElement, vibratePattern) {
     audioElement.currentTime = 0; 
     let playPromise = audioElement.play();
     if (playPromise !== undefined) {
-        playPromise.catch(error => { console.warn("Звук заблокирован", error); });
+        playPromise.catch(error => { console.warn("Audio blocked by browser."); });
     }
     if (vibratePattern && "vibrate" in navigator) {
         try { navigator.vibrate(vibratePattern); } catch(e){}
@@ -155,17 +155,74 @@ window.endWebRTCCall = function() {
     }
 };
 
-// --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
+// --- 2. ЕДИНЫЙ СЛУШАТЕЛЬ (Звонки 1-на-1 и Групповые Инвайты) ---
+window.initSignalListener = function() { 
+    if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
+    if (window.isSignalListenerActive) return;
+    window.isSignalListenerActive = true;
+
+    firebase.database().ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
+        const sig = snap.val(); if (!sig) return; 
+        
+        if (sig.type === 'call') { 
+            if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType); 
+            else firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        } 
+        else if (sig.type === 'group_invite') {
+            if (Date.now() - sig.timestamp < 60000) {
+                window.playSafeSound(window.sndMsg, [200, 100, 200]);
+                if (window.showToast) {
+                    window.showToast(
+                        "🎥 Видеоконференция", 
+                        `${sig.callerName} зовет вас в видеочат! Нажмите здесь.`, 
+                        sig.callerPhoto, 
+                        `window.switchTab(2); if(window.initConference) window.initConference();`
+                    );
+                }
+            }
+            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+        else if (sig.type === 'reject') {
+            window.stopAllRings(); window.playSafeSound(window.sndMissed, [200, 100, 200]);
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            window.endWebRTCCall(); if (window.switchTab) window.switchTab(0);
+        }
+        else if (sig.type === 'answered') {
+            window.stopAllRings(); 
+            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            
+            try {
+                if (window.myLastOutgoingCallType === 'video' && window.initConference) window.initConference();
+            } catch(e) {}
+
+            setTimeout(() => { window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video'); }, 500);
+        }
+        else if (sig.type === 'missed') {
+            window.stopAllRings(); document.getElementById('incoming-call-modal').classList.remove('active');
+            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+        }
+    }); 
+};
+
+let signalInitCheck = setInterval(() => {
+    if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
+        window.initSignalListener(); clearInterval(signalInitCheck);
+    }
+}, 1000);
+
+
+// --- 3. ИСХОДЯЩИЕ ЗВОНКИ 1-НА-1 ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
 window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
 window.startInAppCall = function(callType = 'voice') { 
     if (!window.currentTargetUser) { 
-        alert("Выберите контакт для звонка!"); window.closePhoneChoiceModal(); return; 
+        if(window.closePhoneChoiceModal) window.closePhoneChoiceModal(); return; 
     } 
     const target = window.currentTargetUser; 
     
-    // ЗАКРЫВАЕМ ВСЕ МЕНЮ
     if(window.closePhoneChoiceModal) window.closePhoneChoiceModal();
     if(window.closeAllMenus) window.closeAllMenus();
     
@@ -175,7 +232,7 @@ window.startInAppCall = function(callType = 'voice') {
     firebase.database().ref('calls/' + myId + '_' + target.id).remove();
     let callRef = firebase.database().ref('signals/' + target.id).push();
     
-    // БЛОК 1: МГНОВЕННО ОТПРАВЛЯЕМ ВЫЗОВ В БАЗУ ДАННЫХ (ЧТОБЫ У СОБЕСЕДНИКА 100% ЗАЗВОНИЛО)
+    // ОТПРАВКА СИГНАЛА СРАЗУ
     callRef.set({ 
         type: 'call', 
         callType: callType,
@@ -190,57 +247,40 @@ window.startInAppCall = function(callType = 'voice') {
         window.sendPushNotification(target.id, { type: 'call', callerName: window.myUsername, callType: callType }, pushTitle, `Входящий звонок...`);
     }
     
-    // БЛОК 2: МГНОВЕННО ВРУБАЕМ ЗВУК И ВИБРАЦИЮ (У ТЕБЯ)
     window.stopAllRings();
     window.playSafeSound(window.sndCallOut, [500, 500, 500]);
     
-    // БЛОК 3: БЕЗОПАСНАЯ ОТРИСОВКА ИНТЕРФЕЙСА (ОШИБКИ ЗДЕСЬ БОЛЬШЕ НЕ СЛОМАЮТ ВЫЗОВ)
     try {
         const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
         if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag || '🌐'; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
         
         window.voiceFriend = target; 
         
-        if (callType === 'video' && window.initConference) {
-            window.initConference();
-        }
-        
+        if (callType === 'video' && window.initConference) window.initConference();
         if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
         if (window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
-    } catch(err) {
-        console.error("Сбой отрисовки интерфейса (но звонок идет!):", err);
-    }
+    } catch(err) {}
     
-    // БЛОК 4: ПОПЫТКА ВЗЯТЬ КАМЕРУ (ЕСЛИ ВИДЕО)
     if (callType === 'video') {
-        try {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then(stream => {
-                    window.localStream = stream; 
-                    let myVideo = document.getElementById('my-live-video');
-                    if (myVideo) {
-                        myVideo.src = ""; myVideo.srcObject = window.localStream; myVideo.play().catch(e=>{});
-                    }
-                    let camBtn = document.getElementById('conf-cam-btn');
-                    if(camBtn) {
-                        camBtn.classList.replace('bg-[#202c33]', 'bg-red-500');
-                        camBtn.querySelector('i').className = 'fa-solid fa-video text-white';
-                    }
-                }).catch(e => { console.warn("Камера заблокирована планшетом", e); });
-            }
-        } catch(camErr) {
-            console.error("Ошибка API камеры", camErr);
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                window.localStream = stream; 
+                let myVideo = document.getElementById('my-live-video');
+                if (myVideo) {
+                    myVideo.src = ""; myVideo.srcObject = window.localStream; myVideo.play().catch(e=>{});
+                }
+                let camBtn = document.getElementById('conf-cam-btn');
+                if(camBtn) { camBtn.classList.replace('bg-[#202c33]', 'bg-red-500'); camBtn.querySelector('i').className = 'fa-solid fa-video text-white'; }
+            }).catch(e => { console.warn("Камера заблокирована"); });
         }
     }
     
-    // БЛОК 5: ТАЙМАУТ (СБРОС ЧЕРЕЗ 30 СЕКУНД)
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
         firebase.database().ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
         callRef.remove(); window.callTimeout = null;
-        window.stopAllRings();
-        window.playSafeSound(window.sndMissed, [200, 100, 200]); 
+        window.stopAllRings(); window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
         window.endWebRTCCall();
     }, 30000);
@@ -272,11 +312,9 @@ window.acceptCall = function() {
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
         
         try {
-            if (window.currentIncomingCallType === 'video' && window.initConference) {
-                window.initConference();
-            }
+            if (window.currentIncomingCallType === 'video' && window.initConference) window.initConference();
             if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 2 : 1); 
-        } catch(e) { console.error("UI Error", e); }
+        } catch(e) {}
         
         setTimeout(() => { window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); }, 500);
     } 
@@ -298,63 +336,23 @@ window.hangUpCall = function() {
     if (window.switchTab) window.switchTab(0);
 };
 
-window.initSignalListener = function() { 
-    if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
-    if (window.isSignalListenerActive) return;
-    window.isSignalListenerActive = true;
-
-    firebase.database().ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => { 
-        const sig = snap.val(); if (!sig) return; 
-        
-        if (sig.type === 'call') { 
-            if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType); 
-            else firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-        } 
-        else if (sig.type === 'reject') {
-            window.stopAllRings(); window.playSafeSound(window.sndMissed, [200, 100, 200]);
-            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
-            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-            window.endWebRTCCall(); if (window.switchTab) window.switchTab(0);
-        }
-        else if (sig.type === 'answered') {
-            window.stopAllRings(); 
-            if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
-            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-            
-            try {
-                if (window.myLastOutgoingCallType === 'video' && window.initConference) window.initConference();
-            } catch(e) { console.error("Error drawing conf grid:", e); }
-
-            setTimeout(() => { window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video'); }, 500);
-        }
-        else if (sig.type === 'missed') {
-            window.stopAllRings(); document.getElementById('incoming-call-modal').classList.remove('active');
-            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-        }
-    }); 
-};
-
-let signalInitCheck = setInterval(() => {
-    if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
-        window.initSignalListener(); clearInterval(signalInitCheck);
-    }
-}, 1000);
-
+// --- 4. ВИДЕОКОНФЕРЕНЦИЯ С ПЕРЕВОДОМ (chat.js ИНТЕГРАЦИЯ) ---
 window.initConference = function() {
     try {
         const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
         
-        // БЕЗОПАСНОЕ ПОЛУЧЕНИЕ ЯЗЫКА (если функции нет, скрипт не умрет)
         let myReadLang = (typeof window.getLangPref === 'function') ? window.getLangPref(false, true) : 'en'; 
         let myReadFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
         let myName = window.myUsername || 'User';
         let myFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
         
+        // ПОЛНЫЕ МЕЖДУНАРОДНЫЕ КОДЫ ДЛЯ ПЕРЕВОДЧИКА
         const smartLanguages = [
-            { code: 'kz', flag: '🇰🇿', lang: 'KK' }, { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
-            { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' }, { code: 'es', flag: '🇪🇸', lang: 'ES' },
-            { code: 'fr', flag: '🇫🇷', lang: 'FR' }, { code: 'de', flag: '🇩🇪', lang: 'DE' }, { code: 'it', flag: '🇮🇹', lang: 'IT' },
-            { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'ae', flag: '🇦🇪', lang: 'AR' }, { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
+            { code: 'kz', flag: '🇰🇿', lang: 'kk-KZ' }, { code: 'az', flag: '🇦🇿', lang: 'az-AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'ru-RU' },
+            { code: 'us', flag: '🇺🇸', lang: 'en-US' }, { code: 'tr', flag: '🇹🇷', lang: 'tr-TR' }, { code: 'es', flag: '🇪🇸', lang: 'es-ES' },
+            { code: 'fr', flag: '🇫🇷', lang: 'fr-FR' }, { code: 'de', flag: '🇩🇪', lang: 'de-DE' }, { code: 'it', flag: '🇮🇹', lang: 'it-IT' },
+            { code: 'pt', flag: '🇵🇹', lang: 'pt-PT' }, { code: 'ae', flag: '🇦🇪', lang: 'ar-AE' }, { code: 'cn', flag: '🇨🇳', lang: 'zh-CN' }, 
+            { code: 'jp', flag: '🇯🇵', lang: 'ja-JP' }
         ];
 
         let confHtml = `
@@ -394,7 +392,7 @@ window.initConference = function() {
                         <span class="text-4xl mb-2">${langArea.flag}</span>
                         <span class="text-xs text-[#8696a0]">Ожидание (${langArea.lang})</span>
                     </div>
-                    <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${langArea.code}" data-flag="${langArea.flag}" style="animation-duration: 40s;">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
+                    <div class="translation-bar"><div class="conf-marquee-text conf-listener-marquee" data-lang="${langArea.code}" data-flag="${langArea.flag}" style="animation-duration: 40s;" data-i18n="channel_waiting">${langArea.flag} Канал ${langArea.lang} свободен...</div></div>
                 </div>`;
             }
         });
@@ -419,9 +417,15 @@ window.initConference = function() {
             videoEl.src = (window.myProfileInfo && window.myProfileInfo.video) ? window.myProfileInfo.video : 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
             videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; 
         }
-    } catch(err) {
-        console.error("Ошибка при генерации видео-сетки:", err);
-    }
+
+        // КЛЮЧЕВОЙ МОМЕНТ ДЛЯ ПЕРЕВОДОВ В CHAT.JS
+        // Как только HTML вставлен, мы принудительно вызываем функцию перевода, 
+        // чтобы chat.js увидел новые блоки и перевел их.
+        if (typeof window.updateUI_i18n === 'function') {
+            window.updateUI_i18n();
+        }
+        
+    } catch(err) {}
 };
 
 window.toggleMyCamera = async function(btn) { 
@@ -460,35 +464,18 @@ window.toggleMeetMarquee = function() {
 
 window.makeCallFromContact = function(userId, type = 'voice') {
     const target = (window.participants || []).find(p => p.id === userId);
-    if (!target) return console.error("Юзер не найден");
+    if (!target) return;
     window.currentTargetUser = target;
     if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
     window.startInAppCall(type);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        if (window.sendFirebaseMsg) {
-            const originalSend = window.sendFirebaseMsg;
-            window.sendFirebaseMsg = function() {
-                const inputId = window.currentMicInputTarget || 'chat-input';
-                const inputEl = document.getElementById(inputId);
-                if (inputEl && inputEl.value.trim() !== "") window.playSafeSound(window.sndMsg);
-                originalSend(); 
-            };
-        }
-    }, 2000);
-});
-// ==========================================
-// ЛОГИКА ГРУППОВЫХ ПРИГЛАШЕНИЙ В ВИДЕОЧАТ
-// ==========================================
-
+// --- 5. ОТПРАВКА ГРУППОВЫХ ПРИГЛАШЕНИЙ ---
 window.openGroupInviteModal = function() {
     const listEl = document.getElementById('group-invite-list');
     if(!listEl) return;
     
     let html = '';
-    // Берем всех активных пользователей, кроме себя и бота ИИ
     let users = (window.participants || []).filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id);
     
     users.forEach(u => {
@@ -502,18 +489,15 @@ window.openGroupInviteModal = function() {
     
     listEl.innerHTML = html || '<div class="text-[#8696a0] text-center text-sm" data-i18n="no_contacts">No contacts</div>';
     
-    // Обновляем переводы, если список загрузился
     if(window.updateUI_i18n) window.updateUI_i18n();
     
     let modal = document.getElementById('group-invite-modal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
 };
 
 window.closeGroupInviteModal = function() {
     let modal = document.getElementById('group-invite-modal');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+    modal.classList.add('hidden'); modal.classList.remove('flex');
 };
 
 window.isAllSelected = false;
@@ -531,7 +515,6 @@ window.sendGroupInvites = function() {
 
     const selectedIds = Array.from(selectedBoxes).map(cb => cb.value);
 
-    // Отправляем сигнал каждому выбранному пользователю
     selectedIds.forEach(targetId => {
         firebase.database().ref('signals/' + targetId).push({
             type: 'group_invite',
@@ -541,7 +524,6 @@ window.sendGroupInvites = function() {
             timestamp: firebase.database.ServerValue.TIMESTAMP
         });
         
-        // Пуш-уведомление (если свернуто приложение)
         if(window.sendPushNotification) {
             window.sendPushNotification(
                 targetId, 
@@ -557,30 +539,16 @@ window.sendGroupInvites = function() {
     window.playSafeSound(window.sndMsg);
 };
 
-// --- СЛУШАТЕЛЬ ДЛЯ ТЕХ, КОМУ ПРИШЛО ПРИГЛАШЕНИЕ ---
-let groupSignalCheck = setInterval(() => {
-    if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
-        firebase.database().ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => {
-            const sig = snap.val();
-            if (sig && sig.type === 'group_invite') {
-                if (Date.now() - sig.timestamp < 60000) { // Приглашение актуально 60 секунд
-                    window.playSafeSound(window.sndMsg, [200, 100, 200]); // Звук сообщения
-                    
-                    // Показываем всплывающий Toast. При клике на него человек зайдет в видео-вкладку!
-                    if(window.showToast) {
-                        window.showToast(
-                            "🎥 Видеоконференция", 
-                            `${sig.callerName} зовет вас в видеочат! Нажмите здесь.`, 
-                            sig.callerPhoto, 
-                            `window.switchTab(2); if(window.initConference) window.initConference();`
-                        );
-                    }
-                }
-                firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-            }
-        });
-        clearInterval(groupSignalCheck);
-    }
-}, 2000);
-
-
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if (window.sendFirebaseMsg) {
+            const originalSend = window.sendFirebaseMsg;
+            window.sendFirebaseMsg = function() {
+                const inputId = window.currentMicInputTarget || 'chat-input';
+                const inputEl = document.getElementById(inputId);
+                if (inputEl && inputEl.value.trim() !== "") window.playSafeSound(window.sndMsg);
+                originalSend(); 
+            };
+        }
+    }, 2000);
+});
