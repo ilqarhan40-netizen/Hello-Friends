@@ -50,7 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- 1. ПЕРЕДАЧА ГОЛОСА И ВИДЕО (WebRTC) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
-        window.localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+        // УМНАЯ ЛОГИКА: Если мы уже включили камеру при гудках, берем её. Иначе запрашиваем.
+        if (!window.localStream) {
+            window.localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+        }
     } catch (e) {
         alert("Нет доступа к микрофону/камере! Убедитесь, что дано разрешение.");
         return;
@@ -165,6 +168,12 @@ window.endWebRTCCall = function() {
         myVideo.srcObject = null;
         myVideo.src = window.myProfileInfo?.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4';
     }
+    
+    let camBtn = document.getElementById('conf-cam-btn');
+    if(camBtn) {
+        camBtn.classList.replace('bg-red-500', 'bg-[#202c33]');
+        camBtn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]';
+    }
 };
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
@@ -209,6 +218,26 @@ window.startInAppCall = function(callType = 'voice') {
     // ВАЖНО: Рисуем сетку для видео до переключения вкладки!
     if (callType === 'video' && window.initConference) {
         window.initConference();
+        
+        // 🔥 СРАЗУ ВРУБАЕМ КАМЕРУ ВО ВРЕМЯ ГУДКОВ 🔥
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+            window.localStream = stream; // Запоминаем поток
+            let myVideo = document.getElementById('my-live-video');
+            if (myVideo) {
+                myVideo.src = "";
+                myVideo.srcObject = window.localStream;
+                myVideo.play().catch(e=>{});
+            }
+            // Делаем кнопку камеры красной (активной)
+            let camBtn = document.getElementById('conf-cam-btn');
+            if(camBtn) {
+                camBtn.classList.replace('bg-[#202c33]', 'bg-red-500');
+                camBtn.querySelector('i').className = 'fa-solid fa-video text-white';
+            }
+        }).catch(e => {
+            console.warn("Камера недоступна до ответа", e);
+        });
     }
     
     if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
@@ -224,6 +253,7 @@ window.startInAppCall = function(callType = 'voice') {
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
+        window.endWebRTCCall(); // Выключаем камеру, если не взяли трубку
     }, 30000);
 };
 
@@ -261,7 +291,6 @@ window.acceptCall = function() {
         window.voiceFriend = target; 
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
         
-        // ВАЖНО: Рисуем сетку до переключения вкладки, если это видео!
         if (window.currentIncomingCallType === 'video' && window.initConference) {
             window.initConference();
         }
@@ -322,7 +351,6 @@ window.initSignalListener = function() {
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             
-            // Рисуем сетку у того, кто звонил, если это было видео
             if (window.myLastOutgoingCallType === 'video' && window.initConference) {
                 window.initConference();
             }
