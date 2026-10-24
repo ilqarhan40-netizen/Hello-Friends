@@ -479,3 +479,108 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 2000);
 });
+// ==========================================
+// ЛОГИКА ГРУППОВЫХ ПРИГЛАШЕНИЙ В ВИДЕОЧАТ
+// ==========================================
+
+window.openGroupInviteModal = function() {
+    const listEl = document.getElementById('group-invite-list');
+    if(!listEl) return;
+    
+    let html = '';
+    // Берем всех активных пользователей, кроме себя и бота ИИ
+    let users = (window.participants || []).filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id);
+    
+    users.forEach(u => {
+        html += `
+        <label class="flex items-center gap-3 p-2 hover:bg-[#202c33] rounded-xl cursor-pointer transition">
+            <input type="checkbox" class="invite-checkbox w-5 h-5 accent-[#00a884]" value="${u.id}">
+            <img src="${u.photo}" class="w-10 h-10 rounded-full object-cover">
+            <div class="flex-1 text-white text-sm font-bold">${u.name.split(' ')[0]} <span class="text-xs font-normal text-[#8696a0] ml-1">${u.flag || '🌐'}</span></div>
+        </label>`;
+    });
+    
+    listEl.innerHTML = html || '<div class="text-[#8696a0] text-center text-sm" data-i18n="no_contacts">No contacts</div>';
+    
+    // Обновляем переводы, если список загрузился
+    if(window.updateUI_i18n) window.updateUI_i18n();
+    
+    let modal = document.getElementById('group-invite-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+window.closeGroupInviteModal = function() {
+    let modal = document.getElementById('group-invite-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+window.isAllSelected = false;
+window.selectAllForInvite = function() {
+    window.isAllSelected = !window.isAllSelected;
+    document.querySelectorAll('.invite-checkbox').forEach(cb => cb.checked = window.isAllSelected);
+};
+
+window.sendGroupInvites = function() {
+    const selectedBoxes = document.querySelectorAll('.invite-checkbox:checked');
+    if(selectedBoxes.length === 0) { 
+        if(window.showToast) window.showToast("Ошибка", "Выберите хотя бы одного пользователя", "", "");
+        return; 
+    }
+
+    const selectedIds = Array.from(selectedBoxes).map(cb => cb.value);
+
+    // Отправляем сигнал каждому выбранному пользователю
+    selectedIds.forEach(targetId => {
+        firebase.database().ref('signals/' + targetId).push({
+            type: 'group_invite',
+            callerId: window.myProfileInfo.id,
+            callerName: window.myUsername,
+            callerPhoto: window.myProfileInfo.photo,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        // Пуш-уведомление (если свернуто приложение)
+        if(window.sendPushNotification) {
+            window.sendPushNotification(
+                targetId, 
+                { type: 'group_invite' }, 
+                "🎥 Group Video Chat", 
+                `${window.myUsername} приглашает вас!`
+            );
+        }
+    });
+
+    window.closeGroupInviteModal();
+    if(window.showToast) window.showToast("Invites Sent", `Приглашения отправлены (${selectedIds.length})`, "", "");
+    window.playSafeSound(window.sndMsg);
+};
+
+// --- СЛУШАТЕЛЬ ДЛЯ ТЕХ, КОМУ ПРИШЛО ПРИГЛАШЕНИЕ ---
+let groupSignalCheck = setInterval(() => {
+    if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
+        firebase.database().ref('signals/' + window.myProfileInfo.id).on('child_added', (snap) => {
+            const sig = snap.val();
+            if (sig && sig.type === 'group_invite') {
+                if (Date.now() - sig.timestamp < 60000) { // Приглашение актуально 60 секунд
+                    window.playSafeSound(window.sndMsg, [200, 100, 200]); // Звук сообщения
+                    
+                    // Показываем всплывающий Toast. При клике на него человек зайдет в видео-вкладку!
+                    if(window.showToast) {
+                        window.showToast(
+                            "🎥 Видеоконференция", 
+                            `${sig.callerName} зовет вас в видеочат! Нажмите здесь.`, 
+                            sig.callerPhoto, 
+                            `window.switchTab(2); if(window.initConference) window.initConference();`
+                        );
+                    }
+                }
+                firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            }
+        });
+        clearInterval(groupSignalCheck);
+    }
+}, 2000);
+
+
