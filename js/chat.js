@@ -568,6 +568,11 @@ if (data.isVoiceRoomMsg) {
                     if (revLangMap[baseL]) targetFlag = revLangMap[baseL];
                 }
             }
+            
+if (targetLang === 'cn') targetLang = 'zh';
+if (targetLang === 'jp') targetLang = 'ja';
+if (targetLang === 'ae') targetLang = 'ar';
+if (targetLang === 'kz') targetLang = 'kk';
 
             fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(originalText)}`)
                 .then(r => r.json())
