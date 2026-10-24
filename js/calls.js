@@ -70,7 +70,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     if (isVideo) {
         let myVideo = document.getElementById('my-live-video');
         if (myVideo) {
-            myVideo.src = ""; // Отключаем фейковое видео-заглушку лобби
+            myVideo.src = ""; 
             myVideo.srcObject = window.localStream;
             myVideo.play().catch(e=>{});
         }
@@ -78,15 +78,12 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
     window.peerConnection.ontrack = (event) => {
         if (isVideo) {
-            // Ищем ячейку собеседника в умной сетке
             let gridVideo = document.getElementById(`remote-video-${targetId}`);
-            
             if (gridVideo) {
                 gridVideo.srcObject = event.streams[0];
                 gridVideo.classList.remove('hidden');
                 gridVideo.play().catch(e=>{});
             } else {
-                // Резервный полноэкранный режим, если сетка не прогрузилась
                 let remoteVideo = document.getElementById('remote-video-player');
                 if (!remoteVideo) {
                     remoteVideo = document.createElement('video');
@@ -208,6 +205,12 @@ window.startInAppCall = function(callType = 'voice') {
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
     
     window.voiceFriend = target; 
+    
+    // ВАЖНО: Рисуем сетку для видео до переключения вкладки!
+    if (callType === 'video' && window.initConference) {
+        window.initConference();
+    }
+    
     if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
@@ -221,16 +224,6 @@ window.startInAppCall = function(callType = 'voice') {
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
-        
-        let missedTitle = callType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
-        if (window.sendPushNotification) {
-            window.sendPushNotification(
-                target.id, 
-                { type: 'missed', callerName: window.myUsername }, 
-                missedTitle, 
-                `Вы пропустили вызов от ${window.myUsername}`
-            );
-        }
     }, 30000);
 };
 
@@ -267,9 +260,14 @@ window.acceptCall = function() {
         
         window.voiceFriend = target; 
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
+        
+        // ВАЖНО: Рисуем сетку до переключения вкладки, если это видео!
+        if (window.currentIncomingCallType === 'video' && window.initConference) {
+            window.initConference();
+        }
+        
         if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 2 : 1); 
         
-        // ЗАДЕРЖКА 0.5 сек: даем HTML-сетке время отрисоваться перед тем, как лить в нее видео
         setTimeout(() => {
             window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); 
         }, 500);
@@ -301,7 +299,6 @@ window.hangUpCall = function() {
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
     
-    // Предотвращаем двойной запуск слушателя
     if (window.isSignalListenerActive) return;
     window.isSignalListenerActive = true;
 
@@ -325,7 +322,11 @@ window.initSignalListener = function() {
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
             
-            // ЗАДЕРЖКА 0.5 сек для инициатора звонка
+            // Рисуем сетку у того, кто звонил, если это было видео
+            if (window.myLastOutgoingCallType === 'video' && window.initConference) {
+                window.initConference();
+            }
+
             setTimeout(() => {
                 window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
             }, 500);
@@ -338,7 +339,6 @@ window.initSignalListener = function() {
     }); 
 };
 
-// --- АВТОМАТИЧЕСКИЙ ЗАПУСК ПРИЕМА ЗВОНКОВ ---
 let signalInitCheck = setInterval(() => {
     if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
         window.initSignalListener();
@@ -353,8 +353,8 @@ window.initConference = function() {
     let myReadLang = window.getLangPref(false, true); 
     let myReadFlag = window.myProfileInfo.flag || '🌐';
     
-        const smartLanguages = [
-        { code: 'kz', flag: '🇰🇿', lang: 'KK' }, // Добавили Казахстан (язык - казахский)
+    const smartLanguages = [
+        { code: 'kz', flag: '🇰🇿', lang: 'KK' }, 
         { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
         { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' },
         { code: 'es', flag: '🇪🇸', lang: 'ES' }, { code: 'fr', flag: '🇫🇷', lang: 'FR' },
@@ -430,11 +430,10 @@ window.initConference = function() {
 window.toggleMyCamera = async function(btn) { 
     const videoEl = document.getElementById('my-live-video'); 
     
-    // Если мы находимся в РЕАЛЬНОМ WebRTC звонке
     if (window.localStream) {
         let videoTrack = window.localStream.getVideoTracks()[0];
         if (videoTrack) {
-            videoTrack.enabled = !videoTrack.enabled; // Физически отключаем отправку кадров
+            videoTrack.enabled = !videoTrack.enabled; 
             if (videoTrack.enabled) {
                 btn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
                 btn.querySelector('i').className = 'fa-solid fa-video text-white';
@@ -444,7 +443,6 @@ window.toggleMyCamera = async function(btn) {
             }
         }
     } else { 
-        // Если мы просто сидим в лобби без звонка (фейковая камера)
         if (window.myVideoStream) { 
             window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
             if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; videoEl.play(); } 
@@ -465,19 +463,15 @@ window.toggleMeetMarquee = function() {
     document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
 };
 
-// --- ВЫЗОВ ИЗ КОНТАКТОВ ---
 window.makeCallFromContact = function(userId, type = 'voice') {
     const target = (window.participants || []).find(p => p.id === userId);
     if (!target) return console.error("Юзер не найден");
 
     window.currentTargetUser = target;
-
     if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
-    
     window.startInAppCall(type);
 };
 
-// --- ФИКС ЗВУКА ОТПРАВКИ СООБЩЕНИЙ ВО ВСЕХ ЧАТАХ ---
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (window.sendFirebaseMsg) {
