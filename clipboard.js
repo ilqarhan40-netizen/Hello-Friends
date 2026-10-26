@@ -1,166 +1,175 @@
 // ==========================================
-// 1. ПЕРЕХВАТ ВСТАВКИ ФОТО И ВИДЕО (PASTE)
+// 1. БЛОКИРОВКА ГУГЛ-МЕНЮ (CSS)
+// ==========================================
+const overrideStyle = document.createElement('style');
+overrideStyle.innerHTML = `
+    .chat-bubble img, .chat-bubble video {
+        -webkit-touch-callout: none !important; /* Убивает меню Гугла только на картинках */
+    }
+    #custom-action-menu {
+        display: none; position: absolute; z-index: 999999; background: #202c33; 
+        border: 1px solid #2a3942; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+        padding: 6px; min-width: 150px; flex-direction: column;
+    }
+    .custom-menu-btn {
+        background: transparent; border: none; color: #e9edef; font-size: 14.5px; 
+        padding: 12px; text-align: left; width: 100%; border-radius: 8px; cursor: pointer; margin-bottom: 2px;
+    }
+    .custom-menu-btn-del {
+        background: transparent; border: none; color: #ff4444; font-size: 14.5px; 
+        padding: 12px; text-align: left; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold;
+    }
+`;
+document.head.appendChild(overrideStyle);
+
+// ==========================================
+// 2. ВЕРСТКА НАШЕГО МЕНЮ
+// ==========================================
+const customMenu = document.createElement('div');
+customMenu.id = 'custom-action-menu';
+customMenu.innerHTML = `
+    <button onclick="window.handleMenuAction('copy')" class="custom-menu-btn">Скопировать</button>
+    <button onclick="window.handleMenuAction('paste')" class="custom-menu-btn">Вставить</button>
+    <button onclick="window.handleMenuAction('forward')" class="custom-menu-btn">Переслать</button>
+    <div style="height: 1px; background: #2a3942; margin: 4px 0;"></div>
+    <button onclick="window.handleMenuAction('delete')" class="custom-menu-btn-del">Удалить</button>
+`;
+document.body.appendChild(customMenu);
+
+window.currentMenuTarget = null;
+window.appInternalClipboard = null; // Внутренняя память для скопированных фото
+
+// ==========================================
+// 3. ОТСЛЕЖИВАНИЕ ДОЛГОГО ТАПА
+// ==========================================
+let pressTimer;
+let startX = 0, startY = 0;
+
+window.showCustomMenu = function(x, y, targetElement) {
+    window.currentMenuTarget = targetElement;
+    if (x + 160 > window.innerWidth) x = window.innerWidth - 170;
+    
+    customMenu.style.left = x + 'px';
+    customMenu.style.top = y + 'px';
+    customMenu.style.display = 'flex';
+    
+    if (navigator.vibrate) navigator.vibrate(50);
+};
+
+document.addEventListener('touchstart', function(e) {
+    let targetElement = e.target.closest('.chat-bubble');
+    if (!targetElement) return;
+
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+
+    pressTimer = setTimeout(() => {
+        window.showCustomMenu(startX, startY, targetElement);
+    }, 400); // Открываем меню через 400мс удержания пальца
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+    if (Math.abs(e.touches[0].clientX - startX) > 10 || Math.abs(e.touches[0].clientY - startY) > 10) {
+        clearTimeout(pressTimer);
+    }
+}, { passive: true });
+
+document.addEventListener('touchend', function() { clearTimeout(pressTimer); }, { passive: true });
+document.addEventListener('contextmenu', function(e) {
+    let targetElement = e.target.closest('.chat-bubble');
+    if (targetElement) { e.preventDefault(); window.showCustomMenu(e.pageX, e.pageY, targetElement); }
+});
+document.addEventListener('click', function(e) {
+    if (!customMenu.contains(e.target)) customMenu.style.display = 'none';
+});
+
+// ==========================================
+// 4. ДЕЙСТВИЯ КНОПОК МЕНЮ
+// ==========================================
+window.handleMenuAction = function(action) {
+    customMenu.style.display = 'none';
+    if (!window.currentMenuTarget) return;
+
+    let imgEl = window.currentMenuTarget.querySelector('img');
+    let vidEl = window.currentMenuTarget.querySelector('video');
+
+    if (action === 'copy') {
+        if (imgEl || vidEl) {
+            window.appInternalClipboard = { type: imgEl ? 'image' : 'video', src: imgEl ? imgEl.src : vidEl.src };
+            if (window.showToast) window.showToast("Скопировано", "Медиафайл готов к вставке", "", "");
+        } else {
+            navigator.clipboard.writeText(window.currentMenuTarget.innerText.trim());
+            window.appInternalClipboard = null; 
+        }
+    } 
+    else if (action === 'paste') {
+        if (window.appInternalClipboard) {
+            // Вставляем фото
+            fetch(window.appInternalClipboard.src)
+                .then(res => res.blob())
+                .then(blob => {
+                    let ext = window.appInternalClipboard.type === 'image' ? 'png' : 'mp4';
+                    triggerUpload(new File([blob], "copied_media." + ext, {type: blob.type}));
+                });
+        } else {
+            // Вставляем текст
+            navigator.clipboard.readText().then(clipText => {
+                let inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input');
+                if (inputField) { inputField.value += clipText; inputField.focus(); }
+            }).catch(() => {});
+        }
+    } 
+    else if (action === 'forward') {
+        alert("Выберите контакт для пересылки");
+    } 
+    else if (action === 'delete') {
+        let messageGroup = window.currentMenuTarget.closest('.flex.flex-col.w-full.mt-3') || window.currentMenuTarget;
+        messageGroup.remove();
+    }
+};
+
+// ==========================================
+// 5. ПЕРЕХВАТ СИСТЕМНОЙ ВСТАВКИ (Защита от зеленого текста)
 // ==========================================
 document.addEventListener('paste', function(e) {
     let clipboardData = e.clipboardData || window.clipboardData;
     if (!clipboardData) return;
 
+    // Перехват гигантского кода картинки (Base64), как на твоем скрине
+    let pastedText = clipboardData.getData('text');
+    if (pastedText && pastedText.startsWith('data:image/')) {
+        e.preventDefault();
+        fetch(pastedText).then(res => res.blob()).then(blob => {
+            triggerUpload(new File([blob], "image.png", {type: blob.type}));
+        });
+        return;
+    }
+
+    // Перехват обычного файла
     let items = clipboardData.items;
-    
     for (let i = 0; i < items.length; i++) {
         if (items[i].kind === 'file') {
             let file = items[i].getAsFile();
-            if (!file) continue;
-
-            if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+            if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
                 e.preventDefault(); 
-                
-                let mediaTypeStr = file.type.startsWith('image/') ? 'фото' : 'видео';
-                
-                if (confirm(`Отправить скопированное ${mediaTypeStr} в чат?`)) {
-                    // Укажи здесь правильный ID твоего инпута-скрепки
-                    let fileInput = document.getElementById('media-upload-input'); 
-                    
-                    if (fileInput) {
-                        let dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        fileInput.files = dataTransfer.files;
-                        
-                        let event = new Event('change', { bubbles: true });
-                        fileInput.dispatchEvent(event);
-                    } else if (typeof window.uploadMediaFile === 'function') {
-                        window.uploadMediaFile(file);
-                    } else {
-                        alert("Загрузчик файлов не найден.");
-                    }
-                }
+                triggerUpload(file);
                 break; 
             }
         }
     }
 });
 
-// ==========================================
-// 2. СОЗДАНИЕ СВОЕГО МЕНЮ И БЛОКИРОВКА ГУГЛА
-// ==========================================
-
-// Внедряем CSS для меню и блокировки системы
-const overrideStyle = document.createElement('style');
-overrideStyle.innerHTML = `
-    .chat-bubble, .chat-bubble img, .chat-bubble video {
-        -webkit-touch-callout: none !important;
-        -webkit-user-select: none !important;
-        user-select: none !important;
+// Отправка файла в твою систему
+function triggerUpload(file) {
+    let fileInput = document.getElementById('media-upload-input');
+    if (fileInput) {
+        let dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    } else if (typeof window.uploadMediaFile === 'function') {
+        window.uploadMediaFile(file);
+    } else {
+        alert("Ошибка: Загрузчик файлов media-upload-input не найден в HTML");
     }
-    #custom-action-menu {
-        transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
-    }
-`;
-document.head.appendChild(overrideStyle);
-
-// Создаем HTML нашего меню в памяти (стилизовано под твой темный чат)
-const customMenu = document.createElement('div');
-customMenu.id = 'custom-action-menu';
-customMenu.className = 'hidden absolute z-[9999] bg-[#202c33] border border-[#2a3942] rounded-xl shadow-2xl flex flex-col p-2 min-w-[160px] transform scale-95 opacity-0 origin-top-left';
-customMenu.innerHTML = `
-    <button onclick="window.handleMenuAction('copy')" class="flex items-center gap-3 text-[#e9edef] text-sm text-left p-3 hover:bg-[#111b21] rounded-lg transition">
-        <i class="fa-regular fa-copy text-[#8696a0]"></i> Скопировать
-    </button>
-    <button onclick="window.handleMenuAction('paste')" class="flex items-center gap-3 text-[#e9edef] text-sm text-left p-3 hover:bg-[#111b21] rounded-lg transition">
-        <i class="fa-solid fa-paste text-[#8696a0]"></i> Вставить
-    </button>
-    <button onclick="window.handleMenuAction('forward')" class="flex items-center gap-3 text-[#e9edef] text-sm text-left p-3 hover:bg-[#111b21] rounded-lg transition">
-        <i class="fa-solid fa-share text-[#8696a0]"></i> Переслать
-    </button>
-    <div class="h-[1px] w-full bg-[#2a3942] my-1"></div>
-    <button onclick="window.handleMenuAction('delete')" class="flex items-center gap-3 text-red-500 text-sm text-left p-3 hover:bg-red-500/10 rounded-lg transition font-bold">
-        <i class="fa-regular fa-trash-can"></i> Удалить
-    </button>
-`;
-document.body.appendChild(customMenu);
-
-window.currentMenuTarget = null; // Запоминаем, на что кликнули
-
-// Перехватываем долгий тап
-document.addEventListener('contextmenu', function(e) {
-    let targetElement = e.target.closest('.chat-bubble') || e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO';
-    
-    if (targetElement) {
-        e.preventDefault(); // Убиваем Гугл-меню
-        window.currentMenuTarget = targetElement; // Запоминаем пузырь с текстом/фото
-        
-        // Позиционируем меню там, где палец
-        let x = e.pageX;
-        let y = e.pageY;
-        
-        // Проверка, чтобы меню не уехало за край экрана
-        if (x + 160 > window.innerWidth) x = window.innerWidth - 170;
-        
-        customMenu.style.left = x + 'px';
-        customMenu.style.top = y + 'px';
-        
-        // Показываем с анимацией
-        customMenu.classList.remove('hidden');
-        setTimeout(() => {
-            customMenu.classList.remove('scale-95', 'opacity-0');
-            customMenu.classList.add('scale-100', 'opacity-100');
-        }, 10);
-    }
-});
-
-// Закрываем меню при тапе в любое другое место
-document.addEventListener('click', function(e) {
-    if (!customMenu.contains(e.target)) {
-        customMenu.classList.add('scale-95', 'opacity-0');
-        customMenu.classList.remove('scale-100', 'opacity-100');
-        setTimeout(() => customMenu.classList.add('hidden'), 100);
-    }
-});
-
-// ==========================================
-// 3. ФУНКЦИИ КНОПОК МЕНЮ
-// ==========================================
-window.handleMenuAction = function(action) {
-    // Прячем меню после выбора
-    customMenu.classList.add('hidden', 'scale-95', 'opacity-0');
-    
-    if (!window.currentMenuTarget) return;
-
-    if (action === 'copy') {
-        // Копирование текста (если это текст) или ссылки (если картинка)
-        let textToCopy = window.currentMenuTarget.innerText;
-        let imgEl = window.currentMenuTarget.querySelector('img');
-        if (imgEl) textToCopy = imgEl.src; // Если картинка, скопируется ссылка
-        
-        navigator.clipboard.writeText(textToCopy.trim()).then(() => {
-            if (window.showToast) window.showToast("Скопировано", "Сохранено в буфер обмена", "", "");
-        }).catch(err => console.log('Ошибка копирования: ', err));
-
-    } else if (action === 'paste') {
-        // Вставка текста из буфера в строку ввода
-        navigator.clipboard.readText().then(clipText => {
-            let inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input');
-            if (inputField) {
-                inputField.value += clipText;
-                inputField.focus();
-            }
-        });
-
-    } else if (action === 'forward') {
-        // Пересылка (пока просто окно, сюда потом можно привязать вызов твоего списка контактов)
-        alert("Выберите контакт для пересылки (нужно привязать базу)");
-
-    } else if (action === 'delete') {
-        // Удаление
-        if(confirm("Удалить это сообщение?")) {
-            // Визуальное удаление с экрана:
-            let messageGroup = window.currentMenuTarget.closest('.flex.flex-col.w-full.mt-3');
-            if (messageGroup) {
-                messageGroup.remove();
-            } else {
-                window.currentMenuTarget.remove();
-            }
-            // *Здесь позже можно добавить удаление из Firebase по ID*
-        }
-    }
-};
+}
