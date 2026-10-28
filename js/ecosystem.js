@@ -166,7 +166,8 @@ window.sendEmailForm = function(e) {
         message: text,
         from_name: window.myUsername || "User"
     };
-    emailjs.send("service_8d6b5v3", "template_slxkkuk", templateParams)
+        emailjs.send("service_8d6b5v3", "template_slxkkuk", templateParams).then(function() {
+
     
         btn.classList.remove('animate-pulse'); 
         btn.innerText = 'Success! ✔️'; 
