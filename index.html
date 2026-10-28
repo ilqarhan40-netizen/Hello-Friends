@@ -1850,16 +1850,7 @@ if (window.OneSignalDeferred) {
         </div>
     </div>
     
-    <script>
-        window.showMyQR = function() {
-            const appUrl = "https://hello-friends-p8p3i7.web.app"; 
-            const qrImg = document.getElementById('qr-image');
-            const qrModal = document.getElementById('qr-modal');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(appUrl)}&color=111b21&bgcolor=ffffff`;
-            qrModal.classList.add('active');
-        };
-
-            <script>
+        <script>
         window.showMyQR = function() {
             const appUrl = "https://hello-friends-p8p3i7.web.app"; 
             const qrImg = document.getElementById('qr-image');
@@ -1886,6 +1877,7 @@ if (window.OneSignalDeferred) {
             }
         }, 1500);
     </script>
+
        <!-- Модальное окно группового приглашения -->
 <div id="group-invite-modal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
     <div class="bg-[#111b21] rounded-2xl w-full max-w-sm flex flex-col overflow-hidden border border-[#2a3942] shadow-2xl relative transition-transform transform scale-95" id="group-invite-content">
