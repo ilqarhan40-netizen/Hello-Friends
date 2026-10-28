@@ -166,7 +166,8 @@ window.sendEmailForm = function(e) {
         message: text,
         from_name: window.myUsername || "User"
     };
-    emailjs.send("service_8d6b5v3", "template_0o6h5cm", templateParams).then(function() { 
+    emailjs.send("service_8d6b5v3", "template_slxkkuk", templateParams)
+    
         btn.classList.remove('animate-pulse'); 
         btn.innerText = 'Success! ✔️'; 
         btn.style.background = '#00a884'; 
