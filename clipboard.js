@@ -1,71 +1,68 @@
 // ==========================================
-// 1. БЛОКИРОВКА ГУГЛ-МЕНЮ (CSS)
+// 1. УБИВАЕМ ГУГЛ-МЕНЮ В ЧАТЕ
 // ==========================================
-const overrideStyle = document.createElement('style');
-overrideStyle.innerHTML = `
-    .chat-bubble img, .chat-bubble video {
-        -webkit-touch-callout: none !important; /* Убивает меню Гугла только на картинках */
+window.oncontextmenu = function(e) {
+    if (e.target.closest('.chat-bubble') || e.target.tagName === 'IMG') {
+        e.preventDefault(); 
+        e.stopPropagation();
+        openChatActionMenu(e.target);
+        return false;
     }
-    #custom-action-menu {
-        display: none; position: absolute; z-index: 999999; background: #202c33; 
-        border: 1px solid #2a3942; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
-        padding: 6px; min-width: 150px; flex-direction: column;
-    }
-    .custom-menu-btn {
-        background: transparent; border: none; color: #e9edef; font-size: 14.5px; 
-        padding: 12px; text-align: left; width: 100%; border-radius: 8px; cursor: pointer; margin-bottom: 2px;
-    }
-    .custom-menu-btn-del {
-        background: transparent; border: none; color: #ff4444; font-size: 14.5px; 
-        padding: 12px; text-align: left; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold;
-    }
-`;
-document.head.appendChild(overrideStyle);
+};
 
 // ==========================================
-// 2. ВЕРСТКА НАШЕГО МЕНЮ
+// 2. УПРАВЛЕНИЕ НАШИМ НЕЗАВИСИМЫМ МЕНЮ ЧАТА
 // ==========================================
-const customMenu = document.createElement('div');
-customMenu.id = 'custom-action-menu';
-customMenu.innerHTML = `
-    <button onclick="window.handleMenuAction('copy')" class="custom-menu-btn">Скопировать</button>
-    <button onclick="window.handleMenuAction('paste')" class="custom-menu-btn">Вставить</button>
-    <button onclick="window.handleMenuAction('forward')" class="custom-menu-btn">Переслать</button>
-    <div style="height: 1px; background: #2a3942; margin: 4px 0;"></div>
-    <button onclick="window.handleMenuAction('delete')" class="custom-menu-btn-del">Удалить</button>
-`;
-document.body.appendChild(customMenu);
-
-window.currentMenuTarget = null;
-window.appInternalClipboard = null; // Внутренняя память для скопированных фото
-
-// ==========================================
-// 3. ОТСЛЕЖИВАНИЕ ДОЛГОГО ТАПА
-// ==========================================
+window.currentChatTarget = null;
+window.appInternalClipboard = null; 
 let pressTimer;
 let startX = 0, startY = 0;
 
-window.showCustomMenu = function(x, y, targetElement) {
-    window.currentMenuTarget = targetElement;
-    if (x + 160 > window.innerWidth) x = window.innerWidth - 170;
+function openChatActionMenu(targetElement) {
+    window.currentChatTarget = targetElement.closest('.chat-bubble') || targetElement;
     
-    customMenu.style.left = x + 'px';
-    customMenu.style.top = y + 'px';
-    customMenu.style.display = 'flex';
+    let modal = document.getElementById('chat-action-modal');
+    let content = document.getElementById('chat-action-content');
+    let title = document.getElementById('chat-action-title');
     
-    if (navigator.vibrate) navigator.vibrate(50);
+    if (modal && content) {
+        if (window.currentChatTarget.querySelector('img')) {
+            title.innerText = "Действие с фото";
+        } else if (window.currentChatTarget.querySelector('video')) {
+            title.innerText = "Действие с видео";
+        } else {
+            title.innerText = "Действие с сообщением";
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => { content.classList.remove('translate-y-full'); }, 10);
+        if (navigator.vibrate) navigator.vibrate(50);
+    }
+}
+
+window.closeChatActionMenu = function() {
+    let modal = document.getElementById('chat-action-modal');
+    let content = document.getElementById('chat-action-content');
+    if (content) content.classList.add('translate-y-full');
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }, 300);
 };
 
+// ==========================================
+// 3. ДОЛГИЙ ТАП (ТОЛЬКО ДЛЯ ЧАТА)
+// ==========================================
 document.addEventListener('touchstart', function(e) {
-    let targetElement = e.target.closest('.chat-bubble');
-    if (!targetElement) return;
-
+    let target = e.target.closest('.chat-bubble') || (e.target.tagName === 'IMG' ? e.target : null);
+    if (!target) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-
-    pressTimer = setTimeout(() => {
-        window.showCustomMenu(startX, startY, targetElement);
-    }, 400); // Открываем меню через 400мс удержания пальца
+    
+    pressTimer = setTimeout(() => { openChatActionMenu(target); }, 450);
 }, { passive: true });
 
 document.addEventListener('touchmove', function(e) {
@@ -75,101 +72,88 @@ document.addEventListener('touchmove', function(e) {
 }, { passive: true });
 
 document.addEventListener('touchend', function() { clearTimeout(pressTimer); }, { passive: true });
-document.addEventListener('contextmenu', function(e) {
-    let targetElement = e.target.closest('.chat-bubble');
-    if (targetElement) { e.preventDefault(); window.showCustomMenu(e.pageX, e.pageY, targetElement); }
-});
-document.addEventListener('click', function(e) {
-    if (!customMenu.contains(e.target)) customMenu.style.display = 'none';
-});
 
 // ==========================================
-// 4. ДЕЙСТВИЯ КНОПОК МЕНЮ
+// 4. НЕЗАВИСИМАЯ ФУНКЦИЯ ДЕЙСТВИЙ
 // ==========================================
-window.handleMenuAction = function(action) {
-    customMenu.style.display = 'none';
-    if (!window.currentMenuTarget) return;
+window.chatAction = function(action) {
+    window.closeChatActionMenu();
+    if (!window.currentChatTarget) return;
 
-    let imgEl = window.currentMenuTarget.querySelector('img');
-    let vidEl = window.currentMenuTarget.querySelector('video');
+    let imgEl = window.currentChatTarget.querySelector('img') || (window.currentChatTarget.tagName === 'IMG' ? window.currentChatTarget : null);
+    let vidEl = window.currentChatTarget.querySelector('video');
 
     if (action === 'copy') {
         if (imgEl || vidEl) {
             window.appInternalClipboard = { type: imgEl ? 'image' : 'video', src: imgEl ? imgEl.src : vidEl.src };
             if (window.showToast) window.showToast("Скопировано", "Медиафайл готов к вставке", "", "");
         } else {
-            navigator.clipboard.writeText(window.currentMenuTarget.innerText.trim());
-            window.appInternalClipboard = null; 
+            navigator.clipboard.writeText(window.currentChatTarget.innerText.trim());
+            window.appInternalClipboard = null;
+            if (window.showToast) window.showToast("Скопировано", "Текст скопирован", "", "");
         }
     } 
     else if (action === 'paste') {
         if (window.appInternalClipboard) {
-            // Вставляем фото
-            fetch(window.appInternalClipboard.src)
-                .then(res => res.blob())
-                .then(blob => {
-                    let ext = window.appInternalClipboard.type === 'image' ? 'png' : 'mp4';
-                    triggerUpload(new File([blob], "copied_media." + ext, {type: blob.type}));
-                });
+            fetch(window.appInternalClipboard.src).then(res => res.blob()).then(blob => {
+                triggerAppUpload(new File([blob], "copied_media." + (window.appInternalClipboard.type === 'image' ? 'png' : 'mp4'), {type: blob.type}));
+            });
         } else {
-            // Вставляем текст
             navigator.clipboard.readText().then(clipText => {
                 let inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input');
-                if (inputField) { inputField.value += clipText; inputField.focus(); }
+                if (inputField) { 
+                    inputField.value += clipText; 
+                    inputField.focus(); 
+                }
             }).catch(() => {});
         }
     } 
     else if (action === 'forward') {
-        alert("Выберите контакт для пересылки");
+        if (window.showToast) window.showToast("Пересылка", "Выберите контакт", "", "");
     } 
     else if (action === 'delete') {
-        let messageGroup = window.currentMenuTarget.closest('.flex.flex-col.w-full.mt-3') || window.currentMenuTarget;
+        let messageGroup = window.currentChatTarget.closest('.flex.flex-col.w-full.mt-3') || window.currentChatTarget;
         messageGroup.remove();
     }
+    
+    setTimeout(() => { window.currentChatTarget = null; }, 500); 
 };
 
 // ==========================================
-// 5. ПЕРЕХВАТ СИСТЕМНОЙ ВСТАВКИ (Защита от зеленого текста)
+// 5. ПЕРЕХВАТ ОБЫЧНОЙ ВСТАВКИ (ЗАЩИТА ОТ ЗЕЛЕНОГО ТЕКСТА)
 // ==========================================
 document.addEventListener('paste', function(e) {
     let clipboardData = e.clipboardData || window.clipboardData;
     if (!clipboardData) return;
 
-    // Перехват гигантского кода картинки (Base64), как на твоем скрине
     let pastedText = clipboardData.getData('text');
     if (pastedText && pastedText.startsWith('data:image/')) {
         e.preventDefault();
         fetch(pastedText).then(res => res.blob()).then(blob => {
-            triggerUpload(new File([blob], "image.png", {type: blob.type}));
+            triggerAppUpload(new File([blob], "image.png", {type: blob.type}));
         });
         return;
     }
 
-    // Перехват обычного файла
     let items = clipboardData.items;
     for (let i = 0; i < items.length; i++) {
         if (items[i].kind === 'file') {
             let file = items[i].getAsFile();
             if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
-                e.preventDefault(); 
-                triggerUpload(file);
-                break; 
+                e.preventDefault();
+                triggerAppUpload(file);
+                break;
             }
         }
     }
 });
 
-// Отправка файла в твою систему
-function triggerUpload(file) {
+function triggerAppUpload(file) {
     let fileInput = document.getElementById('media-upload-input');
     if (fileInput) {
-        let dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        fileInput.files = dataTransfer.files;
+        let dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-    } else if (typeof window.uploadMediaFile === 'function') {
-        window.uploadMediaFile(file);
-    } else {
-        alert("Ошибка: Загрузчик файлов media-upload-input не найден в HTML");
     }
 }
