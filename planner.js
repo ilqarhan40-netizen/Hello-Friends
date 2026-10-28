@@ -1,68 +1,67 @@
-// --- 1. ГЕНЕРАЦИЯ ИНТЕРФЕЙСА БЕЗ HTML ---
-window.addEventListener('DOMContentLoaded', () => {
-    if (document.getElementById('planner-modal')) return;
-    
-    const modalHTML = `
-    <div id="planner-modal" class="app-modal" onclick="if(event.target===this) window.closePlannerModal();">
-        <div class="app-modal-content h-[80vh] flex flex-col">
-            <div class="close-sheet-btn" onclick="window.closePlannerModal()"><i class="fa-solid fa-xmark"></i></div>
-            <div class="sheet-handle" onclick="window.closePlannerModal()"></div>
-            
-            <h2 class="text-xl font-bold mb-4 text-white text-center mt-2">
-                <i class="fa-solid fa-calendar-check text-[#f59e0b] mr-2"></i> Планировщик
-            </h2>
-            
-            <div class="flex gap-1 bg-[#202c33] p-1 rounded-xl mb-4 border border-[#2a3942] shrink-0">
-                <button id="tab-btn-reminders" type="button" class="flex-1 py-2 rounded-lg bg-[#111b21] text-white text-xs font-bold shadow-sm transition" onclick="window.switchPlannerTab('reminders')">
-                    <i class="fa-regular fa-clock"></i> Напоминания
-                </button>
-                <button id="tab-btn-notes" type="button" class="flex-1 py-2 rounded-lg bg-transparent text-[#8696a0] text-xs font-bold hover:text-white transition" onclick="window.switchPlannerTab('notes')">
-                    <i class="fa-solid fa-list-check"></i> Заметки
-                </button>
-            </div>
-            
-            <div id="planner-reminders-view" class="flex flex-col flex-grow overflow-hidden">
-                <form id="reminder-form" class="flex flex-col gap-2 shrink-0 mb-3" onsubmit="window.addReminder(event)">
-                    <input type="text" id="reminder-text" class="form-input-box !mb-0" placeholder="О чем напомнить?" required>
-                    <div class="flex gap-2">
-                        <input type="date" id="reminder-date" class="form-input-box !mb-0 flex-1" required>
-                        <input type="time" id="reminder-time" class="form-input-box !mb-0 w-1/3" value="09:00" required>
-                    </div>
-                    <button type="submit" class="btn-primary !bg-[#f59e0b] !text-[#111b21] !py-2.5 mt-1 border-none">Добавить</button>
-                </form>
-                <div id="reminders-list" class="flex flex-col gap-2 overflow-y-auto flex-grow pb-4"></div>
-            </div>
-
-            <div id="planner-notes-view" class="hidden flex-col flex-grow overflow-hidden">
-                 <form id="note-form" class="flex gap-2 shrink-0 mb-3" onsubmit="window.addNote(event)">
-                    <input type="text" id="note-text" class="form-input-box !mb-0 flex-1" placeholder="Новая заметка..." required>
-                    <button type="submit" class="bg-[#00a884] text-[#111b21] border-none rounded-xl px-4 font-bold hover:scale-95 transition"><i class="fa-solid fa-plus"></i></button>
-                </form>
-                <div id="notes-list" class="flex flex-col gap-2 overflow-y-auto flex-grow pb-4"></div>
-            </div>
-        </div>
-    </div>`;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-});
-
-// --- 2. ЛОГИКА ПЛАНИРОВЩИКА ---
+// БАЗА ДАННЫХ ПЛАНИРОВЩИКА
 window.plannerReminders = JSON.parse(localStorage.getItem('hf_reminders')) || [];
 window.plannerNotes = JSON.parse(localStorage.getItem('hf_notes')) || [];
 
+// ОТКРЫТИЕ ОКНА И ЕГО СОЗДАНИЕ ПРИ ПЕРВОМ КЛИКЕ
 window.openPlannerModal = function() {
-    window.closeDropdown();
-    document.getElementById('planner-modal').classList.add('active');
-    
+    if(window.closeAllMenus) window.closeAllMenus();
+
+    // 1. Проверяем, есть ли окно. Если нет - создаем жестко!
+    if (!document.getElementById('planner-modal')) {
+        const modalHTML = `
+        <div id="planner-modal" class="app-modal" onclick="if(event.target===this) window.closePlannerModal();">
+            <div class="app-modal-content h-[80vh] flex flex-col">
+                <div class="close-sheet-btn" onclick="window.closePlannerModal()"><i class="fa-solid fa-xmark"></i></div>
+                <div class="sheet-handle" onclick="window.closePlannerModal()"></div>
+                <h2 class="text-xl font-bold mb-4 text-white text-center mt-2">
+                    <i class="fa-solid fa-calendar-check text-[#f59e0b] mr-2"></i> Планировщик
+                </h2>
+                <div class="flex gap-1 bg-[#202c33] p-1 rounded-xl mb-4 border border-[#2a3942] shrink-0">
+                    <button id="tab-btn-reminders" type="button" class="flex-1 py-2 rounded-lg bg-[#111b21] text-white text-xs font-bold shadow-sm transition" onclick="window.switchPlannerTab('reminders')">
+                        <i class="fa-regular fa-clock"></i> Напоминания
+                    </button>
+                    <button id="tab-btn-notes" type="button" class="flex-1 py-2 rounded-lg bg-transparent text-[#8696a0] text-xs font-bold hover:text-white transition" onclick="window.switchPlannerTab('notes')">
+                        <i class="fa-solid fa-list-check"></i> Заметки
+                    </button>
+                </div>
+                <div id="planner-reminders-view" class="flex flex-col flex-grow overflow-hidden">
+                    <form id="reminder-form" class="flex flex-col gap-2 shrink-0 mb-3" onsubmit="window.addReminder(event)">
+                        <input type="text" id="reminder-text" class="form-input-box !mb-0" placeholder="О чем напомнить?" required>
+                        <div class="flex gap-2">
+                            <input type="date" id="reminder-date" class="form-input-box !mb-0 flex-1" required>
+                            <input type="time" id="reminder-time" class="form-input-box !mb-0 w-1/3" value="09:00" required>
+                        </div>
+                        <button type="submit" class="btn-primary !bg-[#f59e0b] !text-[#111b21] !py-2.5 mt-1 border-none">Добавить</button>
+                    </form>
+                    <div id="reminders-list" class="flex flex-col gap-2 overflow-y-auto flex-grow pb-4"></div>
+                </div>
+                <div id="planner-notes-view" class="hidden flex-col flex-grow overflow-hidden">
+                     <form id="note-form" class="flex gap-2 shrink-0 mb-3" onsubmit="window.addNote(event)">
+                        <input type="text" id="note-text" class="form-input-box !mb-0 flex-1" placeholder="Новая заметка..." required>
+                        <button type="submit" class="bg-[#00a884] text-[#111b21] border-none rounded-xl px-4 font-bold hover:scale-95 transition"><i class="fa-solid fa-plus"></i></button>
+                    </form>
+                    <div id="notes-list" class="flex flex-col gap-2 overflow-y-auto flex-grow pb-4"></div>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    // 2. Показываем окно
+    const modal = document.getElementById('planner-modal');
+    if (modal) modal.classList.add('active');
+
+    // 3. Ставим сегодняшнюю дату
     const today = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById('reminder-date');
-    if(dateInput) dateInput.value = today;
-    
-    window.renderPlannerLists();
+    if (dateInput) dateInput.value = today;
+
+    if(window.renderPlannerLists) window.renderPlannerLists();
 };
 
 window.closePlannerModal = function() {
-    document.getElementById('planner-modal').classList.remove('active');
+    const modal = document.getElementById('planner-modal');
+    if(modal) modal.classList.remove('active');
 };
 
 window.switchPlannerTab = function(tabName) {
@@ -89,7 +88,6 @@ window.addReminder = function(e) {
     const text = document.getElementById('reminder-text').value.trim();
     const date = document.getElementById('reminder-date').value;
     const time = document.getElementById('reminder-time').value;
-    
     if (!text || !date || !time) return;
 
     const newReminder = {
@@ -109,7 +107,7 @@ window.addNote = function(e) {
     const text = document.getElementById('note-text').value.trim();
     if (!text) return;
 
-    window.plannerNotes.unshift({ id: 'note_' + Date.now(), text: text }); 
+    window.plannerNotes.unshift({ id: 'note_' + Date.now(), text: text });
     localStorage.setItem('hf_notes', JSON.stringify(window.plannerNotes));
     document.getElementById('note-text').value = '';
     window.renderPlannerLists();
@@ -142,11 +140,11 @@ window.renderPlannerLists = function() {
             const borderClass = isPast ? 'border-[#2a3942]' : 'border-[#f59e0b]/50';
             rHtml += `
             <div class="bg-[#111b21] p-3 rounded-xl border ${borderClass} flex justify-between items-center gap-3">
-                <div class="flex flex-col">
-                    <span class="${colorClass} font-bold text-sm">${r.text}</span>
+                <div class="flex flex-col overflow-hidden">
+                    <span class="${colorClass} font-bold text-sm truncate">${r.text}</span>
                     <span class="text-[#8696a0] text-xs"><i class="fa-regular fa-calendar mr-1"></i> ${r.date} в ${r.time}</span>
                 </div>
-                <button onclick="window.deleteReminder('${r.id}')" class="text-[#8696a0] hover:text-red-500 transition px-2"><i class="fa-solid fa-trash-can"></i></button>
+                <button onclick="window.deleteReminder('${r.id}')" class="text-[#8696a0] hover:text-red-500 transition px-2 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
             </div>`;
         });
         rList.innerHTML = rHtml;
@@ -160,7 +158,7 @@ window.renderPlannerLists = function() {
             nHtml += `
             <div class="bg-[#111b21] p-3 rounded-xl border border-[#2a3942] flex justify-between items-center gap-3">
                 <span class="text-white text-sm whitespace-pre-wrap">${n.text}</span>
-                <button onclick="window.deleteNote('${n.id}')" class="text-[#8696a0] hover:text-red-500 transition px-2"><i class="fa-solid fa-trash-can"></i></button>
+                <button onclick="window.deleteNote('${n.id}')" class="text-[#8696a0] hover:text-red-500 transition px-2 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
             </div>`;
         });
         nList.innerHTML = nHtml;
@@ -188,3 +186,4 @@ setInterval(() => {
         if (modal && modal.classList.contains('active')) window.renderPlannerLists();
     }
 }, 30000);
+            
