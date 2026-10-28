@@ -35,6 +35,8 @@
     <script src="js/archive.js?v=2000"></script>
     <script src="js/invite.js?v=2000"></script>
     <script src="js/clipboard.js?v=5000"></script>
+    <script src="js/planner.js?v=1000"></script>
+    
     
     
 
@@ -761,9 +763,10 @@ if (window.OneSignalDeferred) {
     <option value="zh-CN">🇨🇳 中文</option>
 </select>
 
-                    <div class="action-icon" onclick="window.startInAppCall('video'); window.closeAllMenus();" title="Video Call">
-                        <i class="fa-solid fa-video"></i>
+                    <div class="action-icon text-[#f59e0b] hover:text-white hover:bg-[#f59e0b]" onclick="window.openPlannerModal(); window.closeAllMenus();" title="Блокнот и Напоминания">
+                        <i class="fa-solid fa-calendar-check"></i>
                     </div>
+                    
 
 
                     <div class="action-icon text-[#a29bfe] hover:text-white" onclick="window.showMyQR(); window.closeAllMenus();" title="My QR Code">
