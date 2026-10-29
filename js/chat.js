@@ -1029,8 +1029,12 @@ window.selectAllForInvite = function() {
 
 window.sendGroupInvites = function() {
     const selected = Array.from(document.querySelectorAll('.invite-checkbox:checked')).map(cb => cb.value);
+    
+    // Одна строчка: обращаемся к глобальному словарю
+    let dict = window.i18n ? (window.i18n[window.appLang || 'en'] || window.i18n['en']) : {};
+
     if (selected.length === 0) {
-        if (window.showToast) window.showToast("Error", "Select at least one user", "", "");
+        if (window.showToast) window.showToast(dict.toast_err || "Error", dict.toast_err_desc || "Select user", "", "");
         return;
     }
     
@@ -1040,6 +1044,7 @@ window.sendGroupInvites = function() {
         }
     });
     
-    if (window.showToast) window.showToast("Sent", `Invites sent to ${selected.length} users`, "", "");
+    if (window.showToast) window.showToast(dict.toast_ok || "Sent", (dict.toast_ok_desc || "Invited:") + " " + selected.length, "", "");
     window.closeGroupInviteModal();
 };
+
