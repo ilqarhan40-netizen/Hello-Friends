@@ -1119,16 +1119,35 @@ if (window.OneSignalDeferred) {
         </div>
 
       <div id="trash-modal" class="app-modal" onclick="if(event.target===this) window.closeTrashModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-6 text-white text-center mt-4">Manage Chat</h2>
-                <div class="flex flex-col gap-3">
-                    <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.actionArchiveChat()"><i class="fa-solid fa-box-archive mr-2"></i> Archive Chat</button>
-                    <button class="btn-primary !bg-[#b45309] !text-white" onclick="window.actionClearHistory()"><i class="fa-solid fa-eraser mr-2"></i> Clear History</button>
-                    <button class="btn-primary !bg-red-600 !text-white" onclick="window.actionDeleteForever()"><i class="fa-solid fa-trash-can mr-2"></i> Delete Forever</button>
-                </div>
-            </div>
+    <div class="app-modal-content">
+        <div class="close-sheet-btn" onclick="window.closeTrashModal()"><i class="fa-solid fa-xmark"></i></div>
+        <h2 class="text-xl font-bold mb-6 text-white text-center mt-4" data-i18n="manage_chat_title">Manage Chat</h2>
+        <div class="flex flex-col gap-3">
+            <button class="btn-primary !bg-[#202c33] !text-white" onclick="window.actionArchiveChat()"><i class="fa-solid fa-box-archive mr-2"></i> <span data-i18n="archive_chat">Archive Chat</span></button>
+            <button class="btn-primary !bg-[#b45309] !text-white" onclick="window.actionClearHistory()"><i class="fa-solid fa-eraser mr-2"></i> <span data-i18n="clear_history">Clear History</span></button>
+            <button class="btn-primary !bg-red-600 !text-white" onclick="window.actionDeleteForever()"><i class="fa-solid fa-trash-can mr-2"></i> <span data-i18n="delete_forever">Delete Forever</span></button>
         </div>
+    </div>
+</div>
+
+<script>
+    if (window.i18n) {
+        Object.assign(window.i18n.en, { manage_chat_title: "Manage Chat", archive_chat: "Archive Chat", clear_history: "Clear History", delete_forever: "Delete Forever" });
+        Object.assign(window.i18n.ru, { manage_chat_title: "Управление чатом", archive_chat: "Архивировать чат", clear_history: "Очистить историю", delete_forever: "Удалить навсегда" });
+        Object.assign(window.i18n.de, { manage_chat_title: "Chat verwalten", archive_chat: "Chat archivieren", clear_history: "Verlauf leeren", delete_forever: "Endgültig löschen" });
+        Object.assign(window.i18n.kk, { manage_chat_title: "Чатты басқару", archive_chat: "Чатты мұрағаттау", clear_history: "Тарихты тазалау", delete_forever: "Мәңгілікке өшіру" });
+        Object.assign(window.i18n.az, { manage_chat_title: "Çatı idarə et", archive_chat: "Çatı arxivləşdir", clear_history: "Tarixçəni təmizlə", delete_forever: "Həmişəlik sil" });
+        Object.assign(window.i18n.tr, { manage_chat_title: "Sohbeti Yönet", archive_chat: "Sohbeti Arşivle", clear_history: "Geçmişi Temizle", delete_forever: "Kalıcı Olarak Sil" });
+        Object.assign(window.i18n.ar, { manage_chat_title: "إدارة الدردشة", archive_chat: "أرشفة الدردشة", clear_history: "مسح السجل", delete_forever: "حذف نهائي" });
+        Object.assign(window.i18n.it, { manage_chat_title: "Gestisci Chat", archive_chat: "Archivia Chat", clear_history: "Cancella Cronologia", delete_forever: "Elimina per sempre" });
+        Object.assign(window.i18n.es, { manage_chat_title: "Gestionar Chat", archive_chat: "Archivar Chat", clear_history: "Borrar Historial", delete_forever: "Eliminar para siempre" });
+        Object.assign(window.i18n.fr, { manage_chat_title: "Gérer le Chat", archive_chat: "Archiver le Chat", clear_history: "Effacer l'historique", delete_forever: "Supprimer définitivement" });
+        Object.assign(window.i18n.pt, { manage_chat_title: "Gerenciar Chat", archive_chat: "Arquivar Chat", clear_history: "Limpar Histórico", delete_forever: "Excluir para sempre" });
+        Object.assign(window.i18n.ja, { manage_chat_title: "チャット管理", archive_chat: "チャットをアーカイブ", clear_history: "履歴をクリア", delete_forever: "完全に削除" });
+        Object.assign(window.i18n.zh, { manage_chat_title: "管理聊天", archive_chat: "归档聊天", clear_history: "清除历史记录", delete_forever: "永久删除" });
+    }
+</script>
+            
       <div id="contacts-modal" class="app-modal" onclick="if(event.target===this) window.closeContactsModal();">
             <div class="app-modal-content">
                 <div class="close-sheet-btn" onclick="window.closeContactsModal()"><i class="fa-solid fa-xmark"></i></div>
