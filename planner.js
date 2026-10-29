@@ -1,8 +1,12 @@
+// ==========================================
 // БАЗА ДАННЫХ ПЛАНИРОВЩИКА
+// ==========================================
 window.plannerReminders = JSON.parse(localStorage.getItem('hf_reminders')) || [];
 window.plannerNotes = JSON.parse(localStorage.getItem('hf_notes')) || [];
 
+// ==========================================
 // ОТКРЫТИЕ ОКНА И ЕГО СОЗДАНИЕ ПРИ ПЕРВОМ КЛИКЕ
+// ==========================================
 window.openPlannerModal = function() {
     if(window.closeAllMenus) window.closeAllMenus();
 
@@ -14,30 +18,31 @@ window.openPlannerModal = function() {
                 <div class="close-sheet-btn" onclick="window.closePlannerModal()"><i class="fa-solid fa-xmark"></i></div>
                 <div class="sheet-handle" onclick="window.closePlannerModal()"></div>
                 <h2 class="text-xl font-bold mb-4 text-white text-center mt-2">
-                    <i class="fa-solid fa-calendar-check text-[#f59e0b] mr-2"></i> Планировщик
+                    <i class="fa-solid fa-calendar-check text-[#f59e0b] mr-2"></i> 
+                    <span data-translate="planner_title">Планировщик</span>
                 </h2>
                 <div class="flex gap-1 bg-[#202c33] p-1 rounded-xl mb-4 border border-[#2a3942] shrink-0">
                     <button id="tab-btn-reminders" type="button" class="flex-1 py-2 rounded-lg bg-[#111b21] text-white text-xs font-bold shadow-sm transition" onclick="window.switchPlannerTab('reminders')">
-                        <i class="fa-regular fa-clock"></i> Напоминания
+                        <i class="fa-regular fa-clock"></i> <span data-translate="planner_reminders">Напоминания</span>
                     </button>
                     <button id="tab-btn-notes" type="button" class="flex-1 py-2 rounded-lg bg-transparent text-[#8696a0] text-xs font-bold hover:text-white transition" onclick="window.switchPlannerTab('notes')">
-                        <i class="fa-solid fa-list-check"></i> Заметки
+                        <i class="fa-solid fa-list-check"></i> <span data-translate="planner_notes">Заметки</span>
                     </button>
                 </div>
                 <div id="planner-reminders-view" class="flex flex-col flex-grow overflow-hidden">
                     <form id="reminder-form" class="flex flex-col gap-2 shrink-0 mb-3" onsubmit="window.addReminder(event)">
-                        <input type="text" id="reminder-text" class="form-input-box !mb-0" placeholder="О чем напомнить?" required>
+                        <input type="text" id="reminder-text" class="form-input-box !mb-0" placeholder="О чем напомнить?" data-translate-placeholder="planner_placeholder_remind" required>
                         <div class="flex gap-2">
                             <input type="date" id="reminder-date" class="form-input-box !mb-0 flex-1" required>
                             <input type="time" id="reminder-time" class="form-input-box !mb-0 w-1/3" value="09:00" required>
                         </div>
-                        <button type="submit" class="btn-primary !bg-[#f59e0b] !text-[#111b21] !py-2.5 mt-1 border-none">Добавить</button>
+                        <button type="submit" class="btn-primary !bg-[#f59e0b] !text-[#111b21] !py-2.5 mt-1 border-none" data-translate="planner_btn_add">Добавить</button>
                     </form>
                     <div id="reminders-list" class="flex flex-col gap-2 overflow-y-auto flex-grow pb-4"></div>
                 </div>
                 <div id="planner-notes-view" class="hidden flex-col flex-grow overflow-hidden">
                      <form id="note-form" class="flex gap-2 shrink-0 mb-3" onsubmit="window.addNote(event)">
-                        <input type="text" id="note-text" class="form-input-box !mb-0 flex-1" placeholder="Новая заметка..." required>
+                        <input type="text" id="note-text" class="form-input-box !mb-0 flex-1" placeholder="Новая заметка..." data-translate-placeholder="planner_placeholder_note" required>
                         <button type="submit" class="bg-[#00a884] text-[#111b21] border-none rounded-xl px-4 font-bold hover:scale-95 transition"><i class="fa-solid fa-plus"></i></button>
                     </form>
                     <div id="notes-list" class="flex flex-col gap-2 overflow-y-auto flex-grow pb-4"></div>
@@ -45,11 +50,22 @@ window.openPlannerModal = function() {
             </div>
         </div>`;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // ВАЖНО: Вызываем функцию перевода сразу после создания окна
+        if (typeof window.applyTranslations === 'function') {
+            window.applyTranslations();
+        }
     }
 
     // 2. Показываем окно
     const modal = document.getElementById('planner-modal');
-    if (modal) modal.classList.add('active');
+    if (modal) {
+        modal.classList.add('active');
+        // Обновляем переводы, если окно уже было создано, а язык поменялся
+        if (typeof window.applyTranslations === 'function') {
+            window.applyTranslations();
+        }
+    }
 
     // 3. Ставим сегодняшнюю дату
     const today = new Date().toISOString().split('T')[0];
@@ -131,7 +147,8 @@ window.renderPlannerLists = function() {
     if(!rList || !nList) return;
 
     if (window.plannerReminders.length === 0) {
-        rList.innerHTML = '<p class="text-center text-sm text-[#8696a0] mt-4">Нет активных напоминаний.</p>';
+        // Текст пустых списков тоже переведем через виджет или оставим заглушку
+        rList.innerHTML = '<p class="text-center text-sm text-[#8696a0] mt-4" data-translate="planner_empty_reminders">Нет активных напоминаний.</p>';
     } else {
         let rHtml = '';
         window.plannerReminders.forEach(r => {
@@ -151,7 +168,7 @@ window.renderPlannerLists = function() {
     }
 
     if (window.plannerNotes.length === 0) {
-        nList.innerHTML = '<p class="text-center text-sm text-[#8696a0] mt-4">Блокнот пуст.</p>';
+        nList.innerHTML = '<p class="text-center text-sm text-[#8696a0] mt-4" data-translate="planner_empty_notes">Блокнот пуст.</p>';
     } else {
         let nHtml = '';
         window.plannerNotes.forEach(n => {
@@ -163,6 +180,8 @@ window.renderPlannerLists = function() {
         });
         nList.innerHTML = nHtml;
     }
+    
+    if (typeof window.applyTranslations === 'function') window.applyTranslations();
 };
 
 setInterval(() => {
@@ -186,4 +205,3 @@ setInterval(() => {
         if (modal && modal.classList.contains('active')) window.renderPlannerLists();
     }
 }, 30000);
-            
