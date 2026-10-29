@@ -1021,26 +1021,35 @@ if (window.OneSignalDeferred) {
         </div>
      
         <div id="email-modal" class="app-modal" onclick="if(event.target===this) window.closeEmailModal();">
-            <div class="app-modal-content">
-                <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
-                <h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-envelope text-red-400 mr-2"></i> Send Email</h2>
-                <form class="w-full flex flex-col" id="email-form-element" onsubmit="window.sendEmailForm(event)">
-                    <input type="email" id="email-to" class="form-input-box" placeholder="Recipient (To)" required>
-                    <input type="text" id="email-subject" class="form-input-box" placeholder="Subject" required>
-                    <div class="relative w-full mb-3">
-                        <textarea id="email-text" class="form-input-box !mb-0 w-full resize-none pr-8" placeholder="Write your message here..." rows="4" required></textarea>
-                        <div class="absolute right-3 top-3 flex flex-col gap-3">
-                            <i class="fa-solid fa-paperclip text-[#8696a0] hover:text-[#00a884] cursor-pointer text-lg transition" onclick="document.getElementById('email-attach-input').click()" title="Attach File"></i>
-                            <i class="fa-regular fa-face-smile text-[#8696a0] hover:text-white cursor-pointer text-lg transition" onclick="window.toggleEmojiPicker('email-text')" title="Emojis"></i>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 mt-2">
-                        <button type="button" class="btn-primary !bg-[#202c33] !text-white flex-1 border border-[#2a3942] hover:bg-[#2a3942]" onclick="document.getElementById('email-form-element').reset();"><i class="fa-solid fa-eraser"></i> Clear</button>
-                        <button type="submit" class="btn-primary flex-1"><i class="fa-solid fa-paper-plane"></i> Send</button>
-                    </div>
-                </form>
+    <div class="app-modal-content">
+        <div class="close-sheet-btn" onclick="window.closeEmailModal()"><i class="fa-solid fa-xmark"></i></div>
+        <h2 class="text-xl font-bold mb-4 text-white mt-4"><i class="fa-solid fa-envelope text-red-400 mr-2"></i> Send Email</h2>
+        
+        <form class="w-full flex flex-col" id="email-form-element" onsubmit="window.sendEmailForm(event)">
+            <!-- Скрытые поля для EmailJS -->
+            <input type="hidden" name="from_name" value="Hello Friends User">
+            <input type="hidden" name="name" value="Hello Friends">
+            
+            <!-- Видимые поля -->
+            <input type="email" name="to_email" id="email-to" class="form-input-box" placeholder="Recipient (To)" required>
+            <input type="text" name="subject" id="email-subject" class="form-input-box" placeholder="Subject" required>
+            
+            <div class="relative w-full mb-3">
+                <textarea name="message" id="email-text" class="form-input-box !mb-0 w-full resize-none pr-8" placeholder="Write your message here..." rows="4" required></textarea>
+                <div class="absolute right-3 top-3 flex flex-col gap-3">
+                    <i class="fa-solid fa-paperclip text-[#8696a0] hover:text-[#00a884] cursor-pointer text-lg transition" onclick="document.getElementById('email-attach-input').click()" title="Attach File"></i>
+                    <i class="fa-regular fa-face-smile text-[#8696a0] hover:text-white cursor-pointer text-lg transition" onclick="window.toggleEmojiPicker('email-text')" title="Emojis"></i>
+                </div>
             </div>
+            
+            <div class="flex gap-3 mt-2">
+                <button type="button" class="btn-primary !bg-[#202c33] !text-white flex-1 border border-[#2a3942] hover:bg-[#2a3942]" onclick="document.getElementById('email-form-element').reset();"><i class="fa-solid fa-eraser"></i> Clear</button>
+                <button type="submit" class="btn-primary flex-1"><i class="fa-solid fa-paper-plane"></i> Send</button>
+            </div>
+        </form>
+    </div>
         </div>
+            
 
         <div id="location-modal" class="app-modal" onclick="if(event.target===this) window.closeLocationModal();">
             <div class="app-modal-content h-[60vh]">
