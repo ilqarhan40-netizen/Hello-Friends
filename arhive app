@@ -14,7 +14,8 @@
     <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=HF&background=00a884&color=fff&size=192">
     
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script> (function(){ emailjs.init("_iFSpvIKpRoNrFh_e"); })(); </script>
+    <script> (function(){ emailjs.init("NXn0TeAF95L5qScxO"); })(); </script>
+    
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -23,15 +24,25 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script src="js/language.js?v=999"></script>
-  <script src="js/search.js?v=1"></script>  
-<script src="js/ecosystem.js?v=999"></script>
-<script src="js/profiles.js?v=999"></script>
-<script src="js/calls.js?v=5.0"></script>
-<script src="js/voice.js?v=999"></script>
-<script src="js/chat.js?v=999"></script>
-<script src="js/archive.js?v=999"></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script src="js/language.js?v=2000"></script>
+    <script src="js/search.js?v=2000"></script>
+    <script src="js/ecosystem.js?v=2000"></script>
+    <script src="js/profiles.js?v=2000"></script>
+    <script src="js/calls.js?v=9955"></script>
+    <script src="js/voice.js?v=2000"></script>
+    <script src="js/chat.js?v=2000"></script>
+    <script src="js/archive.js?v=2000"></script>
+    <script src="js/invite.js?v=2000"></script>
+    <script src="clipboard.js?v=5000"></script>
+    <script src="planner.js?v=9999"></script>
+    
+    
+    
+    
+    
+
+    
 <script>
   window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
@@ -218,6 +229,8 @@ OneSignalDeferred.push(async function(OneSignal) {
 </script>
 </head>
 <body>
+ 
+    
 
  <div id="security-lock" style="position: fixed; inset: 0; background: #0b141a; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; transition: opacity 0.4s ease;">
         <div id="auth-spinner" style="display: flex; flex-direction: column; align-items: center;">
@@ -469,6 +482,7 @@ if (window.OneSignalDeferred) {
           <select id="app-lang-select" onchange="window.changeAppLanguage(this.value)" onclick="event.stopPropagation()" class="bg-transparent text-[#e9edef] text-[0.9rem] w-full outline-none cursor-pointer appearance-none">
                 <option value="auto" class="bg-[#111b21] text-[#00a884]">🤖 Auto (Profile)</option>
                 <option value="en" class="bg-[#111b21]">🇬🇧 English</option>
+                <option value="kk">Қазақ тілі</option>
                 <option value="ru" class="bg-[#111b21]">🇷🇺 Русский</option>
                 <option value="az" class="bg-[#111b21]">🇦🇿 Azərbaycanca</option>
                 <option value="de" class="bg-[#111b21]">🇩🇪 Deutsch</option>
@@ -610,6 +624,10 @@ if (window.OneSignalDeferred) {
                 </div>
                 <div class="flex-grow overflow-y-auto p-2 relative"><div class="video-grid" id="conference-grid"></div></div>
                 <div class="flex justify-center items-center gap-6 py-3 bg-[#111b21] shrink-0">
+                    <button onclick="window.openGroupInviteModal()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl shadow-lg hover:bg-[#2a3942] transition">
+    <i class="fa-solid fa-user-plus"></i>
+</button>
+
                     <button onclick="window.toggleMeetMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition" title="Toggle Video CC"><i class="fa-solid fa-closed-captioning"></i></button>
                     <button id="conf-cam-btn" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-gray-700 transition" onclick="window.toggleMyCamera(this)"><i class="fa-solid fa-video-slash text-[#8696a0]"></i></button>
                     <button class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg hover:bg-red-600 transition" onclick="window.switchTab(0)"><i class="fa-solid fa-phone-slash"></i></button>
@@ -747,9 +765,11 @@ if (window.OneSignalDeferred) {
     <option value="zh-CN">🇨🇳 中文</option>
 </select>
 
-                    <div class="action-icon" onclick="window.switchTab(2); window.closeAllMenus();" title="Video Call">
-                        <i class="fa-solid fa-video"></i>
+                    <div class="action-icon text-[#f59e0b] hover:text-white hover:bg-[#f59e0b]" onclick="window.openPlannerModal(); window.closeAllMenus();" title="Блокнот и Напоминания">
+                        <i class="fa-solid fa-calendar-check"></i>
                     </div>
+                    
+
 
                     <div class="action-icon text-[#a29bfe] hover:text-white" onclick="window.showMyQR(); window.closeAllMenus();" title="My QR Code">
                         <i class="fa-solid fa-qrcode"></i>
@@ -1835,7 +1855,7 @@ if (window.OneSignalDeferred) {
         </div>
     </div>
     
-    <script>
+        <script>
         window.showMyQR = function() {
             const appUrl = "https://hello-friends-p8p3i7.web.app"; 
             const qrImg = document.getElementById('qr-image');
@@ -1856,10 +1876,30 @@ if (window.OneSignalDeferred) {
         };
         
         setTimeout(function() {
+            if (typeof window.renderSidebar === 'function') window.renderSidebar();
             if (document.getElementById('conference-grid') && typeof window.initConference === 'function') {
                 window.initConference();
             }
         }, 1500);
     </script>
+
+       <!-- Модальное окно группового приглашения -->
+<div id="group-invite-modal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+    <div class="bg-[#111b21] rounded-2xl w-full max-w-sm flex flex-col overflow-hidden border border-[#2a3942] shadow-2xl relative transition-transform transform scale-95" id="group-invite-content">
+        <div class="flex items-center justify-between p-4 border-b border-[#2a3942] bg-[#202c33]">
+            <h3 class="text-white font-bold text-lg"><i class="fa-solid fa-users text-[#00a884] mr-2"></i><span data-i18n="invite_users">Invite Users</span></h3>
+            <button onclick="window.closeGroupInviteModal()" class="text-[#8696a0] hover:text-white text-2xl transition">&times;</button>
+        </div>
+        <div class="p-4 flex flex-col gap-3 max-h-[60vh] overflow-y-auto" id="group-invite-list">
+            <!-- Список генерируется через JS -->
+        </div>
+        <div class="p-4 border-t border-[#2a3942] bg-[#202c33] flex justify-between gap-3">
+            <button onclick="window.selectAllForInvite()" class="flex-1 py-2 rounded-xl bg-[#2a3942] text-white font-bold hover:bg-[#3a4a53] transition text-sm" data-i18n="select_all">Select All</button>
+            <button onclick="window.sendGroupInvites()" class="flex-1 py-2 rounded-xl bg-[#00a884] text-[#111b21] font-bold hover:bg-[#008f6f] transition text-sm"><i class="fa-solid fa-paper-plane mr-1"></i> <span data-i18n="send_invite">Send</span></button>
+        </div>
+    </div>
+</div>
+
+ 
 </body>
 </html>
