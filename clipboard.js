@@ -1,282 +1,240 @@
 // ==========================================
-// ГЛОБАЛЬНЫЙ CLIPBOARD.JS (ТЕКСТ, ФОТО, ВИДЕО, ЛОКАЦИИ, ССЫЛКИ)
-// Работает во всех комнатах и чатах экосистемы
+// 1. УБИВАЕМ ГУГЛ-МЕНЮ В ЧАТЕ (ДЛЯ ПК)
 // ==========================================
-
-// 1. ЖЕСТКАЯ БЛОКИРОВКА МЕНЮ CHROME ДЛЯ ВСЕХ ЭЛЕМЕНТОВ СООБЩЕНИЙ
-(function blockChromeMenu() {
-    if (!document.getElementById('hf-clip-styles')) {
-        const style = document.createElement('style');
-        style.id = 'hf-clip-styles';
-        style.innerHTML = `
-            .message, .msg-content, img, video, iframe, a, [data-clipboard] {
-                -webkit-touch-callout: none !important;
-                -webkit-user-select: none !important;
-                user-select: none !important;
-            }
-            input, textarea, [contenteditable="true"] {
-                -webkit-user-select: text !important;
-                user-select: text !important;
-            }
-        `;
-        document.head.appendChild(style);
+window.oncontextmenu = function(e) {
+    if (e.target.closest('.chat-bubble') || e.target.tagName === 'IMG') {
+        e.preventDefault(); 
+        e.stopPropagation();
+        window.openChatActionMenu(e.target);
+        return false;
     }
-})();
+};
 
-window.currentClipContent = null;
-window.currentClipType = 'text';
-window.currentTargetElement = null; 
+// ==========================================
+// 2. УПРАВЛЕНИЕ МЕНЮ (С АВТО-СОЗДАНИЕМ HTML)
+// ==========================================
+window.currentChatTarget = null;
+window.appInternalClipboard = null; 
+window.chatActionMenuJustOpened = false;
 
-window.openClipboardMenu = function(content, type, targetEl) {
-    if (window.closeAllMenus) window.closeAllMenus();
+let pressTimer;
+let startX = 0, startY = 0;
+
+window.openChatActionMenu = function(targetElement) {
+    window.currentChatTarget = targetElement.closest('.chat-bubble') || targetElement;
     
-    window.currentClipContent = content;
-    window.currentClipType = type;
-    window.currentTargetElement = targetEl;
-
-    let dict = window.i18n ? (window.i18n[window.appLang || 'en'] || window.i18n['en']) : {};
-
-    let modal = document.getElementById('clipboard-modal');
-    if (!modal) {
+    // 1. Создаем HTML модального окна, если его еще нет на странице
+    if (!document.getElementById('chat-action-modal')) {
         const modalHTML = `
-        <div id="clipboard-modal" class="app-modal" onclick="if(event.target===this) window.closeClipboardModal();" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
-            <div class="app-modal-content flex flex-col p-4 max-w-sm w-full bg-[#111b21] border border-[#2a3942] rounded-2xl shadow-2xl scale-95 transition-transform duration-200">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-white font-bold text-base"><i class="fa-solid fa-clipboard text-[#00a884] mr-2"></i> <span data-i18n="clip_title">Actions</span></h3>
-                    <div class="cursor-pointer text-[#8696a0] hover:text-white px-2" onclick="window.closeClipboardModal()"><i class="fa-solid fa-xmark text-lg"></i></div>
-                </div>
+        <div id="chat-action-modal" class="hidden fixed inset-0 z-[99999] bg-[#111b21]/80 items-end sm:items-center justify-center backdrop-blur-sm" onclick="if(event.target===this) window.closeChatActionMenu();">
+            <div id="chat-action-content" class="bg-[#111b21] w-full sm:w-[350px] rounded-t-3xl sm:rounded-2xl p-6 transform translate-y-full transition-transform duration-300 flex flex-col gap-3 border border-[#2a3942] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                <div class="w-12 h-1.5 bg-[#2a3942] rounded-full mx-auto mb-2 sm:hidden"></div>
+                <h3 id="chat-action-title" class="text-white text-center font-bold mb-3 text-lg">Действие</h3>
                 
-                <div id="clipboard-preview" class="bg-[#202c33] p-2.5 rounded-xl text-xs text-[#e9edef] mb-3 max-h-32 overflow-y-auto break-all border border-[#2a3942] flex justify-center items-center text-center"></div>
+                <button onclick="window.chatAction('copy')" class="w-full py-3.5 bg-[#202c33] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#2a3942] transition border border-[#2a3942]">
+                    <i class="fa-regular fa-copy text-blue-400 text-lg"></i> <span data-translate="chat_action_copy">Скопировать</span>
+                </button>
                 
-                <div class="flex flex-col gap-2">
-                    <button type="button" onclick="window.execCopyAction()" class="flex items-center gap-3 w-full p-2.5 bg-[#202c33] hover:bg-[#2a3942] text-white rounded-xl text-sm font-medium transition border border-[#2a3942]">
-                        <i class="fa-solid fa-copy text-[#00a884] w-5"></i> <span data-i18n="clip_copy">Copy</span>
-                    </button>
-                    <button type="button" onclick="window.execPasteAction()" class="flex items-center gap-3 w-full p-2.5 bg-[#202c33] hover:bg-[#2a3942] text-white rounded-xl text-sm font-medium transition border border-[#2a3942]">
-                        <i class="fa-solid fa-paste text-[#3b82f6] w-5"></i> <span data-i18n="clip_paste">Paste</span>
-                    </button>
-                    <button id="clip-save-btn" type="button" onclick="window.execSaveAction()" class="flex items-center gap-3 w-full p-2.5 bg-[#202c33] hover:bg-[#2a3942] text-white rounded-xl text-sm font-medium transition border border-[#2a3942]">
-                        <i class="fa-solid fa-download text-[#f59e0b] w-5"></i> <span data-i18n="clip_save">Save</span>
-                    </button>
-                    <button type="button" onclick="window.execDeleteAction()" class="flex items-center gap-3 w-full p-2.5 bg-[#202c33] hover:bg-red-950/40 text-red-400 rounded-xl text-sm font-medium transition border border-red-900/30">
-                        <i class="fa-solid fa-trash-can w-5"></i> <span data-i18n="clip_delete">Delete</span>
-                    </button>
-                </div>
+                <button onclick="window.chatAction('paste')" class="w-full py-3.5 bg-[#202c33] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#2a3942] transition border border-[#2a3942]">
+                    <i class="fa-solid fa-paste text-green-400 text-lg"></i> <span data-translate="chat_action_paste">Вставить в чат</span>
+                </button>
+
+                <button onclick="window.chatAction('download')" class="w-full py-3.5 bg-[#202c33] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#2a3942] transition border border-[#2a3942]">
+                    <i class="fa-solid fa-download text-yellow-400 text-lg"></i> <span data-translate="chat_action_download">Сохранить / Скачать</span>
+                </button>
+                
+                <button onclick="window.chatAction('forward')" class="w-full py-3.5 bg-[#202c33] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#2a3942] transition border border-[#2a3942]">
+                    <i class="fa-solid fa-share text-purple-400 text-lg"></i> <span data-translate="chat_action_forward">Переслать</span>
+                </button>
+                
+                <button onclick="window.chatAction('delete')" class="w-full py-3.5 bg-red-500/10 text-red-500 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-500/20 transition border border-red-500/30 mt-2">
+                    <i class="fa-solid fa-trash-can text-lg"></i> <span data-translate="chat_action_delete">Удалить у себя</span>
+                </button>
             </div>
         </div>`;
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        modal = document.getElementById('clipboard-modal');
     }
 
-    // Настраиваем превью под любой тип контента
-    const previewEl = document.getElementById('clipboard-preview');
-    if (type === 'image') {
-        previewEl.innerHTML = `<img src="${content}" class="max-h-24 rounded-lg object-contain">`;
-    } else if (type === 'video') {
-        previewEl.innerHTML = `<video src="${content}" class="max-h-24 rounded-lg object-contain"></video>`;
-    } else if (type === 'location') {
-        previewEl.innerHTML = `<i class="fa-solid fa-map-location-dot text-3xl text-[#3b82f6] mb-1"></i><br><span>Location Map</span>`;
-    } else if (type === 'link') {
-        previewEl.innerHTML = `<i class="fa-solid fa-link text-xl text-[#00a884] mr-2"></i> ${content}`;
-    } else {
-        previewEl.innerText = content.length > 100 ? content.substring(0, 100) + '...' : content;
-    }
-
-    // Сохранить можно только фото и видео. Карты и тексты - только копировать
-    const saveBtn = document.getElementById('clip-save-btn');
-    if (type === 'image' || type === 'video') saveBtn.style.display = 'flex';
-    else saveBtn.style.display = 'none';
-
-    modal.style.display = 'flex';
-    setTimeout(() => modal.querySelector('.app-modal-content').classList.replace('scale-95', 'scale-100'), 10);
+    let modal = document.getElementById('chat-action-modal');
+    let content = document.getElementById('chat-action-content');
+    let title = document.getElementById('chat-action-title');
     
-    if (typeof window.applyTranslations === 'function') window.applyTranslations();
-};
-
-window.closeClipboardModal = function() {
-    const modal = document.getElementById('clipboard-modal');
-    if (modal) {
-        modal.querySelector('.app-modal-content').classList.replace('scale-100', 'scale-95');
-        setTimeout(() => modal.style.display = 'none', 200);
-    }
-};
-
-// --- ФУНКЦИИ ---
-
-window.execCopyAction = async function() {
-    if (!window.currentClipContent) return;
-    let dict = window.i18n ? (window.i18n[window.appLang || 'en'] || window.i18n['en']) : {};
-
-    try {
-        if (window.currentClipType === 'image') {
-            const res = await fetch(window.currentClipContent);
-            const blob = await res.blob();
-            await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]);
+    if (modal && content) {
+        // Определяем тип контента
+        if (window.currentChatTarget.querySelector('img') || window.currentChatTarget.tagName === 'IMG') {
+            title.innerText = "Действие с фото";
+        } else if (window.currentChatTarget.querySelector('video') || window.currentChatTarget.tagName === 'VIDEO') {
+            title.innerText = "Действие с видео";
         } else {
-            // Для текста, локаций (iframe src) и ссылок просто копируем их как текст/URL
-            await navigator.clipboard.writeText(window.currentClipContent);
+            title.innerText = "Действие с сообщением";
         }
-        if (window.showToast) window.showToast(dict.clip_copied || "Copied", "", "", "");
-    } catch (err) {
-        if (window.currentClipType === 'image' && window.showToast) {
-            window.showToast("Use Save", "Image copying blocked by device.", "", "");
-        } else {
-            // Фолбэк на старый метод копирования, если устройство капризное
-            const el = document.createElement('textarea');
-            el.value = window.currentClipContent;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            if (window.showToast) window.showToast(dict.clip_copied || "Copied", "", "", "");
-        }
+
+        window.chatActionMenuJustOpened = true; 
+        
+        if (typeof window.applyTranslations === 'function') window.applyTranslations();
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => { content.classList.remove('translate-y-full'); }, 10);
+        if (navigator.vibrate) navigator.vibrate(50);
     }
-    window.closeClipboardModal();
 };
 
-window.execPasteAction = async function() {
-    try {
-        const text = await navigator.clipboard.readText();
-        if (!text) return;
-
-        let activeInput = document.activeElement;
-        if (!activeInput || (activeInput.tagName !== 'INPUT' && activeInput.tagName !== 'TEXTAREA')) {
-            activeInput = document.getElementById('msg-input') || document.querySelector('input[type="text"]');
+window.closeChatActionMenu = function() {
+    let modal = document.getElementById('chat-action-modal');
+    let content = document.getElementById('chat-action-content');
+    if (content) content.classList.add('translate-y-full');
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
-        if (activeInput) {
-            const start = activeInput.selectionStart || 0;
-            const end = activeInput.selectionEnd || 0;
-            activeInput.value = activeInput.value.slice(0, start) + text + activeInput.value.slice(end);
-            activeInput.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    } catch (err) {}
-    window.closeClipboardModal();
+    }, 300);
 };
 
-window.execSaveAction = function() {
-    if (!window.currentClipContent || (window.currentClipType !== 'image' && window.currentClipType !== 'video')) return;
-    const a = document.createElement('a');
-    a.href = window.currentClipContent;
-    let ext = window.currentClipType === 'video' ? 'mp4' : 'jpg';
-    a.download = `HF_Media_${Date.now()}.${ext}`;
-    
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    let dict = window.i18n ? (window.i18n[window.appLang || 'en'] || window.i18n['en']) : {};
-    if (window.showToast) window.showToast(dict.clip_saved || "Saved", "", "", "");
-    window.closeClipboardModal();
-};
-
-window.execDeleteAction = function() {
-    if (window.currentTargetElement) {
-        // Ищем корневой блок сообщения, чтобы удалить всё целиком
-        const msgBlock = window.currentTargetElement.closest('.message, .msg-content') || window.currentTargetElement;
-        msgBlock.remove();
-    }
-    let dict = window.i18n ? (window.i18n[window.appLang || 'en'] || window.i18n['en']) : {};
-    if (window.showToast) window.showToast(dict.clip_deleted || "Deleted", "", "", "");
-    window.closeClipboardModal();
-};
-
-// --- ВСЕЯДНЫЙ ПЕРЕХВАТЧИК ---
-
-function handleContextRequest(e) {
-    // 1. Ищем ЛЮБОЙ элемент, по которому кликнули (включая локации, ссылки, чат-блоки)
-    const target = e.target.closest('.message, .msg-content, img, video, iframe, a');
+// ==========================================
+// 3. ДОЛГИЙ ТАП ДЛЯ МОБИЛЬНЫХ
+// ==========================================
+document.addEventListener('touchstart', function(e) {
+    let target = e.target.closest('.chat-bubble') || (e.target.tagName === 'IMG' ? e.target : null);
     if (!target) return;
+    
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    
+    pressTimer = setTimeout(() => { 
+        window.openChatActionMenu(target); 
+    }, 500); 
+}, { passive: true });
 
-    let content = '';
-    let type = 'text';
-
-    // 2. Распознаем, что именно внутри
-    if (target.tagName === 'IFRAME') {
-        content = target.src; 
-        type = 'location'; // Это локация (карта)
-    } else if (target.tagName === 'IMG') {
-        content = target.src;
-        type = 'image';
-    } else if (target.tagName === 'VIDEO') {
-        content = target.src || target.querySelector('source')?.src;
-        type = 'video';
-    } else if (target.tagName === 'A') {
-        content = target.href;
-        type = 'link';
-    } else {
-        // Если кликнули на сам блок .message, ищем внутри него медиа или локации
-        const iframe = target.querySelector('iframe');
-        const img = target.querySelector('img');
-        const video = target.querySelector('video');
-        const link = target.querySelector('a');
-
-        if (iframe) {
-            content = iframe.src;
-            type = 'location';
-        } else if (img) {
-            content = img.src;
-            type = 'image';
-        } else if (video) {
-            content = video.src || video.querySelector('source')?.src;
-            type = 'video';
-        } else if (link) {
-            content = link.href;
-            type = 'link';
-        } else {
-            // Если ничего нет, берем текст сообщения
-            content = target.innerText || target.textContent || '';
-            type = 'text';
-            if (!content.trim()) return;
-        }
+document.addEventListener('touchmove', function(e) {
+    if (Math.abs(e.touches[0].clientX - startX) > 15 || Math.abs(e.touches[0].clientY - startY) > 15) {
+        clearTimeout(pressTimer);
     }
+}, { passive: true });
 
-    if (content) {
-        e.preventDefault(); 
-        e.stopPropagation(); 
-        window.openClipboardMenu(content, type, target);
-    }
-}
+document.addEventListener('touchend', function() { clearTimeout(pressTimer); }, { passive: true });
 
-// Захватываем события везде по всему приложению
-document.addEventListener('contextmenu', function(e) {
-    if (e.target.closest('.message, .msg-content, img, video, iframe, a')) {
-        handleContextRequest(e);
+document.addEventListener('click', function(e) {
+    if (window.chatActionMenuJustOpened) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.chatActionMenuJustOpened = false; 
     }
 }, true);
 
-let touchTimer = null;
-document.addEventListener('touchstart', function(e) {
-    if (e.target.closest('.message, .msg-content, img, video, iframe, a')) {
-        touchTimer = setTimeout(() => {
-            handleContextRequest(e);
-        }, 400); 
-    }
-}, { passive: false, capture: true });
+// ==========================================
+// 4. НЕЗАВИСИМАЯ ФУНКЦИЯ ДЕЙСТВИЙ (КОПИРОВАТЬ, СКАЧАТЬ, ВСТАВИТЬ)
+// ==========================================
+window.chatAction = function(action) {
+    window.closeChatActionMenu();
+    if (!window.currentChatTarget) return;
 
-document.addEventListener('touchend', function() { if (touchTimer) clearTimeout(touchTimer); }, true);
-document.addEventListener('touchmove', function() { if (touchTimer) clearTimeout(touchTimer); }, true);
+    let imgEl = window.currentChatTarget.querySelector('img') || (window.currentChatTarget.tagName === 'IMG' ? window.currentChatTarget : null);
+    let vidEl = window.currentChatTarget.querySelector('video') || (window.currentChatTarget.tagName === 'VIDEO' ? window.currentChatTarget : null);
 
-// --- ГЛОБАЛЬНЫЕ СЛОВАРИ (Мультиязычность) ---
-if (window.i18n) {
-    const clipDicts = {
-        en: {clip_title: "Actions", clip_copy: "Copy", clip_paste: "Paste", clip_save: "Save", clip_delete: "Delete", clip_copied: "Copied", clip_saved: "Saved", clip_deleted: "Deleted"},
-        ru: {clip_title: "Действия", clip_copy: "Копировать", clip_paste: "Вставить", clip_save: "Сохранить", clip_delete: "Удалить", clip_copied: "Скопировано", clip_saved: "Сохранено", clip_deleted: "Удалено"},
-        de: {clip_title: "Aktionen", clip_copy: "Kopieren", clip_paste: "Einfügen", clip_save: "Speichern", clip_delete: "Löschen", clip_copied: "Kopiert", clip_saved: "Gespeichert", clip_deleted: "Gelöscht"},
-        kk: {clip_title: "Әрекеттер", clip_copy: "Көшіру", clip_paste: "Кірістіру", clip_save: "Сақтау", clip_delete: "Жою", clip_copied: "Көшірілді", clip_saved: "Сақталды", clip_deleted: "Жойылды"},
-        az: {clip_title: "Hərəkətlər", clip_copy: "Kopyala", clip_paste: "Yerləşdir", clip_save: "Yadda saxla", clip_delete: "Sil", clip_copied: "Kopyalandı", clip_saved: "Saxlanıldı", clip_deleted: "Silindi"},
-        tr: {clip_title: "Eylemler", clip_copy: "Kopyala", clip_paste: "Yapıştır", clip_save: "Kaydet", clip_delete: "Sil", clip_copied: "Kopyalandı", clip_saved: "Kaydedildi", clip_deleted: "Silindi"},
-        ar: {clip_title: "إجراءات", clip_copy: "نسخ", clip_paste: "لصق", clip_save: "حفظ", clip_delete: "حذف", clip_copied: "تم النسخ", clip_saved: "تم الحفظ", clip_deleted: "تم الحذف"},
-        it: {clip_title: "Azioni", clip_copy: "Copia", clip_paste: "Incolla", clip_save: "Salva", clip_delete: "Elimina", clip_copied: "Copiato", clip_saved: "Salvato", clip_deleted: "Eliminato"},
-        es: {clip_title: "Acciones", clip_copy: "Copiar", clip_paste: "Pegar", clip_save: "Guardar", clip_delete: "Eliminar", clip_copied: "Copiado", clip_saved: "Guardado", clip_deleted: "Eliminado"},
-        fr: {clip_title: "Actions", clip_copy: "Copier", clip_paste: "Coller", clip_save: "Enregistrer", clip_delete: "Supprimer", clip_copied: "Copié", clip_saved: "Enregistré", clip_deleted: "Supprimé"},
-        pt: {clip_title: "Ações", clip_copy: "Copiar", clip_paste: "Colar", clip_save: "Salvar", clip_delete: "Excluir", clip_copied: "Copiado", clip_saved: "Salvo", clip_deleted: "Excluído"},
-        ja: {clip_title: "アクション", clip_copy: "コピー", clip_paste: "貼り付け", clip_save: "保存", clip_delete: "削除", clip_copied: "コピーしました", clip_saved: "保存しました", clip_deleted: "削除しました"},
-        zh: {clip_title: "操作", clip_copy: "复制", clip_paste: "粘贴", clip_save: "保存", clip_delete: "删除", clip_copied: "已复制", clip_saved: "已保存", clip_deleted: "已删除"}
-    };
-    for (let lang in clipDicts) {
-        if (window.i18n[lang]) {
-            Object.assign(window.i18n[lang], clipDicts[lang]);
+    if (action === 'copy') {
+        if (imgEl || vidEl) {
+            window.appInternalClipboard = { type: imgEl ? 'image' : 'video', src: imgEl ? imgEl.src : vidEl.src };
+            if (window.showToast) window.showToast("Скопировано", "Медиафайл готов к отправке", "", "");
+        } else {
+            let textToCopy = window.currentChatTarget.innerText.trim();
+            textToCopy = textToCopy.replace(/➔.*/g, '').trim(); 
+            navigator.clipboard.writeText(textToCopy);
+            window.appInternalClipboard = null;
+            if (window.showToast) window.showToast("Скопировано", "Текст скопирован", "", "");
+        }
+    } 
+    else if (action === 'paste') {
+        if (window.appInternalClipboard) {
+            fetch(window.appInternalClipboard.src).then(res => res.blob()).then(blob => {
+                triggerAppUpload(new File([blob], "copied_media." + (window.appInternalClipboard.type === 'image' ? 'png' : 'mp4'), {type: blob.type}));
+            });
+        } else {
+            navigator.clipboard.readText().then(clipText => {
+                let inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input');
+                if (inputField) { 
+                    inputField.value += clipText; 
+                    inputField.focus(); 
+                }
+            }).catch(() => {
+                if (window.showToast) window.showToast("Ошибка", "Буфер обмена пуст", "", "");
+            });
+        }
+    } 
+    else if (action === 'download') {
+        if (imgEl || vidEl) {
+            let mediaUrl = imgEl ? imgEl.src : vidEl.src;
+            let extension = imgEl ? 'png' : 'mp4';
+            let fileName = 'HelloFriends_Media_' + Date.now() + '.' + extension;
+            
+            fetch(mediaUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.style.display = 'none';
+                    link.href = blobUrl;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    window.URL.revokeObjectURL(blobUrl);
+                    if (window.showToast) window.showToast("Скачано", "Файл сохранен на устройство", "", "");
+                })
+                .catch(() => {
+                    if (window.showToast) window.showToast("Ошибка", "Не удалось скачать файл", "", "");
+                });
+        } else {
+            if (window.showToast) window.showToast("Внимание", "Текст можно только скопировать", "", "");
         }
     }
-                }
-            
+    else if (action === 'forward') {
+        if (window.showToast) window.showToast("Пересылка", "Выберите чат, нажмите Вставить", "", "");
+    } 
+    else if (action === 'delete') {
+        let messageGroup = window.currentChatTarget.closest('.flex.flex-col.w-full.mt-3') || window.currentChatTarget;
+        messageGroup.remove();
+        if (window.showToast) window.showToast("Удалено", "Сообщение скрыто", "", "");
+    }
+    
+    setTimeout(() => { window.currentChatTarget = null; }, 500); 
+};
+
+// ==========================================
+// 5. ПЕРЕХВАТ ОБЫЧНОЙ ВСТАВКИ
+// ==========================================
+document.addEventListener('paste', function(e) {
+    let clipboardData = e.clipboardData || window.clipboardData;
+    if (!clipboardData) return;
+
+    let pastedText = clipboardData.getData('text');
+    if (pastedText && pastedText.startsWith('data:image/')) {
+        e.preventDefault();
+        fetch(pastedText).then(res => res.blob()).then(blob => {
+            triggerAppUpload(new File([blob], "image.png", {type: blob.type}));
+        });
+        return;
+    }
+
+    let items = clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].kind === 'file') {
+            let file = items[i].getAsFile();
+            if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+                e.preventDefault();
+                triggerAppUpload(file);
+                break;
+            }
+        }
+    }
+});
+
+function triggerAppUpload(file) {
+    let fileInput = document.getElementById('media-upload-input');
+    if (fileInput) {
+        let dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
