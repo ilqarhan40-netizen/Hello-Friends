@@ -125,24 +125,40 @@ document.addEventListener('paste', function(e) {
     }
 });
 
+function sendMediaDirectly(mediaUrl, type) {
+    if (typeof firebase !== 'undefined' && window.currentRoomId) {
+        let isVoiceTab = window.currentIndex === 1; let isConfTab = window.currentIndex === 2;
+        let targetDbRoom = window.currentRoomId || 'global';
+        if (isConfTab && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
+
+        firebase.database().ref(targetDbRoom).push({
+            userId: window.myProfileInfo.id || 'guest', name: window.myUsername || 'User',
+            text: type === 'video' ? "📹 Video" : "🖼️ Photo", 
+            mediaUrl: mediaUrl, 
+            mediaType: type,
+            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U', flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', langCode: window.myProfileInfo.langCode || 'en', isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
+        });
+        if (window.showToast) window.showToast("✈️", "Media Sent", "", "");
+    }
+}
+
 function sendLocationDirectly(url) {
     if (typeof firebase !== 'undefined' && window.currentRoomId) {
         let isVoiceTab = window.currentIndex === 1; let isConfTab = window.currentIndex === 2;
         let targetDbRoom = window.currentRoomId || 'global';
-        if (isConfTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
-        else if (isVoiceTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
+        if (isConfTab && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
 
         firebase.database().ref(targetDbRoom).push({
             userId: window.myProfileInfo.id || 'guest', name: window.myUsername || 'User',
             text: "📍 Shared Location", isLocation: true, embedLink: url, mapLink: url,
             sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
-            flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un',
-            langCode: window.myProfileInfo.langCode || 'en', isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
+            photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U', flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', langCode: window.myProfileInfo.langCode || 'en', isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
         });
         if (window.showToast) window.showToast("📍", "Location Sent", "", "");
     }
 }
+
 
 
 // === 3. МЕНЮ ===
