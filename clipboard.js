@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - Умный буфер обмена 
-// (Авто-инжектор кнопок "Три точки", защита от Base64, мультиязычность)
+// (Авто-инжектор "3 точки", Умное удаление из БД, Защита Base64, Мультиязычность 13+ языков)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -8,72 +8,50 @@
         const style = document.createElement('style');
         style.id = 'hf-clip-styles';
         style.innerHTML = `
-            /* Стили для кнопки "Три точки" под медиа */
-            .media-action-bar {
-                display: flex;
-                justify-content: flex-end;
-                padding-top: 6px;
-                margin-top: 4px;
-                border-top: 1px solid rgba(255,255,255,0.1);
-                width: 100%;
-            }
-            .media-action-btn {
-                background: rgba(17, 27, 33, 0.6);
-                color: #8696a0;
-                border: 1px solid rgba(42, 57, 66, 0.8);
-                padding: 4px 14px;
-                border-radius: 12px;
-                cursor: pointer;
-                transition: all 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .media-action-btn:hover, .media-action-btn:active { 
-                background: #00a884; 
-                color: #111b21; 
-                border-color: #00a884;
-            }
-            
-            /* Блокировка системных меню */
-            .chat-bubble-wrapper img, .chat-bubble-wrapper video, .chat-bubble-wrapper iframe {
-                -webkit-touch-callout: none !important;
-                -webkit-user-select: none !important;
-                user-select: none !important;
-                pointer-events: auto; 
-            }
+            .media-action-bar { display: flex; justify-content: flex-end; padding-top: 6px; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; }
+            .media-action-btn { background: rgba(17, 27, 33, 0.6); color: #8696a0; border: 1px solid rgba(42, 57, 66, 0.8); padding: 4px 14px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+            .media-action-btn:hover, .media-action-btn:active { background: #00a884; color: #111b21; border-color: #00a884; }
+            .chat-bubble-wrapper img, .chat-bubble-wrapper video, .chat-bubble-wrapper iframe { -webkit-touch-callout: none !important; -webkit-user-select: none !important; user-select: none !important; pointer-events: auto; }
             body.clipboard-open { overflow: hidden; }
         `;
         document.head.appendChild(style);
     }
 })();
 
-// === СЛОВАРИ ===
+// === СЛОВАРИ (13 ЯЗЫКОВ) ===
 const clipDict = {
     en: { clip_photo: "Photo", clip_video: "Video", clip_text: "Text", clip_loc: "Location", clip_link: "Link", clip_copy: "Copy", clip_paste: "Paste & Send", clip_save: "Save", clip_forward: "Forward", clip_del: "Delete" },
-    ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Отправить скопированное", clip_save: "Сохранить", clip_forward: "Переслать", clip_del: "Удалить" },
+    ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Вставить и Отправить", clip_save: "Сохранить", clip_forward: "Переслать", clip_del: "Удалить" },
     kk: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Мәтін", clip_loc: "Локация", clip_link: "Сілтеме", clip_copy: "Көшіру", clip_paste: "Кірістіру/Жіберу", clip_save: "Сақтау", clip_forward: "Қайта жіберу", clip_del: "Өшіру" },
-    az: { clip_photo: "Şəkil", clip_video: "Video", clip_text: "Mətn", clip_loc: "Məkan", clip_link: "Link", clip_copy: "Kopyala", clip_paste: "Yerləşdir/Göndər", clip_save: "Yadda saxla", clip_forward: "Yönləndir", clip_del: "Sil" }
+    az: { clip_photo: "Şəkil", clip_video: "Video", clip_text: "Mətn", clip_loc: "Məkan", clip_link: "Link", clip_copy: "Kopyala", clip_paste: "Yerləşdir/Göndər", clip_save: "Yadda saxla", clip_forward: "Yönləndir", clip_del: "Sil" },
+    de: { clip_photo: "Foto", clip_video: "Video", clip_text: "Text", clip_loc: "Standort", clip_link: "Link", clip_copy: "Kopieren", clip_paste: "Einfügen & Senden", clip_save: "Speichern", clip_forward: "Weiterleiten", clip_del: "Löschen" },
+    tr: { clip_photo: "Fotoğraf", clip_video: "Video", clip_text: "Metin", clip_loc: "Konum", clip_link: "Bağlantı", clip_copy: "Kopyala", clip_paste: "Yapıştır & Gönder", clip_save: "Kaydet", clip_forward: "İlet", clip_del: "Sil" },
+    ar: { clip_photo: "صورة", clip_video: "فيديو", clip_text: "نص", clip_loc: "الموقع", clip_link: "رابط", clip_copy: "نسخ", clip_paste: "لصق وإرسال", clip_save: "حفظ", clip_forward: "إرسال", clip_del: "حذف" },
+    it: { clip_photo: "Foto", clip_video: "Video", clip_text: "Testo", clip_loc: "Posizione", clip_link: "Link", clip_copy: "Copia", clip_paste: "Incolla e Invia", clip_save: "Salva", clip_forward: "Inoltra", clip_del: "Elimina" },
+    es: { clip_photo: "Foto", clip_video: "Video", clip_text: "Texto", clip_loc: "Ubicación", clip_link: "Enlace", clip_copy: "Copiar", clip_paste: "Pegar y Enviar", clip_save: "Guardar", clip_forward: "Reenviar", clip_del: "Eliminar" },
+    fr: { clip_photo: "Photo", clip_video: "Vidéo", clip_text: "Texte", clip_loc: "Emplacement", clip_link: "Lien", clip_copy: "Copier", clip_paste: "Coller & Envoyer", clip_save: "Enregistrer", clip_forward: "Transférer", clip_del: "Supprimer" },
+    pt: { clip_photo: "Foto", clip_video: "Vídeo", clip_text: "Texto", clip_loc: "Localização", clip_link: "Link", clip_copy: "Copiar", clip_paste: "Colar e Enviar", clip_save: "Salvar", clip_forward: "Encaminhar", clip_del: "Excluir" },
+    ja: { clip_photo: "写真", clip_video: "ビデオ", clip_text: "テキスト", clip_loc: "位置情報", clip_link: "リンク", clip_copy: "コピー", clip_paste: "貼り付けて送信", clip_save: "保存", clip_forward: "転送", clip_del: "削除" },
+    zh: { clip_photo: "照片", clip_video: "视频", clip_text: "文本", clip_loc: "位置", clip_link: "链接", clip_copy: "复制", clip_paste: "粘贴并发送", clip_save: "保存", clip_forward: "转发", clip_del: "删除" }
 };
 
+// === УМНАЯ ЛОГИКА ДЛЯ ЛЮБЫХ БУДУЩИХ ЯЗЫКОВ ===
 const checkClipI18n = setInterval(() => {
     if (window.i18n && window.i18n.en) {
         clearInterval(checkClipI18n);
         for (let sysLang in window.i18n) {
+            // Если язык есть в словаре буфера - используем его. Если это новый будущий язык (например, 'hi') - безопасно ставим English
             Object.assign(window.i18n[sysLang], clipDict[sysLang] || clipDict['en']);
         }
         if (typeof window.applyTranslations === 'function') window.applyTranslations();
     }
 }, 100);
 
-window.currentClipContent = null;
-window.currentClipType = 'text';
-window.currentTargetElement = null; 
+window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
 window.internalAppClipboard = { content: null, type: null, blob: null };
 
-// === 1. АВТО-ИНЖЕКТОР КНОПОК "ТРИ ТОЧКИ" (БЕЗ ИЗМЕНЕНИЯ HTML) ===
+// === 1. АВТО-ИНЖЕКТОР КНОПОК "ТРИ ТОЧКИ" ===
 function injectActionButtons(wrapper) {
-    // Если кнопка уже есть, пропускаем
     if (wrapper.querySelector('.media-action-bar')) return;
 
     const img = wrapper.querySelector('img:not(.w-8):not(.rounded-full)'); 
@@ -81,58 +59,44 @@ function injectActionButtons(wrapper) {
     const iframe = wrapper.querySelector('iframe');
     const bubble = wrapper.querySelector('.chat-bubble');
 
-    let content = null;
-    let type = null;
+    let content = null, type = null;
 
     if (iframe && iframe.src) { content = iframe.src; type = 'location'; }
     else if (img && img.src && !img.src.includes('ui-avatars') && !img.src.includes('flagcdn')) { content = img.src; type = 'image'; }
     else if (vid) { content = vid.src || vid.querySelector('source')?.src; type = 'video'; }
 
-    // Если это медиа, добавляем панель с 3 точками
     if (content && bubble) {
-        const actionBar = document.createElement('div');
-        actionBar.className = 'media-action-bar';
+        const actionBar = document.createElement('div'); actionBar.className = 'media-action-bar';
         actionBar.innerHTML = `<button class="media-action-btn" title="Actions"><i class="fa-solid fa-ellipsis"></i></button>`;
         
-        // Вешаем клик на кнопку
         actionBar.querySelector('button').onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            window.openClipboardMenu(content, type, wrapper);
+            e.preventDefault(); e.stopPropagation(); window.openClipboardMenu(content, type, wrapper);
         };
-        
         bubble.appendChild(actionBar);
     }
 }
 
-// Наблюдатель (Observer), который следит за появлением новых сообщений в чате
 const chatObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) { // Если это HTML элемент
-                if (node.classList.contains('chat-bubble-wrapper')) {
-                    injectActionButtons(node);
-                } else {
-                    const wrappers = node.querySelectorAll('.chat-bubble-wrapper');
-                    wrappers.forEach(w => injectActionButtons(w));
-                }
+            if (node.nodeType === 1) { 
+                if (node.classList.contains('chat-bubble-wrapper')) injectActionButtons(node);
+                else node.querySelectorAll('.chat-bubble-wrapper').forEach(w => injectActionButtons(w));
             }
         });
     });
 });
 
-// Запускаем слежку за главным контейнером
 setTimeout(() => {
     const chatContainer = document.getElementById('chat-messages');
     if (chatContainer) {
         chatObserver.observe(chatContainer, { childList: true, subtree: true });
-        // Проверяем те, что уже загрузились
         document.querySelectorAll('.chat-bubble-wrapper').forEach(w => injectActionButtons(w));
     }
 }, 2000);
 
 
-// === 2. ПЕРЕХВАТЧИК СИСТЕМНОЙ ВСТАВКИ (ЗАЩИТА ОТ КОДОВ В ТЕКСТЕ) ===
+// === 2. ЗАЩИТА ВСТАВКИ С КЛАВИАТУРЫ ===
 document.addEventListener('paste', function(e) {
     let activeInput = document.activeElement;
     if (!activeInput || (activeInput.id !== 'chat-input' && activeInput.id !== 'conf-chat-input' && activeInput.id !== 'voice-chat-input')) return; 
@@ -141,10 +105,7 @@ document.addEventListener('paste', function(e) {
     for (let i = 0; i < items.length; i++) {
         if (items[i].kind === 'file') {
             e.preventDefault();
-            const file = items[i].getAsFile();
-            if (typeof window.handleMediaUpload === 'function') {
-                window.handleMediaUpload({ target: { files: [file] } });
-            }
+            if (typeof window.handleMediaUpload === 'function') window.handleMediaUpload({ target: { files: [items[i].getAsFile()] } });
             return;
         }
     }
@@ -152,32 +113,21 @@ document.addEventListener('paste', function(e) {
     let pasteText = (e.clipboardData || window.clipboardData).getData('text');
     if (!pasteText) return;
 
-    // Блокируем страшный код картинки (base64) и превращаем его в файл
-    if (pasteText.startsWith('data:image/') || pasteText.startsWith('data:video/')) {
+    if (pasteText.startsWith('data:image/') || pasteText.startsWith('data:video/') || pasteText.length > 5000) {
         e.preventDefault();
-        fetch(pasteText).then(res => res.blob()).then(blob => {
-            const ext = pasteText.startsWith('data:video/') ? '.mp4' : '.jpg';
-            const file = new File([blob], `pasted_media${ext}`, { type: blob.type });
-            if (typeof window.handleMediaUpload === 'function') {
-                window.handleMediaUpload({ target: { files: [file] } });
-            }
-        });
-        return;
+        return; 
     }
 
-    // Вставка карты
     if (window.internalAppClipboard.type === 'location' && (pasteText === window.internalAppClipboard.content || pasteText.includes('google.com/maps/embed'))) {
         e.preventDefault();
         sendLocationDirectly(pasteText);
         window.internalAppClipboard = { content: null, type: null, blob: null };
-        return;
     }
 });
 
 function sendLocationDirectly(url) {
     if (typeof firebase !== 'undefined' && window.currentRoomId) {
-        let isVoiceTab = window.currentIndex === 1;
-        let isConfTab = window.currentIndex === 2;
+        let isVoiceTab = window.currentIndex === 1; let isConfTab = window.currentIndex === 2;
         let targetDbRoom = window.currentRoomId || 'global';
         if (isConfTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
         else if (isVoiceTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
@@ -195,12 +145,13 @@ function sendLocationDirectly(url) {
 }
 
 
-// === 3. МЕНЮ ИКОНОК (НОВЫЙ КОМПАКТНЫЙ ДИЗАЙН) ===
+// === 3. МЕНЮ ===
 window.openClipboardMenu = function(content, type, targetEl) {
     if (typeof window.closeDropdown === 'function') window.closeDropdown();
     window.currentClipContent = content; window.currentClipType = type; window.currentTargetElement = targetEl; 
     document.body.classList.add('clipboard-open');
 
+    // Умный поиск перевода для модального окна (с фолбэком на английский)
     let userLang = localStorage.getItem('hf_app_lang') || window.appLang || 'en';
     if (userLang === 'auto') userLang = window.appLang || 'en';
     const langDict = clipDict[userLang.substring(0,2)] || clipDict['en'];
@@ -209,43 +160,34 @@ window.openClipboardMenu = function(content, type, targetEl) {
     if (type === 'image') titleText = langDict.clip_photo;
     else if (type === 'video') titleText = langDict.clip_video;
     else if (type === 'location') titleText = langDict.clip_loc;
-    else if (type === 'link') titleText = langDict.clip_link;
 
     let modal = document.getElementById('clipboard-modal-clean');
     if (!modal) {
         const modalHTML = `
         <div id="clipboard-modal-clean" onclick="if(event.target===this) window.closeClipboardModal();" style="display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:flex-end; padding-bottom: 2rem;">
             <div class="flex flex-col p-4 w-full max-w-[350px] bg-[#0b141a] border border-[#2a3942] rounded-3xl shadow-2xl">
-                
                 <div class="flex justify-between items-center mb-4 px-2 border-b border-[#202c33] pb-2">
                     <h3 class="text-[#00a884] font-bold text-sm tracking-wide uppercase" id="clip-title-text">${titleText}</h3>
                     <i class="fa-solid fa-xmark text-[#8696a0] text-lg cursor-pointer" onclick="window.closeClipboardModal()"></i>
                 </div>
-                
                 <div class="grid grid-cols-4 gap-2 mb-2">
-                    <!-- Копировать -->
                     <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execCopyAction()">
                         <div class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-white text-lg border border-[#2a3942]"><i class="fa-regular fa-copy"></i></div>
                         <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight" id="clip-text-copy">${langDict.clip_copy}</span>
                     </div>
-                    <!-- Скачать/Сохранить (Только для медиа) -->
                     <div id="clip-save-btn" class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execSaveAction()">
                         <div class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#f59e0b] text-lg border border-[#2a3942]"><i class="fa-solid fa-download"></i></div>
                         <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight" id="clip-text-save">${langDict.clip_save}</span>
                     </div>
-                    <!-- Переслать -->
                     <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execForwardAction()">
                         <div class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#a855f7] text-lg border border-[#2a3942]"><i class="fa-solid fa-share"></i></div>
                         <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight" id="clip-text-forward">${langDict.clip_forward}</span>
                     </div>
-                    <!-- Удалить -->
                     <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execDeleteAction()">
                         <div class="w-12 h-12 rounded-full bg-red-950/30 flex items-center justify-center text-[#ef4444] text-lg border border-red-900/40"><i class="fa-regular fa-trash-can"></i></div>
                         <span class="text-[0.6rem] text-[#ef4444] font-bold text-center leading-tight" id="clip-text-del">${langDict.clip_del}</span>
                     </div>
                 </div>
-
-                <!-- Вставить (Широкая кнопка внизу) -->
                 <button id="clip-paste-btn" type="button" onclick="window.execPasteAction()" class="flex items-center justify-center gap-2 w-full py-3.5 mt-2 bg-[#00a884] active:scale-95 text-[#111b21] rounded-2xl text-sm font-bold transition shadow-[0_0_15px_rgba(0,168,132,0.3)]">
                     <i class="fa-solid fa-paper-plane"></i> <span id="clip-text-paste">${langDict.clip_paste}</span>
                 </button>
@@ -254,12 +196,7 @@ window.openClipboardMenu = function(content, type, targetEl) {
         document.body.insertAdjacentHTML('beforeend', modalHTML);
         modal = document.getElementById('clipboard-modal-clean');
     } else {
-        document.getElementById('clip-title-text').innerText = titleText;
-        document.getElementById('clip-text-copy').innerText = langDict.clip_copy;
-        document.getElementById('clip-text-paste').innerText = langDict.clip_paste;
-        document.getElementById('clip-text-save').innerText = langDict.clip_save;
-        document.getElementById('clip-text-forward').innerText = langDict.clip_forward;
-        document.getElementById('clip-text-del').innerText = langDict.clip_del;
+        document.getElementById('clip-title-text').innerText = titleText; document.getElementById('clip-text-copy').innerText = langDict.clip_copy; document.getElementById('clip-text-paste').innerText = langDict.clip_paste; document.getElementById('clip-text-save').innerText = langDict.clip_save; document.getElementById('clip-text-forward').innerText = langDict.clip_forward; document.getElementById('clip-text-del').innerText = langDict.clip_del;
     }
     
     if (typeof window.applyTranslations === 'function') window.applyTranslations();
@@ -358,25 +295,47 @@ window.execForwardAction = function() {
     window.closeClipboardModal();
 };
 
+// === УМНОЕ УДАЛЕНИЕ ИЗ FIREBASE ===
 window.execDeleteAction = function() {
     if (window.currentTargetElement) {
-        const msgId = window.currentTargetElement.getAttribute('data-id');
-        window.currentTargetElement.style.opacity = '0';
-        setTimeout(() => window.currentTargetElement.remove(), 300);
-        if (msgId && window.currentRoomId && typeof firebase !== 'undefined') {
-            firebase.database().ref(window.currentRoomId).child(msgId).remove();
+        const wrapper = window.currentTargetElement;
+        wrapper.style.opacity = '0';
+        setTimeout(() => wrapper.remove(), 300);
+
+        if (typeof firebase !== 'undefined' && window.currentRoomId) {
+            const ref = firebase.database().ref(window.currentRoomId);
+            ref.once('value', (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    let isMatch = false;
+
+                    if (window.currentClipType === 'image' || window.currentClipType === 'video') {
+                        if (data.mediaUrl === window.currentClipContent) isMatch = true;
+                    } 
+                    else if (window.currentClipType === 'location') {
+                        if (data.embedLink === window.currentClipContent || data.mapLink === window.currentClipContent) isMatch = true;
+                    } 
+                    else {
+                        if (data.originalText === window.currentClipContent || data.text === window.currentClipContent) isMatch = true;
+                    }
+
+                    if (isMatch) {
+                        childSnapshot.ref.remove();
+                        return true; 
+                    }
+                });
+            });
         }
     }
     window.closeClipboardModal();
 };
 
-// === 5. ДОЛГИЙ ТАП (ОСТАВЛЯЕМ ТОЛЬКО ДЛЯ ОБЫЧНОГО ТЕКСТА) ===
+// === 5. ДОЛГИЙ ТАП (ТОЛЬКО ДЛЯ ОБЫЧНОГО ТЕКСТА) ===
 function handleTextContextRequest(e, wrapper) {
-    // Если внутри есть медиа - игнорируем (для них теперь кнопка 3 точки)
     if (wrapper.querySelector('img:not(.w-8)') || wrapper.querySelector('video') || wrapper.querySelector('iframe')) return;
     
     const selection = window.getSelection().toString();
-    if (selection.trim().length > 0) return; // Разрешить копирование текста стандартно
+    if (selection.trim().length > 0) return; 
     
     let content = wrapper.innerText || wrapper.textContent || ''; 
     if (!content.trim()) return;
