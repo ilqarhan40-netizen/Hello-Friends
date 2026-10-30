@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - Умный буфер обмена 
-// (Авто-инжектор "3 точки", Умное удаление из БД, Защита Base64, Мультиязычность 13+ языков)
+// (Авто-инжектор "3 точки", Умное удаление из БД для всех, Прямая отправка видео, Мультиязычность 13+ языков)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -40,7 +40,6 @@ const checkClipI18n = setInterval(() => {
     if (window.i18n && window.i18n.en) {
         clearInterval(checkClipI18n);
         for (let sysLang in window.i18n) {
-            // Если язык есть в словаре буфера - используем его. Если это новый будущий язык (например, 'hi') - безопасно ставим English
             Object.assign(window.i18n[sysLang], clipDict[sysLang] || clipDict['en']);
         }
         if (typeof window.applyTranslations === 'function') window.applyTranslations();
@@ -125,40 +124,24 @@ document.addEventListener('paste', function(e) {
     }
 });
 
-function sendMediaDirectly(mediaUrl, type) {
-    if (typeof firebase !== 'undefined' && window.currentRoomId) {
-        let isVoiceTab = window.currentIndex === 1; let isConfTab = window.currentIndex === 2;
-        let targetDbRoom = window.currentRoomId || 'global';
-        if (isConfTab && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
-
-        firebase.database().ref(targetDbRoom).push({
-            userId: window.myProfileInfo.id || 'guest', name: window.myUsername || 'User',
-            text: type === 'video' ? "📹 Video" : "🖼️ Photo", 
-            mediaUrl: mediaUrl, 
-            mediaType: type,
-            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U', flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', langCode: window.myProfileInfo.langCode || 'en', isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
-        });
-        if (window.showToast) window.showToast("✈️", "Media Sent", "", "");
-    }
-}
-
 function sendLocationDirectly(url) {
     if (typeof firebase !== 'undefined' && window.currentRoomId) {
         let isVoiceTab = window.currentIndex === 1; let isConfTab = window.currentIndex === 2;
         let targetDbRoom = window.currentRoomId || 'global';
-        if (isConfTab && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
+        if (isConfTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
+        else if (isVoiceTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
 
         firebase.database().ref(targetDbRoom).push({
             userId: window.myProfileInfo.id || 'guest', name: window.myUsername || 'User',
             text: "📍 Shared Location", isLocation: true, embedLink: url, mapLink: url,
             sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U', flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', langCode: window.myProfileInfo.langCode || 'en', isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
+            photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
+            flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un',
+            langCode: window.myProfileInfo.langCode || 'en', isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
         });
         if (window.showToast) window.showToast("📍", "Location Sent", "", "");
     }
 }
-
 
 
 // === 3. МЕНЮ ===
@@ -167,7 +150,6 @@ window.openClipboardMenu = function(content, type, targetEl) {
     window.currentClipContent = content; window.currentClipType = type; window.currentTargetElement = targetEl; 
     document.body.classList.add('clipboard-open');
 
-    // Умный поиск перевода для модального окна (с фолбэком на английский)
     let userLang = localStorage.getItem('hf_app_lang') || window.appLang || 'en';
     if (userLang === 'auto') userLang = window.appLang || 'en';
     const langDict = clipDict[userLang.substring(0,2)] || clipDict['en'];
@@ -225,7 +207,7 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-// === 4. ДЕЙСТВИЯ ===
+// === 4. ДЕЙСТВИЯ (ИЗМЕНЕНО: Видео больше не зависает в памяти) ===
 window.execCopyAction = async function() {
     if (!window.currentClipContent) return;
     window.internalAppClipboard.content = window.currentClipContent;
@@ -233,23 +215,20 @@ window.execCopyAction = async function() {
     window.internalAppClipboard.blob = null;
 
     try {
-        if (window.currentClipType === 'image' || window.currentClipType === 'video') {
+        if (window.currentClipType === 'image') {
             const res = await fetch(window.currentClipContent);
-            const blob = await res.blob();
-            window.internalAppClipboard.blob = blob; 
-            
-            if (window.currentClipType === 'image') {
-                try {
-                    const img = new Image(); img.crossOrigin = "Anonymous"; img.src = window.currentClipContent;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
-                        canvas.getContext('2d').drawImage(img, 0, 0);
-                        canvas.toBlob(pngBlob => { navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]).catch(e=>{}); }, 'image/png');
-                    };
-                } catch(e) {}
-            } else {
-                if (!window.currentClipContent.startsWith('data:')) await navigator.clipboard.writeText(window.currentClipContent);
-            }
+            window.internalAppClipboard.blob = await res.blob(); 
+            try {
+                const img = new Image(); img.crossOrigin = "Anonymous"; img.src = window.currentClipContent;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    canvas.toBlob(pngBlob => { navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]).catch(e=>{}); }, 'image/png');
+                };
+            } catch(e) {}
+        } else if (window.currentClipType === 'video') {
+            // Оставляем видео ссылкой, не грузим в Blob
+            if (!window.currentClipContent.startsWith('data:')) await navigator.clipboard.writeText(window.currentClipContent);
         } else {
             await navigator.clipboard.writeText(window.currentClipContent);
         }
@@ -263,21 +242,40 @@ window.execCopyAction = async function() {
     window.closeClipboardModal();
 };
 
+// === ИЗМЕНЕНО: Отправка видео как видео ===
 window.execPasteAction = async function() {
     const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
     
-    if (window.internalAppClipboard.blob && (window.internalAppClipboard.type === 'image' || window.internalAppClipboard.type === 'video')) {
-        let extension = window.internalAppClipboard.type === 'video' ? '.mp4' : '.jpg';
-        let mime = window.internalAppClipboard.type === 'video' ? 'video/mp4' : 'image/jpeg';
-        const file = new File([window.internalAppClipboard.blob], `media_copy${extension}`, { type: mime });
-        
+    // ФОТО: отправляется через загрузчик
+    if (window.internalAppClipboard.type === 'image' && window.internalAppClipboard.blob) {
+        const file = new File([window.internalAppClipboard.blob], `media_copy.jpg`, { type: 'image/jpeg' });
         if (typeof window.handleMediaUpload === 'function') {
             window.handleMediaUpload({ target: { files: [file] } });
             if (window.showToast) window.showToast("✈️", "Sent", "", "");
         }
-    } else if (window.internalAppClipboard.type === 'location') {
+    } 
+    // ВИДЕО: Прямая отправка в Firebase без конвертации в файл
+    else if (window.internalAppClipboard.type === 'video') {
+        if (typeof firebase !== 'undefined' && window.currentRoomId) {
+            let targetDbRoom = window.currentRoomId || 'global';
+            if (window.currentIndex === 2) targetDbRoom = (window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
+            
+            firebase.database().ref(targetDbRoom).push({
+                userId: window.myProfileInfo.id || 'guest', name: window.myUsername || 'User',
+                text: "📹 Video", mediaUrl: window.internalAppClipboard.content, mediaType: 'video',
+                sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
+                photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U', 
+                flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un', 
+                langCode: window.myProfileInfo.langCode || 'en', 
+                isVoiceRoomMsg: (window.currentIndex === 1), isConfMsg: (window.currentIndex === 2)
+            });
+            if (window.showToast) window.showToast("✈️", "Video Sent", "", "");
+        }
+    }
+    else if (window.internalAppClipboard.type === 'location') {
         sendLocationDirectly(window.internalAppClipboard.content);
-    } else {
+    } 
+    else {
         try {
             const text = await navigator.clipboard.readText();
             if (text && inputField) { inputField.value += text; inputField.focus(); }
@@ -311,7 +309,7 @@ window.execForwardAction = function() {
     window.closeClipboardModal();
 };
 
-// === УМНОЕ УДАЛЕНИЕ ИЗ FIREBASE ===
+// === ИЗМЕНЕНО: Умное удаление из Firebase с гарантией ===
 window.execDeleteAction = function() {
     if (window.currentTargetElement) {
         const wrapper = window.currentTargetElement;
@@ -319,14 +317,18 @@ window.execDeleteAction = function() {
         setTimeout(() => wrapper.remove(), 300);
 
         if (typeof firebase !== 'undefined' && window.currentRoomId) {
-            const ref = firebase.database().ref(window.currentRoomId);
+            let targetDbRoom = window.currentRoomId || 'global';
+            if (window.currentIndex === 2) targetDbRoom = (window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
+
+            const ref = firebase.database().ref(targetDbRoom);
             ref.once('value', (snapshot) => {
+                let targetRef = null;
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
                     let isMatch = false;
 
                     if (window.currentClipType === 'image' || window.currentClipType === 'video') {
-                        if (data.mediaUrl === window.currentClipContent) isMatch = true;
+                        if (data.mediaUrl && String(data.mediaUrl).substring(0, 150) === String(window.currentClipContent).substring(0, 150)) isMatch = true;
                     } 
                     else if (window.currentClipType === 'location') {
                         if (data.embedLink === window.currentClipContent || data.mapLink === window.currentClipContent) isMatch = true;
@@ -335,11 +337,10 @@ window.execDeleteAction = function() {
                         if (data.originalText === window.currentClipContent || data.text === window.currentClipContent) isMatch = true;
                     }
 
-                    if (isMatch) {
-                        childSnapshot.ref.remove();
-                        return true; 
-                    }
+                    if (isMatch) targetRef = childSnapshot.ref;
                 });
+                
+                if (targetRef) targetRef.remove();
             });
         }
     }
@@ -382,3 +383,36 @@ document.addEventListener('contextmenu', function(e) {
         }
     }
 });
+
+// === ИЗМЕНЕНО: Синхронизатор удалений для всех пользователей ===
+let currentTrackedRoom = null;
+let removeListener = null;
+setInterval(() => {
+    let activeRoom = window.currentRoomId || 'global';
+    if (window.currentIndex === 2) activeRoom = (window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
+
+    if (activeRoom && activeRoom !== currentTrackedRoom && typeof firebase !== 'undefined') {
+        if (currentTrackedRoom && removeListener) firebase.database().ref(currentTrackedRoom).off('child_removed', removeListener);
+        currentTrackedRoom = activeRoom;
+        
+        removeListener = firebase.database().ref(currentTrackedRoom).on('child_removed', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+            document.querySelectorAll('.chat-bubble-wrapper').forEach(wrapper => {
+                const textEl = wrapper.querySelector('.chat-bubble');
+                const img = wrapper.querySelector('img:not(.w-8)');
+                const vid = wrapper.querySelector('video');
+                
+                let isMatch = false;
+                if ((data.mediaType === 'video' || data.mediaUrl) && vid && (vid.src === data.mediaUrl || vid.querySelector('source')?.src === data.mediaUrl)) isMatch = true;
+                else if (img && data.mediaUrl === img.src) isMatch = true;
+                else if (textEl && data.text && (textEl.innerText.includes(data.originalText || '') || textEl.innerText.includes(data.text))) isMatch = true;
+                
+                if (isMatch) {
+                    const group = wrapper.closest('.flex.flex-col.w-full.mt-3.mb-2');
+                    if (group) group.remove(); else wrapper.remove();
+                }
+            });
+        });
+    }
+}, 1000);
