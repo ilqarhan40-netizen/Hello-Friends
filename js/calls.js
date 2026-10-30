@@ -373,3 +373,17 @@ window.initConference = function() {
 
         smartLanguages.forEach(langArea => {
             let usersInThisLang = activeUsers.filter(p => p.flagCode === langArea.code);
+            if (usersInThisLang.length > 0) {
+                confHtml += `<div class="video-frame">
+                    <img src="${usersInThisLang[0].photo}" class="placeholder-bg opacity-30">
+                    <video id="remote-video-${usersInThisLang[0].id}" class="hidden" playsinline autoplay></video>
+                    <div class="video-overlay">${(usersInThisLang[0].name || 'User').split(' ')[0]}</div>
+                    <div class="flag-overlay" style="top:5px; right:5px;"><img src="https://flagcdn.com/w20/${langArea.code}.png" class="w-4 rounded-sm"></div>
+                    <div class="translation-bar"><div id="conf-marquee-${usersInThisLang[0].id}" class="conf-marquee-text conf-listener-marquee" data-lang="${langArea.lang}" data-flag="${langArea.flag}" style="animation-duration: 25s;">➔ [AUTO] Translating...</div></div>
+                </div>`;
+            }
+        });
+        
+        confGrid.innerHTML = confHtml;
+    } catch (err) {}
+};
