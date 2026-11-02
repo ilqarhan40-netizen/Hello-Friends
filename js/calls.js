@@ -1,5 +1,5 @@
 //==========================================
-// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL ASSEMBLED)
+// MODULE: CALLS, VIDEO & WebRTC ENGINE (С ИНТЕГРАЦИЕЙ ИИ)
 // ==========================================
 
 window.localStream = null;
@@ -8,6 +8,7 @@ window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 window.currentIncomingCallType = 'voice'; 
 window.myLastOutgoingCallType = 'voice';
+window.webrtcDataChannel = null; // Канал для текста ИИ
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
@@ -47,6 +48,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { once: true });
 });
 
+// --- НАСТРОЙКА КАНАЛА ДАННЫХ ДЛЯ ИИ ---
+window.setupDataChannel = function(channel) {
+    channel.onopen = () => {
+        console.log("⚡ Канал данных открыт! Запускаем Слухача (ИИ).");
+        if (window.startVoiceAI) window.startVoiceAI(); // Запуск распознавания речи
+    };
+    channel.onmessage = (event) => {
+        try {
+            const payload = JSON.parse(event.data);
+            if (payload.type === 'speech' && window.handleIncomingSpeech) {
+                window.handleIncomingSpeech(payload);
+            }
+        } catch(e) { console.error("Ошибка чтения DataChannel:", e); }
+    };
+};
+
 // --- 1. ПЕРЕДАЧА ГОЛОСА И ВИДЕО (WebRTC) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
@@ -65,6 +82,20 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         ] 
     };
     window.peerConnection = new RTCPeerConnection(servers);
+
+    // ==========================================
+    // ВНЕДРЕНИЕ ИИ: Открываем канал для передачи текста
+    // ==========================================
+    if (isCaller) {
+        window.webrtcDataChannel = window.peerConnection.createDataChannel("chat");
+        window.setupDataChannel(window.webrtcDataChannel);
+    } else {
+        window.peerConnection.ondatachannel = (event) => {
+            window.webrtcDataChannel = event.channel;
+            window.setupDataChannel(window.webrtcDataChannel);
+        };
+    }
+    // ==========================================
     
     window.localStream.getTracks().forEach(track => window.peerConnection.addTrack(track, window.localStream));
 
@@ -150,6 +181,10 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 };
 
 window.endWebRTCCall = function() {
+    // ВНЕДРЕНИЕ ИИ: Выключаем распознавание речи и канал при завершении
+    if (window.stopVoiceAI) window.stopVoiceAI();
+    if (window.webrtcDataChannel) { window.webrtcDataChannel.close(); window.webrtcDataChannel = null; }
+
     if (window.peerConnection) { window.peerConnection.close(); window.peerConnection = null; }
     if (window.localStream) { window.localStream.getTracks().forEach(t => t.stop()); window.localStream = null; }
     
@@ -296,7 +331,6 @@ window.hangUpCall = function() {
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
     
-    // Предотвращаем двойной запуск слушателя
     if (window.isSignalListenerActive) return;
     window.isSignalListenerActive = true;
 
@@ -341,11 +375,11 @@ let signalInitCheck = setInterval(() => {
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
     
-    let myReadLang = window.getLangPref(false, true); 
+    let myReadLang = window.getLangPref ? window.getLangPref(false, true) : 'en'; 
     let myReadFlag = window.myProfileInfo.flag || '🌐';
     
-        const smartLanguages = [
-        { code: 'kz', flag: '🇰🇿', lang: 'KK' }, // Добавили Казахстан (язык - казахский)
+    const smartLanguages = [
+        { code: 'kz', flag: '🇰🇿', lang: 'KK' }, 
         { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
         { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' },
         { code: 'es', flag: '🇪🇸', lang: 'ES' }, { code: 'fr', flag: '🇫🇷', lang: 'FR' },
@@ -354,10 +388,9 @@ window.initConference = function() {
         { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
     ];
 
-
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
-       <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="window.openPersonalLangModal()"></video>
+       <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="if(window.openPersonalLangModal) window.openPersonalLangModal()"></video>
         <div class="video-overlay">${window.myUsername}</div>
         <div class="flag-overlay" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${window.myProfileInfo.flagCode || 'un'}.png" class="w-6 rounded-sm"></div>
         <div class="translation-bar"><div id="speaker-marquee" class="conf-marquee-text conf-listener-marquee" data-lang="${myReadLang}" data-flag="${myReadFlag}" style="animation-duration: 30s;">➔ [AUTO] Связь защищена...</div></div>
