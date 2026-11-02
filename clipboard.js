@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - Умный буфер обмена (ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ)
-// Откачено до стабильного состояния: удаление у всех, правильное копирование видео
+// Исправлено: синхронное удаление во всех комнатах, анти-кэш фото, правильный MIME-тип для видео
 // ==========================================
 
 (function initClipboardStyles() {
@@ -229,17 +229,25 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-// === 4. ДЕЙСТВИЯ (ОТКАЧЕНО ДО РАБОЧИХ ОРИГИНАЛОВ) ===
+// === 4. ДЕЙСТВИЯ ===
+
+// === КОПИРОВАНИЕ (БЕЗ КЭШИРОВАНИЯ СТАРЫХ ФОТО) ===
 window.execCopyAction = async function() {
     if (!window.currentClipContent) return;
-    window.internalAppClipboard.content = window.currentClipContent;
-    window.internalAppClipboard.type = window.currentClipType;
-    window.internalAppClipboard.blob = null; 
+    
+    // ЖЕСТКАЯ ОЧИСТКА: обнуляем старый блоб перед новым копированием
+    window.internalAppClipboard = {
+        content: window.currentClipContent,
+        type: window.currentClipType,
+        blob: null 
+    };
 
     try {
         if (window.currentClipType === 'image' || window.currentClipType === 'video') {
-            // ЧИСТЫЙ FETCH, БЕЗ СБРОСА КЭША (чтобы не ломать токены Firebase Storage)
-            const res = await fetch(window.currentClipContent);
+            // АНТИ-КЭШ: обманываем браузер, чтобы он всегда качал свежий файл
+            const cacheBuster = window.currentClipContent + (window.currentClipContent.includes('?') ? '&' : '?') + 'cb=' + Date.now();
+            
+            const res = await fetch(cacheBuster, { cache: "no-store" });
             const blob = await res.blob();
             window.internalAppClipboard.blob = blob;
             
@@ -273,16 +281,21 @@ window.execCopyAction = async function() {
     window.closeClipboardModal();
 };
 
+// === ВСТАВКА (ПРАВИЛЬНАЯ ОБРАБОТКА ВИДЕО) ===
 window.execPasteAction = async function() {
     const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
     
     if (window.internalAppClipboard.blob && (window.internalAppClipboard.type === 'image' || window.internalAppClipboard.type === 'video')) {
         const isVid = window.internalAppClipboard.type === 'video';
-        const ext = isVid ? '.mp4' : '.jpg';
-        const mime = isVid ? 'video/mp4' : 'image/jpeg';
         
-        // Жестко задаем правильный MIME-тип для видео
+        // Берем тип из блоба, но если это видео, принудительно делаем его mp4
+        let mime = window.internalAppClipboard.blob.type;
+        if (isVid && !mime.startsWith('video/')) mime = 'video/mp4';
+        if (!isVid && !mime.startsWith('image/')) mime = 'image/jpeg';
+        
+        const ext = isVid ? '.mp4' : '.jpg';
         const uniqueFilename = `media_${Date.now()}${ext}`;
+        
         const file = new File([window.internalAppClipboard.blob], uniqueFilename, { type: mime });
         
         if (typeof window.handleMediaUpload === 'function') {
@@ -333,13 +346,20 @@ window.execDeleteAction = function() {
         const wrapper = window.currentTargetElement;
         const msgId = wrapper.getAttribute('data-id'); // Берем ТОЛЬКО точный ID сообщения
         
-        // 1. Скрываем визуально у себя (как было в твоем оригинальном коде)
+        // 1. Скрываем визуально у себя
         wrapper.style.opacity = '0';
         setTimeout(() => wrapper.remove(), 300);
 
         // 2. Бьем прямо в базу по точному пути, чтобы удалить у всех
-        if (msgId && typeof firebase !== 'undefined' && window.currentRoomId) {
-            firebase.database().ref(window.currentRoomId).child(msgId).remove();
+        if (msgId && typeof firebase !== 'undefined') {
+            let isVoiceTab = window.currentIndex === 1; 
+            let isConfTab = window.currentIndex === 2;
+            let targetDbRoom = window.currentRoomId || 'global';
+            
+            if (isConfTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
+            else if (isVoiceTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
+
+            firebase.database().ref(targetDbRoom).child(msgId).remove();
         }
     }
     window.closeClipboardModal();
@@ -384,5 +404,3 @@ document.addEventListener('contextmenu', function(e) {
         }
     }
 });
-
-
