@@ -1,5 +1,5 @@
 // ==========================================
-// MODULE: VOICE, MIC & AI AUDIO
+// MODULE: VOICE, MIC, AI AUDIO & LIVE CALL TRANSLATOR
 // ==========================================
 
 window.currentMicInputTarget = 'chat-input';
@@ -45,6 +45,7 @@ window.getSmartLang = function(userProfile) {
     return userProfile.langCode || 'en';
 };
 
+// --- ФУНКЦИЯ 1: ОДИНОЧНОЕ ГОЛОСОВОЕ СООБЩЕНИЕ (Твоя оригинальная) ---
 window.startUniversalMic = async function(mode) {
     window.speechRecognizedText = "";
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -87,15 +88,11 @@ window.startUniversalMic = async function(mode) {
     
     rec.onresult = async (e) => { 
         window.speechRecognizedText = e.results[0][0].transcript; 
-        
-        // 1. ОПРЕДЕЛЯЕМ ЯЗЫК ПЕРЕВОДА И ОЗВУЧКИ
         let targetLang = 'en'; 
         
         if (selectedMicLang !== 'auto') {
-            // Если юзер ВРУЧНУЮ выбрал язык микрофона — жестко переводим на него!
             targetLang = selectedMicLang.split('-')[0]; 
         } else {
-            // Иначе работает умная логика (на язык собеседника)
             if (window.currentTargetUser && window.currentRoomId !== 'global') {
                 targetLang = window.getSmartLang(window.currentTargetUser);
             } else {
@@ -107,7 +104,6 @@ window.startUniversalMic = async function(mode) {
         let textToShip = window.speechRecognizedText;
         
         try { 
-            // Переводим на нужный язык (targetLang)
             const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`); 
             const data = await res.json(); 
             if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0]; 
@@ -116,7 +112,6 @@ window.startUniversalMic = async function(mode) {
         let isVoice = window.currentMicInputTarget === 'voice-chat-input';
         let isConf = window.currentMicInputTarget === 'conf-chat-input';
 
-        // 2. ОТПРАВЛЯЕМ targetLang В БАЗУ (чтобы акцент совпадал с языком)
         if (mode === 'text') {
             firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: targetLang, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
         } else if (mode === 'ai-audio') {
@@ -143,4 +138,94 @@ window.playAIVoice = function(encodedText, langCode) {
 window.autoSetMicLang = function() { 
     let rMic = document.getElementById('plus-mic-lang'); 
     if(rMic && !rMic.value) rMic.value = 'auto'; 
+};
+
+// =========================================================================
+// ФУНКЦИЯ 2: ЖИВОЙ ПЕРЕВОДЧИК ДЛЯ АУДИО/ВИДЕО ЗВОНКОВ (WebRTC DataChannel)
+// =========================================================================
+window.liveCallRec = null;
+
+window.startVoiceAI = function() {
+    if (window.liveCallRec) return; // Уже запущен
+    
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) return console.warn("Speech Recognition not supported.");
+
+    window.liveCallRec = new SpeechRec();
+    window.liveCallRec.continuous = true; // Слушаем постоянно, пока идет звонок
+    window.liveCallRec.interimResults = false;
+
+    // Мой язык
+    let myLangCode = window.getSmartLang(window.myProfileInfo);
+    window.liveCallRec.lang = myLangCode === 'ru' ? 'ru-RU' : 'en-US'; // Можно расширить
+
+    window.liveCallRec.onresult = async (e) => {
+        let transcript = e.results[e.results.length - 1][0].transcript;
+        if (!transcript.trim()) return;
+
+        // Если звонок идет, шлем текст через быстрый DataChannel
+        if (window.webrtcDataChannel && window.webrtcDataChannel.readyState === 'open') {
+            
+            // Язык собеседника
+            let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : 'en';
+
+            try {
+                // Переводим МОЙ голос на язык СОБЕСЕДНИКА перед отправкой
+                let textToShip = transcript;
+                if (myLangCode !== targetLang) {
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myLangCode}&tl=${targetLang}&dt=t&q=${encodeURIComponent(transcript)}`);
+                    const data = await res.json();
+                    if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0];
+                }
+
+                // Отправляем переведенный текст собеседнику
+                window.webrtcDataChannel.send(JSON.stringify({
+                    type: 'speech',
+                    text: textToShip,
+                    lang: targetLang
+                }));
+            } catch(err) { console.error("Ошибка живого перевода:", err); }
+        }
+    };
+
+    window.liveCallRec.onend = () => {
+        // Если звонок еще идет, перезапускаем микрофон
+        if (window.peerConnection && window.liveCallRec) {
+            try { window.liveCallRec.start(); } catch(err) {}
+        }
+    };
+
+    try { window.liveCallRec.start(); } catch(err){}
+};
+
+window.stopVoiceAI = function() {
+    if (window.liveCallRec) {
+        window.liveCallRec.onend = null; // Отключаем перезапуск
+        try { window.liveCallRec.stop(); } catch(err){}
+        window.liveCallRec = null;
+    }
+};
+
+window.handleIncomingSpeech = function(payload) {
+    console.log("Входящий перевод:", payload.text);
+    
+    // Если это ВИДЕОЗВОНОК - показываем субтитры
+    if (window.currentIncomingCallType === 'video' || window.myLastOutgoingCallType === 'video') {
+        let callerId = window.currentTargetUser ? window.currentTargetUser.id : 'speaker';
+        let marquee = document.getElementById(`conf-marquee-${callerId}`) || document.getElementById('speaker-marquee');
+        if (marquee) {
+            let callerName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : 'Собеседник';
+            marquee.innerText = `[${callerName}]: ${payload.text}`;
+            marquee.style.animation = 'none';
+            marquee.offsetHeight; 
+            marquee.style.animation = null; 
+        }
+    } 
+    // Если это АУДИОЗВОНОК - озвучиваем роботом
+    else {
+        let voiceMarquee = document.getElementById('voice-info-marquee');
+        if (voiceMarquee) voiceMarquee.innerText = `[Перевод]: ${payload.text}`;
+        
+        window.playAIVoice(encodeURIComponent(payload.text), payload.lang);
+    }
 };
