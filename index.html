@@ -1614,6 +1614,29 @@ window.i18n = {
         invite_users: "邀请", select_all: "全选", send_invite: "发送", toast_err: "错误", toast_err_desc: "选择用户", toast_ok: "发送", toast_ok_desc: "邀请:" }
 };
 
+ // --- ПЕРЕВОДЫ ДЛЯ ПОЧТЫ (Интеграция в экосистему) ---
+const emailTranslations = {
+    en: { email_title: "Send Email", email_to: "Recipient (To)", email_subj: "Subject", email_msg: "Write your message here...", email_clear: "Clear", email_send: "Send", email_sending: "Sending...", email_success: "Success! ✔️", email_failed: "Failed ❌", email_sent_toast: "Securely delivered via EmailJS" },
+    ru: { email_title: "Отправить письмо", email_to: "Получатель (Кому)", email_subj: "Тема", email_msg: "Напишите сообщение...", email_clear: "Очистить", email_send: "Отправить", email_sending: "Отправка...", email_success: "Успешно! ✔️", email_failed: "Ошибка ❌", email_sent_toast: "Письмо безопасно доставлено" },
+    kk: { email_title: "Хат жіберу", email_to: "Алушы (Кімге)", email_subj: "Тақырыбы", email_msg: "Хабарламаңызды осында жазыңыз...", email_clear: "Тазарту", email_send: "Жіберу", email_sending: "Жіберілуде...", email_success: "Сәтті! ✔️", email_failed: "Қате ❌", email_sent_toast: "Сәтті жеткізілді" },
+    az: { email_title: "E-poçt Göndər", email_to: "Qəbuledici (Kimə)", email_subj: "Mövzu", email_msg: "Mesajınızı buraya yazın...", email_clear: "Təmizlə", email_send: "Göndər", email_sending: "Göndərilir...", email_success: "Uğurlu! ✔️", email_failed: "Xəta ❌", email_sent_toast: "Uğurla çatdırıldı" },
+    de: { email_title: "E-Mail senden", email_to: "Empfänger (An)", email_subj: "Betreff", email_msg: "Schreiben Sie hier Ihre Nachricht...", email_clear: "Löschen", email_send: "Senden", email_sending: "Senden...", email_success: "Erfolgreich! ✔️", email_failed: "Fehlgeschlagen ❌", email_sent_toast: "Sicher zugestellt" },
+    tr: { email_title: "E-posta Gönder", email_to: "Alıcı (Kime)", email_subj: "Konu", email_msg: "Mesajınızı buraya yazın...", email_clear: "Temizle", email_send: "Gönder", email_sending: "Gönderiliyor...", email_success: "Başarılı! ✔️", email_failed: "Başarısız ❌", email_sent_toast: "Güvenli bir şekilde iletildi" },
+    ar: { email_title: "إرسال بريد إلكتروني", email_to: "المستلم (إلى)", email_subj: "الموضوع", email_msg: "اكتب رسالتك هنا...", email_clear: "مسح", email_send: "إرسال", email_sending: "جاري الإرسال...", email_success: "نجاح! ✔️", email_failed: "فشل ❌", email_sent_toast: "تم التسليم بنجاح" },
+    it: { email_title: "Invia Email", email_to: "Destinatario (A)", email_subj: "Oggetto", email_msg: "Scrivi qui il tuo messaggio...", email_clear: "Pulisci", email_send: "Invia", email_sending: "Invio in corso...", email_success: "Successo! ✔️", email_failed: "Fallito ❌", email_sent_toast: "Consegnato in modo sicuro" },
+    es: { email_title: "Enviar correo", email_to: "Destinatario (Para)", email_subj: "Asunto", email_msg: "Escribe tu mensaje aquí...", email_clear: "Limpiar", email_send: "Enviar", email_sending: "Enviando...", email_success: "¡Éxito! ✔️", email_failed: "Falló ❌", email_sent_toast: "Entregado de forma segura" },
+    fr: { email_title: "Envoyer un e-mail", email_to: "Destinataire (À)", email_subj: "Sujet", email_msg: "Écrivez votre message ici...", email_clear: "Effacer", email_send: "Envoyer", email_sending: "Envoi en cours...", email_success: "Succès ! ✔️", email_failed: "Échec ❌", email_sent_toast: "Livré en toute sécurité" },
+    pt: { email_title: "Enviar E-mail", email_to: "Destinatário (Para)", email_subj: "Assunto", email_msg: "Escreva sua mensagem aqui...", email_clear: "Limpar", email_send: "Enviar", email_sending: "Enviando...", email_success: "Sucesso! ✔️", email_failed: "Falhou ❌", email_sent_toast: "Entregue com segurança" },
+    ja: { email_title: "メールを送信", email_to: "宛先", email_subj: "件名", email_msg: "ここにメッセージを入力...", email_clear: "クリア", email_send: "送信", email_sending: "送信中...", email_success: "成功！ ✔️", email_failed: "失敗 ❌", email_sent_toast: "安全に配信されました" },
+    zh: { email_title: "发送电子邮件", email_to: "收件人", email_subj: "主题", email_msg: "在这里输入您的信息...", email_clear: "清除", email_send: "发送", email_sending: "发送中...", email_success: "成功！ ✔️", email_failed: "失败 ❌", email_sent_toast: "已安全送达" }
+};
+
+Object.keys(emailTranslations).forEach(lang => {
+    if (window.i18n[lang]) {
+        Object.assign(window.i18n[lang], emailTranslations[lang]);
+    }
+});
+            
 // --- УМНАЯ ЛОГИКА ЯЗЫКА (РАБОТАЕТ С ГЛОБАЛЬНЫМ СЛОВАРЕМ) ---
 window.applyTranslations = function() { 
     let savedLang = localStorage.getItem('hf_app_lang') || 'auto';
