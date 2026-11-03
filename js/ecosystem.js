@@ -166,7 +166,8 @@ window.sendEmailForm = function(e) {
         message: text,
         from_name: window.myUsername || "User"
     };
-        emailjs.send("service_md6pprq", "template_slxkkuk", templateParams).then(function() {
+        emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScxO").then(function() {
+            
             
 
     
