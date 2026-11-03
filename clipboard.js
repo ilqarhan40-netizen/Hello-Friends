@@ -1,6 +1,5 @@
 // ==========================================
-// CLIPBOARD.JS - Умный буфер обмена (ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ)
-// Исправлено: синхронное удаление во всех комнатах, анти-кэш фото, правильный MIME-тип для видео
+// CLIPBOARD.JS - Рабочая версия (Исправлено кэширование фото и удаление)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -18,24 +17,17 @@
     }
 })();
 
-// === ТОТАЛЬНЫЙ УБИЙЦА СИСТЕМНЫХ МЕНЮ (ТОЛЬКО ВНУТРИ ЧАТА) ===
+// === ТОТАЛЬНЫЙ УБИЙЦА СИСТЕМНЫХ МЕНЮ ===
 window.addEventListener('contextmenu', function(e) {
-    const inChat = e.target.closest('#chat-messages') || e.target.closest('.chat-bubble-wrapper');
-    if (inChat) {
-        if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.tagName === 'IFRAME' || e.target.closest('.chat-bubble-wrapper')) { 
-            e.preventDefault(); e.stopPropagation(); return false; 
-        }
-    }
+    if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.tagName === 'IFRAME') { e.preventDefault(); e.stopPropagation(); return false; }
+    if (e.target.closest('.chat-bubble-wrapper')) { e.preventDefault(); e.stopPropagation(); return false; }
 }, { capture: true, passive: false });
 
 window.addEventListener('dragstart', function(e) {
-    const inChat = e.target.closest('#chat-messages') || e.target.closest('.chat-bubble-wrapper');
-    if (inChat && (e.target.tagName === 'IMG' || e.target.tagName === 'A' || e.target.tagName === 'VIDEO')) { 
-        e.preventDefault(); return false; 
-    }
+    if (e.target.tagName === 'IMG' || e.target.tagName === 'A' || e.target.tagName === 'VIDEO') { e.preventDefault(); return false; }
 }, { capture: true });
 
-// === СЛОВАРИ ===
+// === СЛОВАРИ (13 ЯЗЫКОВ) ===
 const clipDict = {
     en: { clip_photo: "Photo", clip_video: "Video", clip_text: "Text", clip_loc: "Location", clip_link: "Link", clip_copy: "Copy", clip_paste: "Paste & Send", clip_save: "Save", clip_forward: "Forward", clip_del: "Delete" },
     ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Вставить и Отправить", clip_save: "Сохранить", clip_forward: "Переслать", clip_del: "Удалить" },
@@ -55,9 +47,7 @@ const clipDict = {
 const checkClipI18n = setInterval(() => {
     if (window.i18n && window.i18n.en) {
         clearInterval(checkClipI18n);
-        for (let sysLang in window.i18n) {
-            Object.assign(window.i18n[sysLang], clipDict[sysLang] || clipDict['en']);
-        }
+        for (let sysLang in window.i18n) { Object.assign(window.i18n[sysLang], clipDict[sysLang] || clipDict['en']); }
         if (typeof window.applyTranslations === 'function') window.applyTranslations();
     }
 }, 100);
@@ -65,10 +55,9 @@ const checkClipI18n = setInterval(() => {
 window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
 window.internalAppClipboard = { content: null, type: null, blob: null };
 
-// === 1. АВТО-ИНЖЕКТОР КНОПОК "ТРИ ТОЧКИ" (ТОЛЬКО ДЛЯ МЕДИА) ===
+// === ПОИСК ФАЙЛОВ ===
 function getMediaFromWrapper(wrapper) {
     const bubble = wrapper.querySelector('.chat-bubble'); if (!bubble) return { content: null, type: 'text' };
-    
     const vid = bubble.querySelector('video');
     const iframe = bubble.querySelector('iframe');
     const img = bubble.querySelector('img:not(.w-8):not(.rounded-full)');
@@ -83,31 +72,39 @@ function getMediaFromWrapper(wrapper) {
     return { content: bubble.innerText || bubble.textContent || '', type: 'text' };
 }
 
+// === АВТО-ИНЖЕКТОР КНОПОК ===
 function injectActionButtons(wrapper) {
-    const bubble = wrapper.querySelector('.chat-bubble');
-    if (!bubble || wrapper.querySelector('.media-action-bar')) return;
-
+    if (wrapper.querySelector('.media-action-bar')) return;
     const media = getMediaFromWrapper(wrapper);
 
-    // Добавляем "три точки" ТОЛЬКО если это не текст
     if (media.content && media.type !== 'text') {
         const actionBar = document.createElement('div'); actionBar.className = 'media-action-bar';
         actionBar.innerHTML = `<button class="media-action-btn" title="Actions"><i class="fa-solid fa-ellipsis"></i></button>`;
         
+        // РЕШЕНИЕ ПРОБЛЕМЫ ЗАЛИПАНИЯ ПЕРВОГО ФОТО:
+        // Читаем ссылку заново ТОЛЬКО в момент нажатия на кнопку
         actionBar.querySelector('button').onclick = (e) => {
             e.preventDefault(); e.stopPropagation(); 
-            const freshMedia = getMediaFromWrapper(wrapper);
+            const freshMedia = getMediaFromWrapper(wrapper); 
             window.openClipboardMenu(freshMedia.content, freshMedia.type, wrapper);
         };
-        bubble.appendChild(actionBar);
+        const bubble = wrapper.querySelector('.chat-bubble');
+        if (bubble) bubble.appendChild(actionBar);
     }
 }
 
 let observerTimeout = null;
-const chatObserver = new MutationObserver(() => {
+const chatObserver = new MutationObserver((mutations) => {
     if (observerTimeout) clearTimeout(observerTimeout);
     observerTimeout = setTimeout(() => {
-        document.querySelectorAll('.chat-bubble-wrapper').forEach(w => injectActionButtons(w));
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { 
+                    if (node.classList.contains('chat-bubble-wrapper')) injectActionButtons(node);
+                    else node.querySelectorAll('.chat-bubble-wrapper').forEach(w => injectActionButtons(w));
+                }
+            });
+        });
     }, 50); 
 });
 
@@ -119,54 +116,7 @@ setTimeout(() => {
     }
 }, 2000);
 
-// === 2. ЗАЩИТА ВСТАВКИ С КЛАВИАТУРЫ ===
-document.addEventListener('paste', function(e) {
-    let activeInput = document.activeElement;
-    if (!activeInput || (activeInput.id !== 'chat-input' && activeInput.id !== 'conf-chat-input' && activeInput.id !== 'voice-chat-input')) return; 
-
-    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-    for (let i = 0; i < items.length; i++) {
-        if (items[i].kind === 'file') {
-            e.preventDefault();
-            if (typeof window.handleMediaUpload === 'function') window.handleMediaUpload({ target: { files: [items[i].getAsFile()] } });
-            return;
-        }
-    }
-
-    let pasteText = (e.clipboardData || window.clipboardData).getData('text');
-    if (!pasteText) return;
-
-    if (pasteText.startsWith('data:image/') || pasteText.startsWith('data:video/') || pasteText.length > 5000) {
-        e.preventDefault(); return; 
-    }
-
-    if (window.internalAppClipboard.type === 'location' && (pasteText === window.internalAppClipboard.content || pasteText.includes('google.com/maps/embed'))) {
-        e.preventDefault();
-        sendLocationDirectly(pasteText);
-        window.internalAppClipboard = { content: null, type: null, blob: null };
-    }
-});
-
-function sendLocationDirectly(url) {
-    if (typeof firebase !== 'undefined' && window.currentRoomId) {
-        let isVoiceTab = window.currentIndex === 1; let isConfTab = window.currentIndex === 2;
-        let targetDbRoom = window.currentRoomId || 'global';
-        if (isConfTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
-        else if (isVoiceTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
-
-        firebase.database().ref(targetDbRoom).push({
-            userId: window.myProfileInfo.id || 'guest', name: window.myUsername || 'User',
-            text: "📍 Shared Location", isLocation: true, embedLink: url, mapLink: url,
-            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
-            flag: window.myProfileInfo.flag || '🌐', flagCode: window.myProfileInfo.flagCode || 'un',
-            langCode: window.myProfileInfo.langCode || 'en', isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
-        });
-        if (window.showToast) window.showToast("📍", "Location Sent", "", "");
-    }
-}
-
-// === 3. МЕНЮ ===
+// === МЕНЮ "ТРИ ТОЧКИ" ===
 window.openClipboardMenu = function(content, type, targetEl) {
     if (typeof window.closeDropdown === 'function') window.closeDropdown();
     window.currentClipContent = content; window.currentClipType = type; window.currentTargetElement = targetEl; 
@@ -184,7 +134,7 @@ window.openClipboardMenu = function(content, type, targetEl) {
     let modal = document.getElementById('clipboard-modal-clean');
     if (!modal) {
         const modalHTML = `
-        <div id="clipboard-modal-clean" onclick="if(event.target===this) window.closeClipboardModal();" style="display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:flex-end; padding-bottom: env(safe-area-inset-bottom, 2rem);">
+        <div id="clipboard-modal-clean" onclick="if(event.target===this) window.closeClipboardModal();" style="display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:flex-end; padding-bottom: 2rem;">
             <div class="flex flex-col p-4 w-full max-w-[350px] bg-[#0b141a] border border-[#2a3942] rounded-3xl shadow-2xl">
                 <div class="flex justify-between items-center mb-4 px-2 border-b border-[#202c33] pb-2">
                     <h3 class="text-[#00a884] font-bold text-sm tracking-wide uppercase" id="clip-title-text">${titleText}</h3>
@@ -229,73 +179,35 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-// === 4. ДЕЙСТВИЯ ===
-
-// === КОПИРОВАНИЕ (БЕЗ КЭШИРОВАНИЯ СТАРЫХ ФОТО) ===
+// === ДЕЙСТВИЯ: КОПИРОВАНИЕ И ВСТАВКА ===
 window.execCopyAction = async function() {
     if (!window.currentClipContent) return;
     
-    // ЖЕСТКАЯ ОЧИСТКА: обнуляем старый блоб перед новым копированием
-    window.internalAppClipboard = {
-        content: window.currentClipContent,
-        type: window.currentClipType,
-        blob: null 
-    };
+    window.internalAppClipboard.content = window.currentClipContent;
+    window.internalAppClipboard.type = window.currentClipType;
 
     try {
         if (window.currentClipType === 'image' || window.currentClipType === 'video') {
-            // АНТИ-КЭШ: обманываем браузер, чтобы он всегда качал свежий файл
-            const cacheBuster = window.currentClipContent + (window.currentClipContent.includes('?') ? '&' : '?') + 'cb=' + Date.now();
-            
-            const res = await fetch(cacheBuster, { cache: "no-store" });
-            const blob = await res.blob();
-            window.internalAppClipboard.blob = blob;
-            
-            if (window.currentClipType === 'image') {
-                try {
-                    const img = new Image();
-                    img.crossOrigin = "Anonymous"; 
-                    img.src = window.currentClipContent;
-                    
-                    img.onload = () => {
-                        try {
-                            const canvas = document.createElement('canvas'); 
-                            canvas.width = img.width; canvas.height = img.height;
-                            canvas.getContext('2d').drawImage(img, 0, 0);
-                            canvas.toBlob(pngBlob => { 
-                                navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]).catch(()=>{}); 
-                            }, 'image/png');
-                        } catch(e) {}
-                    };
-                } catch(e) {}
-            } else if (window.currentClipType === 'video') {
-                navigator.clipboard.writeText(window.currentClipContent).catch(()=>{});
-            }
+            const cacheBuster = window.currentClipContent.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
+            const res = await fetch(window.currentClipContent + cacheBuster, { cache: "no-store" });
+            window.internalAppClipboard.blob = await res.blob();
         } else {
             await navigator.clipboard.writeText(window.currentClipContent);
         }
         if (window.showToast) window.showToast("✔", "Copied", "", "");
-    } catch (err) {
-        navigator.clipboard.writeText(window.currentClipContent).catch(()=>{});
-    }
+    } catch (err) {}
     window.closeClipboardModal();
 };
 
-// === ВСТАВКА (ПРАВИЛЬНАЯ ОБРАБОТКА ВИДЕО) ===
 window.execPasteAction = async function() {
     const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
     
+    // ВСТАВКА ФОТО/ВИДЕО
     if (window.internalAppClipboard.blob && (window.internalAppClipboard.type === 'image' || window.internalAppClipboard.type === 'video')) {
-        const isVid = window.internalAppClipboard.type === 'video';
+        let extension = window.internalAppClipboard.type === 'video' ? '.mp4' : '.jpg';
+        let mime = window.internalAppClipboard.type === 'video' ? 'video/mp4' : 'image/jpeg';
         
-        // Берем тип из блоба, но если это видео, принудительно делаем его mp4
-        let mime = window.internalAppClipboard.blob.type;
-        if (isVid && !mime.startsWith('video/')) mime = 'video/mp4';
-        if (!isVid && !mime.startsWith('image/')) mime = 'image/jpeg';
-        
-        const ext = isVid ? '.mp4' : '.jpg';
-        const uniqueFilename = `media_${Date.now()}${ext}`;
-        
+        const uniqueFilename = `media_copy_${Date.now()}${extension}`;
         const file = new File([window.internalAppClipboard.blob], uniqueFilename, { type: mime });
         
         if (typeof window.handleMediaUpload === 'function') {
@@ -303,15 +215,10 @@ window.execPasteAction = async function() {
             if (window.showToast) window.showToast("✈️", "Sent", "", "");
         }
     } else if (window.internalAppClipboard.type === 'location') {
-        sendLocationDirectly(window.internalAppClipboard.content);
+        if (typeof sendLocationDirectly === 'function') sendLocationDirectly(window.internalAppClipboard.content);
     } else {
-        try {
-            const text = await navigator.clipboard.readText();
-            if (text && inputField) { inputField.value += text; inputField.focus(); }
-        } catch (err) {
-            if (window.internalAppClipboard.type === 'text' && inputField) {
-                inputField.value += window.internalAppClipboard.content; inputField.focus();
-            }
+        if (window.internalAppClipboard.type === 'text' && inputField) {
+            inputField.value += window.internalAppClipboard.content; inputField.focus();
         }
     }
     
@@ -340,32 +247,78 @@ window.execForwardAction = function() {
     window.closeClipboardModal();
 };
 
-// === ИСПРАВЛЕННОЕ УДАЛЕНИЕ (100% УДАЛЯЕТ ИЗ БД У ВСЕХ) ===
+// === УДАЛЕНИЕ ДЛЯ ВСЕХ БЕЗ ВОЗВРАТА И КРАШЕЙ ===
 window.execDeleteAction = function() {
     if (window.currentTargetElement) {
         const wrapper = window.currentTargetElement;
-        const msgId = wrapper.getAttribute('data-id'); // Берем ТОЛЬКО точный ID сообщения
         
-        // 1. Скрываем визуально у себя
-        wrapper.style.opacity = '0';
-        setTimeout(() => wrapper.remove(), 300);
+        // Получаем ID из вашей системы (Firebase обычно ставит data-id или data-firebase-id)
+        const msgId = wrapper.getAttribute('data-id') || wrapper.getAttribute('data-firebase-id'); 
+        
+        // 1. Мгновенно прячем у вас
+        wrapper.style.setProperty('display', 'none', 'important');
+        const group = wrapper.closest('.flex.flex-col.w-full.mt-3.mb-2');
+        if (group) group.style.setProperty('display', 'none', 'important');
 
-        // 2. Бьем прямо в базу по точному пути, чтобы удалить у всех
-        if (msgId && typeof firebase !== 'undefined') {
-            let isVoiceTab = window.currentIndex === 1; 
-            let isConfTab = window.currentIndex === 2;
+        // 2. Удаляем из базы
+        if (typeof firebase !== 'undefined' && window.currentRoomId) {
             let targetDbRoom = window.currentRoomId || 'global';
+            if (window.currentIndex === 2 && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
             
-            if (isConfTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'video_room_global';
-            else if (isVoiceTab) targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
-
-            firebase.database().ref(targetDbRoom).child(msgId).remove();
+            if (msgId) {
+                firebase.database().ref(targetDbRoom).child(msgId).remove();
+            } else {
+                // Страховка: если ID нет в HTML, ищем по ссылке
+                firebase.database().ref(targetDbRoom).limitToLast(100).once('value', (snapshot) => {
+                    snapshot.forEach((child) => {
+                        const data = child.val();
+                        if (data && (data.mediaUrl === window.currentClipContent || data.text === window.currentClipContent || data.originalText === window.currentClipContent)) {
+                            child.ref.remove();
+                        }
+                    });
+                });
+            }
         }
     }
     window.closeClipboardModal();
 };
 
-// === 5. ДОЛГИЙ ТАП (ТОЛЬКО ДЛЯ ТЕКСТА) ===
+// === СЛУШАТЕЛЬ УДАЛЕНИЙ (ПРЯЧЕТ ФАЙЛ У ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ) ===
+let currentTrackedRoom = null;
+let removeListener = null;
+setInterval(() => {
+    let activeRoom = window.currentRoomId || 'global';
+    if (window.currentIndex === 2 && activeRoom === 'global') activeRoom = 'video_room_global';
+
+    if (activeRoom && activeRoom !== currentTrackedRoom && typeof firebase !== 'undefined') {
+        if (currentTrackedRoom && removeListener) firebase.database().ref(currentTrackedRoom).off('child_removed', removeListener);
+        currentTrackedRoom = activeRoom;
+        
+        removeListener = firebase.database().ref(currentTrackedRoom).on('child_removed', (snapshot) => {
+            const deletedId = snapshot.key;
+            const exactEl = document.querySelector(`[data-firebase-id="${deletedId}"]`) || document.querySelector(`[data-id="${deletedId}"]`);
+            
+            if (exactEl) {
+                exactEl.style.setProperty('display', 'none', 'important');
+                const group = exactEl.closest('.flex.flex-col.w-full.mt-3.mb-2');
+                if (group) group.style.setProperty('display', 'none', 'important');
+            } else {
+                // Если нет ID, ищем по контенту
+                const data = snapshot.val();
+                if (!data) return;
+                document.querySelectorAll('.chat-bubble-wrapper').forEach(wrapper => {
+                    if (wrapper.style.display === 'none') return;
+                    const media = getMediaFromWrapper(wrapper);
+                    if (media.content === data.mediaUrl || media.content === data.text || media.content === data.originalText) {
+                        wrapper.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            }
+        });
+    }
+}, 1000);
+
+// === ДОЛГИЙ ТАП (ДЛЯ ОБЫЧНОГО ТЕКСТА) ===
 function handleTextContextRequest(wrapper) {
     if (wrapper.querySelector('img:not(.w-8)') || wrapper.querySelector('video') || wrapper.querySelector('iframe')) return;
     const selection = window.getSelection().toString();
@@ -376,24 +329,18 @@ function handleTextContextRequest(wrapper) {
 }
 
 let touchTimer = null; let touchMoved = false;
-
 document.addEventListener('touchstart', function(e) {
     const wrapper = e.target.closest('.chat-bubble-wrapper');
     if (!wrapper) return;
     touchMoved = false;
     touchTimer = setTimeout(() => {
         if (touchMoved) return; 
-        handleTextContextRequest(wrapper); 
+        handleTextContextRequest(wrapper);
     }, 500); 
 }, { passive: true }); 
 
-document.addEventListener('touchend', function(e) { 
-    if (touchTimer) clearTimeout(touchTimer); 
-});
-document.addEventListener('touchmove', function() { 
-    touchMoved = true; 
-    if (touchTimer) clearTimeout(touchTimer); 
-}, { passive: true });
+document.addEventListener('touchend', function(e) { if (touchTimer) clearTimeout(touchTimer); });
+document.addEventListener('touchmove', function() { touchMoved = true; if (touchTimer) clearTimeout(touchTimer); }, { passive: true });
 
 document.addEventListener('contextmenu', function(e) {
     const wrapper = e.target.closest('.chat-bubble-wrapper');
