@@ -108,3 +108,69 @@ window.sendEmailForm = function(e) {
     });
 };
          
+// --- БЛОК АВТОМАТИЧЕСКОЙ МУЛЬТИЯЗЫЧНОСТИ ДЛЯ EMAIL-ФОРМЫ ---
+(function initEmailTranslationBlock() {
+    // 1. Словарь для формы
+    const emailDict = {
+        en: { email_title: "Send Email", email_to: "Recipient (To)", email_subj: "Subject", email_msg: "Write your message here...", email_clear: "Clear", email_send: "Send" },
+        ru: { email_title: "Отправить Email", email_to: "Получатель (Кому)", email_subj: "Тема", email_msg: "Напишите сообщение...", email_clear: "Очистить", email_send: "Отправить" },
+        az: { email_title: "E-poçt Göndər", email_to: "Alıcı (Kimə)", email_subj: "Mövzu", email_msg: "Mesajınızı bura yazın...", email_clear: "Təmizlə", email_send: "Göndər" },
+        kk: { email_title: "Хат жіберу", email_to: "Алушы (Кімге)", email_subj: "Тақырыбы", email_msg: "Хабарламаңызды жазыңыз...", email_clear: "Тазалау", email_send: "Жіберу" },
+        de: { email_title: "E-Mail senden", email_to: "Empfänger", email_subj: "Betreff", email_msg: "Nachricht hier schreiben...", email_clear: "Löschen", email_send: "Senden" },
+        tr: { email_title: "E-posta Gönder", email_to: "Alıcı", email_subj: "Konu", email_msg: "Mesajınızı buraya yazın...", email_clear: "Temizle", email_send: "Gönder" },
+        ar: { email_title: "إرسال بريد", email_to: "المستلم", email_subj: "الموضوع", email_msg: "اكتب رسالتك هنا...", email_clear: "مسح", email_send: "إرسال" },
+        it: { email_title: "Invia Email", email_to: "Destinatario", email_subj: "Oggetto", email_msg: "Scrivi qui il tuo messaggio...", email_clear: "Pulisci", email_send: "Invia" },
+        es: { email_title: "Enviar Correo", email_to: "Destinatario", email_subj: "Asunto", email_msg: "Escribe tu mensaje aquí...", email_clear: "Borrar", email_send: "Enviar" },
+        fr: { email_title: "Envoyer E-mail", email_to: "Destinataire", email_subj: "Sujet", email_msg: "Écrivez votre message ici...", email_clear: "Effacer", email_send: "Envoyer" },
+        pt: { email_title: "Enviar E-mail", email_to: "Destinatário", email_subj: "Assunto", email_msg: "Escreva sua mensagem aqui...", email_clear: "Limpar", email_send: "Enviar" },
+        ja: { email_title: "メールを送信", email_to: "宛先", email_subj: "件名", email_msg: "ここにメッセージを書く...", email_clear: "クリア", email_send: "送信" },
+        zh: { email_title: "发送邮件", email_to: "收件人", email_subj: "主题", email_msg: "在此处编写您的信息...", email_clear: "清除", email_send: "发送" }
+    };
+
+    // 2. Функция внедрения
+    function applyEmailInjection() {
+        // Добавляем слова в глобальный словарь window.i18n
+        if (window.i18n) {
+            Object.keys(emailDict).forEach(lang => {
+                if (!window.i18n[lang]) window.i18n[lang] = {};
+                Object.assign(window.i18n[lang], emailDict[lang]);
+            });
+        }
+
+        // Находим форму и проставляем атрибуты data-i18n
+        const modal = document.getElementById('email-modal');
+        if (modal && !modal.dataset.i18nInjected) {
+            const title = modal.querySelector('h2');
+            if (title) title.innerHTML = `<i class="fa-solid fa-envelope text-red-400 mr-2"></i> <span data-i18n="email_title">Send Email</span>`;
+            
+            const toInput = document.getElementById('email-to');
+            if (toInput) toInput.setAttribute('data-i18n-placeholder', 'email_to');
+
+            const subjInput = document.getElementById('email-subject');
+            if (subjInput) subjInput.setAttribute('data-i18n-placeholder', 'email_subj');
+
+            const msgInput = document.getElementById('email-text');
+            if (msgInput) msgInput.setAttribute('data-i18n-placeholder', 'email_msg');
+
+            const clearBtn = modal.querySelector('button[type="button"]');
+            if (clearBtn) clearBtn.innerHTML = `<i class="fa-solid fa-eraser"></i> <span data-i18n="email_clear">Clear</span>`;
+
+            const sendBtn = modal.querySelector('button[type="submit"]');
+            if (sendBtn) sendBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span data-i18n="email_send">Send</span>`;
+            
+            // Отмечаем, что внедрение прошло, чтобы не дублировать
+            modal.dataset.i18nInjected = "true";
+
+            // Вызываем перевод немедленно
+            if (window.applyTranslations) window.applyTranslations();
+        }
+    }
+
+    // 3. Запускаем после загрузки DOM или немедленно, если уже загружен
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyEmailInjection);
+    } else {
+        applyEmailInjection();
+    }
+})();
+// --- КОНЕЦ БЛОКА МУЛЬТИЯЗЫЧНОСТИ ---
