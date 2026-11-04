@@ -50,7 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- 1. ПЕРЕДАЧА ГОЛОСА И ВИДЕО (WebRTC) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
-        window.localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+        // Проверяем, не включили ли мы камеру уже на этапе дозвона
+        if (!window.localStream) {
+            window.localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+        }
     } catch (e) {
         alert("Нет доступа к микрофону/камере! Убедитесь, что дано разрешение.");
         return;
@@ -59,9 +62,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     const servers = { 
         iceServers: [ 
             { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' }
+            { urls: 'stun:stun1.l.google.com:19302' }
         ] 
     };
     window.peerConnection = new RTCPeerConnection(servers);
@@ -74,13 +75,17 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             myVideo.src = ""; 
             myVideo.srcObject = window.localStream;
             myVideo.play().catch(e=>{});
+            const camBtn = document.getElementById('conf-cam-btn');
+            if (camBtn) { 
+                camBtn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
+                camBtn.innerHTML = '<i class="fa-solid fa-video text-white"></i>'; 
+            }
         }
     }
 
     window.peerConnection.ontrack = (event) => {
         if (isVideo) {
             let gridVideo = document.getElementById(`remote-video-${targetId}`);
-            
             if (gridVideo) {
                 gridVideo.srcObject = event.streams[0];
                 gridVideo.classList.remove('hidden');
@@ -166,20 +171,42 @@ window.endWebRTCCall = function() {
         myVideo.srcObject = null;
         myVideo.src = window.myProfileInfo?.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4';
     }
+    
+    const camBtn = document.getElementById('conf-cam-btn');
+    if (camBtn) {
+        camBtn.classList.replace('bg-red-500', 'bg-[#202c33]');
+        camBtn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]';
+    }
 };
 
-// --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
+// --- 2. ЛОГИКА ДОЗВОНА И ПРИЕМА СИГНАЛОВ ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
 window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
 
-window.startInAppCall = function(callType = 'voice') { 
+window.startInAppCall = async function(callType = 'voice') { 
     if (!window.currentTargetUser) { 
         alert("Выберите контакт для звонка!"); window.closePhoneChoiceModal(); return; 
     } 
     const target = window.currentTargetUser; 
     window.closePhoneChoiceModal(); 
-    
     window.myLastOutgoingCallType = callType;
+    
+    // Включаем свою камеру СРАЗУ во время дозвона
+    if (callType === 'video') {
+        try {
+            window.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const myVideo = document.getElementById('my-live-video');
+            if (myVideo) { myVideo.srcObject = window.localStream; myVideo.play(); }
+            const camBtn = document.getElementById('conf-cam-btn');
+            if (camBtn) { 
+                camBtn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
+                camBtn.innerHTML = '<i class="fa-solid fa-video text-white"></i>'; 
+            }
+        } catch (e) {
+            console.error("Ошибка камеры при дозвоне:", e);
+        }
+    }
+
     firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
 
     let callRef = firebase.database().ref('signals/' + target.id).push();
@@ -194,12 +221,7 @@ window.startInAppCall = function(callType = 'voice') {
     
     let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
     if (window.sendPushNotification) {
-        window.sendPushNotification(
-            target.id, 
-            { type: 'call', callerName: window.myUsername, callType: callType }, 
-            pushTitle, 
-            `${window.myUsername} звонит вам!`
-        );
+        window.sendPushNotification(target.id, { type: 'call', callerName: window.myUsername, callType: callType }, pushTitle, `${window.myUsername} звонит вам!`);
     }
     
     const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
@@ -219,16 +241,8 @@ window.startInAppCall = function(callType = 'voice') {
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
-        
-        let missedTitle = callType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
-        if (window.sendPushNotification) {
-            window.sendPushNotification(
-                target.id, 
-                { type: 'missed', callerName: window.myUsername }, 
-                missedTitle, 
-                `Вы пропустили вызов от ${window.myUsername}`
-            );
-        }
+        window.endWebRTCCall(); // Отключаем камеру, если не ответили
+        if (window.switchTab) window.switchTab(0);
     }, 30000);
 };
 
@@ -293,10 +307,10 @@ window.hangUpCall = function() {
     if (window.switchTab) window.switchTab(0);
 };
 
+// Исправлено: убрана блокировка вызова при разнице во времени
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
     
-    // Предотвращаем двойной запуск слушателя
     if (window.isSignalListenerActive) return;
     window.isSignalListenerActive = true;
 
@@ -304,8 +318,7 @@ window.initSignalListener = function() {
         const sig = snap.val(); if (!sig) return; 
         
         if (sig.type === 'call') { 
-            if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType); 
-            else firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType); 
         } 
         else if (sig.type === 'reject') {
             window.stopAllRings();
@@ -337,15 +350,16 @@ let signalInitCheck = setInterval(() => {
     }
 }, 1000);
 
+
 // --- 3. ИЗОЛИРОВАННАЯ ВИДЕОКОНФЕРЕНЦИЯ С УМНОЙ ЛОГИКОЙ (12 СТРАН) ---
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
     
-    let myReadLang = window.getLangPref(false, true); 
+    let myReadLang = (typeof window.getLangPref === 'function') ? window.getLangPref(false, true) : (window.myProfileInfo.langCode || 'en'); 
     let myReadFlag = window.myProfileInfo.flag || '🌐';
     
-        const smartLanguages = [
-        { code: 'kz', flag: '🇰🇿', lang: 'KK' }, // Добавили Казахстан (язык - казахский)
+    const smartLanguages = [
+        { code: 'kz', flag: '🇰🇿', lang: 'KK' }, 
         { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
         { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' },
         { code: 'es', flag: '🇪🇸', lang: 'ES' }, { code: 'fr', flag: '🇫🇷', lang: 'FR' },
@@ -353,7 +367,6 @@ window.initConference = function() {
         { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'ae', flag: '🇦🇪', lang: 'AR' },
         { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
     ];
-
 
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
@@ -378,7 +391,7 @@ window.initConference = function() {
                 let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
                 confHtml += `
                 <div class="video-frame">
-                    <video id="remote-video-${p.id}" class="absolute inset-0 w-full h-full object-cover z-20 hidden" autoplay playsinline></video>
+                    <video id="remote-video-${p.id}" class="absolute inset-0 w-full h-full object-cover z-20" autoplay playsinline></video>
                     <div class="absolute inset-0 flex items-center justify-center bg-[#111b21] z-10"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
                     <div class="video-overlay z-30">${(p.name||'User').split(' ')[0]}</div>
                     <div class="flag-overlay z-30" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
@@ -402,7 +415,7 @@ window.initConference = function() {
         let userLangStr = p.flagCode ? p.flagCode.toUpperCase() : 'AUTO';
         confHtml += `
         <div class="video-frame">
-            <video id="remote-video-${p.id}" class="absolute inset-0 w-full h-full object-cover z-20 hidden" autoplay playsinline></video>
+            <video id="remote-video-${p.id}" class="absolute inset-0 w-full h-full object-cover z-20" autoplay playsinline></video>
             <div class="absolute inset-0 flex items-center justify-center bg-[#111b21] z-10"><i class="fa-solid fa-user text-4xl text-[#2a3942]"></i></div>
             <div class="video-overlay z-30">${(p.name||'User').split(' ')[0]}</div>
             <div class="flag-overlay z-30" style="top:10px; right:10px;"><img src="https://flagcdn.com/w40/${p.flagCode || 'un'}.png" class="w-6 rounded-sm border border-[#2a3942]"></div>
@@ -421,16 +434,39 @@ window.initConference = function() {
 
 window.toggleMyCamera = async function(btn) { 
     const videoEl = document.getElementById('my-live-video'); 
-    if (window.myVideoStream) { 
-        window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
-        btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
+    
+    if (window.localStream) { 
+        window.endWebRTCCall(); 
+        if(videoEl) { 
+            videoEl.srcObject = null; 
+            videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
+            videoEl.play(); 
+        } 
+        btn.classList.replace('bg-red-500', 'bg-[#202c33]'); 
+        btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
     } else { 
         try { 
-            window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
-            if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
-            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
-        } catch(e) { alert("Доступ к камере запрещен!"); } 
+            window.localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true }); 
+            
+            if(videoEl) { 
+                videoEl.src = ""; 
+                videoEl.srcObject = window.localStream; 
+                videoEl.play(); 
+            } 
+            
+            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
+            btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
+            
+            if (window.currentTargetUser) {
+                window.startWebRTC(true, window.currentTargetUser.id, true);
+            } else {
+                alert("Камера включена. Выберите контакт для звонка (из списка контактов -> App Video).");
+            }
+
+        } catch(e) { 
+            console.error(e);
+            alert("Доступ к камере и микрофону запрещен! Разрешите их в настройках браузера."); 
+        } 
     } 
 };
 
