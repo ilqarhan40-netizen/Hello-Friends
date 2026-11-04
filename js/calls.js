@@ -10,6 +10,30 @@ window.currentIncomingCallType = 'voice';
 window.myLastOutgoingCallType = 'voice';
 window.webrtcDataChannel = null; // Канал для текста ИИ
 
+// === БЛОК 1: ПЕРЕДАТЧИК ПУШЕЙ (ВСТАВИТЬ СЮДА) ===
+window.sendPushNotification = function(targetUserId, payloadData, title, body) {
+    const oneSignalAppId = "ТВОЙ_APP_ID_ИЗ_ONESIGNAL";
+    const restApiKey = "ТВОЙ_REST_API_KEY_ИЗ_ONESIGNAL";
+
+    if (!oneSignalAppId || oneSignalAppId === "ТВОЙ_APP_ID_ИЗ_ONESIGNAL") return;
+
+    fetch("https://onesignal.com/api/v1/notifications", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic " + restApiKey
+        },
+        body: JSON.stringify({
+            app_id: oneSignalAppId,
+            include_external_user_ids: [targetUserId],
+            headings: { "en": title, "ru": title },
+            contents: { "en": body, "ru": body },
+            data: { custom: { a: payloadData } } 
+        })
+    }).catch(e => console.log(e));
+};
+
+
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
 window.sndCash = new Audio('cash.mp3.wav');
