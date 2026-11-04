@@ -6,18 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="close-sheet-btn" onclick="window.closeSearchModal()"><i class="fa-solid fa-xmark"></i></div>
                 
                 <h2 class="text-xl font-bold text-[var(--wa-text)] mb-5 mt-2 flex items-center gap-2">
-                    <i class="fa-solid fa-globe text-blue-400"></i> Global Omni-Search
+                    <i class="fa-solid fa-globe text-blue-400"></i> <span data-i18n="global_search">Global Omni-Search</span>
                 </h2>
                 
                 <div class="relative w-full mb-4 shrink-0">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-[#8696a0]"></i>
-                    <input type="text" id="global-search-input" onkeyup="window.performOmniSearch(this.value)" placeholder="Search..." class="w-full bg-[var(--wa-bg)] text-[var(--wa-text)] border border-[var(--wa-border)] rounded-2xl pl-11 pr-10 py-3.5 outline-none focus:border-blue-400 transition shadow-inner">
+                    <input type="text" id="global-search-input" onkeyup="window.performOmniSearch(this.value)" data-i18n-placeholder="search_placeholder" placeholder="Search..." class="w-full bg-[var(--wa-bg)] text-[var(--wa-text)] border border-[var(--wa-border)] rounded-2xl pl-11 pr-10 py-3.5 outline-none focus:border-blue-400 transition shadow-inner">
                     <i id="search-clear-btn" class="fa-solid fa-circle-xmark absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8696a0] hidden cursor-pointer hover:text-blue-400 transition" onclick="window.clearOmniSearch()"></i>
                 </div>
 
                 <div id="search-categories" class="flex flex-col gap-5 overflow-y-auto pb-6 shrink-0">
                     <div>
-                        <p class="text-[0.65rem] text-[#eab308] uppercase font-bold tracking-widest mb-2.5">People & Skills</p>
+                        <p class="text-[0.65rem] text-[#eab308] uppercase font-bold tracking-widest mb-2.5" data-i18n="people_skills">People & Skills</p>
                         <div class="flex flex-wrap gap-2.5">
                             <button onclick="window.setSearchQuery('Engineer')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-laptop-code text-[#eab308]"></i> Engineer</button>
                             <button onclick="window.setSearchQuery('Designer')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-palette text-[#eab308]"></i> Designer</button>
@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <p class="text-[0.65rem] text-green-500 uppercase font-bold tracking-widest mb-2.5">Services & Actions</p>
                         <div class="flex flex-wrap gap-2.5">
-                            <button onclick="window.closeSearchModal(); if(window.openBankTransferModal) window.openBankTransferModal();" class="px-4 py-2 bg-green-500/10 rounded-xl border border-green-500/30 text-green-500 text-xs font-bold hover:bg-green-500/20 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-money-bill-wave"></i> Send Money</button>
-                            <button onclick="window.closeSearchModal(); if(window.openEmailModal) window.openEmailModal();" class="px-4 py-2 bg-purple-500/10 rounded-xl border border-purple-500/30 text-purple-500 text-xs font-bold hover:bg-purple-500/20 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-envelope"></i> Compose Email</button>
+                            <button onclick="window.closeSearchModal(); if(window.openBankTransferModal) window.openBankTransferModal();" class="px-4 py-2 bg-green-500/10 rounded-xl border border-green-500/30 text-green-500 text-xs font-bold hover:bg-green-500/20 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-money-bill-wave"></i> <span data-i18n="wallet">Send Money</span></button>
+                            <button onclick="window.closeSearchModal(); if(window.openEmailModal) window.openEmailModal();" class="px-4 py-2 bg-purple-500/10 rounded-xl border border-purple-500/30 text-purple-500 text-xs font-bold hover:bg-purple-500/20 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-envelope"></i> <span data-i18n="email_title">Compose Email</span></button>
                         </div>
                     </div>
 
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p class="text-[0.65rem] text-blue-400 uppercase font-bold tracking-widest mb-2.5">Web Queries</p>
                         <div class="grid grid-cols-2 gap-2.5">
                             <button onclick="if(window.doNewsSearch) window.doNewsSearch('Exchange Rates')" class="py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-blue-400 transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-money-bill-transfer text-blue-400"></i> Exchange Rates</button>
-                            <button onclick="if(window.doNewsSearch) window.doNewsSearch('World News')" class="py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-blue-400 transition shadow-md flex items-center justify-center gap-2"><i class="fa-regular fa-newspaper text-blue-400"></i> World News</button>
+                            <button onclick="if(window.doNewsSearch) window.doNewsSearch('World News')" class="py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-blue-400 transition shadow-md flex items-center justify-center gap-2"><i class="fa-regular fa-newspaper text-blue-400"></i> <span data-i18n="global_news">World News</span></button>
                         </div>
                     </div>
                 </div>
@@ -58,12 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 <iframe id="search-result-frame" class="w-full h-[40vh] mt-3 rounded-xl border border-[var(--wa-border)] bg-white hidden shrink-0" src="about:blank"></iframe>
                 
                 <button onclick="window.executeDirectGoogleSearch()" class="w-full py-3.5 mt-auto bg-[var(--wa-bg)] rounded-2xl border border-[var(--wa-border)] text-[var(--wa-text)] font-bold text-sm hover:bg-[var(--wa-border)] transition flex items-center justify-center gap-2 shrink-0 shadow-lg mt-2">
-                    Search Web: <span class="text-blue-500 text-base">G</span><span class="text-red-500 text-base">o</span><span class="text-yellow-500 text-base">o</span><span class="text-blue-500 text-base">g</span><span class="text-green-500 text-base">l</span><span class="text-red-500 text-base">e</span>
+                    <span data-i18n="search_web">Search Web:</span> <span class="text-blue-500 text-base">G</span><span class="text-red-500 text-base">o</span><span class="text-yellow-500 text-base">o</span><span class="text-blue-500 text-base">g</span><span class="text-green-500 text-base">l</span><span class="text-red-500 text-base">e</span>
                 </button>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', searchModalHTML);
+    
+    // Применяем переводы к только что созданному окну, если глобальная функция уже доступна
+    setTimeout(() => {
+        if (window.applyTranslations) window.applyTranslations();
+    }, 150);
 });
 
 // Функции модального окна поиска
