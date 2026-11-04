@@ -98,3 +98,15 @@ self.addEventListener('push', function(event) {
         event.waitUntil(self.registration.showNotification('📵 Пропущенный', missedOptions));
     }
 });
+
+    // В. НОВОЕ ПИСЬМО НА ПОЧТУ
+    if (payload.type === 'email') {
+        const emailOptions = {
+            body: payload.bodyText || 'У вас новое сообщение',
+            icon: '/img/logo.png', 
+            vibrate: [200, 100, 200], 
+            tag: 'new-email'
+        };
+        event.waitUntil(self.registration.showNotification('📧 ' + (payload.titleText || 'Новое письмо'), emailOptions));
+    }
+
