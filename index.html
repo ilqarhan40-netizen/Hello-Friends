@@ -1636,7 +1636,28 @@ Object.keys(emailTranslations).forEach(lang => {
         Object.assign(window.i18n[lang], emailTranslations[lang]);
     }
 });
-            
+
+   // --- ПЕРЕВОДЫ ДЛЯ КНОПОК АВАТАРА ---
+const avatarTranslations = {
+    en: { btn_private_chat: "Private Chat", btn_voice_msg: "Voice Msg", btn_app_audio: "App Audio", btn_app_video: "App Video", btn_phone_call: "Phone Call" },
+    ru: { btn_private_chat: "Личный чат", btn_voice_msg: "Голосовое", btn_app_audio: "Звонок в App", btn_app_video: "Видео в App", btn_phone_call: "Сотовый звонок" },
+    kk: { btn_private_chat: "Жеке чат", btn_voice_msg: "Дауыстық", btn_app_audio: "App қоңырау", btn_app_video: "App видео", btn_phone_call: "Ұялы телефон" },
+    az: { btn_private_chat: "Şəxsi Çat", btn_voice_msg: "Səsli Mesaj", btn_app_audio: "App Zəngi", btn_app_video: "App Videosu", btn_phone_call: "Mobil Zəng" },
+    de: { btn_private_chat: "Privater Chat", btn_voice_msg: "Sprachnachricht", btn_app_audio: "App-Anruf", btn_app_video: "App-Video", btn_phone_call: "Handyanruf" },
+    tr: { btn_private_chat: "Özel Sohbet", btn_voice_msg: "Sesli Mesaj", btn_app_audio: "App Araması", btn_app_video: "App Videosu", btn_phone_call: "Mobil Arama" },
+    ar: { btn_private_chat: "دردشة خاصة", btn_voice_msg: "رسالة صوتية", btn_app_audio: "اتصال التطبيق", btn_app_video: "فيديو التطبيق", btn_phone_call: "مكالمة هاتفية" },
+    it: { btn_private_chat: "Chat Privata", btn_voice_msg: "Messaggio Vocale", btn_app_audio: "Chiamata App", btn_app_video: "Video App", btn_phone_call: "Chiamata Cellulare" },
+    es: { btn_private_chat: "Chat Privado", btn_voice_msg: "Mensaje de Voz", btn_app_audio: "Llamada App", btn_app_video: "Video App", btn_phone_call: "Llamada Móvil" },
+    fr: { btn_private_chat: "Chat Privé", btn_voice_msg: "Message Vocal", btn_app_audio: "Appel App", btn_app_video: "Vidéo App", btn_phone_call: "Appel Mobile" },
+    pt: { btn_private_chat: "Chat Privado", btn_voice_msg: "Mensagem de Voz", btn_app_audio: "Chamada App", btn_app_video: "Vídeo App", btn_phone_call: "Chamada de Celular" },
+    ja: { btn_private_chat: "プライベートチャット", btn_voice_msg: "ボイスメッセージ", btn_app_audio: "アプリ通話", btn_app_video: "アプリビデオ", btn_phone_call: "電話をかける" },
+    zh: { btn_private_chat: "私人聊天", btn_voice_msg: "语音信息", btn_app_audio: "应用通话", btn_app_video: "应用视频", btn_phone_call: "拨打电话" }
+};
+
+Object.keys(avatarTranslations).forEach(lang => {
+    if (window.i18n[lang]) Object.assign(window.i18n[lang], avatarTranslations[lang]);
+});
+         
 // --- УМНАЯ ЛОГИКА ЯЗЫКА (РАБОТАЕТ С ГЛОБАЛЬНЫМ СЛОВАРЕМ) ---
 window.applyTranslations = function() { 
     let savedLang = localStorage.getItem('hf_app_lang') || 'auto';
