@@ -39,10 +39,8 @@ window.sendEmailForm = function(e) {
     const dict = window.i18n[window.appLang] || window.i18n['en'];
     
     const btn = e.target.querySelector('button[type="submit"]');
-    // Запоминаем оригинальный HTML кнопки (чтобы вернуть иконку и span с data-i18n)
     const originalHTML = btn.innerHTML; 
     
-    // Меняем текст на лету (иконку убираем на время отправки)
     btn.innerText = dict['email_sending'] || 'Sending...'; 
     btn.classList.add('animate-pulse');
     
@@ -57,7 +55,18 @@ window.sendEmailForm = function(e) {
     };
     
     emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScxO").then(function() {
-            
+        
+        // === БЛОК 3: ПИНОК ПУШ-УВЕДОМЛЕНИЯ О ПИСЬМЕ ===
+        if (window.sendPushNotification) {
+            window.sendPushNotification(
+                to, // Отправляем пуш на email получателя
+                { type: 'email', titleText: 'Новое письмо', bodyText: `От: ${window.myUsername || 'User'}` }, 
+                'Новое письмо', 
+                `Вам пришло письмо от ${window.myUsername || 'User'}`
+            );
+        }
+        // ==============================================
+
         btn.classList.remove('animate-pulse'); 
         btn.innerText = dict['email_success'] || 'Success! ✔️'; 
         btn.style.background = '#00a884'; 
@@ -65,7 +74,6 @@ window.sendEmailForm = function(e) {
         
         setTimeout(() => { 
             document.getElementById('email-form-element').reset(); 
-            // Возвращаем оригинальную HTML-разметку с иконкой и дата-атрибутом
             btn.innerHTML = originalHTML; 
             btn.style.background = ''; 
             btn.style.color = ''; 
