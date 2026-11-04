@@ -19,14 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <p class="text-[0.65rem] text-[#eab308] uppercase font-bold tracking-widest mb-2.5" data-i18n="people_skills">People & Skills</p>
                         <div class="flex flex-wrap gap-2.5">
-                            <button onclick="window.setSearchQuery('Engineer')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-laptop-code text-[#eab308]"></i> Engineer</button>
-                            <button onclick="window.setSearchQuery('Designer')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-palette text-[#eab308]"></i> Designer</button>
-                            <button onclick="window.setSearchQuery('Marketing')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-chart-line text-[#eab308]"></i> Marketing</button>
+                            <button onclick="window.setSearchQuery('Engineer')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-laptop-code text-[#eab308]"></i> <span data-i18n="search_engineer">Engineer</span></button>
+                            <button onclick="window.setSearchQuery('Designer')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-palette text-[#eab308]"></i> <span data-i18n="search_designer">Designer</span></button>
+                            <button onclick="window.setSearchQuery('Marketing')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-[#eab308] transition shadow-md flex items-center gap-2"><i class="fa-solid fa-chart-line text-[#eab308]"></i> <span data-i18n="search_marketing">Marketing</span></button>
                         </div>
                     </div>
 
                     <div>
-                        <p class="text-[0.65rem] text-cyan-400 uppercase font-bold tracking-widest mb-2.5">Places & Languages</p>
+                        <p class="text-[0.65rem] text-cyan-400 uppercase font-bold tracking-widest mb-2.5" data-i18n="places_languages">Places & Languages</p>
                         <div class="flex flex-wrap gap-2.5">
                             <button onclick="window.setSearchQuery('Germany')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-cyan-400 transition shadow-md flex items-center gap-2"><span class="text-[10px] bg-gray-500/20 text-[#8696a0] px-1.5 py-0.5 rounded">DE</span> Germany</button>
                             <button onclick="window.setSearchQuery('Italy')" class="px-3.5 py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-cyan-400 transition shadow-md flex items-center gap-2"><span class="text-[10px] bg-gray-500/20 text-[#8696a0] px-1.5 py-0.5 rounded">IT</span> Italy</button>
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <div>
-                        <p class="text-[0.65rem] text-green-500 uppercase font-bold tracking-widest mb-2.5">Services & Actions</p>
+                        <p class="text-[0.65rem] text-green-500 uppercase font-bold tracking-widest mb-2.5" data-i18n="services_actions">Services & Actions</p>
                         <div class="flex flex-wrap gap-2.5">
                             <button onclick="window.closeSearchModal(); if(window.openBankTransferModal) window.openBankTransferModal();" class="px-4 py-2 bg-green-500/10 rounded-xl border border-green-500/30 text-green-500 text-xs font-bold hover:bg-green-500/20 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-money-bill-wave"></i> <span data-i18n="wallet">Send Money</span></button>
                             <button onclick="window.closeSearchModal(); if(window.openEmailModal) window.openEmailModal();" class="px-4 py-2 bg-purple-500/10 rounded-xl border border-purple-500/30 text-purple-500 text-xs font-bold hover:bg-purple-500/20 transition shadow-md flex items-center gap-2"><i class="fa-solid fa-envelope"></i> <span data-i18n="email_title">Compose Email</span></button>
@@ -44,9 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <div>
-                        <p class="text-[0.65rem] text-blue-400 uppercase font-bold tracking-widest mb-2.5">Web Queries</p>
+                        <p class="text-[0.65rem] text-blue-400 uppercase font-bold tracking-widest mb-2.5" data-i18n="web_queries">Web Queries</p>
                         <div class="grid grid-cols-2 gap-2.5">
-                            <button onclick="if(window.doNewsSearch) window.doNewsSearch('Exchange Rates')" class="py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-blue-400 transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-money-bill-transfer text-blue-400"></i> Exchange Rates</button>
+                            <button onclick="if(window.doNewsSearch) window.doNewsSearch('Exchange Rates')" class="py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-blue-400 transition shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-money-bill-transfer text-blue-400"></i> <span data-i18n="exchange_rates">Exchange Rates</span></button>
                             <button onclick="if(window.doNewsSearch) window.doNewsSearch('World News')" class="py-2 bg-[var(--wa-bg)] rounded-xl border border-[var(--wa-border)] text-[var(--wa-text)] text-xs font-bold hover:border-blue-400 transition shadow-md flex items-center justify-center gap-2"><i class="fa-regular fa-newspaper text-blue-400"></i> <span data-i18n="global_news">World News</span></button>
                         </div>
                     </div>
@@ -64,11 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', searchModalHTML);
-    
-    // Применяем переводы к только что созданному окну, если глобальная функция уже доступна
-    setTimeout(() => {
-        if (window.applyTranslations) window.applyTranslations();
-    }, 150);
 });
 
 // Функции модального окна поиска
@@ -125,10 +120,13 @@ window.performOmniSearch = function(value) {
     categories.style.display = 'none';
     clearBtn.classList.remove('hidden');
     statusText.classList.remove('hidden');
-    statusText.innerHTML = `<div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div> Поиск: "${value}"...`;
+    
+    // Перевод статуса поиска (пока оставляем простым, можно усложнить потом)
+    statusText.innerHTML = `<div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div> "${value}"...`;
+    
     if(resultFrame) resultFrame.classList.add('hidden');
     
-    // Логика фильтрации (ищет по профессии, стране, имени или языку)
+    // Логика фильтрации
     let matchedUsers = window.participants ? window.participants.filter(p => p.id !== 'ai' && (!window.myProfileInfo || p.id !== window.myProfileInfo.id) && !p.id.startsWith('guest')) : []; 
     let valLower = value.toLowerCase();
     
@@ -144,13 +142,14 @@ window.performOmniSearch = function(value) {
     resultsArea.innerHTML = '';
 
     if (matchedUsers.length === 0) {
-        resultsArea.innerHTML = `<p class="text-[#8696a0] text-[0.8rem] text-center mt-6">В контактах совпадений не найдено.</p>`;
+        // Упрощенный статус "Ничего не найдено", который можно стилизовать
+        resultsArea.innerHTML = `<p class="text-[#8696a0] text-[0.8rem] text-center mt-6">0</p>`;
         return;
     }
     
-    statusText.innerHTML = `<i class="fa-solid fa-check text-green-400"></i> Found ${matchedUsers.length} user(s)`;
+    statusText.innerHTML = `<i class="fa-solid fa-check text-green-400"></i> ${matchedUsers.length}`;
 
-    // Отрисовка карточки (как на твоем фото: светлый/адаптивный фон, имя + код страны, профессия синим)
+    // Отрисовка карточки
     matchedUsers.forEach(p => {
         let nameTxt = (p.name || 'User').split(' ')[0];
         let prof = p.profession || 'User';
@@ -172,7 +171,7 @@ window.performOmniSearch = function(value) {
     });
 };
 
-// Поиск в Web (через Google кнопку)
+// Поиск в Web
 window.executeDirectGoogleSearch = function() {
     const q = document.getElementById('global-search-input').value;
     if(!q) return;
@@ -181,7 +180,43 @@ window.executeDirectGoogleSearch = function() {
         document.getElementById('search-categories').style.display = 'none';
         document.getElementById('search-results-area').innerHTML = '';
         document.getElementById('search-status-text').classList.add('hidden');
-        frame.src = `https://www.bing.com/search?q=${encodeURIComponent(q)}&setmkt=en-us&setlang=en-us`; // Используем Bing во фрейме, т.к. Google блокирует iframe
+        frame.src = `https://www.bing.com/search?q=${encodeURIComponent(q)}&setmkt=en-us&setlang=en-us`;
         frame.classList.remove('hidden');
     }
 };
+
+// --- БЛОК АВТОМАТИЧЕСКОЙ МУЛЬТИЯЗЫЧНОСТИ ДЛЯ ПОИСКА ---
+(function initSearchTranslationBlock() {
+    const searchDict = {
+        en: { places_languages: "Places & Languages", services_actions: "Services & Actions", web_queries: "Web Queries", search_engineer: "Engineer", search_designer: "Designer", search_marketing: "Marketing", exchange_rates: "Exchange Rates" },
+        ru: { places_languages: "Места и Языки", services_actions: "Сервисы и Действия", web_queries: "Веб Запросы", search_engineer: "Инженер", search_designer: "Дизайнер", search_marketing: "Маркетинг", exchange_rates: "Курсы Валют" },
+        az: { places_languages: "Məkanlar və Dillər", services_actions: "Xidmətlər və Fəaliyyətlər", web_queries: "Veb Sorğular", search_engineer: "Mühəndis", search_designer: "Dizayner", search_marketing: "Marketinq", exchange_rates: "Məzənnələr" },
+        kk: { places_languages: "Орындар және тілдер", services_actions: "Қызметтер және әрекеттер", web_queries: "Веб сұраулар", search_engineer: "Инженер", search_designer: "Дизайнер", search_marketing: "Маркетинг", exchange_rates: "Валюта бағамдары" },
+        de: { places_languages: "Orte & Sprachen", services_actions: "Dienste & Aktionen", web_queries: "Web-Abfragen", search_engineer: "Ingenieur", search_designer: "Designer", search_marketing: "Marketing", exchange_rates: "Wechselkurse" },
+        tr: { places_languages: "Yerler ve Diller", services_actions: "Hizmetler ve İşlemler", web_queries: "Web Sorguları", search_engineer: "Mühendis", search_designer: "Tasarımcı", search_marketing: "Pazarlama", exchange_rates: "Döviz Kurları" },
+        ar: { places_languages: "الأماكن واللغات", services_actions: "الخدمات والإجراءات", web_queries: "استعلامات الويب", search_engineer: "مهندس", search_designer: "مصمم", search_marketing: "تسويق", exchange_rates: "أسعار الصرف" },
+        it: { places_languages: "Luoghi e Lingue", services_actions: "Servizi e Azioni", web_queries: "Query Web", search_engineer: "Ingegnere", search_designer: "Designer", search_marketing: "Marketing", exchange_rates: "Tassi di Cambio" },
+        es: { places_languages: "Lugares e Idiomas", services_actions: "Servicios y Acciones", web_queries: "Consultas Web", search_engineer: "Ingeniero", search_designer: "Diseñador", search_marketing: "Marketing", exchange_rates: "Tipos de Cambio" },
+        fr: { places_languages: "Lieux et Langues", services_actions: "Services et Actions", web_queries: "Requêtes Web", search_engineer: "Ingénieur", search_designer: "Designer", search_marketing: "Marketing", exchange_rates: "Taux de Change" },
+        pt: { places_languages: "Lugares e Idiomas", services_actions: "Serviços e Ações", web_queries: "Consultas da Web", search_engineer: "Engenheiro", search_designer: "Designer", search_marketing: "Marketing", exchange_rates: "Taxas de Câmbio" },
+        ja: { places_languages: "場所と言語", services_actions: "サービスとアクション", web_queries: "ウェブクエリ", search_engineer: "エンジニア", search_designer: "デザイナー", search_marketing: "マーケティング", exchange_rates: "為替レート" },
+        zh: { places_languages: "地点和语言", services_actions: "服务与操作", web_queries: "Web查询", search_engineer: "工程师", search_designer: "设计师", search_marketing: "营销", exchange_rates: "汇率" }
+    };
+
+    function applySearchInjection() {
+        if (window.i18n) {
+            Object.keys(searchDict).forEach(lang => {
+                if (!window.i18n[lang]) window.i18n[lang] = {};
+                Object.assign(window.i18n[lang], searchDict[lang]);
+            });
+        }
+        if (window.applyTranslations) window.applyTranslations();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applySearchInjection);
+    } else {
+        applySearchInjection();
+    }
+})();
+// --- КОНЕЦ БЛОКА ПОИСКА ---
