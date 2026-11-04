@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - ФИНАЛЬНАЯ СБОРКА 
-// (Оригинальные языки + Бронебойные три точки + Механика медиа)
+// (Оригинальные языки + ОРИГИНАЛЬНЫЙ СТАРТ ТРЕХ ТОЧЕК + Механика медиа)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -66,13 +66,18 @@ function getMediaFromWrapper(wrapper) {
     const bubble = wrapper.querySelector('.chat-bubble'); if (!bubble) return { content: null, type: 'text' };
     
     const vid = bubble.querySelector('video');
-    if (vid) return { content: vid.src || vid.querySelector('source')?.src, type: 'video' };
+    if (vid) {
+        const vSrc = vid.src || vid.querySelector('source')?.src;
+        if (vSrc) return { content: vSrc, type: 'video' };
+    }
     
     const iframe = bubble.querySelector('iframe');
     if (iframe && iframe.src) return { content: iframe.src, type: 'location' };
     
     const docLink = bubble.querySelector('a[href*="alt=media"]');
-    if (docLink && !docLink.href.includes('google.com/maps') && !docLink.querySelector('img')) return { content: docLink.href, type: 'document' };
+    if (docLink && !docLink.href.includes('google.com/maps') && !docLink.querySelector('img')) {
+        return { content: docLink.href, type: 'document' };
+    }
     
     const img = bubble.querySelector('img:not(.w-8):not(.rounded-full)');
     if (img && img.src && !img.src.includes('ui-avatars') && !img.src.includes('flagcdn')) return { content: img.src, type: 'image' };
@@ -80,7 +85,7 @@ function getMediaFromWrapper(wrapper) {
     return { content: bubble.innerText || bubble.textContent || '', type: 'text' };
 }
 
-// === БРОНЕБОЙНЫЙ ИНЖЕКТОР (БОЛЬШЕ НЕ ЛОМАЕТСЯ) ===
+// === ИНЖЕКТОР КНОПОК ===
 function injectActionButtons(wrapper) {
     if (wrapper.querySelector('.media-action-bar')) return;
     const media = getMediaFromWrapper(wrapper);
@@ -99,11 +104,29 @@ function injectActionButtons(wrapper) {
     }
 }
 
-// Сканируем чат каждую секунду. Надежнее, чем MutationObserver, который умирал при переключении комнат.
-setInterval(() => {
-    document.querySelectorAll('.chat-bubble-wrapper').forEach(w => injectActionButtons(w));
-}, 1000);
+// === ТВОЙ ОРИГИНАЛЬНЫЙ НАБЛЮДАТЕЛЬ (ВОССТАНОВЛЕН) ===
+let observerTimeout = null;
+const chatObserver = new MutationObserver((mutations) => {
+    if (observerTimeout) clearTimeout(observerTimeout);
+    observerTimeout = setTimeout(() => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { 
+                    if (node.classList.contains('chat-bubble-wrapper')) injectActionButtons(node);
+                    else node.querySelectorAll('.chat-bubble-wrapper').forEach(w => injectActionButtons(w));
+                }
+            });
+        });
+    }, 50); 
+});
 
+setTimeout(() => {
+    const chatContainer = document.getElementById('chat-messages');
+    if (chatContainer) {
+        chatObserver.observe(chatContainer, { childList: true, subtree: true });
+        document.querySelectorAll('.chat-bubble-wrapper').forEach(w => injectActionButtons(w));
+    }
+}, 2000);
 
 // === ГЕНЕРАЦИЯ МЕНЮ ===
 window.openClipboardMenu = function(content, type, targetEl) {
