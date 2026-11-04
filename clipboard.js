@@ -1,6 +1,5 @@
 // ==========================================
-// CLIPBOARD.JS - ФИНАЛЬНАЯ СБОРКА
-// (Защита интерфейса, Умное меню удаления, Чистое копирование файлов)
+// CLIPBOARD.JS - ФИНАЛЬНАЯ МЕХАНИКА (Файлы, Удаление, Анти-кэш)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -18,7 +17,6 @@
     }
 })();
 
-// === УБИЙЦА GOOGLE LENS (СТРОГО ТОЛЬКО В ЧАТЕ - СКРЕПКА В БЕЗОПАСНОСТИ) ===
 window.addEventListener('contextmenu', function(e) {
     if (e.target.closest('.chat-bubble-wrapper')) {
         e.preventDefault(); e.stopPropagation(); return false;
@@ -33,54 +31,40 @@ window.addEventListener('dragstart', function(e) {
     }
 }, { capture: true });
 
-// === СЛОВАРИ (13 ЯЗЫКОВ) ===
-const clipDict = {
-    en: { clip_photo: "Photo", clip_video: "Video", clip_text: "Text", clip_loc: "Location", clip_link: "Link", clip_copy: "Copy", clip_paste: "Paste & Send", clip_save: "Save", clip_forward: "Forward", clip_del_me: "Delete for me", clip_del_all: "Delete for all" },
-    ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Вставить и Отправить", clip_save: "Сохранить", clip_forward: "Переслать", clip_del_me: "Удалить у меня", clip_del_all: "Удалить у всех" },
-    kk: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Мәтін", clip_loc: "Локация", clip_link: "Сілтеме", clip_copy: "Көшіру", clip_paste: "Кірістіру/Жіберу", clip_save: "Сақтау", clip_forward: "Қайта жіберу", clip_del_me: "Менен өшіру", clip_del_all: "Барлығынан өшіру" },
-    az: { clip_photo: "Şəkil", clip_video: "Video", clip_text: "Mətn", clip_loc: "Məkan", clip_link: "Link", clip_copy: "Kopyala", clip_paste: "Yerləşdir/Göndər", clip_save: "Yadda saxla", clip_forward: "Yönləndir", clip_del_me: "Məndən sil", clip_del_all: "Hamıdan sil" },
-    de: { clip_photo: "Foto", clip_video: "Video", clip_text: "Text", clip_loc: "Standort", clip_link: "Link", clip_copy: "Kopieren", clip_paste: "Einfügen & Senden", clip_save: "Speichern", clip_forward: "Weiterleiten", clip_del_me: "Für mich löschen", clip_del_all: "Für alle löschen" },
-    tr: { clip_photo: "Fotoğraf", clip_video: "Video", clip_text: "Metin", clip_loc: "Konum", clip_link: "Bağlantı", clip_copy: "Kopyala", clip_paste: "Yapıştır & Gönder", clip_save: "Kaydet", clip_forward: "İlet", clip_del_me: "Benden sil", clip_del_all: "Herkesten sil" },
-    ar: { clip_photo: "صورة", clip_video: "فيديو", clip_text: "نص", clip_loc: "الموقع", clip_link: "رابط", clip_copy: "نسخ", clip_paste: "لصق وإرسال", clip_save: "حفظ", clip_forward: "إرسال", clip_del_me: "حذف لدي", clip_del_all: "حذف لدى الجميع" },
-    it: { clip_photo: "Foto", clip_video: "Video", clip_text: "Testo", clip_loc: "Posizione", clip_link: "Link", clip_copy: "Copia", clip_paste: "Incolla e Invia", clip_save: "Salva", clip_forward: "Inoltra", clip_del_me: "Elimina per me", clip_del_all: "Elimina per tutti" },
-    es: { clip_photo: "Foto", clip_video: "Video", clip_text: "Texto", clip_loc: "Ubicación", clip_link: "Enlace", clip_copy: "Copiar", clip_paste: "Pegar y Enviar", clip_save: "Guardar", clip_forward: "Reenviar", clip_del_me: "Eliminar para mí", clip_del_all: "Eliminar para todos" },
-    fr: { clip_photo: "Photo", clip_video: "Vidéo", clip_text: "Texte", clip_loc: "Emplacement", clip_link: "Lien", clip_copy: "Copier", clip_paste: "Coller & Envoyer", clip_save: "Enregistrer", clip_forward: "Transférer", clip_del_me: "Supprimer pour moi", clip_del_all: "Supprimer pour tous" },
-    pt: { clip_photo: "Foto", clip_video: "Vídeo", clip_text: "Texto", clip_loc: "Localização", clip_link: "Link", clip_copy: "Copiar", clip_paste: "Colar e Enviar", clip_save: "Salvar", clip_forward: "Encaminhar", clip_del_me: "Excluir para mim", clip_del_all: "Excluir para todos" },
-    ja: { clip_photo: "写真", clip_video: "ビデオ", clip_text: "テキスト", clip_loc: "位置情報", clip_link: "リンク", clip_copy: "コピー", clip_paste: "貼り付けて送信", clip_save: "保存", clip_forward: "転送", clip_del_me: "自分のみ削除", clip_del_all: "全員から削除" },
-    zh: { clip_photo: "照片", clip_video: "视频", clip_text: "文本", clip_loc: "位置", clip_link: "链接", clip_copy: "复制", clip_paste: "粘贴并发送", clip_save: "保存", clip_forward: "转发", clip_del_me: "为我删除", clip_del_all: "为所有人删除" }
-};
-
-const checkClipI18n = setInterval(() => {
-    if (window.i18n && window.i18n.en) {
-        clearInterval(checkClipI18n);
-        for (let sysLang in window.i18n) { Object.assign(window.i18n[sysLang], clipDict[sysLang] || clipDict['en']); }
-        if (typeof window.applyTranslations === 'function') window.applyTranslations();
-    }
-}, 100);
 
 window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
 window.internalAppClipboard = { content: null, type: null, blob: null };
 
-// === ПОИСК ФАЙЛОВ (ИСПРАВЛЕНО: ВИДЕО ИДЕТ ПЕРВЫМ) ===
+// === 1. ИСПРАВЛЕННЫЙ ПОИСК ФАЙЛОВ (ВКЛЮЧАЯ ДОКУМЕНТЫ) ===
 function getMediaFromWrapper(wrapper) {
     const bubble = wrapper.querySelector('.chat-bubble'); if (!bubble) return { content: null, type: 'text' };
     
+    // Сначала ищем видео
     const vid = bubble.querySelector('video');
     if (vid) {
         const vSrc = vid.src || vid.querySelector('source')?.src;
         if (vSrc) return { content: vSrc, type: 'video' };
     }
     
+    // Ищем документы/файлы (по иконке скачивания или классу)
+    const docLink = bubble.querySelector('a[download], a[href*="alt=media"]');
+    if (docLink && !docLink.href.includes('google.com/maps')) { // Исключаем локации
+        return { content: docLink.href, type: 'document' };
+    }
+
+    // Ищем локацию
     const iframe = bubble.querySelector('iframe');
     if (iframe && iframe.src) return { content: iframe.src, type: 'location' };
     
+    // Ищем фото
     const img = bubble.querySelector('img:not(.w-8):not(.rounded-full)');
     if (img && img.src && !img.src.includes('ui-avatars') && !img.src.includes('flagcdn')) return { content: img.src, type: 'image' };
     
+    // Если ничего нет — это просто текст
     return { content: bubble.innerText || bubble.textContent || '', type: 'text' };
 }
 
-// === АВТО-ИНЖЕКТОР КНОПОК "3 ТОЧКИ" ===
+
 function injectActionButtons(wrapper) {
     if (wrapper.querySelector('.media-action-bar')) return;
     const media = getMediaFromWrapper(wrapper);
@@ -122,64 +106,58 @@ setTimeout(() => {
     }
 }, 2000);
 
-// === ГЕНЕРАЦИЯ МЕНЮ С УМНЫМ УДАЛЕНИЕМ ===
+
 window.openClipboardMenu = function(content, type, targetEl) {
     if (typeof window.closeDropdown === 'function') window.closeDropdown();
     window.currentClipContent = content; window.currentClipType = type; window.currentTargetElement = targetEl; 
     document.body.classList.add('clipboard-open');
 
-    let userLang = localStorage.getItem('hf_app_lang') || window.appLang || 'en';
-    if (userLang === 'auto') userLang = window.appLang || 'en';
-    const langDict = clipDict[userLang.substring(0,2)] || clipDict['en'];
+    let titleText = "Text";
+    if (type === 'image') titleText = "Photo";
+    else if (type === 'video') titleText = "Video";
+    else if (type === 'location') titleText = "Location";
+    else if (type === 'document') titleText = "Document";
 
-    let titleText = langDict.clip_text;
-    if (type === 'image') titleText = langDict.clip_photo;
-    else if (type === 'video') titleText = langDict.clip_video;
-    else if (type === 'location') titleText = langDict.clip_loc;
-
-    // Проверяем, моё ли это сообщение
     const isOutgoing = targetEl.classList.contains('outgoing') || targetEl.closest('.outgoing') !== null;
     
-    // Динамические кнопки удаления
     let deleteButtonsHTML = '';
     if (isOutgoing) {
         deleteButtonsHTML = `
             <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execDeleteAction('me')">
                 <div class="w-12 h-12 rounded-full bg-orange-950/30 flex items-center justify-center text-orange-500 text-lg border border-orange-900/40"><i class="fa-solid fa-eye-slash"></i></div>
-                <span class="text-[0.6rem] text-orange-500 font-bold text-center leading-tight">${langDict.clip_del_me}</span>
+                <span class="text-[0.6rem] text-orange-500 font-bold text-center leading-tight">Delete for me</span>
             </div>
             <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execDeleteAction('all')">
                 <div class="w-12 h-12 rounded-full bg-red-950/30 flex items-center justify-center text-[#ef4444] text-lg border border-red-900/40"><i class="fa-regular fa-trash-can"></i></div>
-                <span class="text-[0.6rem] text-[#ef4444] font-bold text-center leading-tight">${langDict.clip_del_all}</span>
+                <span class="text-[0.6rem] text-[#ef4444] font-bold text-center leading-tight">Delete for all</span>
             </div>
         `;
     } else {
         deleteButtonsHTML = `
             <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execDeleteAction('me')">
                 <div class="w-12 h-12 rounded-full bg-red-950/30 flex items-center justify-center text-[#ef4444] text-lg border border-red-900/40"><i class="fa-solid fa-eye-slash"></i></div>
-                <span class="text-[0.6rem] text-[#ef4444] font-bold text-center leading-tight">${langDict.clip_del_me}</span>
+                <span class="text-[0.6rem] text-[#ef4444] font-bold text-center leading-tight">Delete for me</span>
             </div>
         `;
     }
 
-    // Собираем общие кнопки
     const commonButtons = `
         <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execCopyAction()">
             <div class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-white text-lg border border-[#2a3942]"><i class="fa-regular fa-copy"></i></div>
-            <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight">${langDict.clip_copy}</span>
+            <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight">Copy</span>
         </div>
-        <div id="clip-save-btn" class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" style="display: ${(type === 'image' || type === 'video') ? 'flex' : 'none'}" onclick="window.execSaveAction()">
+        <div id="clip-save-btn" class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" style="display: ${(type === 'image' || type === 'video' || type === 'document') ? 'flex' : 'none'}" onclick="window.execSaveAction()">
             <div class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#f59e0b] text-lg border border-[#2a3942]"><i class="fa-solid fa-download"></i></div>
-            <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight">${langDict.clip_save}</span>
+            <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight">Save</span>
         </div>
         <div class="flex flex-col items-center gap-1 cursor-pointer hover:opacity-80 transition" onclick="window.execForwardAction()">
             <div class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#a855f7] text-lg border border-[#2a3942]"><i class="fa-solid fa-share"></i></div>
-            <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight">${langDict.clip_forward}</span>
+            <span class="text-[0.6rem] text-[#8696a0] font-bold text-center leading-tight">Forward</span>
         </div>
     `;
 
     let modal = document.getElementById('clipboard-modal-clean');
-    if (modal) modal.remove(); // Всегда пересоздаем, чтобы кнопки удаления обновлялись
+    if (modal) modal.remove(); 
 
     const modalHTML = `
     <div id="clipboard-modal-clean" onclick="if(event.target===this) window.closeClipboardModal();" style="display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:flex-end; padding-bottom: 2rem;">
@@ -195,13 +173,11 @@ window.openClipboardMenu = function(content, type, targetEl) {
             </div>
             
             <button type="button" onclick="window.execPasteAction()" class="flex items-center justify-center gap-2 w-full py-3.5 mt-2 bg-[#00a884] active:scale-95 text-[#111b21] rounded-2xl text-sm font-bold transition shadow-[0_0_15px_rgba(0,168,132,0.3)]">
-                <i class="fa-solid fa-paper-plane"></i> <span>${langDict.clip_paste}</span>
+                <i class="fa-solid fa-paper-plane"></i> <span>Paste & Send</span>
             </button>
         </div>
     </div>`;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    if (typeof window.applyTranslations === 'function') window.applyTranslations();
 };
 
 window.closeClipboardModal = function() {
@@ -209,7 +185,7 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-// === КОПИРОВАНИЕ И ВСТАВКА (ВИДЕО ИДЕТ СТРОГО КАК ФАЙЛ) ===
+// === 2. ЖЕСТКИЙ АНТИ-КЭШ ДЛЯ ФАЙЛОВ ПРИ КОПИРОВАНИИ ===
 window.execCopyAction = async function() {
     if (!window.currentClipContent) return;
     
@@ -217,28 +193,47 @@ window.execCopyAction = async function() {
     window.internalAppClipboard.type = window.currentClipType;
 
     try {
-        if (window.currentClipType === 'image' || window.currentClipType === 'video') {
-            const cacheBuster = window.currentClipContent.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
-            const res = await fetch(window.currentClipContent + cacheBuster, { cache: "no-store" });
+        if (['image', 'video', 'document'].includes(window.currentClipType)) {
+            // Агрессивный сброс кэша для Firebase Storage
+            let fetchUrl = window.currentClipContent;
+            if (fetchUrl.includes('?')) {
+                fetchUrl += `&ignoreCache=${Date.now()}`;
+            } else {
+                fetchUrl += `?ignoreCache=${Date.now()}`;
+            }
+            // mode: 'cors' и cache: 'no-cache' заставляют браузер тянуть оригинал
+            const res = await fetch(fetchUrl, { cache: "no-cache", mode: "cors" });
             window.internalAppClipboard.blob = await res.blob();
         } else {
             await navigator.clipboard.writeText(window.currentClipContent);
         }
         if (window.showToast) window.showToast("✔", "Copied", "", "");
-    } catch (err) {}
+    } catch (err) {
+        console.error("Ошибка копирования:", err);
+    }
     window.closeClipboardModal();
 };
 
+// === 3. ПРАВИЛЬНАЯ ВСТАВКА ВИДЕО И ДОКУМЕНТОВ ===
 window.execPasteAction = async function() {
     const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
     
-    if (window.internalAppClipboard.blob && (window.internalAppClipboard.type === 'image' || window.internalAppClipboard.type === 'video')) {
-        let extension = window.internalAppClipboard.type === 'video' ? '.mp4' : '.jpg';
-        let mime = window.internalAppClipboard.type === 'video' ? 'video/mp4' : 'image/jpeg';
+    if (window.internalAppClipboard.blob && ['image', 'video', 'document'].includes(window.internalAppClipboard.type)) {
+        let extension = '.jpg';
+        let mime = 'image/jpeg';
+        
+        if (window.internalAppClipboard.type === 'video') {
+            extension = '.mp4';
+            mime = 'video/mp4';
+        } else if (window.internalAppClipboard.type === 'document') {
+            extension = '.pdf'; // По умолчанию для документа, если не знаем точный
+            mime = 'application/pdf';
+        }
         
         const uniqueFilename = `media_copy_${Date.now()}${extension}`;
         const file = new File([window.internalAppClipboard.blob], uniqueFilename, { type: mime });
         
+        // Отправляем как реальный файл
         if (typeof window.handleMediaUpload === 'function') {
             window.handleMediaUpload({ target: { files: [file] } });
             if (window.showToast) window.showToast("✈️", "Sent", "", "");
@@ -251,17 +246,18 @@ window.execPasteAction = async function() {
         }
     }
     
-    window.internalAppClipboard = { content: null, type: null, blob: null }; // Чистим буфер от тяжелого файла
+    window.internalAppClipboard = { content: null, type: null, blob: null }; 
     window.closeClipboardModal();
 };
 
 window.execSaveAction = async function() {
-    if (!window.currentClipContent || (window.currentClipType !== 'image' && window.currentClipType !== 'video')) return;
+    if (!window.currentClipContent || !['image', 'video', 'document'].includes(window.currentClipType)) return;
     try {
         const response = await fetch(window.currentClipContent);
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `Saved_${Date.now()}.${window.currentClipType === 'video' ? 'mp4' : 'jpg'}`;
+        const extension = window.currentClipType === 'video' ? 'mp4' : (window.currentClipType === 'document' ? 'pdf' : 'jpg');
+        const a = document.createElement('a'); a.href = url; a.download = `Saved_${Date.now()}.${extension}`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url);
     } catch (e) {}
     if (window.showToast) window.showToast("💾", "Saved", "", "");
@@ -276,86 +272,76 @@ window.execForwardAction = function() {
     window.closeClipboardModal();
 };
 
-// === УМНОЕ УДАЛЕНИЕ (БЕЗ КРАШЕЙ) ===
+// === 4. УМНОЕ УДАЛЕНИЕ: ЗАПОМИНАЕМ СКРЫТОЕ В LOCALSTORAGE ===
 window.execDeleteAction = function(deleteType) {
     if (!window.currentTargetElement) return window.closeClipboardModal();
     
+    // Ищем конкретный пузырь, а не всю группу
     const wrapper = window.currentTargetElement.closest('.chat-bubble-wrapper') || window.currentTargetElement;
     const msgId = wrapper.getAttribute('data-id') || wrapper.getAttribute('data-firebase-id'); 
     
-    // БЕЗОПАСНОЕ СОКРЫТИЕ У СЕБЯ (никаких remove(), чтобы не сломать чат)
-    wrapper.style.setProperty('display', 'none', 'important');
-    const group = wrapper.closest('.flex.flex-col.w-full.mt-3.mb-2');
-    if (group) group.style.setProperty('display', 'none', 'important');
+    if (deleteType === 'me' && msgId) {
+        // Прячем у себя
+        wrapper.style.setProperty('display', 'none', 'important');
+        
+        // Записываем в черный список, чтобы не появилось после перезагрузки
+        let deletedMsgs = JSON.parse(localStorage.getItem('hf_deleted_messages') || '[]');
+        if (!deletedMsgs.includes(msgId)) {
+            deletedMsgs.push(msgId);
+            localStorage.setItem('hf_deleted_messages', JSON.stringify(deletedMsgs));
+        }
+    }
 
-    // ЕСЛИ НАЖАТО "УДАЛИТЬ У ВСЕХ" — стираем из базы
+    // Удаление из базы у всех (если есть права)
     if (deleteType === 'all' && msgId && typeof firebase !== 'undefined' && window.currentRoomId) {
         let targetDbRoom = window.currentRoomId || 'global';
         if (window.currentIndex === 2 && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
         
-        firebase.database().ref(targetDbRoom).child(msgId).remove().catch(err => {
-            // Если нет прав на удаление (база откажет) — вернем сообщение на экран
-            wrapper.style.display = 'flex';
-            if (group) group.style.display = 'flex';
+        firebase.database().ref(targetDbRoom).child(msgId).remove().then(() => {
+             wrapper.style.setProperty('display', 'none', 'important');
+        }).catch(err => {
+             console.error("Нет прав на удаление у всех", err);
         });
     }
+    
     window.closeClipboardModal();
 };
 
-// === СЛУШАТЕЛЬ УДАЛЕНИЙ (АВТОМАТИЧЕСКИ ПРЯЧЕТ ФАЙЛ У ОСТАЛЬНЫХ) ===
+// === 5. ИСПРАВЛЕННЫЙ СЛУШАТЕЛЬ УДАЛЕНИЙ (СИНХРОНИЗАЦИЯ) ===
 let currentTrackedRoom = null;
 let removeListener = null;
+
 setInterval(() => {
     let activeRoom = window.currentRoomId || 'global';
     if (window.currentIndex === 2 && activeRoom === 'global') activeRoom = 'video_room_global';
 
     if (activeRoom && activeRoom !== currentTrackedRoom && typeof firebase !== 'undefined') {
-        if (currentTrackedRoom && removeListener) firebase.database().ref(currentTrackedRoom).off('child_removed', removeListener);
+        if (currentTrackedRoom && removeListener) {
+            firebase.database().ref(currentTrackedRoom).off('child_removed', removeListener);
+        }
         currentTrackedRoom = activeRoom;
         
         removeListener = firebase.database().ref(currentTrackedRoom).on('child_removed', (snapshot) => {
             const deletedId = snapshot.key;
-            const exactEl = document.querySelector(`[data-firebase-id="${deletedId}"]`) || document.querySelector(`[data-id="${deletedId}"]`);
             
-            if (exactEl) {
-                exactEl.style.setProperty('display', 'none', 'important');
-                const group = exactEl.closest('.flex.flex-col.w-full.mt-3.mb-2');
-                if (group) group.style.setProperty('display', 'none', 'important');
+            // Скрываем элемент в реальном времени, если кто-то другой его удалил
+            const el = document.querySelector(`.chat-bubble-wrapper[data-id="${deletedId}"], .chat-bubble-wrapper[data-firebase-id="${deletedId}"]`);
+            if (el) {
+                el.style.setProperty('display', 'none', 'important');
             }
         });
     }
-}, 1000);
-
-// === ДОЛГИЙ ТАП (ДЛЯ ОБЫЧНОГО ТЕКСТА) ===
-function handleTextContextRequest(wrapper) {
-    if (wrapper.querySelector('img:not(.w-8)') || wrapper.querySelector('video') || wrapper.querySelector('iframe')) return;
-    const selection = window.getSelection().toString();
-    if (selection.trim().length > 0) return; 
-    let content = wrapper.innerText || wrapper.textContent || ''; 
-    if (!content.trim()) return;
-    window.openClipboardMenu(content, 'text', wrapper);
-}
-
-let touchTimer = null; let touchMoved = false;
-document.addEventListener('touchstart', function(e) {
-    const wrapper = e.target.closest('.chat-bubble-wrapper');
-    if (!wrapper) return; // ИГНОРИРУЕТ ВСЁ КРОМЕ СООБЩЕНИЙ ЧАТА
-    touchMoved = false;
-    touchTimer = setTimeout(() => {
-        if (touchMoved) return; 
-        handleTextContextRequest(wrapper);
-    }, 500); 
-}, { passive: true }); 
-
-document.addEventListener('touchend', function(e) { if (touchTimer) clearTimeout(touchTimer); });
-document.addEventListener('touchmove', function() { touchMoved = true; if (touchTimer) clearTimeout(touchTimer); }, { passive: true });
-
-document.addEventListener('contextmenu', function(e) {
-    const wrapper = e.target.closest('.chat-bubble-wrapper');
-    if (wrapper) { 
-        if (!wrapper.querySelector('img:not(.w-8)') && !wrapper.querySelector('video') && !wrapper.querySelector('iframe')) {
-            e.preventDefault(); 
-            handleTextContextRequest(wrapper); 
-        }
+    
+    // ПРИ ЗАГРУЗКЕ: проверяем черный список и прячем то, что удалили "для себя"
+    const deletedMsgs = JSON.parse(localStorage.getItem('hf_deleted_messages') || '[]');
+    if (deletedMsgs.length > 0) {
+        deletedMsgs.forEach(id => {
+            const el = document.querySelector(`.chat-bubble-wrapper[data-id="${id}"], .chat-bubble-wrapper[data-firebase-id="${id}"]`);
+            if (el && el.style.display !== 'none') {
+                el.style.setProperty('display', 'none', 'important');
+            }
+        });
     }
-});
+    
+}, 1000);
+        
