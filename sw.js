@@ -109,4 +109,4 @@ self.addEventListener('push', function(event) {
         };
         event.waitUntil(self.registration.showNotification('📧 ' + (payload.titleText || 'Новое письмо'), emailOptions));
     }
-
+});
