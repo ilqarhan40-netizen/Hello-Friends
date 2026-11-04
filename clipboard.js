@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - ФИНАЛЬНАЯ СБОРКА 
-// (Языки сохранены оригинальные, механика файлов и удаления исправлена)
+// (Оригинальные языки + Правильная механика медиа и удаления)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -18,7 +18,7 @@
     }
 })();
 
-// === УБИЙЦА GOOGLE LENS ===
+// === УБИЙЦА GOOGLE LENS (ЗАЩИТА ИНТЕРФЕЙСА) ===
 window.addEventListener('contextmenu', function(e) {
     if (e.target.closest('.chat-bubble-wrapper')) {
         e.preventDefault(); e.stopPropagation(); return false;
@@ -33,7 +33,7 @@ window.addEventListener('dragstart', function(e) {
     }
 }, { capture: true });
 
-// === СЛОВАРИ (ОРИГИНАЛ - НЕ ТРОНУТЫ) ===
+// === ТВОИ ОРИГИНАЛЬНЫЕ СЛОВАРИ (НЕ ТРОНУТЫ) ===
 const clipDict = {
     en: { clip_photo: "Photo", clip_video: "Video", clip_text: "Text", clip_loc: "Location", clip_link: "Link", clip_copy: "Copy", clip_paste: "Paste & Send", clip_save: "Save", clip_forward: "Forward", clip_del_me: "Delete for me", clip_del_all: "Delete for all" },
     ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Вставить и Отправить", clip_save: "Сохранить", clip_forward: "Переслать", clip_del_me: "Удалить у меня", clip_del_all: "Удалить у всех" },
@@ -61,24 +61,18 @@ const checkClipI18n = setInterval(() => {
 window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
 window.internalAppClipboard = { content: null, type: null, blob: null };
 
-// === ИСПРАВЛЕНО: ПОИСК ФАЙЛОВ (Теперь видит Документы) ===
+// === ИСПРАВЛЕННАЯ МЕХАНИКА: ТОЧНЫЙ ПОИСК ФАЙЛОВ (ВКЛЮЧАЯ ДОКУМЕНТЫ) ===
 function getMediaFromWrapper(wrapper) {
     const bubble = wrapper.querySelector('.chat-bubble'); if (!bubble) return { content: null, type: 'text' };
     
     const vid = bubble.querySelector('video');
-    if (vid) {
-        const vSrc = vid.src || vid.querySelector('source')?.src;
-        if (vSrc) return { content: vSrc, type: 'video' };
-    }
+    if (vid) return { content: vid.src || vid.querySelector('source')?.src, type: 'video' };
     
     const iframe = bubble.querySelector('iframe');
     if (iframe && iframe.src) return { content: iframe.src, type: 'location' };
     
-    // Новое: ищем ссылку на документ
     const docLink = bubble.querySelector('a[href*="alt=media"]');
-    if (docLink && !docLink.href.includes('google.com/maps')) {
-        return { content: docLink.href, type: 'document' };
-    }
+    if (docLink && !docLink.href.includes('google.com/maps') && !docLink.querySelector('img')) return { content: docLink.href, type: 'document' };
     
     const img = bubble.querySelector('img:not(.w-8):not(.rounded-full)');
     if (img && img.src && !img.src.includes('ui-avatars') && !img.src.includes('flagcdn')) return { content: img.src, type: 'image' };
@@ -86,7 +80,6 @@ function getMediaFromWrapper(wrapper) {
     return { content: bubble.innerText || bubble.textContent || '', type: 'text' };
 }
 
-// === АВТО-ИНЖЕКТОР КНОПОК ===
 function injectActionButtons(wrapper) {
     if (wrapper.querySelector('.media-action-bar')) return;
     const media = getMediaFromWrapper(wrapper);
@@ -128,7 +121,7 @@ setTimeout(() => {
     }
 }, 2000);
 
-// === ГЕНЕРАЦИЯ МЕНЮ (ТВОИ ЯЗЫКИ СОХРАНЕНЫ) ===
+// === ГЕНЕРАЦИЯ МЕНЮ (Твои языки) ===
 window.openClipboardMenu = function(content, type, targetEl) {
     if (typeof window.closeDropdown === 'function') window.closeDropdown();
     window.currentClipContent = content; window.currentClipType = type; window.currentTargetElement = targetEl; 
@@ -213,7 +206,7 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-// === ИСПРАВЛЕНО: КОПИРОВАНИЕ И ВСТАВКА (Анти-кэш и Документы) ===
+// === ИСПРАВЛЕННАЯ МЕХАНИКА: ПРАВИЛЬНОЕ КОПИРОВАНИЕ И ВСТАВКА ФАЙЛОВ ===
 window.execCopyAction = async function() {
     if (!window.currentClipContent) return;
     
@@ -222,7 +215,7 @@ window.execCopyAction = async function() {
 
     try {
         if (['image', 'video', 'document'].includes(window.currentClipType)) {
-            // Оригинальный сброс кэша
+            // Скачиваем файл через fetch для чистого Blob (без кэша)
             const cacheBuster = window.currentClipContent.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
             const res = await fetch(window.currentClipContent + cacheBuster, { cache: "no-store" });
             window.internalAppClipboard.blob = await res.blob();
@@ -247,6 +240,7 @@ window.execPasteAction = async function() {
         const uniqueFilename = `media_copy_${Date.now()}${extension}`;
         const file = new File([window.internalAppClipboard.blob], uniqueFilename, { type: mime });
         
+        // Отправляем как реальный файл
         if (typeof window.handleMediaUpload === 'function') {
             window.handleMediaUpload({ target: { files: [file] } });
             if (window.showToast) window.showToast("✈️", "Sent", "", "");
@@ -287,20 +281,25 @@ window.execForwardAction = function() {
     window.closeClipboardModal();
 };
 
-// === ИСПРАВЛЕНО: УМНОЕ УДАЛЕНИЕ (Скрывает только 1 файл, а не группу) ===
+// === ИСПРАВЛЕННАЯ МЕХАНИКА: УДАЛЕНИЕ СООБЩЕНИЙ БЕЗ КРАШЕЙ ===
 window.execDeleteAction = function(deleteType) {
     if (!window.currentTargetElement) return window.closeClipboardModal();
     
     const wrapper = window.currentTargetElement.closest('.chat-bubble-wrapper') || window.currentTargetElement;
     const msgId = wrapper.getAttribute('data-id') || wrapper.getAttribute('data-firebase-id'); 
     
-    // Скрываем конкретный пузырь
+    // Прячем ТОЛЬКО само сообщение (чужие сообщения в группе не трогаем)
     wrapper.style.setProperty('display', 'none', 'important');
-    const group = wrapper.closest('.flex.flex-col.w-full.mt-3.mb-2');
-    
-    // Скрываем общую рамку, только если в ней больше не осталось видимых пузырей
-    if (group && group.querySelectorAll('.chat-bubble-wrapper:not([style*="display: none"])').length === 0) {
-        group.style.setProperty('display', 'none', 'important');
+
+    // Запоминаем удаление "для себя", чтобы не появилось после обновления страницы
+    if (deleteType === 'me' && msgId) {
+        try {
+            let deletedMsgs = JSON.parse(localStorage.getItem('hf_deleted_msgs') || '[]');
+            if (!deletedMsgs.includes(msgId)) {
+                deletedMsgs.push(msgId);
+                localStorage.setItem('hf_deleted_msgs', JSON.stringify(deletedMsgs));
+            }
+        } catch(e) {}
     }
 
     if (deleteType === 'all' && msgId && typeof firebase !== 'undefined' && window.currentRoomId) {
@@ -308,36 +307,15 @@ window.execDeleteAction = function(deleteType) {
         if (window.currentIndex === 2 && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
         
         firebase.database().ref(targetDbRoom).child(msgId).remove().catch(err => {
-            wrapper.style.display = 'flex';
-            if (group) group.style.display = 'flex';
+            wrapper.style.display = 'flex'; // возвращаем, если база не дала удалить
         });
     }
     window.closeClipboardModal();
 };
 
-// === ИСПРАВЛЕНО: СЛУШАТЕЛЬ УДАЛЕНИЙ (Восстановлен оборванный код) ===
+// === ИСПРАВЛЕННАЯ МЕХАНИКА: ВОССТАНОВЛЕННЫЙ СЛУШАТЕЛЬ УДАЛЕНИЙ ===
 let currentTrackedRoom = null;
 let removeListener = null;
-setInterval(() => {
-    let activeRoom = window.currentRoomId || 'global';
-    if (window.currentIndex === 2 && activeRoom === 'global') activeRoom = 'video_room_global';
 
-    if (activeRoom && activeRoom !== currentTrackedRoom && typeof firebase !== 'undefined') {
-        if (currentTrackedRoom && removeListener) {
-            firebase.database().ref(currentTrackedRoom).off('child_removed', removeListener);
-        }
-        currentTrackedRoom = activeRoom;
-        
-        removeListener = firebase.database().ref(currentTrackedRoom).on('child_removed', (snapshot) => {
-            const deletedId = snapshot.key;
-            const el = document.querySelector(`.chat-bubble-wrapper[data-id="${deletedId}"], .chat-bubble-wrapper[data-firebase-id="${deletedId}"]`);
-            if (el) {
-                el.style.setProperty('display', 'none', 'important');
-                const group = el.closest('.flex.flex-col.w-full.mt-3.mb-2');
-                if (group && group.querySelectorAll('.chat-bubble-wrapper:not([style*="display: none"])').length === 0) {
-                    group.style.setProperty('display', 'none', 'important');
-                }
-            }
-        });
-    }
-}, 2000);
+setInterval(() => {
+    let activeRoom = window.cur
