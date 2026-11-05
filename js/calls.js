@@ -57,11 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { once: true });
 });
 
-// --- ЗАМЕНИТЬ СТАРЫЕ startWebRTC, endWebRTCCall И toggleMyCamera НА ЭТОТ БЛОК ---
 
+          // --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     if (typeof AgoraRTC === 'undefined') {
-        alert("Модуль связи загружается, подождите пару секунд и перезвоните.");
+        alert("Модуль связи загружается, подождите секунду...");
         window.hangUpCall();
         return;
     }
@@ -69,7 +69,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
         window.agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-        // Обработка входящего видео/аудио от собеседника
+        // Прием потока от собеседника в твою мультиязычную сетку
         window.agoraClient.on("user-published", async (user, mediaType) => {
             await window.agoraClient.subscribe(user, mediaType);
             
@@ -87,19 +87,17 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             }
         });
 
-        // Название комнаты (одинаковое для обоих)
-        const channelName = isCaller ? (window.myProfileInfo.id + '_' + targetId) : (targetId + '_' + window.myProfileInfo.id);
+        // Название комнаты жестко привязано к токену
+        const channelName = "hello"; 
         
-        // Подключение к серверам Agora
-        await window.agoraClient.join(AGORA_APP_ID, channelName, null, window.myProfileInfo.id);
+        // Подключение к серверу с токеном
+        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, window.myProfileInfo.id);
 
         let tracksToPublish = [];
 
-        // Включаем микрофон
         if (!window.localAudioTrack) window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
         tracksToPublish.push(window.localAudioTrack);
 
-        // Включаем камеру, если это видеозвонок
         if (isVideo) {
             if (!window.localVideoTrack) {
                 window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
@@ -112,21 +110,16 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             tracksToPublish.push(window.localVideoTrack);
         }
 
-        // Отправляем свои потоки собеседнику
         await window.agoraClient.publish(tracksToPublish);
 
     } catch (e) {
         console.error("Ошибка Agora: ", e);
-        alert("Связь заблокирована браузером или сервером. Проверьте разрешения.");
+        alert("Ошибка подключения! Проверьте консоль.");
         window.hangUpCall();
     }
 };
 
 window.endWebRTCCall = async function() {
-    // Очистка старых потоков, если они были
-    if (window.localStream) { window.localStream.getTracks().forEach(t => t.stop()); window.localStream = null; }
-    
-    // Очистка Agora
     if (window.localAudioTrack) { window.localAudioTrack.close(); window.localAudioTrack = null; }
     if (window.localVideoTrack) { window.localVideoTrack.close(); window.localVideoTrack = null; }
     if (window.agoraClient) {
@@ -134,7 +127,6 @@ window.endWebRTCCall = async function() {
         window.agoraClient = null;
     }
     
-    // Сброс интерфейса
     document.querySelectorAll('[id^="remote-video-"]').forEach(v => {
         v.srcObject = null;
         v.classList.add('hidden');
@@ -171,8 +163,7 @@ window.toggleMyCamera = async function(btn) {
         }
     } 
 };
-// --------------------------------------------------------------------------------
-                
+      
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
