@@ -11,12 +11,16 @@ if (typeof AgoraRTC === 'undefined') {
 window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
-const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
+
+// Твои ключи Agora
+const AGORA_APP_ID = "72abfc5d7ee247ef8860064bb35ab164"; 
+const AGORA_TEMP_TOKEN = "ВСТАВЬ_СЮДА_СКОПИРОВАННЫЙ_ТОКЕН"; 
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 window.currentIncomingCallType = 'voice';
 window.myLastOutgoingCallType = 'voice';
+
 
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
