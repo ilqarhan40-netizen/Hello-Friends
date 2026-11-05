@@ -1,13 +1,23 @@
 //==========================================
-// MODULE: CALLS, VIDEO & WebRTC ENGINE (FINAL ASSEMBLED)
-// ==========================================
+// MODULE: CALLS, VIDEO & AGORA ENGINE
+//==========================================
 
-window.localStream = null;
-window.peerConnection = null;
+if (typeof AgoraRTC === 'undefined') {
+    const script = document.createElement('script');
+    script.src = "https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js";
+    document.head.appendChild(script);
+}
+
+window.agoraClient = null;
+window.localAudioTrack = null;
+window.localVideoTrack = null;
+const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
+
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
-window.currentIncomingCallType = 'voice'; 
+window.currentIncomingCallType = 'voice';
 window.myLastOutgoingCallType = 'voice';
+
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
