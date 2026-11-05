@@ -14,7 +14,7 @@ window.localVideoTrack = null;
 
 // Твои ключи Agora
 const AGORA_APP_ID = "72abfc5d7ee247ef8860064bb35ab164"; 
-const AGORA_TEMP_TOKEN = "007eJxTYCidwOFjOeVvNEdHDvNiz7+RmXkCskkJ/aee6l9U5eN7dkuBwdLQOM3QONEsycLQwCTF2CTJwNjM0jQxOSXZIMXcMsm8deKbrIZARoa1LdOYGBkgEMRnZchIzcnJZ2AAAM0mHoQ="; 
+const AGORA_TEMP_TOKEN = "ВСТАВЬ_СЮДА_СКОПИРОВАННЫЙ_ТОКЕН"; 
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
@@ -62,10 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
+          // --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     if (typeof AgoraRTC === 'undefined') {
-        alert("Модуль связи загружается...");
+        alert("Модуль связи загружается, подождите секунду...");
         window.hangUpCall();
         return;
     }
@@ -73,8 +73,10 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
         window.agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
+        // Прием потока от собеседника в твою мультиязычную сетку
         window.agoraClient.on("user-published", async (user, mediaType) => {
             await window.agoraClient.subscribe(user, mediaType);
+            
             if (mediaType === "video") {
                 let gridVideo = document.getElementById(`remote-video-${targetId}`);
                 if (gridVideo) {
@@ -89,10 +91,11 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             }
         });
 
+        // Название комнаты жестко привязано к токену
         const channelName = "hello"; 
         
-        // Подключаемся с временным токеном и авто-ID
-        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, null);
+        // Подключение к серверу с токеном
+        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, window.myProfileInfo.id);
 
         let tracksToPublish = [];
 
@@ -114,8 +117,8 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         await window.agoraClient.publish(tracksToPublish);
 
     } catch (e) {
-        let errorMsg = e.message || e.name || JSON.stringify(e);
-        alert("СИСТЕМНАЯ ОШИБКА: " + errorMsg);
+        console.error("Ошибка Agora: ", e);
+        alert("Ошибка подключения! Проверьте консоль.");
         window.hangUpCall();
     }
 };
@@ -164,7 +167,7 @@ window.toggleMyCamera = async function(btn) {
         }
     } 
 };
-
+      
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
@@ -294,6 +297,7 @@ window.hangUpCall = function() {
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
     
+    // Предотвращаем двойной запуск слушателя
     if (window.isSignalListenerActive) return;
     window.isSignalListenerActive = true;
 
@@ -326,6 +330,7 @@ window.initSignalListener = function() {
     }); 
 };
 
+// --- АВТОМАТИЧЕСКИЙ ЗАПУСК ПРИЕМА ЗВОНКОВ ---
 let signalInitCheck = setInterval(() => {
     if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
         window.initSignalListener();
@@ -340,8 +345,8 @@ window.initConference = function() {
     let myReadLang = window.getLangPref(false, true); 
     let myReadFlag = window.myProfileInfo.flag || '🌐';
     
-    const smartLanguages = [
-        { code: 'kz', flag: '🇰🇿', lang: 'KK' },
+        const smartLanguages = [
+        { code: 'kz', flag: '🇰🇿', lang: 'KK' }, // Добавили Казахстан (язык - казахский)
         { code: 'az', flag: '🇦🇿', lang: 'AZ' }, { code: 'ru', flag: '🇷🇺', lang: 'RU' },
         { code: 'us', flag: '🇺🇸', lang: 'EN' }, { code: 'tr', flag: '🇹🇷', lang: 'TR' },
         { code: 'es', flag: '🇪🇸', lang: 'ES' }, { code: 'fr', flag: '🇫🇷', lang: 'FR' },
@@ -349,6 +354,7 @@ window.initConference = function() {
         { code: 'pt', flag: '🇵🇹', lang: 'PT' }, { code: 'ae', flag: '🇦🇪', lang: 'AR' },
         { code: 'cn', flag: '🇨🇳', lang: 'ZH' }, { code: 'jp', flag: '🇯🇵', lang: 'JA' }
     ];
+
 
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
@@ -414,12 +420,28 @@ window.initConference = function() {
     }
 };
 
+window.toggleMyCamera = async function(btn) { 
+    const videoEl = document.getElementById('my-live-video'); 
+    if (window.myVideoStream) { 
+        window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
+        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
+        btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
+    } else { 
+        try { 
+            window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
+            if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
+            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
+        } catch(e) { alert("Доступ к камере запрещен!"); } 
+    } 
+};
+
 window.isMeetMarqueeEnabled = true; 
 window.toggleMeetMarquee = function() { 
     window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; 
     document.querySelectorAll('.translation-bar').forEach(b => { b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; }); 
 };
 
+// --- ВЫЗОВ ИЗ КОНТАКТОВ ---
 window.makeCallFromContact = function(userId, type = 'voice') {
     const target = (window.participants || []).find(p => p.id === userId);
     if (!target) return console.error("Юзер не найден");
@@ -431,6 +453,7 @@ window.makeCallFromContact = function(userId, type = 'voice') {
     window.startInAppCall(type);
 };
 
+// --- ФИКС ЗВУКА ОТПРАВКИ СООБЩЕНИЙ ВО ВСЕХ ЧАТАХ ---
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (window.sendFirebaseMsg) {
