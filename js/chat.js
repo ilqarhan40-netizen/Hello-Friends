@@ -967,16 +967,18 @@ window.insertEmoji = function(emoji) { if(window.currentEmojiTargetId) { const i
 window.sendPushNotification = function(targetUserId, pushData, titleText, bodyText) {
     if (!targetUserId || targetUserId === 'ai' || targetUserId === 'guest') return;
 
-    // 1. Извлекаем onesignal_id получателя из Firebase
+    // 1. Извлекаем onesignal_id получателя из базы
     firebase.database().ref('users/' + targetUserId + '/onesignal_id').once('value').then(snapshot => {
         const targetPlayerId = snapshot.val();
-        if (!targetPlayerId) return; // У получателя нет токена OneSignal
+        if (!targetPlayerId) return; // Если токена нет, отменяем отправку
 
         // 2. Отправляем Push через REST API OneSignal
         fetch('https://onesignal.com/api/v1/notifications', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json; charset=utf-8'
+                'Content-Type': 'application/json; charset=utf-8',
+                // Твой ключ авторизации со скриншота
+                'Authorization': 'Basic os_v2_app_6f6pqhv6fngrfgbvubo2lofpugusgf71153u3ove7cc5wfnrh4oz3tvsqqkj6mbvbrf2b71dd5ltpuzys2dnma5bdzofojkheg6gtya'
             },
             body: JSON.stringify({
                 app_id: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
@@ -992,6 +994,7 @@ window.sendPushNotification = function(targetUserId, pushData, titleText, bodyTe
         }).catch(err => console.error("Ошибка отправки Push:", err));
     });
 };
+
 window.openGroupInviteModal = function() {
     const list = document.getElementById('group-invite-list');
     if (!list) return;
