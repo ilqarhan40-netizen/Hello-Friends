@@ -325,6 +325,11 @@ window.initSignalListener = function() {
         } 
         else if (sig.type === 'reject') {
             window.stopAllRings();
+            
+            // ВОТ ЭТА СТРОКА УБИРАЕТ ЗАВИСШИЙ ЭКРАН ВЫЗОВА:
+            const incomingModal = document.getElementById('incoming-call-modal');
+            if(incomingModal) incomingModal.classList.remove('active');
+            
             window.playSafeSound(window.sndMissed, [200, 100, 200]);
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
@@ -339,11 +344,13 @@ window.initSignalListener = function() {
         }
         else if (sig.type === 'missed') {
             window.stopAllRings();
-            document.getElementById('incoming-call-modal').classList.remove('active');
+            const incomingModal = document.getElementById('incoming-call-modal');
+            if(incomingModal) incomingModal.classList.remove('active');
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
         }
     }); 
 };
+
 
 // --- АВТОМАТИЧЕСКИЙ ЗАПУСК ПРИЕМА ЗВОНКОВ ---
 let signalInitCheck = setInterval(() => {
