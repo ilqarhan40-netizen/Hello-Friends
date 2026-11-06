@@ -12,9 +12,10 @@ window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
 
-// Твои ключи Agora
-const AGORA_APP_ID = "72abfc5d7ee247ef8860064bb35ab164"; 
-const AGORA_TEMP_TOKEN = "ВСТАВЬ_СЮДА_СКОПИРОВАННЫЙ_ТОКЕН"; 
+// Твои правильные ключи Agora
+const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
+const AGORA_TEMP_TOKEN = "007eJxSYJix0mVKdqh0feNCndMeypIGp4LezeLM4Q9UudE4k6P68FEFBktD4zRD40SzJAtDA5MUY5MkA2MzS9PE5JRkgxRzyyTzy7bvshiYzwhVJCqxMjIwMrAwMDKA+ExgkhlMsoBJVoaM1JycfAYGQAAAAP//6cogmg=="; 
+
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
