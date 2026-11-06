@@ -209,10 +209,13 @@ window.startInAppCall = function(callType = 'voice') {
     
     window.voiceFriend = target; 
     if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
+    if (callType === 'video' && window.initConference) window.initConference();
+    
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
     window.stopAllRings();
-    window.playSafeSound(window.sndCallOut);
+    setTimeout(() => { window.playSafeSound(window.sndCallOut); }, 100);
+    
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
@@ -231,6 +234,10 @@ window.startInAppCall = function(callType = 'voice') {
                 `Вы пропустили вызов от ${window.myUsername}`
             );
         }
+                    window.currentCallerId = null;
+            window.voiceFriend = null;
+            if (window.switchTab) window.switchTab(1);
+        
     }, 30000);
 };
 
