@@ -312,7 +312,13 @@ window.handleNewMessage = async function(snapshot) {
     const data = snapshot.val(); 
     if(!data) return; 
 
+    try {
+        let deletedMsgs = JSON.parse(localStorage.getItem('hf_deleted_msgs') || '[]');
+        if (deletedMsgs.includes(snapshot.key)) return;
+    } catch(e) {}
+
     const chatMessages = document.getElementById('chat-messages');
+    
 
     const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id;
     const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
