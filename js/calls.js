@@ -284,15 +284,30 @@ window.hangUpCall = function() {
     window.stopAllRings();
     window.endWebRTCCall();
     
-    if (window.currentTargetUser) {
-        firebase.database().ref('signals/' + window.currentTargetUser.id).push({ type: 'reject', callerName: window.myUsername });
+    // БОРЬБА С ПРИЗРАКАМИ: Отправляем отбой тому, кому звонили (или кто звонил нам)
+    let targetIdToCancel = null;
+    if (window.currentTargetUser) targetIdToCancel = window.currentTargetUser.id;
+    else if (window.voiceFriend) targetIdToCancel = window.voiceFriend.id;
+    else if (window.currentCallerId) targetIdToCancel = window.currentCallerId;
+
+    if (targetIdToCancel) {
+        // 1. Посылаем сигнал отмены
+        firebase.database().ref('signals/' + targetIdToCancel).push({ type: 'reject', callerName: window.myUsername });
+        // 2. Стираем сам факт звонка, если он еще висит
+        firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + targetIdToCancel).remove();
+        firebase.database().ref('calls/' + targetIdToCancel + '_' + window.myProfileInfo.id).remove();
     }
     
     if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
     if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
     
+    // Очищаем переменные
+    window.currentCallerId = null;
+    window.voiceFriend = null;
+    
     if (window.switchTab) window.switchTab(0);
 };
+
 
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
