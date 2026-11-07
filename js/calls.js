@@ -450,20 +450,7 @@ window.initConference = function() {
     }
 };
 
-window.toggleMyCamera = async function(btn) { 
-    const videoEl = document.getElementById('my-live-video'); 
-    if (window.myVideoStream) { 
-        window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
-        btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
-    } else { 
-        try { 
-            window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
-            if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
-            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
-        } catch(e) { alert("Доступ к камере запрещен!"); } 
-    } 
-};
+
 
 window.isMeetMarqueeEnabled = true; 
 window.toggleMeetMarquee = function() { 
