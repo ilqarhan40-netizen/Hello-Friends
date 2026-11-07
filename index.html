@@ -1469,24 +1469,29 @@ if (window.OneSignalDeferred) {
                     const t_video = dict['btn_app_video'] || "App Video";
                     const t_phone = dict['btn_phone_call'] || "Phone Call";
 
-                    actionButtons.innerHTML = `
+                 actionButtons.innerHTML = `
                     <div class="grid grid-cols-2 gap-2 w-full mt-1">
                         <button onclick="window.closeAvatarModal(); window.currentIndex = null; window.switchTab(0); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#00a884] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-lock text-[#00a884] text-lg"></i> ${t_chat}
                         </button>
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(1); window.switchChatRoom('${p.id}');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                            <i class="fa-solid fa-microphone-lines text-blue-400 text-lg"></i> ${t_voice}
+                        
+                        <button onclick="window.closeAvatarModal(); if(window.makeCallFromContact) window.makeCallFromContact('${p.id}', 'video');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-blue-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-video text-blue-400 text-lg"></i> ${t_voice}
                         </button>
-                      <button onclick="window.closeAvatarModal(); window.switchChatRoom('${p.id}'); if(window.makeCallFromContact) window.makeCallFromContact('${p.id}', 'voice');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-    <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> ${t_audio}
-</button>
+                        
+                        <button onclick="window.closeAvatarModal(); window.switchChatRoom('${p.id}'); if(window.makeCallFromContact) window.makeCallFromContact('${p.id}', 'voice');" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-[#a29bfe] text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                            <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> ${t_audio}
+                        </button>
+                        
                         <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
-                            <i class="fa-solid fa-video text-pink-400 text-lg"></i> ${t_video}
+                            <i class="fa-solid fa-users text-pink-400 text-lg"></i> ${t_video}
                         </button>
+                        
                         <button onclick="window.closeAvatarModal(); window.location.href='tel:${(p.phone || '').replace(/\s+/g, '')}';" class="col-span-2 py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-green-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                             <i class="fa-solid fa-mobile-screen text-green-400 text-lg"></i> ${t_phone}
                         </button>
                     </div>`;
+                    
                     actionButtons.style.display = 'block'; 
                 }
             }
