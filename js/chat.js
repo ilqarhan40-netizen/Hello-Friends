@@ -395,6 +395,22 @@ window.handleNewMessage = async function(snapshot) {
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
         bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
     }
+        else if (data.isConferenceInvite) { 
+        bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
+        bubbleContent = `
+            <div class="flex flex-col items-center p-4 min-w-[200px]">
+                <div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg">
+                    <i class="fa-solid fa-users text-2xl"></i>
+                </div>
+                <span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">Конференция</span>
+                <span class="text-white text-[0.85rem] font-bold mb-3 text-center">Приглашение в комнату</span>
+                <div class="w-full h-[1px] bg-[#2a3942] mb-3"></div>
+                <button onclick="window.switchTab(2)" class="w-full bg-[#00a884] text-[#111b21] py-2 rounded-xl font-bold hover:scale-95 transition shadow-[0_0_15px_rgba(0,168,132,0.4)] flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
+                </button>
+            </div>`; 
+        }
+    
 
     const isCurrentRoom = snapshot.ref.parent.key === window.currentRoomId;
 
@@ -1055,6 +1071,52 @@ window.sendGroupInvites = function() {
     
     if (window.showToast) window.showToast(dict.toast_ok || "Sent", (dict.toast_ok_desc || "Invited:") + " " + selected.length, "", "");
     window.closeGroupInviteModal();
+};
+window.sendGroupInvites = function() {
+    const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        if (window.showToast) window.showToast("Ошибка", "Выберите пользователей!", "", "");
+        return;
+    }
+    const myId = window.myProfileInfo.id;
+    checkboxes.forEach(cb => {
+        const targetId = cb.value;
+        const roomId = "private_" + [myId, targetId].sort().join('_');
+        firebase.database().ref(roomId).push({
+            userId: myId,
+            name: window.myUsername,
+            text: "🎥 Приглашение в видеоконференцию",
+            isConferenceInvite: true, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: window.myProfileInfo.photo,
+            flag: window.myProfileInfo.flag || '🌐'
+        });
+    });
+    if (window.showToast) window.showToast("Успех", "Приглашения разосланы", "", "");
+    if (typeof window.closeGroupInviteModal === 'function') window.closeGroupInviteModal();
+};
+window.sendGroupInvites = function() {
+    const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        if (window.showToast) window.showToast("Ошибка", "Выберите пользователей!", "", "");
+        return;
+    }
+    const myId = window.myProfileInfo.id;
+    checkboxes.forEach(cb => {
+        const targetId = cb.value;
+        const roomId = "private_" + [myId, targetId].sort().join('_');
+        firebase.database().ref(roomId).push({
+            userId: myId,
+            name: window.myUsername,
+            text: "🎥 Приглашение в видеоконференцию",
+            isConferenceInvite: true, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: window.myProfileInfo.photo,
+            flag: window.myProfileInfo.flag || '🌐'
+        });
+    });
+    if (window.showToast) window.showToast("Успех", "Приглашения разосланы", "", "");
+    if (typeof window.closeGroupInviteModal === 'function') window.closeGroupInviteModal();
 };
 
 
