@@ -395,6 +395,53 @@ window.handleNewMessage = async function(snapshot) {
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
         bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
     }
+            else if (data.isConferenceInvite) { 
+        // 1. Умная логика языков (только через выбор системы/экосистемы)
+        let uiLang = 'en';
+        if (typeof window.getLangPref === 'function') {
+            uiLang = (window.getLangPref(false, false) || 'en').substring(0,2);
+        }
+        
+        // Подстраховка: если система вернула kz вместо kk
+        if (uiLang === 'kz') uiLang = 'kk';
+
+        // 2. Локальный словарь для 13 языков (с правильным казахским)
+        const invDict = {
+            'ru': { t: 'КОНФЕРЕНЦИЯ', d: 'Приглашение', b: 'Войти' },
+            'en': { t: 'CONFERENCE', d: 'Room Invite', b: 'Join' },
+            'it': { t: 'CONFERENZA', d: 'Invito', b: 'Entra' },
+            'es': { t: 'CONFERENCIA', d: 'Invitación', b: 'Unirse' },
+            'fr': { t: 'CONFÉRENCE', d: 'Invitation', b: 'Rejoindre' },
+            'de': { t: 'KONFERENZ', d: 'Einladung', b: 'Beitreten' },
+            'pt': { t: 'CONFERÊNCIA', d: 'Convite', b: 'Entrar' },
+            'tr': { t: 'KONFERANS', d: 'Davet', b: 'Katıl' },
+            'az': { t: 'KONFRANS', d: 'Dəvət', b: 'Qoşul' },
+            'kk': { t: 'БЕЙНЕЖИЫН', d: 'Шақыру', b: 'Қосылу' },
+            'ar': { t: 'مؤتمر', d: 'دعوة', b: 'انضمام' },
+            'ja': { t: '会議', d: '招待', b: '参加' },
+            'zh': { t: '会议', d: '邀请', b: '加入' }
+        };
+        
+        let txt = invDict[uiLang] || invDict['en'];
+
+        // 3. Компактный горизонтальный дизайн
+        bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.15)] !p-0 overflow-hidden`; 
+        bubbleContent = `
+            <div class="flex items-center gap-3 p-2.5 w-[190px]">
+                <div class="w-10 h-10 shrink-0 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] shadow-md">
+                    <i class="fa-solid fa-users text-lg"></i>
+                </div>
+                <div class="flex flex-col flex-1">
+                    <span class="text-[0.6rem] text-[#00a884] font-bold uppercase tracking-widest leading-none mb-1">${txt.t}</span>
+                    <span class="text-white text-[0.75rem] font-bold leading-tight mb-2">${txt.d}</span>
+                    <button onclick="window.switchTab(2)" class="w-full bg-[#00a884] text-[#111b21] py-1.5 rounded-lg font-bold text-[0.7rem] hover:scale-95 transition shadow-sm flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> ${txt.b}
+                    </button>
+                </div>
+            </div>`; 
+            }
+    
+    
 
     const isCurrentRoom = snapshot.ref.parent.key === window.currentRoomId;
 
@@ -1055,4 +1102,50 @@ window.sendGroupInvites = function() {
     
     if (window.showToast) window.showToast(dict.toast_ok || "Sent", (dict.toast_ok_desc || "Invited:") + " " + selected.length, "", "");
     window.closeGroupInviteModal();
+};
+window.sendGroupInvites = function() {
+    const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        if (window.showToast) window.showToast("Ошибка", "Выберите пользователей!", "", "");
+        return;
+    }
+    const myId = window.myProfileInfo.id;
+    checkboxes.forEach(cb => {
+        const targetId = cb.value;
+        const roomId = "private_" + [myId, targetId].sort().join('_');
+        firebase.database().ref(roomId).push({
+            userId: myId,
+            name: window.myUsername,
+            text: "🎥 Приглашение в видеоконференцию",
+            isConferenceInvite: true, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: window.myProfileInfo.photo,
+            flag: window.myProfileInfo.flag || '🌐'
+        });
+    });
+    if (window.showToast) window.showToast("Успех", "Приглашения разосланы", "", "");
+    if (typeof window.closeGroupInviteModal === 'function') window.closeGroupInviteModal();
+};
+window.sendGroupInvites = function() {
+    const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        if (window.showToast) window.showToast("Ошибка", "Выберите пользователей!", "", "");
+        return;
+    }
+    const myId = window.myProfileInfo.id;
+    checkboxes.forEach(cb => {
+        const targetId = cb.value;
+        const roomId = "private_" + [myId, targetId].sort().join('_');
+        firebase.database().ref(roomId).push({
+            userId: myId,
+            name: window.myUsername,
+            text: "🎥 Приглашение в видеоконференцию",
+            isConferenceInvite: true, 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: window.myProfileInfo.photo,
+            flag: window.myProfileInfo.flag || '🌐'
+        });
+    });
+    if (window.showToast) window.showToast("Успех", "Приглашения разосланы", "", "");
+    if (typeof window.closeGroupInviteModal === 'function') window.closeGroupInviteModal();
 };
