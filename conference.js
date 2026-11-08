@@ -11,17 +11,14 @@ window.startConferenceWebRTC = async function() {
     }
 
     try {
-        // Создаем независимый клиент только для конференций
         if (!window.confClient) {
             window.confClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
         }
 
-        // СЛУШАЕМ ВХОДЯЩИЕ ПОТОКИ И РАСКИДЫВАЕМ ИХ ПО СЕТКЕ
         window.confClient.on("user-published", async (user, mediaType) => {
             await window.confClient.subscribe(user, mediaType);
             
             if (mediaType === "video") {
-                // Ищем конкретный HTML-фрейм этого пользователя в нашей матрице
                 let gridVideo = document.getElementById(`remote-video-${user.uid}`);
                 if (gridVideo) {
                     gridVideo.srcObject = new MediaStream([user.videoTrack.getMediaStreamTrack()]);
@@ -47,30 +44,26 @@ window.startConferenceWebRTC = async function() {
              }
         });
 
-        // ПОДКЛЮЧАЕМСЯ К ГЛОБАЛЬНОЙ КОМНАТЕ (Берем ключи из call.js)
         const confChannelName = "global_conference"; 
         await window.confClient.join(AGORA_APP_ID, confChannelName, AGORA_TEMP_TOKEN, window.myProfileInfo.id);
 
         let tracksToPublish = [];
 
-        // ВКЛЮЧАЕМ СВОЙ МИКРОФОН И КАМЕРУ
         if (!window.confAudioTrack) window.confAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
         tracksToPublish.push(window.confAudioTrack);
 
         if (!window.confVideoTrack) {
             window.confVideoTrack = await AgoraRTC.createCameraVideoTrack();
             
-            // Встраиваем боевую камеру в главный фрейм
             let myVideo = document.getElementById('my-live-video');
             if (myVideo) {
-                myVideo.src = ""; // Убиваем видео-заглушку с парнем из mixkit
+                myVideo.src = ""; 
                 myVideo.removeAttribute('src');
                 myVideo.srcObject = new MediaStream([window.confVideoTrack.getMediaStreamTrack()]);
-                myVideo.muted = true; // Себя не слушаем
+                myVideo.muted = true;
                 myVideo.play().catch(e=>{});
             }
 
-            // Активируем кнопку камеры в интерфейсе
             const camBtn = document.getElementById('conf-cam-btn');
             if (camBtn) {
                 camBtn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
@@ -91,7 +84,6 @@ window.startConferenceWebRTC = async function() {
 window.initConference = function() {
     const confGrid = document.getElementById('conference-grid'); if(!confGrid) return;
     
-    // Получаем языковые предпочтения
     let myReadLang = 'en'; 
     if (window.getLangPref) myReadLang = window.getLangPref(false, true); 
     let myReadFlag = window.myProfileInfo.flag || '🌐';
@@ -104,7 +96,6 @@ window.initConference = function() {
         { code: 'jp', flag: '🇯🇵', lang: 'JA' }
     ];
 
-    // Наш центральный контейнер
     let confHtml = `
     <div class="video-frame main" id="my-video-container">
        <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted onclick="window.openPersonalLangModal()"></video>
@@ -162,7 +153,6 @@ window.initConference = function() {
 
     confGrid.innerHTML = confHtml; 
 
-    // Вызываем подключение камеры с задержкой 300мс (чтобы браузер успел нарисовать теги <video>)
     setTimeout(() => {
         if (window.startConferenceWebRTC) {
             window.startConferenceWebRTC();
@@ -170,7 +160,7 @@ window.initConference = function() {
     }, 300);
 };
 
-// 3. УПРАВЛЕНИЕ КАМЕРОЙ В КОНФЕРЕНЦИИ
+// 3. УПРАВЛЕНИЕ КАМЕРОЙ В КОНФЕРЕНЦИИ И БЕГУЩАЯ СТРОКА
 window.toggleMyCamera = async function(btn) { 
     if (window.confVideoTrack) { 
         const isEnabled = window.confVideoTrack.isPlaying;
@@ -186,7 +176,6 @@ window.toggleMyCamera = async function(btn) {
     } 
 };
 
-// Бегущая строка перевода
 window.isMeetMarqueeEnabled = true; 
 window.toggleMeetMarquee = function() { 
     window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; 
@@ -198,7 +187,6 @@ window.toggleMeetMarquee = function() {
 // ==========================================
 // 4. ЛОГИКА ПРИГЛАШЕНИЯ В КОНФЕРЕНЦИЮ
 // ==========================================
-
 window.openGroupInviteModal = function() {
     if (window.closeDropdown) window.closeDropdown();
     
@@ -263,6 +251,9 @@ window.selectAllForInvite = function() {
     checkboxes.forEach(cb => { cb.checked = !allChecked; });
 };
 
+// ==========================================
+// 5. ОТПРАВКА И СЛУШАТЕЛЬ INVITE-ПОПАПОВ
+// ==========================================
 window.sendGroupInvites = function() {
     const checkboxes = document.querySelectorAll('.invite-checkbox:checked');
     if (checkboxes.length === 0) {
@@ -273,20 +264,83 @@ window.sendGroupInvites = function() {
     let count = 0;
     checkboxes.forEach(cb => {
         const targetId = cb.value;
+        // 1. Отправляем фоновый пуш (если свернуто)
         if (window.sendPushToUser) {
             window.sendPushToUser(targetId, 
                 "Global Conference", 
-                `${window.myUsername} invites you to the video room!`,
+                `${window.myUsername} приглашает вас в видеокомнату!`,
                 { type: "conference_invite", room: "global_conference" }
             );
         }
+        // 2. Бьем напрямую в Firebase (для мгновенного in-app поп-апа)
+        firebase.database().ref('users/' + targetId + '/confInvite').set({
+            fromName: window.myUsername,
+            fromPhoto: window.myProfileInfo.photo,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
         count++;
     });
     
-    if (window.showToast) {
-        window.showToast("Success", `Invites sent to ${count} users`, "https://ui-avatars.com/api/?name=OK&background=00a884&color=111b21", "");
-    }
-    
+    if (window.showToast) window.showToast("Success", `Приглашения отправлены (${count})`, "https://ui-avatars.com/api/?name=OK&background=00a884&color=111b21", "");
     window.closeGroupInviteModal();
 };
+
+window.listenForConferenceInvites = function() {
+    if (window.isGuest || !window.myProfileInfo || !window.myProfileInfo.id) return;
+
+    const inviteRef = firebase.database().ref('users/' + window.myProfileInfo.id + '/confInvite');
+    inviteRef.on('value', (snap) => {
+        const data = snap.val();
+        if (data && data.timestamp) {
+            // Защита от зависших старых сигналов (старше 1 минуты)
+            if (Date.now() - data.timestamp > 60000) {
+                inviteRef.remove();
+                return;
+            }
+            
+            showIncomingConfModal(data.fromName, data.fromPhoto);
+            inviteRef.remove(); // Сразу удаляем сигнал из базы
+        }
+    });
+};
+
+function showIncomingConfModal(name, photo) {
+    let modal = document.getElementById('incoming-conf-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'incoming-conf-modal';
+        modal.className = 'fixed inset-0 bg-black/95 z-[99999] hidden flex-col items-center justify-center backdrop-blur-lg transition-opacity duration-300';
+        modal.innerHTML = `
+            <h2 class="text-[#00a884] font-bold text-xl mb-10 tracking-widest uppercase animate-pulse">Conference Invite</h2>
+            <div class="relative w-32 h-32 mb-4">
+                <div class="absolute inset-0 rounded-full border-4 border-[#00a884] animate-ping opacity-50"></div>
+                <img id="incoming-conf-photo" src="" class="w-full h-full rounded-full object-cover relative z-10 border-4 border-[#111b21] shadow-[0_0_30px_rgba(0,168,132,0.6)]">
+            </div>
+            <h3 id="incoming-conf-name" class="text-white font-bold text-3xl mb-2">User</h3>
+            <span class="text-[#8696a0] text-sm mb-16">Invites you to the Global Room</span>
+            
+            <div class="flex gap-12 w-full max-w-[300px] justify-center">
+                <button onclick="document.getElementById('incoming-conf-modal').classList.remove('flex'); document.getElementById('incoming-conf-modal').classList.add('hidden');" class="w-16 h-16 rounded-full bg-[#ef4444] text-white flex justify-center items-center text-2xl shadow-[0_0_20px_rgba(239,68,68,0.5)] hover:scale-110 transition"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="acceptConfInvite()" class="w-16 h-16 rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-2xl shadow-[0_0_20px_rgba(0,168,132,0.5)] hover:scale-110 transition animate-bounce"><i class="fa-solid fa-video"></i></button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        window.acceptConfInvite = function() {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            if (window.switchTab) window.switchTab(2);
+        };
+    }
+
+    document.getElementById('incoming-conf-photo').src = photo;
+    document.getElementById('incoming-conf-name').innerText = name;
     
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    if (window.sndMsg) window.sndMsg.play().catch(()=>{});
+}
+
+// Запускаем слушатель входящих инвайтов при загрузке скрипта
+setTimeout(window.listenForConferenceInvites, 2000);
