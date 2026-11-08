@@ -571,9 +571,10 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-<div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a] relative z-10">
+
+            <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a] relative z-10">
     
-        <!-- 1. МАРКУЩАЯ СТРОКА НАВЕРХУ (ПОЛНЫЙ ОРИГИНАЛ - БЕЗ ЛИШНИХ КЛАССОВ) -->
+    <!-- 1. МАРКУЩАЯ СТРОКА НАВЕРХУ (ПОЛНЫЙ ОРИГИНАЛ - БЕЗ ЛИШНИХ КЛАССОВ) -->
     <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
         <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
         <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
@@ -582,13 +583,13 @@ if (window.OneSignalDeferred) {
     </div>
 
     <!-- 2. ДВА ФРЕЙМА ДЛЯ ВИДЕО (СЛЕВА И СПРАВА КАК ФОТОБУДКА) -->
-    <div class="flex-grow flex flex-row p-2 gap-2 relative z-0 h-full min-h-[50%]">
+    <div class="flex flex-row p-2 gap-2 shrink-0 h-[240px] sm:h-[300px]">
         <!-- Фрейм друга (Слева) -->
         <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#2a3942] shadow-inner h-full">
             <video id="direct-remote-video" class="w-full h-full object-cover hidden" autoplay playsinline></video>
             <div id="direct-remote-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-[#8696a0]">
-                <i class="fa-solid fa-video-slash text-3xl mb-2"></i>
-                <span class="text-xs text-center">Waiting...</span>
+                <i class="fa-solid fa-video-slash text-2xl mb-1.5"></i>
+                <span class="text-xs text-center" data-i18n="waiting_video">Waiting for video...</span>
             </div>
         </div>
         
@@ -596,29 +597,18 @@ if (window.OneSignalDeferred) {
         <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#00a884] shadow-inner h-full">
             <video id="direct-local-video" class="w-full h-full object-cover hidden" autoplay playsinline muted></video>
             <div id="direct-local-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-[#8696a0]">
-                <i class="fa-solid fa-video-slash text-3xl mb-2"></i>
+                <i class="fa-solid fa-video-slash text-2xl mb-1.5"></i>
                 <span class="text-xs text-center">My Camera</span>
-            </div>
-        </div>
-    </div>
-    
-        
-        <!-- Мой фрейм -->
-        <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#00a884] shadow-inner">
-            <video id="direct-local-video" class="w-full h-full object-cover hidden" autoplay playsinline muted></video>
-            <div id="direct-local-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-[#8696a0]">
-                <i class="fa-solid fa-video-slash text-3xl mb-2"></i>
-                <span class="text-xs">My Camera</span>
             </div>
         </div>
     </div>
 
     <!-- 3. УМЕНЬШЕННЫЕ АВАТАРКИ И ИНДИКАТОР (ВНИЗУ, НАД ЧАТОМ) -->
-    <div class="flex justify-center items-center gap-4 w-full px-2 pb-3 pt-1 shrink-0 relative z-10 bg-[#0b141a]">
+    <div class="flex justify-center items-center gap-4 w-full px-2 pb-2 pt-1 shrink-0 relative z-10 bg-[#0b141a]">
         <!-- Аватарка друга -->
         <div class="flex flex-col items-center flex-1">
-            <div class="w-14 h-14 relative mb-1.5">
-                <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover border-2 border-[#2a3942] shadow-lg">
+            <div class="w-14 h-14 relative mb-1">
+                <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover border border-[#2a3942] shadow-lg">
                 <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-xs bg-[#111b21] rounded-full p-0.5 shadow">🌐</span>
             </div>
             <h3 id="voice-friend-name" class="text-white font-bold text-[0.7rem] text-center truncate max-w-[80px]" data-i18n="select_contact">Select Contact</h3>
@@ -633,9 +623,9 @@ if (window.OneSignalDeferred) {
         
         <!-- Твоя аватарка -->
         <div class="flex flex-col items-center flex-1">
-            <div class="w-14 h-14 relative mb-1.5">
+            <div class="w-14 h-14 relative mb-1">
                 <div class="pulse-ring absolute top-0 left-0 w-full h-full"></div>
-                <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-[#00a884] relative z-10 shadow-[0_0_10px_rgba(0,168,132,0.3)] cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()">
+                <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border border-[#00a884] relative z-10 shadow-[0_0_10px_rgba(0,168,132,0.3)] cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()">
                 <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xs z-20 bg-[#111b21] rounded-full p-0.5 shadow"></span>
             </div>
             <h3 class="text-white font-bold text-[0.7rem] text-center truncate w-full max-w-[80px]" id="voice-me-name"></h3>
@@ -661,8 +651,7 @@ if (window.OneSignalDeferred) {
         <button class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleUniversalMic(event, 'voice-chat-input')"><i class="fa-solid fa-microphone"></i></button>
         <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.currentMicInputTarget='voice-chat-input'; window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
     </div>
-
-</div>
+ </div>
             
             
                             
