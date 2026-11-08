@@ -37,7 +37,31 @@ window.getConfTranslation = function(key) {
     return dict[key] || '';
 };
 
-// 3. ОТПРАВКА ПРИГЛАШЕНИЙ В КОНФЕРЕНЦИЮ
+// 3. УПРАВЛЕНИЕ КАМЕРОЙ В КОНФЕРЕНЦИИ И БЕГУЩАЯ СТРОКА
+window.toggleMyCamera = async function(btn) { 
+    if (window.confVideoTrack) { 
+        const isEnabled = window.confVideoTrack.isPlaying;
+        await window.confVideoTrack.setEnabled(!isEnabled);
+        
+        if (!isEnabled) {
+            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
+            btn.innerHTML = '<i class="fa-solid fa-video text-white"></i>'; 
+        } else {
+            btn.classList.replace('bg-red-500', 'bg-[#202c33]'); 
+            btn.innerHTML = '<i class="fa-solid fa-video-slash text-[#8696a0]"></i>'; 
+        }
+    } 
+};
+
+window.isMeetMarqueeEnabled = true; 
+window.toggleMeetMarquee = function() { 
+    window.isMeetMarqueeEnabled = !window.isMeetMarqueeEnabled; 
+    document.querySelectorAll('#conference .translation-bar').forEach(b => { 
+        b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; 
+    }); 
+};
+
+// 4. ОТПРАВКА ПРИГЛАШЕНИЙ В КОНФЕРЕНЦИЮ
 window.sendGroupInvites = function() {
     const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
     if (checkboxes.length === 0) return;
@@ -62,7 +86,7 @@ window.sendGroupInvites = function() {
     if (typeof window.closeGroupInviteModal === 'function') window.closeGroupInviteModal();
 };
 
-// 4. УНИВЕРСАЛЬНЫЙ ПРИЕМНИК (Статичный, с вибрацией, ждет клика)
+// 5. УНИВЕРСАЛЬНЫЙ ПРИЕМНИК (Статичный, с вибрацией, ждет клика)
 window.listenForDirectInvites = function() {
     if (!window.myProfileInfo || !window.myProfileInfo.id) {
         setTimeout(window.listenForDirectInvites, 1000);
