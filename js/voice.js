@@ -141,56 +141,78 @@ window.autoSetMicLang = function() {
 };
 
 // =========================================================================
-// ФУНКЦИЯ 2: ЖИВОЙ ПЕРЕВОДЧИК ДЛЯ АУДИО/ВИДЕО ЗВОНКОВ (WebRTC DataChannel)
+// ФУНКЦИЯ 2: ЖИВОЙ ПЕРЕВОДЧИК ДЛЯ АУДИО/ВИДЕО ЗВОНКОВ (Через Firebase)
 // =========================================================================
 window.liveCallRec = null;
 
 window.startVoiceAI = function() {
-    if (window.liveCallRec) return; // Уже запущен
+    if (window.liveCallRec) return; 
     
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) return console.warn("Speech Recognition not supported.");
 
     window.liveCallRec = new SpeechRec();
-    window.liveCallRec.continuous = true; // Слушаем постоянно, пока идет звонок
+    window.liveCallRec.continuous = true; 
     window.liveCallRec.interimResults = false;
 
-    // Мой язык
-    let myLangCode = window.getSmartLang(window.myProfileInfo);
-    window.liveCallRec.lang = myLangCode === 'ru' ? 'ru-RU' : 'en-US'; // Можно расширить
+    // УМНЫЙ ЯЗЫК: берем из ромба или профиля
+    let manualMicLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
+    let mySpokenLang = window.getSmartLang(window.myProfileInfo);
+    window.liveCallRec.lang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
 
     window.liveCallRec.onresult = async (e) => {
         let transcript = e.results[e.results.length - 1][0].transcript;
         if (!transcript.trim()) return;
 
-        // Если звонок идет, шлем текст через быстрый DataChannel
-        if (window.webrtcDataChannel && window.webrtcDataChannel.readyState === 'open') {
+        // Определяем язык собеседника
+        let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : 'en';
+        
+        let textToShip = transcript;
+        let spokenLangCode = window.liveCallRec.lang.substring(0, 2);
+        
+        try {
+            // Переводим текст на лету, если языки не совпадают
+            if (spokenLangCode !== targetLang.substring(0, 2)) {
+                const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${spokenLangCode}&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(transcript)}`);
+                const data = await res.json();
+                if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0];
+            }
             
-            // Язык собеседника
-            let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : 'en';
-
-            try {
-                // Переводим МОЙ голос на язык СОБЕСЕДНИКА перед отправкой
-                let textToShip = transcript;
-                if (myLangCode !== targetLang) {
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myLangCode}&tl=${targetLang}&dt=t&q=${encodeURIComponent(transcript)}`);
-                    const data = await res.json();
-                    if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0];
+            // Подготавливаем данные флага
+            let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+            let activeFlag = window.myProfileInfo.flag || '🌐';
+            
+            if (manualMicLang !== 'auto') {
+                const revLangMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
+                if (revLangMap[spokenLangCode]) {
+                    activeFlagCode = revLangMap[spokenLangCode][0];
+                    activeFlag = revLangMap[spokenLangCode][1];
                 }
-
-                // Отправляем переведенный текст собеседнику
-                window.webrtcDataChannel.send(JSON.stringify({
-                    type: 'speech',
-                    text: textToShip,
-                    lang: targetLang
-                }));
-            } catch(err) { console.error("Ошибка живого перевода:", err); }
-        }
+            }
+            
+            // ОТПРАВЛЯЕМ ТЕКСТ В FIREBASE С МЕТКОЙ ЗВОНКА
+            let targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
+            
+            firebase.database().ref(targetDbRoom).push({
+                userId: window.myProfileInfo.id, 
+                name: window.myUsername || 'User', 
+                text: textToShip, 
+                originalText: transcript,
+                sessionId: window.mySessionId || 'sess', 
+                timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
+                flag: activeFlag, 
+                flagCode: activeFlagCode,
+                langCode: targetLang.substring(0,2), 
+                isVoiceRoomMsg: true, 
+                isConfMsg: false
+            });
+            
+        } catch(err) { console.error("Ошибка перевода звонка:", err); }
     };
 
     window.liveCallRec.onend = () => {
-        // Если звонок еще идет, перезапускаем микрофон
-        if (window.peerConnection && window.liveCallRec) {
+        if (window.liveCallRec) {
             try { window.liveCallRec.start(); } catch(err) {}
         }
     };
@@ -200,12 +222,13 @@ window.startVoiceAI = function() {
 
 window.stopVoiceAI = function() {
     if (window.liveCallRec) {
-        window.liveCallRec.onend = null; // Отключаем перезапуск
+        window.liveCallRec.onend = null; 
         try { window.liveCallRec.stop(); } catch(err){}
         window.liveCallRec = null;
     }
 };
 
+// СОХРАНЕННАЯ ФУНКЦИЯ ДЛЯ БУДУЩИХ АУДИОЗВОНКОВ
 window.handleIncomingSpeech = function(payload) {
     console.log("Входящий перевод:", payload.text);
     
@@ -226,6 +249,8 @@ window.handleIncomingSpeech = function(payload) {
         let voiceMarquee = document.getElementById('voice-info-marquee');
         if (voiceMarquee) voiceMarquee.innerText = `[Перевод]: ${payload.text}`;
         
-        window.playAIVoice(encodeURIComponent(payload.text), payload.lang);
+        // Используем payload.langCode (из Firebase) или payload.lang
+        let langToPlay = payload.langCode || payload.lang || 'en';
+        window.playAIVoice(encodeURIComponent(payload.text), langToPlay);
     }
 };
