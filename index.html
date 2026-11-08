@@ -602,7 +602,8 @@ if (window.OneSignalDeferred) {
         </div>
     </div>
 
-            <!-- ========================================== -->
+        
+                <!-- ========================================== -->
     <!-- БЕГУЩАЯ СТРОКА (Для перевода) -->
     <div class="w-full px-4 mb-2 z-10 text-center min-h-[24px]">
         <span id="voice-info-marquee" class="text-[#00a884] text-[15px] font-medium drop-shadow-md"></span>
@@ -658,37 +659,6 @@ if (window.OneSignalDeferred) {
     </div>
     <!-- ========================================== -->
 
-    
-    
-    <!-- 3. УМЕНЬШЕННЫЕ АВАТАРКИ И ИНДИКАТОР (ФУТЕР СДВИНУТ ВНИЗ ЧЕРЕЗ MT-AUTO) -->
-    <div class="flex justify-center items-center gap-4 w-full px-2 py-2 shrink-0 relative z-10 bg-[#0b141a] mt-auto">
-        <!-- Аватарка друга -->
-        <div class="flex flex-col items-center flex-1">
-            <div class="w-12 h-12 relative mb-1">
-                <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover border border-[#2a3942] shadow-lg">
-                <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-[10px] bg-[#111b21] rounded-full p-0.5 shadow">🌐</span>
-            </div>
-            <h3 id="voice-friend-name" class="text-white font-bold text-[0.65rem] text-center truncate max-w-[80px]" data-i18n="select_contact">Select Contact</h3>
-        </div>
-        
-        <!-- Индикатор звука -->
-        <div class="flex gap-1 text-[#00a884] shrink-0 mb-3">
-            <div class="w-1 h-3 bg-[#00a884] rounded-full animate-bounce"></div>
-            <div class="w-1 h-5 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-            <div class="w-1 h-3 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-        </div>
-        
-        <!-- Твоя аватарка -->
-        <div class="flex flex-col items-center flex-1">
-            <div class="w-12 h-12 relative mb-1">
-                <div class="pulse-ring absolute top-0 left-0 w-full h-full"></div>
-                <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border border-[#00a884] relative z-10 shadow-[0_0_10px_rgba(0,168,132,0.3)] cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()">
-                <span id="voice-me-flag" class="absolute bottom-0 right-0 text-[10px] z-20 bg-[#111b21] rounded-full p-0.5 shadow"></span>
-            </div>
-            <h3 class="text-white font-bold text-[0.65rem] text-center truncate w-full max-w-[80px]" id="voice-me-name"></h3>
-        </div>
-    </div>
-
     <!-- 4. ПАНЕЛЬ ВВОДА ЧАТА И КНОПКА ОТБОЯ -->
     <div class="chat-input-area border-t border-b border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative py-2">
         <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
@@ -704,8 +674,7 @@ if (window.OneSignalDeferred) {
         <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.currentMicInputTarget='voice-chat-input'; window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
     </div>
 </div>
-            
-            
+
 
             
     
