@@ -573,24 +573,35 @@ if (window.OneSignalDeferred) {
 
 <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a] relative z-10">
     
-    <!-- 1. МАРКУЩАЯ СТРОКА НАВЕРХУ (БЕЗ НАДПИСИ VIDEO ZENG) -->
-    <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0 py-3 shadow-md z-20">
+        <!-- 1. МАРКУЩАЯ СТРОКА НАВЕРХУ (ПОЛНЫЙ ОРИГИНАЛ - БЕЗ ЛИШНИХ КЛАССОВ) -->
+    <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
         <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
         <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
             <span class="chat-info-marquee-text" id="voice-info-marquee" data-i18n="waiting_voice">Waiting for voice input...</span>
         </div>
     </div>
 
-    <!-- 2. ДВА ФРЕЙМА ДЛЯ ВИДЕО (ЦЕНТР ЭКРАНА) -->
-    <div class="flex-grow flex flex-col p-2 gap-2 relative z-0">
-        <!-- Фрейм друга -->
-        <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#2a3942] shadow-inner">
+    <!-- 2. ДВА ФРЕЙМА ДЛЯ ВИДЕО (СЛЕВА И СПРАВА КАК ФОТОБУДКА) -->
+    <div class="flex-grow flex flex-row p-2 gap-2 relative z-0 h-full min-h-[50%]">
+        <!-- Фрейм друга (Слева) -->
+        <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#2a3942] shadow-inner h-full">
             <video id="direct-remote-video" class="w-full h-full object-cover hidden" autoplay playsinline></video>
             <div id="direct-remote-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-[#8696a0]">
                 <i class="fa-solid fa-video-slash text-3xl mb-2"></i>
-                <span class="text-xs">Waiting for video...</span>
+                <span class="text-xs text-center">Waiting...</span>
             </div>
         </div>
+        
+        <!-- Мой фрейм (Справа) -->
+        <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#00a884] shadow-inner h-full">
+            <video id="direct-local-video" class="w-full h-full object-cover hidden" autoplay playsinline muted></video>
+            <div id="direct-local-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-[#8696a0]">
+                <i class="fa-solid fa-video-slash text-3xl mb-2"></i>
+                <span class="text-xs text-center">My Camera</span>
+            </div>
+        </div>
+    </div>
+    
         
         <!-- Мой фрейм -->
         <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#00a884] shadow-inner">
