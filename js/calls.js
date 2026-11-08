@@ -209,7 +209,7 @@ window.startInAppCall = function(callType = 'voice') {
     
     window.voiceFriend = target; 
     if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
-    if (callType === 'video' && window.initConference) window.initConference();
+    //if (callType === 'video' && window.initConference) window.initConference();
     
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
