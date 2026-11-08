@@ -274,7 +274,7 @@ window.acceptCall = function() {
         
         window.voiceFriend = target; 
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
-        if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 2 : 1); 
+        if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 1 : 1); 
         
         window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); 
     } 
