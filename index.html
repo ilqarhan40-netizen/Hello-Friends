@@ -601,7 +601,19 @@ if (window.OneSignalDeferred) {
             </div>
         </div>
     </div>
+<!-- Панель управления живым звонком (Микрофон и Камера) -->
+<div class="flex justify-center items-center gap-6 my-2 w-full">
+    <!-- Кнопка Вкл/Выкл Микрофон Агоры -->
+    <button id="direct-mic-btn" onclick="window.toggleMyAudio()" class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#00a884] hover:bg-[#2a3942] transition border border-[#2a3942] shadow-sm">
+        <i class="fa-solid fa-microphone text-lg"></i>
+    </button>
 
+    <!-- Кнопка Вкл/Выкл Камеру Агоры -->
+    <button id="direct-cam-btn" onclick="window.toggleMyCamera()" class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#00a884] hover:bg-[#2a3942] transition border border-[#2a3942] shadow-sm">
+        <i class="fa-solid fa-video text-lg"></i>
+    </button>
+</div>
+    
     <!-- 3. УМЕНЬШЕННЫЕ АВАТАРКИ И ИНДИКАТОР (ФУТЕР СДВИНУТ ВНИЗ ЧЕРЕЗ MT-AUTO) -->
     <div class="flex justify-center items-center gap-4 w-full px-2 py-2 shrink-0 relative z-10 bg-[#0b141a] mt-auto">
         <!-- Аватарка друга -->
