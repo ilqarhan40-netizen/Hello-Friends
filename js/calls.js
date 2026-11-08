@@ -143,7 +143,10 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             tracksToPublish.push(window.localVideoTrack);
         }
 
-        await window.agoraClient.publish(tracksToPublish);
+                await window.agoraClient.publish(tracksToPublish);
+
+        // === ЗАПУСК УМНОГО МИКРОФОНА ===
+        if (window.startVoiceAI) window.startVoiceAI();
 
     } catch (e) {
         console.error("Ошибка Agora: ", e);
@@ -153,12 +156,16 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 };
 
 window.endWebRTCCall = async function() {
+    // === ОСТАНОВКА УМНОГО МИКРОФОНА ===
+    if (window.stopVoiceAI) window.stopVoiceAI();
+
     if (window.localAudioTrack) { window.localAudioTrack.close(); window.localAudioTrack = null; }
     if (window.localVideoTrack) { window.localVideoTrack.close(); window.localVideoTrack = null; }
     if (window.agoraClient) {
         try { await window.agoraClient.leave(); } catch (e) {}
         window.agoraClient = null;
     }
+    
     
     // 1. Очищаем старые фреймы
     document.querySelectorAll('[id^="remote-video-"]').forEach(v => {
