@@ -194,3 +194,99 @@ window.toggleMeetMarquee = function() {
         b.style.opacity = window.isMeetMarqueeEnabled ? "1" : "0"; 
     }); 
 };
+
+// ==========================================
+// 4. ЛОГИКА ПРИГЛАШЕНИЯ В КОНФЕРЕНЦИЮ
+// ==========================================
+
+window.openGroupInviteModal = function() {
+    if (window.closeDropdown) window.closeDropdown();
+    
+    const listCont = document.getElementById('group-invite-list');
+    if (!listCont) return;
+    
+    listCont.innerHTML = '';
+    const users = (window.participants || []).filter(p => p.id !== 'ai' && p.id !== window.myProfileInfo.id);
+    
+    if (users.length === 0) {
+        listCont.innerHTML = '<p class="text-[#8696a0] text-center text-sm mt-4">Нет доступных контактов.</p>';
+    } else {
+        users.forEach(p => {
+            let name = (p.name || 'User').split(' ')[0];
+            listCont.innerHTML += `
+            <label class="flex items-center justify-between p-2 hover:bg-[#2a3942] rounded-xl cursor-pointer transition">
+                <div class="flex items-center gap-3">
+                    <img src="${p.photo}" class="w-10 h-10 rounded-full border border-[#00a884] object-cover shadow-sm">
+                    <div>
+                        <p class="text-white font-bold text-sm">${name} ${p.flag}</p>
+                        <p class="text-[#8696a0] text-xs">${p.profession || 'User'}</p>
+                    </div>
+                </div>
+                <input type="checkbox" value="${p.id}" class="invite-checkbox w-5 h-5 accent-[#00a884] cursor-pointer">
+            </label>`;
+        });
+    }
+    
+    const modal = document.getElementById('group-invite-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            const content = document.getElementById('group-invite-content');
+            if (content) {
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }
+        }, 10);
+    }
+};
+
+window.closeGroupInviteModal = function() {
+    const modal = document.getElementById('group-invite-modal');
+    const content = document.getElementById('group-invite-content');
+    if (content) {
+        content.classList.remove('scale-100');
+        content.classList.add('scale-95');
+    }
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }, 200);
+};
+
+window.selectAllForInvite = function() {
+    const checkboxes = document.querySelectorAll('.invite-checkbox');
+    let allChecked = true;
+    checkboxes.forEach(cb => { if (!cb.checked) allChecked = false; });
+    checkboxes.forEach(cb => { cb.checked = !allChecked; });
+};
+
+window.sendGroupInvites = function() {
+    const checkboxes = document.querySelectorAll('.invite-checkbox:checked');
+    if (checkboxes.length === 0) {
+        if (window.showToast) window.showToast("Error", "Выберите пользователей для приглашения", "", "");
+        return;
+    }
+    
+    let count = 0;
+    checkboxes.forEach(cb => {
+        const targetId = cb.value;
+        if (window.sendPushToUser) {
+            window.sendPushToUser(targetId, 
+                "Global Conference", 
+                `${window.myUsername} invites you to the video room!`,
+                { type: "conference_invite", room: "global_conference" }
+            );
+        }
+        count++;
+    });
+    
+    if (window.showToast) {
+        window.showToast("Success", `Invites sent to ${count} users`, "https://ui-avatars.com/api/?name=OK&background=00a884&color=111b21", "");
+    }
+    
+    window.closeGroupInviteModal();
+};
+    
