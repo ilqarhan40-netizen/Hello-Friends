@@ -76,13 +76,27 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
         window.agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-        // Прием потока от собеседника в твою мультиязычную сетку
+        // Прием потока от собеседника (один-на-один)
         window.agoraClient.on("user-published", async (user, mediaType) => {
             await window.agoraClient.subscribe(user, mediaType);
             
             if (mediaType === "video") {
+                // Ищем новые фреймы из комнаты 1-на-1
+                let newDirectVideo = document.getElementById('direct-remote-video');
+                let newDirectPlaceholder = document.getElementById('direct-remote-placeholder');
+                
+                // Ищем старый фрейм (на всякий случай, как запасной вариант)
                 let gridVideo = document.getElementById(`remote-video-${targetId}`);
-                if (gridVideo) {
+                
+                if (newDirectVideo) {
+                    newDirectVideo.srcObject = new MediaStream([user.videoTrack.getMediaStreamTrack()]);
+                    newDirectVideo.style.display = 'block';
+                    newDirectVideo.classList.remove('hidden');
+                    newDirectVideo.play().catch(e => console.warn(e));
+                    
+                    // Прячем иконку "Waiting for video..."
+                    if (newDirectPlaceholder) newDirectPlaceholder.classList.add('hidden');
+                } else if (gridVideo) { 
                     gridVideo.srcObject = new MediaStream([user.videoTrack.getMediaStreamTrack()]);
                     gridVideo.style.display = 'block';
                     gridVideo.classList.remove('hidden');
@@ -97,7 +111,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         // Название комнаты жестко привязано к токену
         const channelName = "hello"; 
         
-        // Подключение к серверу с токеном
         await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, window.myProfileInfo.id);
 
         let tracksToPublish = [];
@@ -108,8 +121,21 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         if (isVideo) {
             if (!window.localVideoTrack) {
                 window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+                
+                // Мое видео в новой комнате 1-на-1
+                let newMyVideo = document.getElementById('direct-local-video');
+                let newMyPlaceholder = document.getElementById('direct-local-placeholder');
+                
                 let myVideo = document.getElementById('my-live-video');
-                if (myVideo) {
+                
+                if (newMyVideo) {
+                    newMyVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
+                    newMyVideo.classList.remove('hidden');
+                    newMyVideo.play().catch(e=>{});
+                    
+                    // Прячем иконку "My Camera"
+                    if (newMyPlaceholder) newMyPlaceholder.classList.add('hidden');
+                } else if (myVideo) {
                     myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
                     myVideo.play().catch(e=>{});
                 }
@@ -134,11 +160,29 @@ window.endWebRTCCall = async function() {
         window.agoraClient = null;
     }
     
+    // 1. Очищаем старые фреймы
     document.querySelectorAll('[id^="remote-video-"]').forEach(v => {
         v.srcObject = null;
         v.classList.add('hidden');
         v.style.display = 'none';
     });
+
+    // 2. Очищаем НОВЫЕ фреймы (прячем видео, возвращаем заглушки)
+    let newDirectVideo = document.getElementById('direct-remote-video');
+    let newDirectPlaceholder = document.getElementById('direct-remote-placeholder');
+    if (newDirectVideo) {
+        newDirectVideo.srcObject = null;
+        newDirectVideo.classList.add('hidden');
+        if (newDirectPlaceholder) newDirectPlaceholder.classList.remove('hidden');
+    }
+
+    let newMyVideo = document.getElementById('direct-local-video');
+    let newMyPlaceholder = document.getElementById('direct-local-placeholder');
+    if (newMyVideo) {
+        newMyVideo.srcObject = null;
+        newMyVideo.classList.add('hidden');
+        if (newMyPlaceholder) newMyPlaceholder.classList.remove('hidden');
+    }
 
     const myVideo = document.getElementById('my-live-video');
     if (myVideo) {
@@ -156,20 +200,6 @@ window.endWebRTCCall = async function() {
     window.currentTargetUser = null;
 };
 
-window.toggleMyCamera = async function(btn) { 
-    if (window.localVideoTrack) { 
-        const isEnabled = window.localVideoTrack.isPlaying;
-        await window.localVideoTrack.setEnabled(!isEnabled);
-        
-        if (!isEnabled) {
-            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); 
-            btn.innerHTML = '<i class="fa-solid fa-video text-white"></i>'; 
-        } else {
-            btn.classList.replace('bg-red-500', 'bg-[#202c33]'); 
-            btn.innerHTML = '<i class="fa-solid fa-video-slash text-[#8696a0]"></i>'; 
-        }
-    } 
-};
       
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
