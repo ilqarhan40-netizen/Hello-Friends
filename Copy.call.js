@@ -14,7 +14,9 @@ window.localVideoTrack = null;
 
 // Твои правильные ключи Agora
 const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
-const AGORA_TEMP_TOKEN = "007eJxSYJix0mVKdqh0feNCndMeypIGp4LezeLM4Q9UudE4k6P68FEFBktD4zRD40SzJAtDA5MUY5MkA2MzS9PE5JRkgxRzyyTzy7bvshiYzwhVJCqxMjIwMrAwMDKA+ExgkhlMsoBJVoaM1JycfAYGQAAAAP//6cogmg=="; 
+const AGORA_TEMP_TOKEN = "007eJxTYPB858P1Y43/ha4je6ZXLX4xX49J89NOcbG35Vekzl18MmW+AoOloXGaoXGiWZKFoYFJirFJkoGxmaVpYnJKskGKuWWSudSV91kNgYwM3ar8rIwMEAjiszJkpObk5DMwAAAF6CFk"; 
+
+
 
 
 window.currentCallerId = null;
@@ -208,11 +210,14 @@ window.startInAppCall = function(callType = 'voice') {
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
     
     window.voiceFriend = target; 
-    if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
+    if (window.switchTab) window.switchTab(callType === 'video' ? 1 : 1); 
+    //if (callType === 'video' && window.initConference) window.initConference();
+    
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
     window.stopAllRings();
-    window.playSafeSound(window.sndCallOut);
+    setTimeout(() => { window.playSafeSound(window.sndCallOut); }, 100);
+    
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
@@ -231,6 +236,10 @@ window.startInAppCall = function(callType = 'voice') {
                 `Вы пропустили вызов от ${window.myUsername}`
             );
         }
+                    window.currentCallerId = null;
+            window.voiceFriend = null;
+            if (window.switchTab) window.switchTab(1);
+        
     }, 30000);
 };
 
@@ -267,7 +276,7 @@ window.acceptCall = function() {
         
         window.voiceFriend = target; 
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
-        if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 2 : 1); 
+        if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 1 : 1); 
         
         window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); 
     } 
@@ -443,20 +452,7 @@ window.initConference = function() {
     }
 };
 
-window.toggleMyCamera = async function(btn) { 
-    const videoEl = document.getElementById('my-live-video'); 
-    if (window.myVideoStream) { 
-        window.myVideoStream.getTracks().forEach(t => t.stop()); window.myVideoStream = null; 
-        if(videoEl) { videoEl.srcObject = null; videoEl.src = window.myProfileInfo.video || ''; videoEl.play(); } 
-        btn.classList.replace('bg-red-500', 'bg-[#202c33]'); btn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]'; 
-    } else { 
-        try { 
-            window.myVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false }); 
-            if(videoEl) { videoEl.srcObject = window.myVideoStream; videoEl.play(); } 
-            btn.classList.replace('bg-[#202c33]', 'bg-red-500'); btn.querySelector('i').className = 'fa-solid fa-video text-white'; 
-        } catch(e) { alert("Доступ к камере запрещен!"); } 
-    } 
-};
+
 
 window.isMeetMarqueeEnabled = true; 
 window.toggleMeetMarquee = function() { 
