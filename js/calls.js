@@ -208,7 +208,7 @@ window.startInAppCall = function(callType = 'voice') {
     if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0]; 
     
     window.voiceFriend = target; 
-    if (window.switchTab) window.switchTab(callType === 'video' ? 2 : 1); 
+    if (window.switchTab) window.switchTab(callType === 'video' ? 1 : 1); 
     //if (callType === 'video' && window.initConference) window.initConference();
     
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
