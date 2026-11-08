@@ -112,13 +112,58 @@ window.initConference = function() {
 
     confGrid.innerHTML = confHtml; 
     
-    const videoEl = document.getElementById('my-live-video'); 
-    if(videoEl) { 
-        videoEl.src = window.myProfileInfo.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4'; 
-        videoEl.loop = true; videoEl.muted = true; videoEl.autoplay = true; 
-    }
+        setTimeout(() => {
+        if (window.startConferenceWebRTC) window.startConferenceWebRTC();
+    }, 500);
+    
 };
 
+// --- БОЕВОЙ ДВИЖОК СВЯЗИ ДЛЯ КОНФЕРЕНЦИИ ---
+window.startConferenceWebRTC = async function() {
+    if (typeof AgoraRTC === 'undefined') return console.error("Agora SDK не загружен");
+    try {
+        if (!window.confClient) window.confClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        
+        window.confClient.on("user-published", async (user, mediaType) => {
+            await window.confClient.subscribe(user, mediaType);
+            if (mediaType === "video") {
+                let gridVideo = document.getElementById(`remote-video-${user.uid}`);
+                if (gridVideo) {
+                    gridVideo.srcObject = new MediaStream([user.videoTrack.getMediaStreamTrack()]);
+                    gridVideo.classList.remove('hidden');
+                    gridVideo.play().catch(e => {});
+                }
+            }
+            if (mediaType === "audio") user.audioTrack.play();
+        });
+
+        window.confClient.on("user-unpublished", (user, mediaType) => {
+             if (mediaType === "video") {
+                let gridVideo = document.getElementById(`remote-video-${user.uid}`);
+                if (gridVideo) { gridVideo.srcObject = null; gridVideo.classList.add('hidden'); }
+             }
+        });
+
+        await window.confClient.join(AGORA_APP_ID, "global_conference", AGORA_TEMP_TOKEN, window.myProfileInfo.id);
+
+        let tracks = [];
+        if (!window.confAudioTrack) window.confAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        tracks.push(window.confAudioTrack);
+
+        if (!window.confVideoTrack) {
+            window.confVideoTrack = await AgoraRTC.createCameraVideoTrack();
+            let myVideo = document.getElementById('my-live-video');
+            if (myVideo) {
+                myVideo.src = ""; myVideo.removeAttribute('src'); 
+                myVideo.srcObject = new MediaStream([window.confVideoTrack.getMediaStreamTrack()]);
+                myVideo.play().catch(e=>{});
+            }
+        }
+        tracks.push(window.confVideoTrack);
+        await window.confClient.publish(tracks);
+        
+    } catch (e) { console.error("Ошибка камеры: ", e); }
+};
 
 
 window.isMeetMarqueeEnabled = true; 
