@@ -571,46 +571,90 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
 
-            <div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a] relative z-10">
-                <div class="flex justify-center items-center px-4 py-3 bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <h2 class="text-xl font-bold text-white" data-i18n="voice_room_title" style="font-family: 'Allura', cursive; font-size: 2.5rem; color: var(--hf-purple);">Voice Room</h2>
-                </div>
-                <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0">
-                    <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
-                    <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
-                        <span class="chat-info-marquee-text" id="voice-info-marquee" data-i18n="waiting_voice">Waiting for voice input...</span>
-                    </div>
-                </div>
-                <div class="flex-grow flex flex-col justify-center items-center relative w-full px-2">
-                    <div class="flex justify-center items-center gap-4 sm:gap-8 w-full">
-                        <div class="flex flex-col items-center flex-1">
-                            <div class="w-24 h-24 sm:w-28 sm:h-28 relative mb-3">
-                                <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover border-2 border-[#2a3942] shadow-lg">
-                                <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-xl bg-[#111b21] rounded-full p-1 shadow">🌐</span>
-                            </div>
-                          <div class="flex items-center justify-center gap-2 mt-2">
-    <h3 id="voice-friend-name" class="text-white font-bold text-sm text-center truncate max-w-[100px]" data-i18n="select_contact">Select Contact</h3>
+<div id="voice-translator" class="page-content h-full flex flex-col bg-[#0b141a] relative z-10">
     
-    <button onclick="window.hangUpCall()" class="bg-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all shrink-0">
-        <i class="fa-solid fa-phone-slash text-white text-xs"></i>
-    </button>
-</div>
-                        </div>
-                        <div class="flex gap-1.5 text-[#00a884] shrink-0 mb-6">
-                            <div class="w-1.5 h-6 bg-[#00a884] rounded-full animate-bounce"></div><div class="w-1.5 h-10 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div><div class="w-1.5 h-6 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                        </div>
-                        <div class="flex flex-col items-center flex-1">
-                            <div class="w-24 h-24 sm:w-28 sm:h-28 relative mb-3">
-                                <div class="pulse-ring absolute top-0 left-0 w-full h-full"></div>
-                               <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-4 border-[#00a884] relative z-10 shadow-[0_0_15px_rgba(0,168,132,0.3)] cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()">
-                                <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xl z-20 bg-[#111b21] rounded-full p-1 shadow"></span>
-                            </div>
-                            <h3 class="text-white font-bold text-sm text-center truncate w-full max-w-[100px]" id="voice-me-name"></h3>
-                        </div>
-                    </div>
-                </div>
+    <!-- 1. МАРКУЩАЯ СТРОКА НАВЕРХУ (БЕЗ НАДПИСИ VIDEO ZENG) -->
+    <div class="chat-info-marquee-container bg-[#111b21] border-b border-[#202c33] shrink-0 py-3 shadow-md z-20">
+        <button onclick="window.toggleVoiceMarquee()" class="text-[#00a884] hover:text-white transition px-2 shrink-0 z-10"><i class="fa-solid fa-closed-captioning text-xl"></i></button>
+        <div id="voice-marquee-container-anim" class="overflow-hidden flex-grow flex items-center h-full transition-opacity duration-300">
+            <span class="chat-info-marquee-text" id="voice-info-marquee" data-i18n="waiting_voice">Waiting for voice input...</span>
+        </div>
+    </div>
 
-                <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative">
+    <!-- 2. ДВА ФРЕЙМА ДЛЯ ВИДЕО (ЦЕНТР ЭКРАНА) -->
+    <div class="flex-grow flex flex-col p-2 gap-2 relative z-0">
+        <!-- Фрейм друга -->
+        <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#2a3942] shadow-inner">
+            <video id="direct-remote-video" class="w-full h-full object-cover hidden" autoplay playsinline></video>
+            <div id="direct-remote-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-[#8696a0]">
+                <i class="fa-solid fa-video-slash text-3xl mb-2"></i>
+                <span class="text-xs">Waiting for video...</span>
+            </div>
+        </div>
+        
+        <!-- Мой фрейм -->
+        <div class="flex-1 bg-[#111b21] rounded-2xl relative overflow-hidden border border-[#00a884] shadow-inner">
+            <video id="direct-local-video" class="w-full h-full object-cover hidden" autoplay playsinline muted></video>
+            <div id="direct-local-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-[#8696a0]">
+                <i class="fa-solid fa-video-slash text-3xl mb-2"></i>
+                <span class="text-xs">My Camera</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. УМЕНЬШЕННЫЕ АВАТАРКИ И ИНДИКАТОР (ВНИЗУ, НАД ЧАТОМ) -->
+    <div class="flex justify-center items-center gap-4 w-full px-2 pb-3 pt-1 shrink-0 relative z-10 bg-[#0b141a]">
+        <!-- Аватарка друга -->
+        <div class="flex flex-col items-center flex-1">
+            <div class="w-14 h-14 relative mb-1.5">
+                <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover border-2 border-[#2a3942] shadow-lg">
+                <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-xs bg-[#111b21] rounded-full p-0.5 shadow">🌐</span>
+            </div>
+            <h3 id="voice-friend-name" class="text-white font-bold text-[0.7rem] text-center truncate max-w-[80px]" data-i18n="select_contact">Select Contact</h3>
+        </div>
+        
+        <!-- Индикатор звука -->
+        <div class="flex gap-1 text-[#00a884] shrink-0 mb-3">
+            <div class="w-1 h-4 bg-[#00a884] rounded-full animate-bounce"></div>
+            <div class="w-1 h-6 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+            <div class="w-1 h-4 bg-[#00a884] rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+        
+        <!-- Твоя аватарка -->
+        <div class="flex flex-col items-center flex-1">
+            <div class="w-14 h-14 relative mb-1.5">
+                <div class="pulse-ring absolute top-0 left-0 w-full h-full"></div>
+                <img id="voice-me-photo" src="" class="w-full h-full rounded-full object-cover border-2 border-[#00a884] relative z-10 shadow-[0_0_10px_rgba(0,168,132,0.3)] cursor-pointer hover:scale-105 transition" onclick="window.openPersonalLangModal()">
+                <span id="voice-me-flag" class="absolute bottom-0 right-0 text-xs z-20 bg-[#111b21] rounded-full p-0.5 shadow"></span>
+            </div>
+            <h3 class="text-white font-bold text-[0.7rem] text-center truncate w-full max-w-[80px]" id="voice-me-name"></h3>
+        </div>
+    </div>
+
+    <!-- 4. ПАНЕЛЬ ВВОДА ЧАТА И КНОПКА ОТБОЯ (В САМОМ НИЗУ) -->
+    <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative py-2">
+        <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
+        <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
+            <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('voice-chat-input'); event.stopPropagation();"></i>
+            <input type="text" id="voice-chat-input" data-i18n-placeholder="msg_placeholder" placeholder="Message..." class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
+            
+            <!-- Корзина -->
+            <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()" title="Manage Chat"></i>
+            
+            <!-- Разделитель -->
+            <div class="w-[1px] h-4 bg-[#2a3942] mx-2"></div>
+            
+            <!-- Кнопка Отбоя звонка -->
+            <i class="fa-solid fa-phone-slash text-red-500 text-[1.1rem] cursor-pointer hover:scale-110 transition-transform" onclick="window.hangUpCall()" title="End Call"></i>
+        </div>
+        <button class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition" onclick="window.toggleUniversalMic(event, 'voice-chat-input')"><i class="fa-solid fa-microphone"></i></button>
+        <button class="w-[40px] h-[40px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-[1.1rem] shrink-0 hover:scale-95 transition" onclick="window.currentMicInputTarget='voice-chat-input'; window.sendFirebaseMsg()"><i class="fa-solid fa-paper-plane ml-[-2px]"></i></button>
+    </div>
+
+</div>
+            
+            
+                            <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21] relative">
                     <button class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()" title="Attach File"><i class="fa-solid fa-paperclip"></i></button>
                     <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                         <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('voice-chat-input'); event.stopPropagation();"></i>
