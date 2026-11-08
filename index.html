@@ -601,18 +601,57 @@ if (window.OneSignalDeferred) {
             </div>
         </div>
     </div>
-<!-- Панель управления живым звонком (Микрофон и Камера) -->
-<div class="flex justify-center items-center gap-6 my-2 w-full">
-    <!-- Кнопка Вкл/Выкл Микрофон Агоры -->
-    <button id="direct-mic-btn" onclick="window.toggleMyAudio()" class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#00a884] hover:bg-[#2a3942] transition border border-[#2a3942] shadow-sm">
-        <i class="fa-solid fa-microphone text-lg"></i>
-    </button>
+        <!-- ========================================== -->
+    <!-- БЕГУЩАЯ СТРОКА ДЛЯ ПЕРЕВОДА (Теперь текст найдет свое место!) -->
+    <div class="w-full px-4 mb-3 z-10 text-center min-h-[24px]">
+        <span id="voice-info-marquee" class="text-[#00a884] text-[15px] font-medium drop-shadow-md"></span>
+    </div>
 
-    <!-- Кнопка Вкл/Выкл Камеру Агоры -->
-    <button id="direct-cam-btn" onclick="window.toggleMyCamera()" class="w-12 h-12 rounded-full bg-[#202c33] flex items-center justify-center text-[#00a884] hover:bg-[#2a3942] transition border border-[#2a3942] shadow-sm">
-        <i class="fa-solid fa-video text-lg"></i>
-    </button>
-</div>
+    <!-- 3. ФУТЕР: АВАТАРКИ И ГОЛЫЕ ИКОНКИ УПРАВЛЕНИЯ -->
+    <div class="flex justify-between items-center w-full px-4 py-2 shrink-0 relative z-10 bg-[#0b141a] mt-auto">
+        
+        <!-- ЛЕВАЯ СТОРОНА: Собеседник и кнопка его звука -->
+        <div class="flex items-center gap-3 flex-1 justify-start">
+            <button onclick="window.toggleRemoteAudio()" class="text-gray-500 hover:text-white transition">
+                <i id="icon-remote-vol" class="fa-solid fa-volume-high text-[1.3rem]"></i>
+            </button>
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 relative mb-1">
+                    <img id="voice-friend-photo" src="https://ui-avatars.com/api/?name=User&background=202c33&color=fff" class="w-full h-full rounded-full object-cover shadow-sm">
+                    <span id="voice-friend-flag" class="absolute bottom-0 right-0 text-[10px] bg-[#111b21] rounded-full p-0.5 shadow">🌐</span>
+                </div>
+                <span class="text-[0.7rem] text-gray-400">Friend</span>
+            </div>
+        </div>
+
+        <!-- ЦЕНТР: Индикатор звонка -->
+        <div class="flex items-center justify-center text-[#00a884]">
+            <i class="fa-solid fa-waveform text-lg"></i>
+        </div>
+
+        <!-- ПРАВАЯ СТОРОНА: Твоя аватарка и твои иконки -->
+        <div class="flex items-center gap-4 flex-1 justify-end">
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 relative mb-1">
+                    <img id="voice-my-photo" src="https://ui-avatars.com/api/?name=Me&background=202c33&color=fff" class="w-full h-full rounded-full object-cover shadow-sm">
+                    <span id="voice-my-flag" class="absolute bottom-0 left-0 text-[10px] bg-[#111b21] rounded-full p-0.5 shadow">🌐</span>
+                </div>
+                <span class="text-[0.7rem] text-gray-400">You</span>
+            </div>
+            
+            <!-- Голые иконки (Микрофон и Камера) -->
+            <div class="flex gap-4">
+                <button onclick="window.toggleMyAudio()" class="text-[#00a884] hover:text-white transition">
+                    <i id="icon-my-mic" class="fa-solid fa-microphone text-[1.3rem]"></i>
+                </button>
+                <button onclick="window.toggleMyCamera()" class="text-[#00a884] hover:text-white transition">
+                    <i id="icon-my-cam" class="fa-solid fa-video text-[1.3rem]"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ========================================== -->
+    
     
     <!-- 3. УМЕНЬШЕННЫЕ АВАТАРКИ И ИНДИКАТОР (ФУТЕР СДВИНУТ ВНИЗ ЧЕРЕЗ MT-AUTO) -->
     <div class="flex justify-center items-center gap-4 w-full px-2 py-2 shrink-0 relative z-10 bg-[#0b141a] mt-auto">
