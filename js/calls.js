@@ -445,45 +445,65 @@ document.addEventListener('DOMContentLoaded', () => {
 // УПРАВЛЕНИЕ КНОПКАМИ ФУТЕРА (Микрофон / Камера AGORA)
 // ==========================================
 
-window.toggleMyAudio = function() {
+window.toggleMyAudio = async function() {
     const icon = document.getElementById('icon-my-mic');
-    if (icon.classList.contains('fa-microphone')) {
-        icon.classList.replace('fa-microphone', 'fa-microphone-slash');
-        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-        
-        // Мягкое отключение микрофона
-        if (typeof window.localAudioTrack !== 'undefined' && window.localAudioTrack) {
-            window.localAudioTrack.setMuted(true);
+    const btn = icon.parentElement;
+    
+    // Защита от спама кликами
+    if (btn.style.pointerEvents === 'none') return;
+    btn.style.pointerEvents = 'none'; 
+
+    try {
+        if (icon.classList.contains('fa-microphone')) {
+            // Мягкое отключение микрофона
+            if (window.localAudioTrack) {
+                await window.localAudioTrack.setMuted(true);
+            }
+            icon.classList.replace('fa-microphone', 'fa-microphone-slash');
+            btn.classList.replace('text-[#00a884]', 'text-red-500');
+        } else {
+            // Включение микрофона
+            if (window.localAudioTrack) {
+                await window.localAudioTrack.setMuted(false);
+            }
+            icon.classList.replace('fa-microphone-slash', 'fa-microphone');
+            btn.classList.replace('text-red-500', 'text-[#00a884]');
         }
-    } else {
-        icon.classList.replace('fa-microphone-slash', 'fa-microphone');
-        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-        
-        // Включение микрофона
-        if (typeof window.localAudioTrack !== 'undefined' && window.localAudioTrack) {
-            window.localAudioTrack.setMuted(false);
-        }
+    } catch (e) {
+        console.error("Ошибка переключения микрофона:", e);
+    } finally {
+        btn.style.pointerEvents = 'auto'; // Разблокируем кнопку
     }
 };
 
-window.toggleMyCamera = function() {
+window.toggleMyCamera = async function() {
     const icon = document.getElementById('icon-my-cam');
-    if (icon.classList.contains('fa-video')) {
-        icon.classList.replace('fa-video', 'fa-video-slash');
-        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-        
-        // Мягкое отключение видео (черный экран)
-        if (typeof window.localVideoTrack !== 'undefined' && window.localVideoTrack) {
-            window.localVideoTrack.setMuted(true);
+    const btn = icon.parentElement;
+
+    // Защита от двойного клика, чтобы не ломать видеопоток
+    if (btn.style.pointerEvents === 'none') return;
+    btn.style.pointerEvents = 'none';
+
+    try {
+        if (icon.classList.contains('fa-video')) {
+            // Мягкое отключение видео (черный экран)
+            if (window.localVideoTrack) {
+                await window.localVideoTrack.setMuted(true);
+            }
+            icon.classList.replace('fa-video', 'fa-video-slash');
+            btn.classList.replace('text-[#00a884]', 'text-red-500');
+        } else {
+            // Возврат видео
+            if (window.localVideoTrack) {
+                await window.localVideoTrack.setMuted(false);
+            }
+            icon.classList.replace('fa-video-slash', 'fa-video');
+            btn.classList.replace('text-red-500', 'text-[#00a884]');
         }
-    } else {
-        icon.classList.replace('fa-video-slash', 'fa-video');
-        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-        
-        // Возврат видео
-        if (typeof window.localVideoTrack !== 'undefined' && window.localVideoTrack) {
-            window.localVideoTrack.setMuted(false);
-        }
+    } catch (e) {
+        console.error("Ошибка переключения камеры:", e);
+    } finally {
+        btn.style.pointerEvents = 'auto'; // Разблокируем кнопку
     }
 };
 
