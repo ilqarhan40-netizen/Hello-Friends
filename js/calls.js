@@ -113,7 +113,8 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         // Название комнаты жестко привязано к токену
         const channelName = "hello"; 
         
-        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, window.myProfileInfo.id);
+        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, null);
+        
 
         let tracksToPublish = [];
 
