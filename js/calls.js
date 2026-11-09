@@ -14,7 +14,8 @@ window.localVideoTrack = null;
 
 // Твои правильные ключи Agora
 const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
-const AGORA_TEMP_TOKEN = "007eJxTYGDYEdXqtjFnsY+KkHZpZ9PnGy8sdrHLV+ccCDe+vEIjeq0Cg6WhcZqhcaJZkoWhgUmKsUmSgbGZpWlickqyQYq5ZZL5bNuPWQ2BjAxiEikMjFAI4rMwhKQWlzAwAADD1x1M";
+const AGORA_TEMP_TOKEN = "007eJxTYKjifd8YnWvFe6ucW+Tkx8PrtTv95kkfP/NuqofsrMce0h8UGCwNjdMMjRPNkiwMDUxSjE2SDIzNLE0Tk1OSDVLMLZPMZ7p/zGoIZGRI5rRgZmJgBEMQn5UhIzUnJ5+BgQlJyNDI2MQUAGTYIPA=";
+
 
 
 
