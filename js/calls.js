@@ -438,5 +438,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2000);
 });
 
+// ==========================================
+// УПРАВЛЕНИЕ КНОПКАМИ ФУТЕРА (Микрофон / Камера AGORA)
+// ==========================================
+
+window.toggleMyAudio = function() {
+    const icon = document.getElementById('icon-my-mic');
+    if (icon.classList.contains('fa-microphone')) {
+        icon.classList.replace('fa-microphone', 'fa-microphone-slash');
+        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+        
+        if (typeof window.localAudioTrack !== 'undefined' && window.localAudioTrack) {
+            window.localAudioTrack.setEnabled(false);
+        }
+    } else {
+        icon.classList.replace('fa-microphone-slash', 'fa-microphone');
+        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+        
+        if (typeof window.localAudioTrack !== 'undefined' && window.localAudioTrack) {
+            window.localAudioTrack.setEnabled(true);
+        }
+    }
+};
+
+window.toggleMyCamera = function() {
+    const icon = document.getElementById('icon-my-cam');
+    if (icon.classList.contains('fa-video')) {
+        icon.classList.replace('fa-video', 'fa-video-slash');
+        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+        
+        if (typeof window.localVideoTrack !== 'undefined' && window.localVideoTrack) {
+            window.localVideoTrack.setEnabled(false);
+        }
+    } else {
+        icon.classList.replace('fa-video-slash', 'fa-video');
+        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+        
+        if (typeof window.localVideoTrack !== 'undefined' && window.localVideoTrack) {
+            window.localVideoTrack.setEnabled(true);
+        }
+    }
+};
+
+window.toggleRemoteAudio = function() {
+    const icon = document.getElementById('icon-remote-mic');
+    if (icon.classList.contains('fa-microphone')) {
+        icon.classList.replace('fa-microphone', 'fa-microphone-slash');
+        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+        
+        document.querySelectorAll('audio').forEach(audio => audio.muted = true);
+    } else {
+        icon.classList.replace('fa-microphone-slash', 'fa-microphone');
+        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+        
+        document.querySelectorAll('audio').forEach(audio => audio.muted = false);
+    }
+};
+
+window.toggleRemoteCamera = function() {
+    const icon = document.getElementById('icon-remote-cam');
+    if (icon.classList.contains('fa-video')) {
+        icon.classList.replace('fa-video', 'fa-video-slash');
+        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+        
+        const remoteVideo = document.getElementById('remote-player'); 
+        if (remoteVideo) remoteVideo.style.opacity = '0';
+    } else {
+        icon.classList.replace('fa-video-slash', 'fa-video');
+        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+        
+        const remoteVideo = document.getElementById('remote-player');
+        if (remoteVideo) remoteVideo.style.opacity = '1';
+    }
+};
+
 
 
