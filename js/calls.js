@@ -448,15 +448,17 @@ window.toggleMyAudio = function() {
         icon.classList.replace('fa-microphone', 'fa-microphone-slash');
         icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
         
+        // Мягкое отключение микрофона
         if (typeof window.localAudioTrack !== 'undefined' && window.localAudioTrack) {
-            window.localAudioTrack.setEnabled(false);
+            window.localAudioTrack.setMuted(true);
         }
     } else {
         icon.classList.replace('fa-microphone-slash', 'fa-microphone');
         icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
         
+        // Включение микрофона
         if (typeof window.localAudioTrack !== 'undefined' && window.localAudioTrack) {
-            window.localAudioTrack.setEnabled(true);
+            window.localAudioTrack.setMuted(false);
         }
     }
 };
@@ -467,15 +469,17 @@ window.toggleMyCamera = function() {
         icon.classList.replace('fa-video', 'fa-video-slash');
         icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
         
+        // Мягкое отключение видео (черный экран)
         if (typeof window.localVideoTrack !== 'undefined' && window.localVideoTrack) {
-            window.localVideoTrack.setEnabled(false);
+            window.localVideoTrack.setMuted(true);
         }
     } else {
         icon.classList.replace('fa-video-slash', 'fa-video');
         icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
         
+        // Возврат видео
         if (typeof window.localVideoTrack !== 'undefined' && window.localVideoTrack) {
-            window.localVideoTrack.setEnabled(true);
+            window.localVideoTrack.setMuted(false);
         }
     }
 };
@@ -511,6 +515,3 @@ window.toggleRemoteCamera = function() {
         if (remoteVideo) remoteVideo.style.opacity = '1';
     }
 };
-
-
-
