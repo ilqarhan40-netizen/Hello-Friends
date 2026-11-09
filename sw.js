@@ -1,7 +1,7 @@
 // 0. ПОДКЛЮЧАЕМ ONESIGNAL В САМОМ НАЧАЛЕ
 importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
-const CACHE_NAME = 'hf-chat-v4'; // Подняли версию, чтобы точно обновить
+const CACHE_NAME = 'hf-chat-v5'; // Подняли версию, чтобы точно обновить
 
 const urlsToCache = [
   './',
@@ -97,7 +97,6 @@ self.addEventListener('push', function(event) {
         };
         event.waitUntil(self.registration.showNotification('📵 Пропущенный', missedOptions));
     }
-});
 
     // В. НОВОЕ ПИСЬМО НА ПОЧТУ
     if (payload.type === 'email') {
@@ -109,6 +108,4 @@ self.addEventListener('push', function(event) {
         };
         event.waitUntil(self.registration.showNotification('📧 ' + (payload.titleText || 'Новое письмо'), emailOptions));
     }
-});
-
-
+}); // <-- Теперь здесь правильная и единственная закрывающая скобка
