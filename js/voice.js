@@ -45,18 +45,35 @@ window.getSmartLang = function(userProfile) {
     return userProfile.langCode || 'en';
 };
 
-// --- ФУНКЦИЯ 1: ОДИНОЧНОЕ ГОЛОСОВОЕ СООБЩЕНИЕ (Твоя оригинальная) ---
+// --- ФУНКЦИЯ 1: ОДИНОЧНОЕ ГОЛОСОВОЕ СООБЩЕНИЕ (Безлимитка + Обход Agora) ---
+window.universalMicRec = null; // Глобальная переменная для ручной остановки
+
 window.startUniversalMic = async function(mode) {
     window.speechRecognizedText = "";
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let rec = SpeechRec ? new SpeechRec() : null;
-    if (!rec) return alert("Browser does not support Speech Recognition.");
+    if (!SpeechRec) return alert("Browser does not support Speech Recognition.");
     
-    rec.continuous = false; rec.interimResults = false;
+    // 1. ОБХОД КОНФЛИКТА: Временно "глушим" микрофон Агоры
+    if (window.localAudioTrack) {
+        try { await window.localAudioTrack.setMuted(true); } catch(e){}
+    }
+
+    // Если микрофон уже работал — убиваем старый процесс
+    if (window.universalMicRec) {
+        try { window.universalMicRec.stop(); } catch(e){}
+    }
+
+    let rec = new SpeechRec();
+    window.universalMicRec = rec;
+
+    // 2. БЕЗЛИМИТКА: теперь слушает без остановки
+    rec.continuous = true; 
+    rec.interimResults = false;
     
     let langSelect = document.getElementById('plus-mic-lang');
     let selectedMicLang = langSelect ? langSelect.value : 'auto';
     
+    // (Твоя оригинальная логика определения языка - ничего не трогал)
     if (selectedMicLang === 'auto') {
         let phone = window.myProfileInfo.phone || ""; 
         let flag = window.myProfileInfo.flagCode || "un"; 
@@ -87,7 +104,8 @@ window.startUniversalMic = async function(mode) {
     if (window.showToast) window.showToast("Listening...", "Speak into the microphone", "", "");
     
     rec.onresult = async (e) => { 
-        window.speechRecognizedText = e.results[0][0].transcript; 
+        // Берем последнюю фразу из бесконечного потока
+        window.speechRecognizedText = e.results[e.results.length - 1][0].transcript; 
         let targetLang = 'en'; 
         
         if (selectedMicLang !== 'auto') {
@@ -120,6 +138,22 @@ window.startUniversalMic = async function(mode) {
     };
     try { rec.start(); } catch(e){}
 };
+
+// НОВАЯ ФУНКЦИЯ ДЛЯ РУЧНОЙ ОСТАНОВКИ
+window.stopUniversalMic = async function() {
+    if (window.universalMicRec) {
+        try { window.universalMicRec.stop(); } catch(e){}
+        window.universalMicRec = null;
+    }
+    
+    // Возвращаем микрофон Агоре, чтобы собеседник снова начал тебя слышать
+    if (window.localAudioTrack) {
+        try { await window.localAudioTrack.setMuted(false); } catch(e){}
+    }
+    
+    if (window.showToast) window.showToast("Stopped", "Voice recording finished.", "", "");
+};
+
 
 window.playAIVoice = function(encodedText, langCode) {
     if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
