@@ -46,7 +46,8 @@ window.getSmartLang = function(userProfile) {
 };
 
 // --- ФУНКЦИЯ 1: ОДИНОЧНОЕ ГОЛОСОВОЕ СООБЩЕНИЕ (Безлимитка + Обход Agora) ---
-window.universalMicRec = null; // Глобальная переменная для ручной остановки
+window.universalMicRec = null; 
+window.isManualMicStop = false; // <-- ФЛАГ БЕЗЛИМИТА
 
 window.startUniversalMic = async function(mode) {
     window.speechRecognizedText = "";
@@ -60,20 +61,21 @@ window.startUniversalMic = async function(mode) {
 
     // Если микрофон уже работал — убиваем старый процесс
     if (window.universalMicRec) {
+        window.isManualMicStop = true;
         try { window.universalMicRec.stop(); } catch(e){}
     }
 
+    window.isManualMicStop = false; // Сбрасываем флаг перед стартом
     let rec = new SpeechRec();
     window.universalMicRec = rec;
 
-    // 2. БЕЗЛИМИТКА: теперь слушает без остановки
+    // 2. БЕЗЛИМИТКА
     rec.continuous = true; 
     rec.interimResults = false;
     
     let langSelect = document.getElementById('plus-mic-lang');
     let selectedMicLang = langSelect ? langSelect.value : 'auto';
     
-    // (Твоя оригинальная логика определения языка - ничего не трогал)
     if (selectedMicLang === 'auto') {
         let phone = window.myProfileInfo.phone || ""; 
         let flag = window.myProfileInfo.flagCode || "un"; 
@@ -104,7 +106,6 @@ window.startUniversalMic = async function(mode) {
     if (window.showToast) window.showToast("Listening...", "Speak into the microphone", "", "");
     
     rec.onresult = async (e) => { 
-        // Берем последнюю фразу из бесконечного потока
         window.speechRecognizedText = e.results[e.results.length - 1][0].transcript; 
         let targetLang = 'en'; 
         
@@ -136,11 +137,27 @@ window.startUniversalMic = async function(mode) {
             firebase.database().ref(window.currentRoomId).push({ userId: window.myProfileInfo.id, name: window.myUsername, text: textToShip, isAIAudio: true, originalText: window.speechRecognizedText, sessionId: window.mySessionId, timestamp: firebase.database.ServerValue.TIMESTAMP, photo: window.myProfileInfo.photo, flag: window.myProfileInfo.flag, flagCode: window.myProfileInfo.flagCode, langCode: targetLang, isVoiceRoomMsg: isVoice, isConfMsg: isConf });
         }
     };
+
+    // === ХАК АВТОПЕРЕЗАПУСКА ПРИ ТИШИНЕ ===
+    rec.onend = () => {
+        if (!window.isManualMicStop && window.universalMicRec) {
+            try { window.universalMicRec.start(); } catch(err) {}
+        }
+    };
+
+    rec.onerror = (e) => {
+        if (e.error === 'not-allowed' || e.error === 'aborted') {
+            window.isManualMicStop = true; 
+        }
+    };
+
     try { rec.start(); } catch(e){}
 };
 
-// НОВАЯ ФУНКЦИЯ ДЛЯ РУЧНОЙ ОСТАНОВКИ
+// --- ФУНКЦИЯ РУЧНОЙ ОСТАНОВКИ ---
 window.stopUniversalMic = async function() {
+    window.isManualMicStop = true; // Отключаем автоперезапуск
+
     if (window.universalMicRec) {
         try { window.universalMicRec.stop(); } catch(e){}
         window.universalMicRec = null;
@@ -153,7 +170,6 @@ window.stopUniversalMic = async function() {
     
     if (window.showToast) window.showToast("Stopped", "Voice recording finished.", "", "");
 };
-
 
 window.playAIVoice = function(encodedText, langCode) {
     if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
@@ -178,19 +194,23 @@ window.autoSetMicLang = function() {
 // ФУНКЦИЯ 2: ЖИВОЙ ПЕРЕВОДЧИК ДЛЯ АУДИО/ВИДЕО ЗВОНКОВ (Через Firebase)
 // =========================================================================
 window.liveCallRec = null;
+window.isManualLiveCallStop = false; // <-- ФЛАГ ДЛЯ ЗВОНКОВ
 
 window.startVoiceAI = function() {
-    if (window.liveCallRec) return; 
+    if (window.liveCallRec) {
+        window.isManualLiveCallStop = true;
+        try { window.liveCallRec.stop(); } catch(e){}
+    }
     
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) return console.warn("Speech Recognition not supported.");
 
+    window.isManualLiveCallStop = false;
     window.liveCallRec = new SpeechRec();
     window.liveCallRec.continuous = true; 
     window.liveCallRec.interimResults = false;
 
-    // УМНЫЙ ЯЗЫК: берем из ромба или профиля
-    let manualMicLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
+    let manualMicLang = localStorage.getItem(window.getMicLangKey ? window.getMicLangKey() : 'hf_mic_lang') || 'auto';
     let mySpokenLang = window.getSmartLang(window.myProfileInfo);
     window.liveCallRec.lang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
 
@@ -198,21 +218,17 @@ window.startVoiceAI = function() {
         let transcript = e.results[e.results.length - 1][0].transcript;
         if (!transcript.trim()) return;
 
-        // Определяем язык собеседника
         let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : 'en';
-        
         let textToShip = transcript;
         let spokenLangCode = window.liveCallRec.lang.substring(0, 2);
         
         try {
-            // Переводим текст на лету, если языки не совпадают
             if (spokenLangCode !== targetLang.substring(0, 2)) {
                 const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${spokenLangCode}&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(transcript)}`);
                 const data = await res.json();
                 if (data && data[0] && data[0][0][0]) textToShip = data[0][0][0];
             }
             
-            // Подготавливаем данные флага
             let activeFlagCode = window.myProfileInfo.flagCode || 'un';
             let activeFlag = window.myProfileInfo.flag || '🌐';
             
@@ -224,7 +240,6 @@ window.startVoiceAI = function() {
                 }
             }
             
-            // ОТПРАВЛЯЕМ ТЕКСТ В FIREBASE С МЕТКОЙ ЗВОНКА
             let targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
             
             firebase.database().ref(targetDbRoom).push({
@@ -245,9 +260,16 @@ window.startVoiceAI = function() {
         } catch(err) { console.error("Ошибка перевода звонка:", err); }
     };
 
+    // === ХАК АВТОПЕРЕЗАПУСКА ДЛЯ ЗВОНКОВ ===
     window.liveCallRec.onend = () => {
-        if (window.liveCallRec) {
+        if (!window.isManualLiveCallStop && window.liveCallRec) {
             try { window.liveCallRec.start(); } catch(err) {}
+        }
+    };
+
+    window.liveCallRec.onerror = (e) => {
+        if (e.error === 'not-allowed' || e.error === 'aborted') {
+            window.isManualLiveCallStop = true;
         }
     };
 
@@ -255,18 +277,16 @@ window.startVoiceAI = function() {
 };
 
 window.stopVoiceAI = function() {
+    window.isManualLiveCallStop = true;
     if (window.liveCallRec) {
-        window.liveCallRec.onend = null; 
         try { window.liveCallRec.stop(); } catch(err){}
         window.liveCallRec = null;
     }
 };
 
-// СОХРАНЕННАЯ ФУНКЦИЯ ДЛЯ БУДУЩИХ АУДИОЗВОНКОВ
 window.handleIncomingSpeech = function(payload) {
     console.log("Входящий перевод:", payload.text);
     
-    // Если это ВИДЕОЗВОНОК - показываем субтитры
     if (window.currentIncomingCallType === 'video' || window.myLastOutgoingCallType === 'video') {
         let callerId = window.currentTargetUser ? window.currentTargetUser.id : 'speaker';
         let marquee = document.getElementById(`conf-marquee-${callerId}`) || document.getElementById('speaker-marquee');
@@ -277,13 +297,10 @@ window.handleIncomingSpeech = function(payload) {
             marquee.offsetHeight; 
             marquee.style.animation = null; 
         }
-    } 
-    // Если это АУДИОЗВОНОК - озвучиваем роботом
-    else {
+    } else {
         let voiceMarquee = document.getElementById('voice-info-marquee');
         if (voiceMarquee) voiceMarquee.innerText = `[Перевод]: ${payload.text}`;
         
-        // Используем payload.langCode (из Firebase) или payload.lang
         let langToPlay = payload.langCode || payload.lang || 'en';
         window.playAIVoice(encodeURIComponent(payload.text), langToPlay);
     }
