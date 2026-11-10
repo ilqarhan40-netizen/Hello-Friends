@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - ФИНАЛЬНАЯ СБОРКА 
-// (Постоянная зеленая кнопка + Мгновенное копирование + Перехват системной вставки)
+// (Автоматический Ловец Пересылки + Раздельная логика)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -36,16 +36,7 @@ const clipDict = {
     en: { clip_photo: "Photo", clip_video: "Video", clip_text: "Text", clip_loc: "Location", clip_link: "Link", clip_copy: "Copy", clip_paste: "Paste & Send", clip_save: "Save", clip_forward: "Forward", clip_del_me: "Delete for me", clip_del_all: "Delete for all" },
     ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Вставить и Отправить", clip_save: "Сохранить", clip_forward: "Переслать", clip_del_me: "Удалить у меня", clip_del_all: "Удалить у всех" },
     kk: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Мәтін", clip_loc: "Локация", clip_link: "Сілтеме", clip_copy: "Көшіру", clip_paste: "Кірістіру/Жіберу", clip_save: "Сақтау", clip_forward: "Қайта жіберу", clip_del_me: "Менен өшіру", clip_del_all: "Барлығынан өшіру" },
-    az: { clip_photo: "Şəkil", clip_video: "Video", clip_text: "Mətn", clip_loc: "Məkan", clip_link: "Link", clip_copy: "Kopyala", clip_paste: "Yerləşdir/Göndər", clip_save: "Yadda saxla", clip_forward: "Yönləndir", clip_del_me: "Məndən sil", clip_del_all: "Hamıdan sil" },
-    de: { clip_photo: "Foto", clip_video: "Video", clip_text: "Text", clip_loc: "Standort", clip_link: "Link", clip_copy: "Kopieren", clip_paste: "Einfügen & Senden", clip_save: "Speichern", clip_forward: "Weiterleiten", clip_del_me: "Für mich löschen", clip_del_all: "Für alle löschen" },
-    tr: { clip_photo: "Fotoğraf", clip_video: "Video", clip_text: "Metin", clip_loc: "Konum", clip_link: "Bağlantı", clip_copy: "Kopyala", clip_paste: "Yapıştır & Gönder", clip_save: "Kaydet", clip_forward: "İlet", clip_del_me: "Benden sil", clip_del_all: "Herkesten sil" },
-    ar: { clip_photo: "صورة", clip_video: "فيديو", clip_text: "نص", clip_loc: "الموقع", clip_link: "رابط", clip_copy: "نسخ", clip_paste: "لصق وإرسال", clip_save: "حفظ", clip_forward: "إرسال", clip_del_me: "حذف لدي", clip_del_all: "حذف لدى الجميع" },
-    it: { clip_photo: "Foto", clip_video: "Video", clip_text: "Testo", clip_loc: "Posizione", clip_link: "Link", clip_copy: "Copia", clip_paste: "Incolla e Invia", clip_save: "Salva", clip_forward: "Inoltra", clip_del_me: "Elimina per me", clip_del_all: "Elimina per tutti" },
-    es: { clip_photo: "Foto", clip_video: "Video", clip_text: "Texto", clip_loc: "Ubicación", clip_link: "Enlace", clip_copy: "Copiar", clip_paste: "Pegar y Enviar", clip_save: "Guardar", clip_forward: "Reenviar", clip_del_me: "Eliminar para mí", clip_del_all: "Eliminar para todos" },
-    fr: { clip_photo: "Photo", clip_video: "Vidéo", clip_text: "Texte", clip_loc: "Emplacement", clip_link: "Lien", clip_copy: "Copier", clip_paste: "Coller & Envoyer", clip_save: "Enregistrer", clip_forward: "Transférer", clip_del_me: "Supprimer pour moi", clip_del_all: "Supprimer pour tous" },
-    pt: { clip_photo: "Foto", clip_video: "Vídeo", clip_text: "Texto", clip_loc: "Localização", clip_link: "Link", clip_copy: "Copiar", clip_paste: "Colar e Enviar", clip_save: "Salvar", clip_forward: "Encaminhar", clip_del_me: "Excluir para mim", clip_del_all: "Excluir para todos" },
-    ja: { clip_photo: "写真", clip_video: "ビデオ", clip_text: "テキスト", clip_loc: "位置情報", clip_link: "リンク", clip_copy: "コピー", clip_paste: "貼り付けて送信", clip_save: "保存", clip_forward: "転送", clip_del_me: "自分のみ削除", clip_del_all: "全員から削除" },
-    zh: { clip_photo: "照片", clip_video: "视频", clip_text: "文本", clip_loc: "位置", clip_link: "链接", clip_copy: "复制", clip_paste: "粘贴并发送", clip_save: "保存", clip_forward: "转发", clip_del_me: "为我删除", clip_del_all: "为所有人删除" }
+    az: { clip_photo: "Şəkil", clip_video: "Video", clip_text: "Mətn", clip_loc: "Məkan", clip_link: "Link", clip_copy: "Kopyala", clip_paste: "Yerləşdir/Göndər", clip_save: "Yadda saxla", clip_forward: "Yönləndir", clip_del_me: "Məndən sil", clip_del_all: "Hamıdan sil" }
 };
 
 const checkClipI18n = setInterval(() => {
@@ -58,6 +49,7 @@ const checkClipI18n = setInterval(() => {
 
 window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
 window.internalAppClipboard = { content: null, type: null };
+window.hfForwardData = null; // Глобальная память для пересылки
 
 function getMediaFromWrapper(wrapper) {
     const bubble = wrapper.querySelector('.chat-bubble'); if (!bubble) return { content: null, type: 'text' };
@@ -199,49 +191,40 @@ window.closeClipboardModal = function() {
 
 window.execCopyAction = function() {
     if (!window.currentClipContent) return;
-    
-    window.internalAppClipboard = {
-        content: window.currentClipContent,
-        type: window.currentClipType
-    };
-
-    try { navigator.clipboard.writeText(window.currentClipContent); } catch(err) {}
-
+    window.internalAppClipboard = { content: window.currentClipContent, type: window.currentClipType };
+    if (window.currentClipType === 'text') {
+        try { navigator.clipboard.writeText(window.currentClipContent); } catch(err) {}
+    }
     if (window.showToast) window.showToast("✔", "Copied", "", "");
     window.closeClipboardModal();
 };
 
 window.execPasteAction = async function() {
-    const clip = window.internalAppClipboard;
-    
-    if (!clip || !clip.content) {
-        // Если буфер пуст, просто закрываем окно, ничего не ломая
-        return window.closeClipboardModal();
-    }
+    const content = window.currentClipContent;
+    const type = window.currentClipType;
+    if (!content) return window.closeClipboardModal();
 
-    if (['image', 'video', 'document'].includes(clip.type)) {
+    if (['image', 'video', 'document'].includes(type)) {
         try {
-            const res = await fetch(clip.content);
+            const res = await fetch(content);
             const blob = await res.blob();
             let extension = '.jpg'; let mime = 'image/jpeg';
-            if (clip.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
-            if (clip.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
+            if (type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
+            if (type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
 
-            const file = new File([blob], `media_copy_${Date.now()}${extension}`, { type: mime });
+            const file = new File([blob], `media_direct_${Date.now()}${extension}`, { type: mime });
             if (typeof window.handleMediaUpload === 'function') {
                 window.handleMediaUpload({ target: { files: [file] } });
                 if (window.showToast) window.showToast("✈️", "Sent", "", "");
             }
         } catch (err) {
             const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
-            if (inputField) { inputField.value += clip.content; inputField.focus(); }
+            if (inputField) { inputField.value += content; inputField.focus(); }
         }
     } else {
         const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
-        if (inputField) { inputField.value += clip.content; inputField.focus(); }
+        if (inputField) { inputField.value += content; inputField.focus(); }
     }
-    
-    window.internalAppClipboard = { content: null, type: null }; 
     window.closeClipboardModal();
 };
 
@@ -285,13 +268,57 @@ window.execSaveAction = async function() {
     window.closeClipboardModal();
 };
 
+// ==========================================
+// ЛОГИКА ПЕРЕСЫЛКИ (FORWARD)
+// ==========================================
 window.execForwardAction = function() {
     if (window.currentClipContent) {
-        window.hfForwardData = { content: window.currentClipContent, type: window.currentClipType };
+        // Запоминаем файл и ИМЯ ТЕКУЩЕЙ КОМНАТЫ
+        window.hfForwardData = { 
+            content: window.currentClipContent, 
+            type: window.currentClipType,
+            sourceRoom: window.currentRoomId || 'global' 
+        };
         if (window.showToast) window.showToast("➥", "Select chat", "", "");
     }
     window.closeClipboardModal();
 };
+
+// ЛОВЕЦ ПЕРЕСЫЛКИ: Следит, когда ты перейдешь в другой чат
+setInterval(async () => {
+    if (window.hfForwardData && window.hfForwardData.content) {
+        let activeRoom = window.currentRoomId || 'global';
+        if (window.currentIndex === 2 && activeRoom === 'global') activeRoom = 'video_room_global';
+
+        // Если комната изменилась (ты выбрал новый чат)
+        if (activeRoom !== window.hfForwardData.sourceRoom) {
+            const fData = window.hfForwardData;
+            window.hfForwardData = null; // Сбрасываем, чтобы не вставлялось бесконечно
+
+            if (['image', 'video', 'document'].includes(fData.type)) {
+                try {
+                    const res = await fetch(fData.content);
+                    const blob = await res.blob();
+                    let extension = '.jpg'; let mime = 'image/jpeg';
+                    if (fData.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
+                    if (fData.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
+
+                    const file = new File([blob], `forward_${Date.now()}${extension}`, { type: mime });
+                    if (typeof window.handleMediaUpload === 'function') {
+                        window.handleMediaUpload({ target: { files: [file] } });
+                        if (window.showToast) window.showToast("✈️", "Forwarded", "", "");
+                    }
+                } catch (err) {
+                    const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
+                    if (inputField) { inputField.value += fData.content; inputField.focus(); }
+                }
+            } else {
+                const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
+                if (inputField) { inputField.value += fData.content; inputField.focus(); }
+            }
+        }
+    }
+}, 500); // Проверяет каждые полсекунды
 
 window.execDeleteAction = function(deleteType) {
     if (!window.currentTargetElement) return window.closeClipboardModal();
