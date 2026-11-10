@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - ФИНАЛЬНАЯ СБОРКА 
-// (Исправлена Локация, Анти-кэш для медиа, Блокировка текстовых ссылок)
+// (Автоматический Ловец Пересылки + Раздельная логика)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -49,7 +49,7 @@ const checkClipI18n = setInterval(() => {
 
 window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
 window.internalAppClipboard = { content: null, type: null };
-window.hfForwardData = null; 
+window.hfForwardData = null; // Глобальная память для пересылки
 
 function getMediaFromWrapper(wrapper) {
     const bubble = wrapper.querySelector('.chat-bubble'); if (!bubble) return { content: null, type: 'text' };
@@ -189,49 +189,25 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-// ==========================================
-// 1. КОПИРОВАНИЕ (БЕЗ ОШИБОК АНДРОИДА)
-// ==========================================
 window.execCopyAction = function() {
     if (!window.currentClipContent) return;
-    
     window.internalAppClipboard = { content: window.currentClipContent, type: window.currentClipType };
-
-    // Скрытый хак для копирования ссылки в буфер телефона без ошибки
-    const textArea = document.createElement("textarea");
-    textArea.value = window.currentClipContent;
-    textArea.style.position = "fixed"; textArea.style.left = "-9999px";
-    document.body.appendChild(textArea);
-    textArea.select();
-    try { document.execCommand('copy'); } catch (err) {}
-    document.body.removeChild(textArea);
-
+    if (window.currentClipType === 'text') {
+        try { navigator.clipboard.writeText(window.currentClipContent); } catch(err) {}
+    }
     if (window.showToast) window.showToast("✔", "Copied", "", "");
     window.closeClipboardModal();
 };
 
-// ==========================================
-// 2. ЗЕЛЕНАЯ КНОПКА
-// ==========================================
 window.execPasteAction = async function() {
     const content = window.currentClipContent;
     const type = window.currentClipType;
     if (!content) return window.closeClipboardModal();
 
-    // ВОССТАНОВЛЕНА ПРАВИЛЬНАЯ ЛОГИКА ЛОКАЦИИ
-    if (type === 'location') {
-        if (typeof sendLocationDirectly === 'function') sendLocationDirectly(content);
-        window.closeClipboardModal();
-        return;
-    }
-
     if (['image', 'video', 'document'].includes(type)) {
         try {
-            // ВОССТАНОВЛЕН АНТИ-КЭШ ИЗ ТВОЕГО ОРИГИНАЛА
-            const cacheBuster = content.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
-            const res = await fetch(content + cacheBuster, { cache: "no-store" });
+            const res = await fetch(content);
             const blob = await res.blob();
-            
             let extension = '.jpg'; let mime = 'image/jpeg';
             if (type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
             if (type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
@@ -242,55 +218,36 @@ window.execPasteAction = async function() {
                 if (window.showToast) window.showToast("✈️", "Sent", "", "");
             }
         } catch (err) {
-            // ФИКС: УБРАЛ ВСТАВКУ ТЕКСТА ЕСЛИ МЕДИА КРАШИТСЯ
-            if (window.showToast) window.showToast("❌", "Error processing media", "", "");
+            const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
+            if (inputField) { inputField.value += content; inputField.focus(); }
         }
     } else {
         const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
         if (inputField) { inputField.value += content; inputField.focus(); }
     }
-    
     window.closeClipboardModal();
 };
 
-// ==========================================
-// 3. ПЕРЕХВАТ ДОЛГОГО НАЖАТИЯ "ВСТАВИТЬ"
-// ==========================================
 window.addEventListener('paste', async function(e) {
     const clip = window.internalAppClipboard;
-    if (clip && clip.content) {
+    if (clip && clip.content && ['image', 'video', 'document'].includes(clip.type)) {
         const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-        
         if (pastedText === clip.content) {
             e.preventDefault(); 
-            
-            // ЛОКАЦИЯ ПРИ ДОЛГОМ НАЖАТИИ
-            if (clip.type === 'location') {
-                if (typeof sendLocationDirectly === 'function') sendLocationDirectly(clip.content);
-                window.internalAppClipboard = { content: null, type: null };
-                return;
-            }
+            try {
+                const res = await fetch(clip.content);
+                const blob = await res.blob();
+                let extension = '.jpg'; let mime = 'image/jpeg';
+                if (clip.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
+                if (clip.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
 
-            if (['image', 'video', 'document'].includes(clip.type)) {
-                try {
-                    const cacheBuster = clip.content.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
-                    const res = await fetch(clip.content + cacheBuster, { cache: "no-store" });
-                    const blob = await res.blob();
-                    
-                    let extension = '.jpg'; let mime = 'image/jpeg';
-                    if (clip.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
-                    if (clip.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
-
-                    const file = new File([blob], `media_copy_${Date.now()}${extension}`, { type: mime });
-                    if (typeof window.handleMediaUpload === 'function') {
-                        window.handleMediaUpload({ target: { files: [file] } });
-                        if (window.showToast) window.showToast("✈️", "Sent", "", "");
-                    }
-                    window.internalAppClipboard = { content: null, type: null };
-                } catch(err) {
-                    if (window.showToast) window.showToast("❌", "Error processing media", "", "");
+                const file = new File([blob], `media_copy_${Date.now()}${extension}`, { type: mime });
+                if (typeof window.handleMediaUpload === 'function') {
+                    window.handleMediaUpload({ target: { files: [file] } });
+                    if (window.showToast) window.showToast("✈️", "Sent", "", "");
                 }
-            }
+                window.internalAppClipboard = { content: null, type: null };
+            } catch(err) {}
         }
     }
 });
@@ -311,8 +268,12 @@ window.execSaveAction = async function() {
     window.closeClipboardModal();
 };
 
+// ==========================================
+// ЛОГИКА ПЕРЕСЫЛКИ (FORWARD)
+// ==========================================
 window.execForwardAction = function() {
     if (window.currentClipContent) {
+        // Запоминаем файл и ИМЯ ТЕКУЩЕЙ КОМНАТЫ
         window.hfForwardData = { 
             content: window.currentClipContent, 
             type: window.currentClipType,
@@ -323,27 +284,21 @@ window.execForwardAction = function() {
     window.closeClipboardModal();
 };
 
+// ЛОВЕЦ ПЕРЕСЫЛКИ: Следит, когда ты перейдешь в другой чат
 setInterval(async () => {
     if (window.hfForwardData && window.hfForwardData.content) {
         let activeRoom = window.currentRoomId || 'global';
         if (window.currentIndex === 2 && activeRoom === 'global') activeRoom = 'video_room_global';
 
+        // Если комната изменилась (ты выбрал новый чат)
         if (activeRoom !== window.hfForwardData.sourceRoom) {
             const fData = window.hfForwardData;
-            window.hfForwardData = null; 
-
-            // ЛОКАЦИЯ ДЛЯ ПЕРЕСЫЛКИ
-            if (fData.type === 'location') {
-                 if (typeof sendLocationDirectly === 'function') sendLocationDirectly(fData.content);
-                 return;
-            }
+            window.hfForwardData = null; // Сбрасываем, чтобы не вставлялось бесконечно
 
             if (['image', 'video', 'document'].includes(fData.type)) {
                 try {
-                    const cacheBuster = fData.content.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
-                    const res = await fetch(fData.content + cacheBuster, { cache: "no-store" });
+                    const res = await fetch(fData.content);
                     const blob = await res.blob();
-                    
                     let extension = '.jpg'; let mime = 'image/jpeg';
                     if (fData.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
                     if (fData.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
@@ -354,7 +309,8 @@ setInterval(async () => {
                         if (window.showToast) window.showToast("✈️", "Forwarded", "", "");
                     }
                 } catch (err) {
-                    if (window.showToast) window.showToast("❌", "Error processing media", "", "");
+                    const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
+                    if (inputField) { inputField.value += fData.content; inputField.focus(); }
                 }
             } else {
                 const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
@@ -362,7 +318,7 @@ setInterval(async () => {
             }
         }
     }
-}, 500); 
+}, 500); // Проверяет каждые полсекунды
 
 window.execDeleteAction = function(deleteType) {
     if (!window.currentTargetElement) return window.closeClipboardModal();
