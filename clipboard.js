@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - ФИНАЛЬНАЯ СБОРКА 
-// (Оригинальные языки + ОРИГИНАЛЬНЫЙ СТАРТ ТРЕХ ТОЧЕК + Механика медиа)
+// (Свой независимый буфер, фикс кэша медиа, поддержка документов)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -33,7 +33,7 @@ window.addEventListener('dragstart', function(e) {
     }
 }, { capture: true });
 
-// === ТВОИ ОРИГИНАЛЬНЫЕ СЛОВАРИ ===
+// === СЛОВАРИ ===
 const clipDict = {
     en: { clip_photo: "Photo", clip_video: "Video", clip_text: "Text", clip_loc: "Location", clip_link: "Link", clip_copy: "Copy", clip_paste: "Paste & Send", clip_save: "Save", clip_forward: "Forward", clip_del_me: "Delete for me", clip_del_all: "Delete for all" },
     ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Вставить и Отправить", clip_save: "Сохранить", clip_forward: "Переслать", clip_del_me: "Удалить у меня", clip_del_all: "Удалить у всех" },
@@ -59,6 +59,8 @@ const checkClipI18n = setInterval(() => {
 }, 100);
 
 window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
+
+// ГЛАВНЫЙ ВНУТРЕННИЙ БУФЕР (Изолирован от системы)
 window.internalAppClipboard = { content: null, type: null, blob: null };
 
 // === ПОИСК ФАЙЛОВ ===
@@ -104,7 +106,7 @@ function injectActionButtons(wrapper) {
     }
 }
 
-// === ТВОЙ ОРИГИНАЛЬНЫЙ НАБЛЮДАТЕЛЬ (ВОССТАНОВЛЕН) ===
+// === НАБЛЮДАТЕЛЬ ===
 let observerTimeout = null;
 const chatObserver = new MutationObserver((mutations) => {
     if (observerTimeout) clearTimeout(observerTimeout);
@@ -217,47 +219,73 @@ window.closeClipboardModal = function() {
 window.execCopyAction = async function() {
     if (!window.currentClipContent) return;
     
-    window.internalAppClipboard.content = window.currentClipContent;
-    window.internalAppClipboard.type = window.currentClipType;
+    // ФИКС КЭША: Жестко сбрасываем старый файл перед новым копированием
+    window.internalAppClipboard = {
+        content: window.currentClipContent,
+        type: window.currentClipType,
+        blob: null 
+    };
 
     try {
         if (['image', 'video', 'document'].includes(window.currentClipType)) {
             const cacheBuster = window.currentClipContent.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
             const res = await fetch(window.currentClipContent + cacheBuster, { cache: "no-store" });
-            window.internalAppClipboard.blob = await res.blob();
+            if (res.ok) {
+                window.internalAppClipboard.blob = await res.blob();
+            }
         } else {
+            // Только текст идет в системный буфер Android/Windows
             await navigator.clipboard.writeText(window.currentClipContent);
         }
         if (window.showToast) window.showToast("✔", "Copied", "", "");
-    } catch (err) {}
+    } catch (err) {
+        console.error("Copy error:", err);
+        // Даже если Blob не скачался (ошибка сети/большое видео), ссылка осталась в internalAppClipboard
+        if (window.showToast) window.showToast("✔", "Copied", "", "");
+    }
     window.closeClipboardModal();
 };
 
 window.execPasteAction = async function() {
     const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
     
-    if (window.internalAppClipboard.blob && ['image', 'video', 'document'].includes(window.internalAppClipboard.type)) {
-        let extension = '.jpg';
-        let mime = 'image/jpeg';
-        
-        if (window.currentClipType === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
-        if (window.currentClipType === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
-        
-        const uniqueFilename = `media_copy_${Date.now()}${extension}`;
-        const file = new File([window.internalAppClipboard.blob], uniqueFilename, { type: mime });
-        
-        if (typeof window.handleMediaUpload === 'function') {
-            window.handleMediaUpload({ target: { files: [file] } });
-            if (window.showToast) window.showToast("✈️", "Sent", "", "");
+    const clip = window.internalAppClipboard;
+    if (!clip.content) return window.closeClipboardModal(); // Блокировка вставки пустоты
+
+    if (['image', 'video', 'document'].includes(clip.type)) {
+        if (clip.blob) {
+            // Идеальный сценарий: файл успешно висит в нашей памяти
+            let extension = '.jpg';
+            let mime = 'image/jpeg';
+            
+            if (clip.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
+            if (clip.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
+            
+            const uniqueFilename = `media_copy_${Date.now()}${extension}`;
+            const file = new File([clip.blob], uniqueFilename, { type: mime });
+            
+            if (typeof window.handleMediaUpload === 'function') {
+                window.handleMediaUpload({ target: { files: [file] } });
+                if (window.showToast) window.showToast("✈️", "Sent", "", "");
+            }
+        } else {
+            // ФИКС "ВСТАВКИ НИЧЕГО": Если это тяжелое видео и Blob не скачался, 
+            // вставляем оригинальную ссылку в поле ввода, чтобы не было сбоя
+            if (inputField) {
+                inputField.value += clip.content; 
+                inputField.focus();
+            }
         }
-    } else if (window.internalAppClipboard.type === 'location') {
-        if (typeof sendLocationDirectly === 'function') sendLocationDirectly(window.internalAppClipboard.content);
+    } else if (clip.type === 'location') {
+        if (typeof sendLocationDirectly === 'function') sendLocationDirectly(clip.content);
     } else {
-        if (window.internalAppClipboard.type === 'text' && inputField) {
-            inputField.value += window.internalAppClipboard.content; inputField.focus();
+        if (clip.type === 'text' && inputField) {
+            inputField.value += clip.content; 
+            inputField.focus();
         }
     }
     
+    // Очищаем буфер после успешной вставки
     window.internalAppClipboard = { content: null, type: null, blob: null }; 
     window.closeClipboardModal();
 };
@@ -350,5 +378,3 @@ setInterval(() => {
     } catch(e) {}
     
 }, 1000);
-
-
