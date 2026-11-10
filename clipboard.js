@@ -189,15 +189,50 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-window.execCopyAction = function() {
+window.execCopyAction = async function() {
     if (!window.currentClipContent) return;
-    window.internalAppClipboard = { content: window.currentClipContent, type: window.currentClipType };
-    if (window.currentClipType === 'text') {
-        try { navigator.clipboard.writeText(window.currentClipContent); } catch(err) {}
+
+    const contentToCopy = window.currentClipContent;
+
+    // 1. Сохраняем во внутреннюю память приложения
+    window.internalAppClipboard = { 
+        content: contentToCopy, 
+        type: window.currentClipType 
+    };
+
+    // 2. Функция 100% копирования в буфер телефона/ПК
+    async function copyToSystemClipboard(text) {
+        // Шаг 1: Пробуем современный API
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return;
+            } catch (err) {}
+        }
+        
+        // Шаг 2: Безотказный метод для Android (скрытое поле)
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.top = "-9999px";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+        } catch (err) {}
+        document.body.removeChild(textArea);
     }
+
+    // Запускаем копирование
+    await copyToSystemClipboard(contentToCopy);
+
+    // Уведомление и закрытие меню
     if (window.showToast) window.showToast("✔", "Copied", "", "");
-    window.closeClipboardModal();
+    if (typeof window.closeClipboardModal === 'function') window.closeClipboardModal();
 };
+
 
 window.execPasteAction = async function() {
     const content = window.currentClipContent;
