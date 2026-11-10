@@ -1,6 +1,6 @@
 // ==========================================
 // CLIPBOARD.JS - ФИНАЛЬНАЯ СБОРКА 
-// (Свой независимый буфер, фикс кэша медиа, поддержка документов)
+// (Постоянная зеленая кнопка + Мгновенное копирование + Перехват системной вставки)
 // ==========================================
 
 (function initClipboardStyles() {
@@ -18,7 +18,6 @@
     }
 })();
 
-// === УБИЙЦА GOOGLE LENS (ЗАЩИТА ИНТЕРФЕЙСА) ===
 window.addEventListener('contextmenu', function(e) {
     if (e.target.closest('.chat-bubble-wrapper')) {
         e.preventDefault(); e.stopPropagation(); return false;
@@ -33,7 +32,6 @@ window.addEventListener('dragstart', function(e) {
     }
 }, { capture: true });
 
-// === СЛОВАРИ ===
 const clipDict = {
     en: { clip_photo: "Photo", clip_video: "Video", clip_text: "Text", clip_loc: "Location", clip_link: "Link", clip_copy: "Copy", clip_paste: "Paste & Send", clip_save: "Save", clip_forward: "Forward", clip_del_me: "Delete for me", clip_del_all: "Delete for all" },
     ru: { clip_photo: "Фото", clip_video: "Видео", clip_text: "Текст", clip_loc: "Локация", clip_link: "Ссылка", clip_copy: "Копировать", clip_paste: "Вставить и Отправить", clip_save: "Сохранить", clip_forward: "Переслать", clip_del_me: "Удалить у меня", clip_del_all: "Удалить у всех" },
@@ -59,43 +57,29 @@ const checkClipI18n = setInterval(() => {
 }, 100);
 
 window.currentClipContent = null; window.currentClipType = 'text'; window.currentTargetElement = null; 
+window.internalAppClipboard = { content: null, type: null };
 
-// ГЛАВНЫЙ ВНУТРЕННИЙ БУФЕР (Изолирован от системы)
-window.internalAppClipboard = { content: null, type: null, blob: null };
-
-// === ПОИСК ФАЙЛОВ ===
 function getMediaFromWrapper(wrapper) {
     const bubble = wrapper.querySelector('.chat-bubble'); if (!bubble) return { content: null, type: 'text' };
-    
     const vid = bubble.querySelector('video');
-    if (vid) {
-        const vSrc = vid.src || vid.querySelector('source')?.src;
-        if (vSrc) return { content: vSrc, type: 'video' };
-    }
-    
+    if (vid) { const vSrc = vid.src || vid.querySelector('source')?.src; if (vSrc) return { content: vSrc, type: 'video' }; }
     const iframe = bubble.querySelector('iframe');
     if (iframe && iframe.src) return { content: iframe.src, type: 'location' };
-    
     const docLink = bubble.querySelector('a[href*="alt=media"]');
     if (docLink && !docLink.href.includes('google.com/maps') && !docLink.querySelector('img')) {
         return { content: docLink.href, type: 'document' };
     }
-    
     const img = bubble.querySelector('img:not(.w-8):not(.rounded-full)');
     if (img && img.src && !img.src.includes('ui-avatars') && !img.src.includes('flagcdn')) return { content: img.src, type: 'image' };
-    
     return { content: bubble.innerText || bubble.textContent || '', type: 'text' };
 }
 
-// === ИНЖЕКТОР КНОПОК ===
 function injectActionButtons(wrapper) {
     if (wrapper.querySelector('.media-action-bar')) return;
     const media = getMediaFromWrapper(wrapper);
-
     if (media.content && media.type !== 'text') {
         const actionBar = document.createElement('div'); actionBar.className = 'media-action-bar';
         actionBar.innerHTML = `<button class="media-action-btn" title="Actions"><i class="fa-solid fa-ellipsis"></i></button>`;
-        
         actionBar.querySelector('button').onclick = (e) => {
             e.preventDefault(); e.stopPropagation(); 
             const freshMedia = getMediaFromWrapper(wrapper); 
@@ -106,7 +90,6 @@ function injectActionButtons(wrapper) {
     }
 }
 
-// === НАБЛЮДАТЕЛЬ ===
 let observerTimeout = null;
 const chatObserver = new MutationObserver((mutations) => {
     if (observerTimeout) clearTimeout(observerTimeout);
@@ -130,7 +113,6 @@ setTimeout(() => {
     }
 }, 2000);
 
-// === ГЕНЕРАЦИЯ МЕНЮ ===
 window.openClipboardMenu = function(content, type, targetEl) {
     if (typeof window.closeDropdown === 'function') window.closeDropdown();
     window.currentClipContent = content; window.currentClipType = type; window.currentTargetElement = targetEl; 
@@ -215,80 +197,77 @@ window.closeClipboardModal = function() {
     if (modal) { modal.style.display = 'none'; document.body.classList.remove('clipboard-open'); }
 };
 
-// === КОПИРОВАНИЕ И ВСТАВКА ФАЙЛОВ ===
-window.execCopyAction = async function() {
+window.execCopyAction = function() {
     if (!window.currentClipContent) return;
     
-    // ФИКС КЭША: Жестко сбрасываем старый файл перед новым копированием
     window.internalAppClipboard = {
         content: window.currentClipContent,
-        type: window.currentClipType,
-        blob: null 
+        type: window.currentClipType
     };
 
-    try {
-        if (['image', 'video', 'document'].includes(window.currentClipType)) {
-            const cacheBuster = window.currentClipContent.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
-            const res = await fetch(window.currentClipContent + cacheBuster, { cache: "no-store" });
-            if (res.ok) {
-                window.internalAppClipboard.blob = await res.blob();
-            }
-        } else {
-            // Только текст идет в системный буфер Android/Windows
-            await navigator.clipboard.writeText(window.currentClipContent);
-        }
-        if (window.showToast) window.showToast("✔", "Copied", "", "");
-    } catch (err) {
-        console.error("Copy error:", err);
-        // Даже если Blob не скачался (ошибка сети/большое видео), ссылка осталась в internalAppClipboard
-        if (window.showToast) window.showToast("✔", "Copied", "", "");
-    }
+    try { navigator.clipboard.writeText(window.currentClipContent); } catch(err) {}
+
+    if (window.showToast) window.showToast("✔", "Copied", "", "");
     window.closeClipboardModal();
 };
 
 window.execPasteAction = async function() {
-    const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
-    
     const clip = window.internalAppClipboard;
-    if (!clip.content) return window.closeClipboardModal(); // Блокировка вставки пустоты
+    
+    if (!clip || !clip.content) {
+        // Если буфер пуст, просто закрываем окно, ничего не ломая
+        return window.closeClipboardModal();
+    }
 
     if (['image', 'video', 'document'].includes(clip.type)) {
-        if (clip.blob) {
-            // Идеальный сценарий: файл успешно висит в нашей памяти
-            let extension = '.jpg';
-            let mime = 'image/jpeg';
-            
+        try {
+            const res = await fetch(clip.content);
+            const blob = await res.blob();
+            let extension = '.jpg'; let mime = 'image/jpeg';
             if (clip.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
             if (clip.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
-            
-            const uniqueFilename = `media_copy_${Date.now()}${extension}`;
-            const file = new File([clip.blob], uniqueFilename, { type: mime });
-            
+
+            const file = new File([blob], `media_copy_${Date.now()}${extension}`, { type: mime });
             if (typeof window.handleMediaUpload === 'function') {
                 window.handleMediaUpload({ target: { files: [file] } });
                 if (window.showToast) window.showToast("✈️", "Sent", "", "");
             }
-        } else {
-            // ФИКС "ВСТАВКИ НИЧЕГО": Если это тяжелое видео и Blob не скачался, 
-            // вставляем оригинальную ссылку в поле ввода, чтобы не было сбоя
-            if (inputField) {
-                inputField.value += clip.content; 
-                inputField.focus();
-            }
+        } catch (err) {
+            const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
+            if (inputField) { inputField.value += clip.content; inputField.focus(); }
         }
-    } else if (clip.type === 'location') {
-        if (typeof sendLocationDirectly === 'function') sendLocationDirectly(clip.content);
     } else {
-        if (clip.type === 'text' && inputField) {
-            inputField.value += clip.content; 
-            inputField.focus();
-        }
+        const inputField = document.getElementById('chat-input') || document.getElementById('conf-chat-input') || document.getElementById('voice-chat-input');
+        if (inputField) { inputField.value += clip.content; inputField.focus(); }
     }
     
-    // Очищаем буфер после успешной вставки
-    window.internalAppClipboard = { content: null, type: null, blob: null }; 
+    window.internalAppClipboard = { content: null, type: null }; 
     window.closeClipboardModal();
 };
+
+window.addEventListener('paste', async function(e) {
+    const clip = window.internalAppClipboard;
+    if (clip && clip.content && ['image', 'video', 'document'].includes(clip.type)) {
+        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        if (pastedText === clip.content) {
+            e.preventDefault(); 
+            try {
+                const res = await fetch(clip.content);
+                const blob = await res.blob();
+                let extension = '.jpg'; let mime = 'image/jpeg';
+                if (clip.type === 'video') { extension = '.mp4'; mime = 'video/mp4'; }
+                if (clip.type === 'document') { extension = '.pdf'; mime = 'application/pdf'; }
+
+                const file = new File([blob], `media_copy_${Date.now()}${extension}`, { type: mime });
+                if (typeof window.handleMediaUpload === 'function') {
+                    window.handleMediaUpload({ target: { files: [file] } });
+                    if (window.showToast) window.showToast("✈️", "Sent", "", "");
+                }
+                window.internalAppClipboard = { content: null, type: null };
+            } catch(err) {}
+        }
+    }
+});
 
 window.execSaveAction = async function() {
     if (!window.currentClipContent || !['image', 'video', 'document'].includes(window.currentClipType)) return;
@@ -308,19 +287,16 @@ window.execSaveAction = async function() {
 
 window.execForwardAction = function() {
     if (window.currentClipContent) {
-        window.hfForwardData = { content: window.currentClipContent, type: window.currentClipType, blob: window.internalAppClipboard.blob };
+        window.hfForwardData = { content: window.currentClipContent, type: window.currentClipType };
         if (window.showToast) window.showToast("➥", "Select chat", "", "");
     }
     window.closeClipboardModal();
 };
 
-// === УДАЛЕНИЕ СООБЩЕНИЙ ===
 window.execDeleteAction = function(deleteType) {
     if (!window.currentTargetElement) return window.closeClipboardModal();
-    
     const wrapper = window.currentTargetElement.closest('.chat-bubble-wrapper') || window.currentTargetElement;
     const msgId = wrapper.getAttribute('data-id') || wrapper.getAttribute('data-firebase-id'); 
-    
     wrapper.style.setProperty('display', 'none', 'important');
 
     if (deleteType === 'me' && msgId) {
@@ -336,7 +312,6 @@ window.execDeleteAction = function(deleteType) {
     if (deleteType === 'all' && msgId && typeof firebase !== 'undefined' && window.currentRoomId) {
         let targetDbRoom = window.currentRoomId || 'global';
         if (window.currentIndex === 2 && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
-        
         firebase.database().ref(targetDbRoom).child(msgId).remove().catch(err => {
             wrapper.style.display = 'flex';
         });
@@ -344,7 +319,6 @@ window.execDeleteAction = function(deleteType) {
     window.closeClipboardModal();
 };
 
-// === СЛУШАТЕЛЬ УДАЛЕНИЙ ===
 let currentTrackedRoom = null;
 let removeListener = null;
 
@@ -353,17 +327,13 @@ setInterval(() => {
     if (window.currentIndex === 2 && activeRoom === 'global') activeRoom = 'video_room_global';
 
     if (activeRoom && activeRoom !== currentTrackedRoom && typeof firebase !== 'undefined') {
-        if (currentTrackedRoom && removeListener) {
-            firebase.database().ref(currentTrackedRoom).off('child_removed', removeListener);
-        }
+        if (currentTrackedRoom && removeListener) { firebase.database().ref(currentTrackedRoom).off('child_removed', removeListener); }
         currentTrackedRoom = activeRoom;
         
         removeListener = firebase.database().ref(currentTrackedRoom).on('child_removed', (snapshot) => {
             const deletedId = snapshot.key;
             const el = document.querySelector(`.chat-bubble-wrapper[data-id="${deletedId}"], .chat-bubble-wrapper[data-firebase-id="${deletedId}"]`);
-            if (el) {
-                el.style.setProperty('display', 'none', 'important');
-            }
+            if (el) { el.style.setProperty('display', 'none', 'important'); }
         });
     }
 
@@ -371,10 +341,7 @@ setInterval(() => {
         const deletedMsgs = JSON.parse(localStorage.getItem('hf_deleted_msgs') || '[]');
         deletedMsgs.forEach(id => {
             const el = document.querySelector(`.chat-bubble-wrapper[data-id="${id}"], .chat-bubble-wrapper[data-firebase-id="${id}"]`);
-            if (el && el.style.display !== 'none') {
-                el.style.setProperty('display', 'none', 'important');
-            }
+            if (el && el.style.display !== 'none') { el.style.setProperty('display', 'none', 'important'); }
         });
     } catch(e) {}
-    
 }, 1000);
