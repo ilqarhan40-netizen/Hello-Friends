@@ -1619,10 +1619,7 @@ if (window.OneSignalDeferred) {
             
             const isVideo = file.type.startsWith('video/');
             
-            if (file.size > 50 * 1024 * 1024) {
-                alert(isVideo ? "Видео слишком огромное! Максимум 50 МБ." : "Фото слишком большое! Максимум 50 МБ.");
-                return;
-            }
+            
 
             if(window.showToast) window.showToast("⏳", "Загрузка медиа...", "", "");
 
