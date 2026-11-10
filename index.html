@@ -1648,10 +1648,7 @@ if (window.OneSignalDeferred) {
             const file = event.target.files[0];
             if (!file) return;
 
-            if (file.size > 50 * 1024 * 1024) {
-                alert("Документ слишком большой! Максимум 50 МБ.");
-                return;
-            }
+    
 
             if(window.showToast) window.showToast("⏳", "Загрузка документа...", "", "");
 
