@@ -383,10 +383,39 @@ window.handleNewMessage = async function(snapshot) {
 
         bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${data.originalText}</div>${transHtml}</div>`;
     }
-    else if (data.mediaUrl) { 
-        bubbleContent = data.mediaType === 'video' ? `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>` : `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; 
-        bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
-    }
+        else if (data.mediaUrl) {
+        // Очищаем имя файла от лишних иконок, если они есть
+        let fileName = data.text ? data.text.replace('📄 Документ: ', '').replace('🖼️ Photo', 'Файл').replace('📹 Video', 'Видео') : 'Файл';
+        
+        // 1. Если это ВИДЕО
+        if (data.mediaType === 'video' || data.mediaUrl.startsWith('data:video/')) {
+            bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
+        } 
+        // 2. Если это МУЗЫКА / АУДИО
+        else if (data.mediaType === 'audio' || data.mediaUrl.startsWith('data:audio/')) {
+            bubbleContent = `<audio src="${data.mediaUrl}" controls class="w-[200px] sm:w-[250px] mt-1 outline-none"></audio>`;
+        } 
+        // 3. Если это ДОКУМЕНТ (PDF, DOC, HTML и т.д.)
+        else if (data.mediaType === 'document' || data.mediaUrl.startsWith('data:application/') || data.mediaUrl.startsWith('data:text/')) {
+            bubbleContent = `
+                <div class="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg border border-[#2a3942] mt-1 min-w-[200px]">
+                    <div class="w-10 h-10 rounded-full bg-[#202c33] flex items-center justify-center text-blue-400 shrink-0">
+                        <i class="fa-solid fa-file-arrow-down text-xl"></i>
+                    </div>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-white text-sm font-bold truncate max-w-[140px]">${fileName}</span>
+                        <a href="${data.mediaUrl}" download="${fileName}" class="text-[0.7rem] text-[#00a884] font-bold mt-1 uppercase tracking-wide hover:text-white transition">Скачать</a>
+                    </div>
+                </div>`;
+        } 
+        // 4. Если это КАРТИНКА (всё остальное)
+        else {
+            bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
+        }
+        
+        bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`;
+        }
+            
     else if (data.isTransfer) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
         bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; 
