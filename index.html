@@ -428,7 +428,8 @@ if (window.OneSignalDeferred) {
     <input type="file" id="hf-upload-audio" accept="audio/*" class="hidden" onchange="window.handleMediaUpload(event)">
     <input type="file" id="hf-upload-doc" accept=".pdf,.doc,.docx,.txt,.html,.xls,.xlsx" class="hidden" onchange="window.handleDocUpload(event)">
     <input type="file" id="email-attach-input" class="hidden" onchange="window.handleEmailAttachment(event)">
-
+    <input type="file" id="hf-upload-camera" accept="image/*" capture="environment" class="hidden" onchange="window.handleMediaUpload(event)">
+    
     <div class="mobile-screen" id="phone-body">
         
         <div id="incoming-call-modal" class="fixed inset-0 bg-black/95 z-[99999] hidden flex-col items-center justify-center backdrop-blur-lg transition-opacity duration-300">
@@ -896,9 +897,18 @@ if (window.OneSignalDeferred) {
         <i class="fa-solid fa-location-dot text-xl sm:text-2xl shrink-0"></i>
         <span class="text-[0.65rem] text-center leading-[1.1] font-medium w-full line-clamp-2 px-0.5 break-words" data-i18n="attach_location">Location</span>
          </button>
-      </div>
+
+    <!-- Кнопка Камера (Голубая) -->
+    <button class="bg-sky-500 text-white rounded-2xl flex flex-col justify-center items-center gap-1.5 aspect-square p-1.5 overflow-hidden shadow-md hover:scale-105 active:scale-95 transition-transform" onclick="document.getElementById('hf-upload-camera').click(); window.closeAttachModal();">
+        <i class="fa-solid fa-aperture text-xl sm:text-2xl shrink-0"></i>
+        <span class="text-[0.65rem] text-center leading-[1.1] font-medium w-full line-clamp-2 px-0.5 break-words" data-i18n="attach_camera">Camera</span>
+        </button>
+     </div>
   </div>
-</div>        
+</div>   
+
+                
+            
 
     
 
@@ -1830,6 +1840,26 @@ window.applyTranslations = function() {
     const langSelect = document.getElementById('app-lang-select'); 
     if(langSelect) langSelect.value = savedLang; 
 };
+            // --- ПЕРЕВОДЫ ДЛЯ МЕНЮ СКРЕПКИ ---
+const attachTranslations = {
+    en: { attach_video: "Video", attach_audio: "Audio", attach_location: "Location", attach_camera: "Camera" },
+    ru: { attach_video: "Видео", attach_audio: "Аудио", attach_location: "Локация", attach_camera: "Камера" },
+    kk: { attach_video: "Бейне", attach_audio: "Аудио", attach_location: "Орналасу", attach_camera: "Камера" },
+    az: { attach_video: "Video", attach_audio: "Audio", attach_location: "Məkan", attach_camera: "Kamera" },
+    de: { attach_video: "Video", attach_audio: "Audio", attach_location: "Standort", attach_camera: "Kamera" },
+    tr: { attach_video: "Video", attach_audio: "Ses", attach_location: "Konum", attach_camera: "Kamera" },
+    ar: { attach_video: "فيديو", attach_audio: "صوت", attach_location: "موقع", attach_camera: "كاميرا" },
+    it: { attach_video: "Video", attach_audio: "Audio", attach_location: "Posizione", attach_camera: "Fotocamera" },
+    es: { attach_video: "Video", attach_audio: "Audio", attach_location: "Ubicación", attach_camera: "Cámara" },
+    fr: { attach_video: "Vidéo", attach_audio: "Audio", attach_location: "Emplacement", attach_camera: "Caméra" },
+    pt: { attach_video: "Vídeo", attach_audio: "Áudio", attach_location: "Localização", attach_camera: "Câmera" },
+    ja: { attach_video: "ビデオ", attach_audio: "オーディオ", attach_location: "位置", attach_camera: "カメラ" },
+    zh: { attach_video: "视频", attach_audio: "音频", attach_location: "位置", attach_camera: "相机" }
+};
+Object.keys(attachTranslations).forEach(lang => {
+    if (window.i18n[lang]) Object.assign(window.i18n[lang], attachTranslations[lang]);
+});
+            
 
         // --- УМНАЯ ЛОГИКА ЯЗЫКА (БЕЗ ЖЕСТКОГО ENGLISH) ---
             window.applyTranslations = function() { 
