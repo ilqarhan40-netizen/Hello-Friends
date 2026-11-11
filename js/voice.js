@@ -240,22 +240,35 @@ window.startVoiceAI = function() {
                 }
             }
             
-            let targetDbRoom = (window.currentRoomId && window.currentRoomId !== 'global') ? window.currentRoomId : 'global';
-            
+                        // 1. Узнаем тип текущего звонка (видео или аудио)
+            let isVideoCall = (window.myLastOutgoingCallType === 'video' || window.currentIncomingCallType === 'video');
+
+            // 2. Находим правильную приватную комнату для вас двоих
+            let targetDbRoom = 'global';
+            if (window.currentTargetUser) {
+                let id1 = String(window.myProfileInfo.id); 
+                let id2 = String(window.currentTargetUser.id);
+                targetDbRoom = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
+            } else if (window.currentRoomId && window.currentRoomId !== 'global') {
+                targetDbRoom = window.currentRoomId;
+            }
+
+            // 3. Отправляем в Firebase
             firebase.database().ref(targetDbRoom).push({
-                userId: window.myProfileInfo.id, 
-                name: window.myUsername || 'User', 
-                text: textToShip, 
+                userId: window.myProfileInfo.id,
+                name: window.myUsername || 'User',
+                text: textToShip,
                 originalText: transcript,
-                sessionId: window.mySessionId || 'sess', 
-                timestamp: firebase.database.ServerValue.TIMESTAMP, 
+                sessionId: window.mySessionId || 'sess',
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
                 photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
-                flag: activeFlag, 
+                flag: activeFlag,
                 flagCode: activeFlagCode,
-                langCode: targetLang.substring(0,2), 
-                isVoiceRoomMsg: true, 
-                isConfMsg: false
+                langCode: targetLang.substring(0,2),
+                isVoiceRoomMsg: !isVideoCall, // true если аудио, false если видео
+                isConfMsg: isVideoCall        // true если ВИДЕО
             });
+            
             
         } catch(err) { console.error("Ошибка перевода звонка:", err); }
     };
