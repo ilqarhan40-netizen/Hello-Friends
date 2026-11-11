@@ -864,11 +864,32 @@ if (window.OneSignalDeferred) {
                 <div class="close-sheet-btn" onclick="window.closeAttachModal()"><i class="fa-solid fa-xmark"></i></div>
                 <h2 class="text-xl font-bold mb-6 text-white text-center mt-4" data-i18n="attach_file">Attach File</h2>
                 <div class="flex flex-col gap-3">
-                    <button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('media-upload-input').click();"><i class="fa-solid fa-image text-xl"></i> <span data-i18n="attach_photo">Photo / Image</span></button>
-                    <button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat();"><i class="fa-solid fa-location-dot text-xl"></i> <span data-i18n="attach_loc">Share Location</span></button>
-                    <button class="btn-primary !bg-purple-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('file-upload-input').click(); window.closeAttachModal();"><i class="fa-solid fa-file text-xl"></i> <span data-i18n="attach_doc">Document</span></button>
+    <!-- Кнопка Фото (Синяя) -->
+    <button class="btn-primary !bg-blue-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('hf-upload-photo').click(); window.closeAttachModal();">
+        <i class="fa-solid fa-image"></i> <span data-i18n="attach_photo">Photo / Image</span>
+    </button>
+
+    <!-- Кнопка Видео (Красная) -->
+    <button class="btn-primary !bg-red-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('hf-upload-video').click(); window.closeAttachModal();">
+        <i class="fa-solid fa-video"></i> <span data-i18n="attach_video">Video</span>
+    </button>
+
+    <!-- Кнопка Аудио (Оранжевая) -->
+    <button class="btn-primary !bg-orange-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('hf-upload-audio').click(); window.closeAttachModal();">
+        <i class="fa-solid fa-headphones"></i> <span data-i18n="attach_audio">Audio</span>
+    </button>
+
+    <!-- Кнопка Документ (Фиолетовая) -->
+    <button class="btn-primary !bg-purple-500 !text-white flex justify-center items-center gap-3" onclick="document.getElementById('hf-upload-doc').click(); window.closeAttachModal();">
+        <i class="fa-solid fa-file-lines"></i> <span data-i18n="attach_doc">Document</span>
+    </button>
+
+    <!-- Кнопка Локация (Зеленая) -->
+    <button class="btn-primary !bg-green-500 !text-white flex justify-center items-center gap-3" onclick="window.sendLocationToChat(); window.closeAttachModal();">
+        <i class="fa-solid fa-location-dot"></i> <span data-i18n="attach_location">Share Location</span>
+    </button>
                 </div>
-            </div>
+            </div> 
         </div>
 
         <div id="fullscreen-image-modal" class="app-modal" style="background: rgba(0,0,0,0.95); z-index: 10000;" onclick="if(event.target===this) window.closeFullscreenImage();">
