@@ -423,8 +423,10 @@ if (window.OneSignalDeferred) {
     </script>
     <input type="file" id="photo-upload-input" accept="image/*" class="hidden" onchange="window.handleFileUpload(event)">
     <input type="file" id="import-file-input" class="hidden" accept=".json" onchange="window.importData(event)">
-    <input type="file" id="media-upload-input" accept="image/*,video/*" class="hidden" onchange="window.handleMediaUpload(event)">
-    <input type="file" id="file-upload-input" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="window.handleDocUpload(event)">
+    <input type="file" id="hf-upload-photo" accept="image/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="hf-upload-video" accept="video/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="hf-upload-audio" accept="audio/*" class="hidden" onchange="window.handleMediaUpload(event)">
+    <input type="file" id="hf-upload-doc" accept=".pdf,.doc,.docx,.txt,.html,.xls,.xlsx" class="hidden" onchange="window.handleDocUpload(event)">
     <input type="file" id="email-attach-input" class="hidden" onchange="window.handleEmailAttachment(event)">
 
     <div class="mobile-screen" id="phone-body">
