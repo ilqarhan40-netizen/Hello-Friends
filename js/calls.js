@@ -12,21 +12,13 @@ window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
 
-// Твои правильные ключи Agora
 const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
 const AGORA_TEMP_TOKEN = "007eJxTYJgX9twsY8q+zU32zHtZzgQ7MSyO7vjWn9v5xkD+/06v888UGCwNjdMMjRPNkiwMDUxSjE2SDIzNLE0Tk1OSDVLMLZPMb/J+yWoIZGSY0+/GwMTACIYgPitDRmpOTj4DVBAkxMJgaGBgCACnyiI0";
-
-
-
-
-
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 window.currentIncomingCallType = 'voice';
 window.myLastOutgoingCallType = 'voice';
-
-
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
@@ -67,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-          // --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
+// --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     if (typeof AgoraRTC === 'undefined') {
         alert("Модуль связи загружается, подождите секунду...");
@@ -78,16 +70,13 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
         window.agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-        // Прием потока от собеседника (один-на-один)
+        // Прием потока от собеседника
         window.agoraClient.on("user-published", async (user, mediaType) => {
             await window.agoraClient.subscribe(user, mediaType);
             
             if (mediaType === "video") {
-                // Ищем новые фреймы из комнаты 1-на-1
                 let newDirectVideo = document.getElementById('direct-remote-video');
                 let newDirectPlaceholder = document.getElementById('direct-remote-placeholder');
-                
-                // Ищем старый фрейм (на всякий случай, как запасной вариант)
                 let gridVideo = document.getElementById(`remote-video-${targetId}`);
                 
                 if (newDirectVideo) {
@@ -95,8 +84,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
                     newDirectVideo.style.display = 'block';
                     newDirectVideo.classList.remove('hidden');
                     newDirectVideo.play().catch(e => console.warn(e));
-                    
-                    // Прячем иконку "Waiting for video..."
                     if (newDirectPlaceholder) newDirectPlaceholder.classList.add('hidden');
                 } else if (gridVideo) { 
                     gridVideo.srcObject = new MediaStream([user.videoTrack.getMediaStreamTrack()]);
@@ -110,11 +97,8 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             }
         });
 
-        // Название комнаты жестко привязано к токену
         const channelName = "hello"; 
-        
         await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, null);
-        
 
         let tracksToPublish = [];
 
@@ -124,19 +108,14 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         if (isVideo) {
             if (!window.localVideoTrack) {
                 window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-                
-                // Мое видео в новой комнате 1-на-1
                 let newMyVideo = document.getElementById('direct-local-video');
                 let newMyPlaceholder = document.getElementById('direct-local-placeholder');
-                
                 let myVideo = document.getElementById('my-live-video');
                 
                 if (newMyVideo) {
                     newMyVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
                     newMyVideo.classList.remove('hidden');
                     newMyVideo.play().catch(e=>{});
-                    
-                    // Прячем иконку "My Camera"
                     if (newMyPlaceholder) newMyPlaceholder.classList.add('hidden');
                 } else if (myVideo) {
                     myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
@@ -146,7 +125,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             tracksToPublish.push(window.localVideoTrack);
         }
 
-                await window.agoraClient.publish(tracksToPublish);
+        await window.agoraClient.publish(tracksToPublish);
 
         // === ЗАПУСК УМНОГО МИКРОФОНА ===
         if (window.startVoiceAI) window.startVoiceAI();
@@ -169,15 +148,12 @@ window.endWebRTCCall = async function() {
         window.agoraClient = null;
     }
     
-    
-    // 1. Очищаем старые фреймы
     document.querySelectorAll('[id^="remote-video-"]').forEach(v => {
         v.srcObject = null;
         v.classList.add('hidden');
         v.style.display = 'none';
     });
 
-    // 2. Очищаем НОВЫЕ фреймы (прячем видео, возвращаем заглушки)
     let newDirectVideo = document.getElementById('direct-remote-video');
     let newDirectPlaceholder = document.getElementById('direct-remote-placeholder');
     if (newDirectVideo) {
@@ -209,8 +185,6 @@ window.endWebRTCCall = async function() {
     window.currentCallerId = null;
     window.currentTargetUser = null;
 };
-
-      
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
 window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
@@ -251,13 +225,11 @@ window.startInAppCall = function(callType = 'voice') {
     
     window.voiceFriend = target; 
     if (window.switchTab) window.switchTab(callType === 'video' ? 1 : 1); 
-    //if (callType === 'video' && window.initConference) window.initConference();
     
     if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, ""); 
     
     window.stopAllRings();
     setTimeout(() => { window.playSafeSound(window.sndCallOut); }, 100);
-    
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
@@ -276,10 +248,9 @@ window.startInAppCall = function(callType = 'voice') {
                 `Вы пропустили вызов от ${window.myUsername}`
             );
         }
-                    window.currentCallerId = null;
-            window.voiceFriend = null;
-            if (window.switchTab) window.switchTab(1);
-        
+        window.currentCallerId = null;
+        window.voiceFriend = null;
+        if (window.switchTab) window.switchTab(1);
     }, 30000);
 };
 
@@ -310,7 +281,7 @@ window.acceptCall = function() {
 
     let target = window.participants.find(p => p.id === window.currentCallerId); 
     if(target) { 
-        window.currentTargetUser = target; 
+        window.currentTargetUser = target; // ФИКС: Устанавливаем собеседника
         const pEl = document.getElementById('voice-friend-photo'); const fEl = document.getElementById('voice-friend-flag'); const nEl = document.getElementById('voice-friend-name');
         if(pEl) pEl.src = target.photo; if(fEl) fEl.innerText = target.flag; if(nEl) nEl.innerText = target.name.split(' ')[0]; 
         
@@ -334,16 +305,13 @@ window.hangUpCall = function() {
     window.stopAllRings();
     window.endWebRTCCall();
     
-    // БОРЬБА С ПРИЗРАКАМИ: Отправляем отбой тому, кому звонили (или кто звонил нам)
     let targetIdToCancel = null;
     if (window.currentTargetUser) targetIdToCancel = window.currentTargetUser.id;
     else if (window.voiceFriend) targetIdToCancel = window.voiceFriend.id;
     else if (window.currentCallerId) targetIdToCancel = window.currentCallerId;
 
     if (targetIdToCancel) {
-        // 1. Посылаем сигнал отмены
         firebase.database().ref('signals/' + targetIdToCancel).push({ type: 'reject', callerName: window.myUsername });
-        // 2. Стираем сам факт звонка, если он еще висит
         firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + targetIdToCancel).remove();
         firebase.database().ref('calls/' + targetIdToCancel + '_' + window.myProfileInfo.id).remove();
     }
@@ -351,18 +319,15 @@ window.hangUpCall = function() {
     if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
     if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
     
-    // Очищаем переменные
     window.currentCallerId = null;
     window.voiceFriend = null;
     
     if (window.switchTab) window.switchTab(0);
 };
 
-
 window.initSignalListener = function() { 
     if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return; 
     
-    // Предотвращаем двойной запуск слушателя
     if (window.isSignalListenerActive) return;
     window.isSignalListenerActive = true;
 
@@ -375,11 +340,8 @@ window.initSignalListener = function() {
         } 
         else if (sig.type === 'reject') {
             window.stopAllRings();
-            
-            // ВОТ ЭТА СТРОКА УБИРАЕТ ЗАВИСШИЙ ЭКРАН ВЫЗОВА:
             const incomingModal = document.getElementById('incoming-call-modal');
             if(incomingModal) incomingModal.classList.remove('active');
-            
             window.playSafeSound(window.sndMissed, [200, 100, 200]);
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
@@ -390,6 +352,10 @@ window.initSignalListener = function() {
             window.stopAllRings(); 
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            // ФИКС: Гарантируем, что звонящий знает, с кем он связался
+            if (window.voiceFriend) window.currentTargetUser = window.voiceFriend;
+            if (window.switchChatRoom && window.currentTargetUser) window.switchChatRoom(window.currentTargetUser.id);
+            
             window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
         }
         else if (sig.type === 'missed') {
@@ -401,8 +367,6 @@ window.initSignalListener = function() {
     }); 
 };
 
-
-// --- АВТОМАТИЧЕСКИЙ ЗАПУСК ПРИЕМА ЗВОНКОВ ---
 let signalInitCheck = setInterval(() => {
     if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
         window.initSignalListener();
@@ -410,8 +374,6 @@ let signalInitCheck = setInterval(() => {
     }
 }, 1000);
 
-
-// --- ВЫЗОВ ИЗ КОНТАКТОВ ---
 window.makeCallFromContact = function(userId, type = 'voice') {
     const target = (window.participants || []).find(p => p.id === userId);
     if (!target) return console.error("Юзер не найден");
@@ -423,7 +385,6 @@ window.makeCallFromContact = function(userId, type = 'voice') {
     window.startInAppCall(type);
 };
 
-// --- ФИКС ЗВУКА ОТПРАВКИ СООБЩЕНИЙ ВО ВСЕХ ЧАТАХ ---
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         if (window.sendFirebaseMsg) {
@@ -442,94 +403,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// УПРАВЛЕНИЕ КНОПКАМИ ФУТЕРА (Микрофон / Камера AGORA)
+// УПРАВЛЕНИЕ КНОПКАМИ ФУТЕРА (Микрофон / Камера AGORA) - ИСПРАВЛЕНО И ОБЪЕДИНЕНО
 // ==========================================
 
 window.toggleMyAudio = async function() {
-    const icon = document.getElementById('icon-my-mic');
-    const btn = icon.parentElement;
-    
-    // Защита от спама кликами
-    if (btn.style.pointerEvents === 'none') return;
-    btn.style.pointerEvents = 'none'; 
-
-    try {
-        if (icon.classList.contains('fa-microphone')) {
-            // Мягкое отключение микрофона
-            if (window.localAudioTrack) {
-                await window.localAudioTrack.setMuted(true);
-            }
-            icon.classList.replace('fa-microphone', 'fa-microphone-slash');
-            btn.classList.replace('text-[#00a884]', 'text-red-500');
-        } else {
-            // Включение микрофона
-            if (window.localAudioTrack) {
-                await window.localAudioTrack.setMuted(false);
-            }
-            icon.classList.replace('fa-microphone-slash', 'fa-microphone');
-            btn.classList.replace('text-red-500', 'text-[#00a884]');
-        }
-    } catch (e) {
-        console.error("Ошибка переключения микрофона:", e);
-    } finally {
-        btn.style.pointerEvents = 'auto'; // Разблокируем кнопку
-    }
-};
-
-window.toggleMyCamera = async function() {
-    const icon = document.getElementById('icon-my-cam');
-    const btn = icon.parentElement;
-
-    // Защита от двойного клика, чтобы не ломать видеопоток
-    if (btn.style.pointerEvents === 'none') return;
-    btn.style.pointerEvents = 'none';
-
-    try {
-        if (icon.classList.contains('fa-video')) {
-            // Мягкое отключение видео (черный экран)
-            if (window.localVideoTrack) {
-                await window.localVideoTrack.setMuted(true);
-            }
-            icon.classList.replace('fa-video', 'fa-video-slash');
-            btn.classList.replace('text-[#00a884]', 'text-red-500');
-        } else {
-            // Возврат видео
-            if (window.localVideoTrack) {
-                await window.localVideoTrack.setMuted(false);
-            }
-            icon.classList.replace('fa-video-slash', 'fa-video');
-            btn.classList.replace('text-red-500', 'text-[#00a884]');
-        }
-    } catch (e) {
-        console.error("Ошибка переключения камеры:", e);
-    } finally {
-        btn.style.pointerEvents = 'auto'; // Разблокируем кнопку
-    }
-};
-
-// ==========================================
-// УПРАВЛЕНИЕ КНОПКАМИ ФУТЕРА (Микрофон / Камера AGORA) - ИСПРАВЛЕНО
-// ==========================================
-
-window.toggleMyAudio = async function() {
-    // Ищем ВСЕ иконки микрофона (для мобильной и планшетной верстки)
     const icons = document.querySelectorAll('#icon-my-mic');
     if (icons.length === 0) return;
-    
-    // Смотрим статус по первой найденной иконке
     const isCurrentlyActive = icons[0].classList.contains('fa-microphone');
 
     try {
         if (isCurrentlyActive) {
-            // Выключаем микрофон
-            if (window.localAudioTrack) await window.localAudioTrack.setMuted(true);
+            // ЖЕСТКОЕ ОТКЛЮЧЕНИЕ ЗВУКА
+            if (window.localAudioTrack) {
+                await window.localAudioTrack.setMuted(true);
+                await window.localAudioTrack.setEnabled(false); // <--- Убивает захват звука аппаратно!
+            }
             icons.forEach(icon => {
                 icon.classList.replace('fa-microphone', 'fa-microphone-slash');
                 if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
             });
         } else {
-            // Включаем микрофон
-            if (window.localAudioTrack) await window.localAudioTrack.setMuted(false);
+            // ВКЛЮЧЕНИЕ ЗВУКА
+            if (window.localAudioTrack) {
+                await window.localAudioTrack.setEnabled(true);
+                await window.localAudioTrack.setMuted(false);
+            }
             icons.forEach(icon => {
                 icon.classList.replace('fa-microphone-slash', 'fa-microphone');
                 if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
@@ -548,14 +446,12 @@ window.toggleMyCamera = async function() {
 
     try {
         if (isCurrentlyActive) {
-            // Выключаем камеру
             if (window.localVideoTrack) await window.localVideoTrack.setMuted(true);
             icons.forEach(icon => {
                 icon.classList.replace('fa-video', 'fa-video-slash');
                 if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
             });
         } else {
-            // Включаем камеру
             if (window.localVideoTrack) await window.localVideoTrack.setMuted(false);
             icons.forEach(icon => {
                 icon.classList.replace('fa-video-slash', 'fa-video');
