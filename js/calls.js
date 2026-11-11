@@ -507,34 +507,62 @@ window.toggleMyCamera = async function() {
     }
 };
 
-window.toggleRemoteAudio = function() {
-    const icon = document.getElementById('icon-remote-mic');
-    if (icon.classList.contains('fa-microphone')) {
-        icon.classList.replace('fa-microphone', 'fa-microphone-slash');
-        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-        
-        document.querySelectorAll('audio').forEach(audio => audio.muted = true);
-    } else {
-        icon.classList.replace('fa-microphone-slash', 'fa-microphone');
-        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-        
-        document.querySelectorAll('audio').forEach(audio => audio.muted = false);
+// ==========================================
+// УПРАВЛЕНИЕ КНОПКАМИ ФУТЕРА (Микрофон / Камера AGORA) - ИСПРАВЛЕНО
+// ==========================================
+
+window.toggleMyAudio = async function() {
+    // Ищем ВСЕ иконки микрофона (для мобильной и планшетной верстки)
+    const icons = document.querySelectorAll('#icon-my-mic');
+    if (icons.length === 0) return;
+    
+    // Смотрим статус по первой найденной иконке
+    const isCurrentlyActive = icons[0].classList.contains('fa-microphone');
+
+    try {
+        if (isCurrentlyActive) {
+            // Выключаем микрофон
+            if (window.localAudioTrack) await window.localAudioTrack.setMuted(true);
+            icons.forEach(icon => {
+                icon.classList.replace('fa-microphone', 'fa-microphone-slash');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+            });
+        } else {
+            // Включаем микрофон
+            if (window.localAudioTrack) await window.localAudioTrack.setMuted(false);
+            icons.forEach(icon => {
+                icon.classList.replace('fa-microphone-slash', 'fa-microphone');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+            });
+        }
+    } catch (e) {
+        console.error("Ошибка переключения микрофона:", e);
     }
 };
 
-window.toggleRemoteCamera = function() {
-    const icon = document.getElementById('icon-remote-cam');
-    if (icon.classList.contains('fa-video')) {
-        icon.classList.replace('fa-video', 'fa-video-slash');
-        icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-        
-        const remoteVideo = document.getElementById('remote-player'); 
-        if (remoteVideo) remoteVideo.style.opacity = '0';
-    } else {
-        icon.classList.replace('fa-video-slash', 'fa-video');
-        icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-        
-        const remoteVideo = document.getElementById('remote-player');
-        if (remoteVideo) remoteVideo.style.opacity = '1';
+window.toggleMyCamera = async function() {
+    const icons = document.querySelectorAll('#icon-my-cam');
+    if (icons.length === 0) return;
+    
+    const isCurrentlyActive = icons[0].classList.contains('fa-video');
+
+    try {
+        if (isCurrentlyActive) {
+            // Выключаем камеру
+            if (window.localVideoTrack) await window.localVideoTrack.setMuted(true);
+            icons.forEach(icon => {
+                icon.classList.replace('fa-video', 'fa-video-slash');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+            });
+        } else {
+            // Включаем камеру
+            if (window.localVideoTrack) await window.localVideoTrack.setMuted(false);
+            icons.forEach(icon => {
+                icon.classList.replace('fa-video-slash', 'fa-video');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+            });
+        }
+    } catch (e) {
+        console.error("Ошибка переключения камеры:", e);
     }
 };
