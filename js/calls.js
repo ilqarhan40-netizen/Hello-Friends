@@ -229,15 +229,18 @@ window.startInAppCall = function(callType = 'voice') {
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
-        // УЛУЧШЕННЫЙ СИГНАЛ ПРОПУЩЕННОГО ВЫЗОВА (С ДАННЫМИ ДЛЯ ПУША)
-        firebase.database().ref('signals/' + target.id).push({ 
-            type: 'missed', 
-            callType: callType,
+        
+        // ОТПРАВЛЯЕМ СИГНАЛ В НЕЗАВИСИМУЮ БАЗУ УВЕДОМЛЕНИЙ (missedCalls)
+        firebase.database().ref('users/' + target.id + '/missedCalls').push({ 
+            type: callType, 
             callerId: window.myProfileInfo.id,
             callerName: window.myUsername,
-            callerPhoto: window.myProfileInfo.photo
+            callerPhoto: window.myProfileInfo.photo,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
         });
-        callRef.remove(); window.callTimeout = null;
+
+        callRef.remove(); 
+        window.callTimeout = null;
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
         if(window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
@@ -359,19 +362,6 @@ window.initSignalListener = function() {
             if (window.switchChatRoom && window.currentTargetUser) window.switchChatRoom(window.currentTargetUser.id);
             
             window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
-        }
-        else if (sig.type === 'missed') {
-            window.stopAllRings();
-            const incomingModal = document.getElementById('incoming-call-modal');
-            if(incomingModal) incomingModal.classList.remove('active');
-            firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-            
-            // ВЫЗЫВАЕМ ПУШИ УВЕДОМЛЕНИЙ НАПРЯМУЮ ОТСЮДА
-            if (sig.callType === 'video') {
-                if (window.showVideoCallNotify) window.showVideoCallNotify(sig.callerName, sig.callerPhoto, sig.callerId);
-            } else {
-                if (window.showAudioCallNotify) window.showAudioCallNotify(sig.callerName, sig.callerPhoto, sig.callerId);
-            }
         }
     }); 
 };
