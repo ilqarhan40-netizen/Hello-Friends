@@ -17,11 +17,11 @@ window.handleEmailAttachment = function(event) {
     const reader = new FileReader(); 
     reader.onload = function(e) { 
         const base64Data = e.target.result; 
-        const newRef = db.ref('email_attachments').push(); 
+        const database = (typeof db !== 'undefined') ? db : firebase.database();
+        const newRef = database.ref('email_attachments').push(); 
         newRef.set({ name: file.name, data: base64Data, timestamp: firebase.database.ServerValue.TIMESTAMP }).then(() => { 
             textEl.value = textEl.value.replace(`\n[Uploading ${file.name}...]`, `\n📎 Attachment Link: https://secure-cloud.hf/file/${newRef.key}`); 
             
-            // Берем переводы для тоста прикрепления файла из i18n
             const dict = window.i18n[window.appLang] || window.i18n['en'];
             const titleText = dict['attached'] || "Attached!";
             const descText = dict['file_uploaded'] || "File securely uploaded.";
@@ -35,14 +35,10 @@ window.handleEmailAttachment = function(event) {
 window.sendEmailForm = function(e) {
     e.preventDefault();
     
-    // Подключаем словарь на лету
     const dict = window.i18n[window.appLang] || window.i18n['en'];
-    
     const btn = e.target.querySelector('button[type="submit"]');
-    // Запоминаем оригинальный HTML кнопки (чтобы вернуть иконку и span с data-i18n)
     const originalHTML = btn.innerHTML; 
     
-    // Меняем текст на лету (иконку убираем на время отправки)
     btn.innerText = dict['email_sending'] || 'Sending...'; 
     btn.classList.add('animate-pulse');
     
@@ -57,7 +53,36 @@ window.sendEmailForm = function(e) {
     };
     
     emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScxO").then(function() {
-            
+        
+        // === СИГНАЛ В FIREBASE ДЛЯ УВЕДОМЛЕНИЙ ===
+        try {
+            const database = (typeof db !== 'undefined') ? db : firebase.database();
+            database.ref('users').orderByChild('email').equalTo(to).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    snapshot.forEach(childSnap => {
+                        const receiverId = childSnap.key;
+                        database.ref('emails/' + receiverId).push({
+                            from: window.myUsername || "User",
+                            subject: subj,
+                            text: text,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    });
+                } else {
+                    const safeId = to.replace(/\./g, ',');
+                    database.ref('emails/' + safeId).push({
+                        from: window.myUsername || "User",
+                        subject: subj,
+                        text: text,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            });
+        } catch (err) {
+            console.log("Firebase push error:", err);
+        }
+        // === КОНЕЦ ===
+
         btn.classList.remove('animate-pulse'); 
         btn.innerText = dict['email_success'] || 'Success! ✔️'; 
         btn.style.background = '#00a884'; 
@@ -65,7 +90,6 @@ window.sendEmailForm = function(e) {
         
         setTimeout(() => { 
             document.getElementById('email-form-element').reset(); 
-            // Возвращаем оригинальную HTML-разметку с иконкой и дата-атрибутом
             btn.innerHTML = originalHTML; 
             btn.style.background = ''; 
             btn.style.color = ''; 
