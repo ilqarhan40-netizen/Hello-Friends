@@ -230,7 +230,6 @@ window.startInAppCall = function(callType = 'voice') {
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
         
-        // ОТПРАВЛЯЕМ СИГНАЛ В НЕЗАВИСИМУЮ БАЗУ УВЕДОМЛЕНИЙ (missedCalls)
         firebase.database().ref('users/' + target.id + '/missedCalls').push({ 
             type: callType, 
             callerId: window.myProfileInfo.id,
@@ -321,7 +320,7 @@ window.hangUpCall = function() {
         firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + targetIdToCancel).remove();
         firebase.database().ref('calls/' + targetIdToCancel + '_' + window.myProfileInfo.id).remove();
         
-        // === ДОБАВЛЕНО: СИГНАЛ ПРОПУЩЕННОГО ВЫЗОВА ДЛЯ УВЕДОМЛЕНИЙ ===
+        // === СИГНАЛ ПРОПУЩЕННОГО ВЫЗОВА ДЛЯ УВЕДОМЛЕНИЙ ===
         try {
             let callTypeToSend = (window.myLastOutgoingCallType === 'video' || window.currentIncomingCallType === 'video') ? 'video' : 'voice';
             firebase.database().ref('users/' + targetIdToCancel + '/missedCalls').push({
@@ -334,18 +333,8 @@ window.hangUpCall = function() {
         } catch (err) {
             console.log("Ошибка отправки пропущенного:", err);
         }
-        // === КОНЕЦ ===
+        // === КОНЕЦ СИГНАЛА ===
     }
-    
-    if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
-    if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
-    
-    window.currentCallerId = null;
-    window.voiceFriend = null;
-    
-    if (window.switchTab) window.switchTab(0);
-};
-
     
     if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
     if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
@@ -436,14 +425,12 @@ window.toggleMyAudio = async function() {
     try {
         if (window.localAudioTrack) {
             if (isCurrentlyActive) {
-                // Мягко, но аппаратно отключаем микрофон (без разрыва связи)
                 await window.localAudioTrack.setEnabled(false);
                 icons.forEach(icon => {
                     icon.classList.replace('fa-microphone', 'fa-microphone-slash');
                     if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
                 });
             } else {
-                // Включаем микрофон обратно
                 await window.localAudioTrack.setEnabled(true);
                 icons.forEach(icon => {
                     icon.classList.replace('fa-microphone-slash', 'fa-microphone');
@@ -464,14 +451,12 @@ window.toggleMyCamera = async function() {
     try {
         if (window.localVideoTrack) {
             if (isCurrentlyActive) {
-                // Аппаратное отключение камеры (индикатор на устройстве погаснет)
                 await window.localVideoTrack.setEnabled(false);
                 icons.forEach(icon => {
                     icon.classList.replace('fa-video', 'fa-video-slash');
                     if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
                 });
             } else {
-                // Включаем камеру обратно
                 await window.localVideoTrack.setEnabled(true);
                 icons.forEach(icon => {
                     icon.classList.replace('fa-video-slash', 'fa-video');
