@@ -55,14 +55,16 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.insertAdjacentHTML('beforeend', notifyHtml);
 });
 
-// === 2. ЗВУКИ И ЛОГИКА (БЕЗ ДУБЛИРОВАНИЯ АУДИО) ===
+// === 2. ЗВУКИ И ЛОГИКА ===
+window.sndEmail = new Audio('email.mp3.wav');
+window.sndMissedCall = new Audio('missed.mp3.wav');
 
 // Почта
 window.showMailNotify = function(fromName, subject) {
     if (fromName) document.getElementById('notify-mail-from').innerText = fromName;
     if (subject) document.getElementById('notify-mail-subj').innerText = subject;
     document.getElementById('notify-new-mail').style.display = 'flex';
-    if (window.playSafeSound && window.sndEmail) window.playSafeSound(window.sndEmail);
+    window.sndEmail.play().catch(() => {});
 };
 
 // Видеозвонок
@@ -78,7 +80,7 @@ window.showVideoCallNotify = function(name, photo, userId) {
         };
     }
     document.getElementById('notify-video-call').style.display = 'flex';
-    if (window.playSafeSound && window.sndMissed) window.playSafeSound(window.sndMissed, [200, 100, 200]);
+    window.sndMissedCall.play().catch(() => {});
 };
 
 // Аудиозвонок
@@ -94,14 +96,15 @@ window.showAudioCallNotify = function(name, photo, userId) {
         };
     }
     document.getElementById('notify-audio-call').style.display = 'flex';
-    if (window.playSafeSound && window.sndMissed) window.playSafeSound(window.sndMissed, [200, 100, 200]);
+    window.sndMissedCall.play().catch(() => {});
 };
 
+// === 3. СЛУШАТЕЛИ FIREBASE (АВТОМАТИКА) ===
 window.initAllNotifications = function() {
     const myId = window.myProfileInfo?.id || localStorage.getItem('hf_active_user');
     if (!myId || myId === 'guest') return;
 
-    // Слушатель почты (работает правильно, оставляем)
+    // Слушатель почты
     let mailLoaded = false;
     db.ref('emails/' + myId).limitToLast(1).on('child_added', snap => {
         if (!mailLoaded) return;
@@ -114,5 +117,21 @@ window.initAllNotifications = function() {
     });
     db.ref('emails/' + myId).once('value', () => { mailLoaded = true; });
 
-    // Слушатель звонков удален, так как теперь calls.js сам дергает окна уведомлений!
+    // Слушатель пропущенных звонков
+    let callsLoaded = false;
+    db.ref('users/' + myId + '/missedCalls').limitToLast(1).on('child_added', snap => {
+        if (!callsLoaded) return;
+        const call = snap.val();
+        if (call) {
+            if (call.type === 'video') {
+                window.showVideoCallNotify(call.callerName, call.callerPhoto, call.callerId);
+            } else {
+                window.showAudioCallNotify(call.callerName, call.callerPhoto, call.callerId);
+            }
+        }
+    });
+    db.ref('users/' + myId + '/missedCalls').once('value', () => { callsLoaded = true; });
 };
+
+// Запуск слушателей с задержкой, чтобы база успела прогрузиться
+setTimeout(() => { if (window.initAllNotifications) window.initAllNotifications(); }, 2500);
