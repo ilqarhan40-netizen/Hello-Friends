@@ -15,7 +15,6 @@ window.localVideoTrack = null;
 const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
 const AGORA_TEMP_TOKEN = "007eJxTYOBIOJ1zdpOqLfdiwzMNOgbBOnOmt26/tLfGa9XfjfeULUUVGCwNjdMMjRPNkiwMDUxSjE2SDIzNLE0Tk1OSDVLMLZPMM32/ZjUEMjL8b3zLwMTACIYgPitDRmpOTj4DVBAkxMJgaGBgCAA9qSGb";
 
-
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 window.currentIncomingCallType = 'voice';
@@ -320,21 +319,6 @@ window.hangUpCall = function() {
         firebase.database().ref('signals/' + targetIdToCancel).push({ type: 'reject', callerName: window.myUsername });
         firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + targetIdToCancel).remove();
         firebase.database().ref('calls/' + targetIdToCancel + '_' + window.myProfileInfo.id).remove();
-        
-        // === СИГНАЛ ПРОПУЩЕННОГО ВЫЗОВА ДЛЯ УВЕДОМЛЕНИЙ ===
-        try {
-            let callTypeToSend = (window.myLastOutgoingCallType === 'video' || window.currentIncomingCallType === 'video') ? 'video' : 'voice';
-            firebase.database().ref('users/' + targetIdToCancel + '/missedCalls').push({
-                callerId: window.myProfileInfo.id,
-                callerName: window.myUsername || "User",
-                callerPhoto: window.myProfileInfo.photo || "https://ui-avatars.com/api/?name=U",
-                type: callTypeToSend,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-        } catch (err) {
-            console.log("Ошибка отправки пропущенного:", err);
-        }
-        // === КОНЕЦ СИГНАЛА ===
     }
     
     if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
@@ -415,90 +399,49 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// УПРАВЛЕНИЕ ЖЕЛЕЗОМ (БЕЗОПАСНО ДЛЯ ПЛАНШЕТОВ И СМАРТФОНОВ)
+// ПРОСТОЙ РУБИЛЬНИК (РЕЖИМ СНА, БЕЗ РАЗРЫВА СВЯЗИ)
 // ==========================================
 
 window.toggleMyAudio = async function() {
-    const icons = document.querySelectorAll('#icon-my-mic');
-    if (icons.length === 0) return;
-    const isCurrentlyActive = icons[0].classList.contains('fa-microphone');
+    let icons = document.querySelectorAll('#icon-my-mic');
+    if (!icons.length) return;
+    let isOn = icons[0].classList.contains('fa-microphone');
 
-    try {
-        if (isCurrentlyActive) {
-            // ВЫКЛЮЧАЕМ МИКРОФОН
-            if (window.localAudioTrack) {
-                await window.localAudioTrack.setEnabled(false);
-            }
-            icons.forEach(icon => {
-                icon.classList.replace('fa-microphone', 'fa-microphone-slash');
-                if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-            });
+    if (isOn) {
+        // Режим сна: звук не идет, но связь не рвется
+        if (window.localAudioTrack) await window.localAudioTrack.setMuted(true);
+        icons.forEach(i => { i.classList.replace('fa-microphone', 'fa-microphone-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
+    } else {
+        // Просыпаемся
+        if (!window.localAudioTrack) {
+            window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+            if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
         } else {
-            // ВКЛЮЧАЕМ МИКРОФОН
-            if (!window.localAudioTrack) {
-                // Если его не было - создаем
-                window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
-            } else {
-                // Если был - аппаратно будим
-                await window.localAudioTrack.setEnabled(true);
-            }
-            icons.forEach(icon => {
-                icon.classList.replace('fa-microphone-slash', 'fa-microphone');
-                if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-            });
+            await window.localAudioTrack.setMuted(false);
         }
-    } catch (e) {
-        console.error("Ошибка переключения микрофона:", e);
+        icons.forEach(i => { i.classList.replace('fa-microphone-slash', 'fa-microphone'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
     }
 };
 
 window.toggleMyCamera = async function() {
-    const icons = document.querySelectorAll('#icon-my-cam');
-    if (icons.length === 0) return;
-    const isCurrentlyActive = icons[0].classList.contains('fa-video');
+    let icons = document.querySelectorAll('#icon-my-cam');
+    if (!icons.length) return;
+    let isOn = icons[0].classList.contains('fa-video');
 
-    try {
-        if (isCurrentlyActive) {
-            // ВЫКЛЮЧАЕМ КАМЕРУ
-            if (window.localVideoTrack) {
-                await window.localVideoTrack.setEnabled(false);
-            }
-            icons.forEach(icon => {
-                icon.classList.replace('fa-video', 'fa-video-slash');
-                if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-            });
+    if (isOn) {
+        // Режим сна: черный экран, но шлюз открыт
+        if (window.localVideoTrack) await window.localVideoTrack.setMuted(true);
+        icons.forEach(i => { i.classList.replace('fa-video', 'fa-video-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
+    } else {
+        // Просыпаемся
+        if (!window.localVideoTrack) {
+            window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+            if (window.agoraClient) await window.agoraClient.publish(window.localVideoTrack);
+            let v = document.getElementById('direct-local-video') || document.getElementById('my-live-video');
+            if (v) { v.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]); v.play().catch(()=>{}); }
         } else {
-            // ВКЛЮЧАЕМ КАМЕРУ
-            if (!window.localVideoTrack) {
-                // Если камеры не было - создаем и публикуем
-                window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-                if (window.agoraClient) await window.agoraClient.publish(window.localVideoTrack);
-                
-                // Привязываем видео к экрану
-                let myVideo = document.getElementById('my-live-video');
-                let newMyVideo = document.getElementById('direct-local-video');
-                let newMyPlaceholder = document.getElementById('direct-local-placeholder');
-                
-                if (newMyVideo && !newMyVideo.classList.contains('hidden')) {
-                    newMyVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
-                    newMyVideo.play().catch(e => console.warn(e));
-                    if (newMyPlaceholder) newMyPlaceholder.classList.add('hidden');
-                } else if (myVideo) {
-                    myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
-                    myVideo.play().catch(e => console.warn(e));
-                }
-            } else {
-                // Если камера была - аппаратно будим
-                await window.localVideoTrack.setEnabled(true);
-            }
-            
-            icons.forEach(icon => {
-                icon.classList.replace('fa-video-slash', 'fa-video');
-                if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-            });
+            await window.localVideoTrack.setMuted(false);
         }
-    } catch (e) {
-        console.error("Ошибка переключения камеры:", e);
+        icons.forEach(i => { i.classList.replace('fa-video-slash', 'fa-video'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
     }
 };
