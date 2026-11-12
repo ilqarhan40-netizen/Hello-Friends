@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { once: true });
 });
 
-
 // --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     if (typeof AgoraRTC === 'undefined') {
@@ -70,7 +69,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     try {
         window.agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-        // Прием потока от собеседника
         window.agoraClient.on("user-published", async (user, mediaType) => {
             await window.agoraClient.subscribe(user, mediaType);
             
@@ -127,7 +125,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
         await window.agoraClient.publish(tracksToPublish);
 
-        // === ЗАПУСК УМНОГО МИКРОФОНА ===
         if (window.startVoiceAI) window.startVoiceAI();
 
     } catch (e) {
@@ -138,7 +135,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 };
 
 window.endWebRTCCall = async function() {
-    // === ОСТАНОВКА УМНОГО МИКРОФОНА ===
     if (window.stopVoiceAI) window.stopVoiceAI();
 
     if (window.localAudioTrack) { window.localAudioTrack.close(); window.localAudioTrack = null; }
@@ -233,7 +229,14 @@ window.startInAppCall = function(callType = 'voice') {
     
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
-        firebase.database().ref('signals/' + target.id).push({ type: 'missed', callerName: window.myUsername });
+        // УЛУЧШЕННЫЙ СИГНАЛ ПРОПУЩЕННОГО ВЫЗОВА (С ДАННЫМИ ДЛЯ ПУША)
+        firebase.database().ref('signals/' + target.id).push({ 
+            type: 'missed', 
+            callType: callType,
+            callerId: window.myProfileInfo.id,
+            callerName: window.myUsername,
+            callerPhoto: window.myProfileInfo.photo
+        });
         callRef.remove(); window.callTimeout = null;
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]); 
@@ -281,7 +284,7 @@ window.acceptCall = function() {
 
     let target = window.participants.find(p => p.id === window.currentCallerId); 
     if(target) { 
-        window.currentTargetUser = target; // ФИКС: Устанавливаем собеседника
+        window.currentTargetUser = target; 
         const pEl = document.getElementById('voice-friend-photo'); const fEl = document.getElementById('voice-friend-flag'); const nEl = document.getElementById('voice-friend-name');
         if(pEl) pEl.src = target.photo; if(fEl) fEl.innerText = target.flag; if(nEl) nEl.innerText = target.name.split(' ')[0]; 
         
@@ -352,7 +355,6 @@ window.initSignalListener = function() {
             window.stopAllRings(); 
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
-            // ФИКС: Гарантируем, что звонящий знает, с кем он связался
             if (window.voiceFriend) window.currentTargetUser = window.voiceFriend;
             if (window.switchChatRoom && window.currentTargetUser) window.switchChatRoom(window.currentTargetUser.id);
             
@@ -363,6 +365,13 @@ window.initSignalListener = function() {
             const incomingModal = document.getElementById('incoming-call-modal');
             if(incomingModal) incomingModal.classList.remove('active');
             firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
+            
+            // ВЫЗЫВАЕМ ПУШИ УВЕДОМЛЕНИЙ НАПРЯМУЮ ОТСЮДА
+            if (sig.callType === 'video') {
+                if (window.showVideoCallNotify) window.showVideoCallNotify(sig.callerName, sig.callerPhoto, sig.callerId);
+            } else {
+                if (window.showAudioCallNotify) window.showAudioCallNotify(sig.callerName, sig.callerPhoto, sig.callerId);
+            }
         }
     }); 
 };
@@ -379,9 +388,7 @@ window.makeCallFromContact = function(userId, type = 'voice') {
     if (!target) return console.error("Юзер не найден");
 
     window.currentTargetUser = target;
-
     if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
-    
     window.startInAppCall(type);
 };
 
@@ -403,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// УПРАВЛЕНИЕ КНОПКАМИ ФУТЕРА (Микрофон / Камера AGORA) - ИСПРАВЛЕНО И ОБЪЕДИНЕНО
+// УПРАВЛЕНИЕ ЖЕЛЕЗОМ (УНИВЕРСАЛЬНО ДЛЯ ВСЕХ УСТРОЙСТВ)
 // ==========================================
 
 window.toggleMyAudio = async function() {
@@ -413,20 +420,21 @@ window.toggleMyAudio = async function() {
 
     try {
         if (isCurrentlyActive) {
-            // ЖЕСТКОЕ ОТКЛЮЧЕНИЕ ЗВУКА
             if (window.localAudioTrack) {
-                await window.localAudioTrack.setMuted(true);
-                await window.localAudioTrack.setEnabled(false); // <--- Убивает захват звука аппаратно!
+                if (window.agoraClient) {
+                    await window.agoraClient.unpublish(window.localAudioTrack);
+                }
+                window.localAudioTrack.close();
+                window.localAudioTrack = null;
             }
             icons.forEach(icon => {
                 icon.classList.replace('fa-microphone', 'fa-microphone-slash');
                 if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
             });
         } else {
-            // ВКЛЮЧЕНИЕ ЗВУКА
-            if (window.localAudioTrack) {
-                await window.localAudioTrack.setEnabled(true);
-                await window.localAudioTrack.setMuted(false);
+            window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+            if (window.agoraClient) {
+                await window.agoraClient.publish(window.localAudioTrack);
             }
             icons.forEach(icon => {
                 icon.classList.replace('fa-microphone-slash', 'fa-microphone');
@@ -441,26 +449,42 @@ window.toggleMyAudio = async function() {
 window.toggleMyCamera = async function() {
     const icons = document.querySelectorAll('#icon-my-cam');
     if (icons.length === 0) return;
-    
     const isCurrentlyActive = icons[0].classList.contains('fa-video');
 
     try {
         if (isCurrentlyActive) {
-            if (window.localVideoTrack) await window.localVideoTrack.setMuted(true);
+            if (window.localVideoTrack) {
+                if (window.agoraClient) {
+                    await window.agoraClient.unpublish(window.localVideoTrack);
+                }
+                window.localVideoTrack.close(); 
+                window.localVideoTrack = null;
+            }
             icons.forEach(icon => {
                 icon.classList.replace('fa-video', 'fa-video-slash');
                 if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
             });
         } else {
-            if (window.localVideoTrack) await window.localVideoTrack.setMuted(false);
+            window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+            if (window.agoraClient) {
+                await window.agoraClient.publish(window.localVideoTrack);
+            }
             icons.forEach(icon => {
                 icon.classList.replace('fa-video-slash', 'fa-video');
                 if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
             });
+
+            let myVideo = document.getElementById('my-live-video');
+            let newMyVideo = document.getElementById('direct-local-video');
+            if (newMyVideo && !newMyVideo.classList.contains('hidden')) {
+                newMyVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
+                newMyVideo.play().catch(e => console.warn(e));
+            } else if (myVideo) {
+                myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
+                myVideo.play().catch(e => console.warn(e));
+            }
         }
     } catch (e) {
         console.error("Ошибка переключения камеры:", e);
     }
 };
-
-
