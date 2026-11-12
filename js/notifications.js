@@ -50,7 +50,7 @@ const notifyHtml = `
 </div>
 `;
 
-// Железобетонная вставка HTML (не зависит от скорости интернета и загрузки)
+// Железобетонная вставка HTML
 function injectNotifications() {
     if (document.body && !document.getElementById('notify-video-call')) {
         document.body.insertAdjacentHTML('beforeend', notifyHtml);
@@ -67,7 +67,7 @@ window.sndEmail = new Audio('email.mp3.wav');
 window.sndMissedCall = new Audio('missed.mp3.wav');
 
 window.showMailNotify = function(fromName, subject) {
-    injectNotifications(); // Перестраховка: если HTML еще нет, вставляем
+    injectNotifications();
     const popup = document.getElementById('notify-new-mail');
     if (!popup) return;
     
@@ -115,16 +115,15 @@ window.showAudioCallNotify = function(name, photo, userId) {
     window.sndMissedCall.play().catch(() => {});
 };
 
-// === 3. СЛУШАТЕЛИ FIREBASE (АВТОМАТИКА) ===
+// === 3. СЛУШАТЕЛИ FIREBASE ===
 window.initAllNotifications = function() {
     const myId = window.myProfileInfo?.id || localStorage.getItem('hf_active_user');
     if (!myId || myId === 'guest') return;
 
-    // Безопасное подключение к Firebase
     const database = typeof firebase !== 'undefined' ? firebase.database() : (typeof db !== 'undefined' ? db : null);
     if (!database) return;
 
-    // Слушатель почты
+    // Почта
     let mailLoaded = false;
     database.ref('emails/' + myId).limitToLast(1).on('child_added', snap => {
         if (!mailLoaded) return;
@@ -137,7 +136,7 @@ window.initAllNotifications = function() {
     });
     database.ref('emails/' + myId).once('value', () => { mailLoaded = true; });
 
-    // Слушатель пропущенных звонков
+    // Пропущенные звонки
     let callsLoaded = false;
     database.ref('users/' + myId + '/missedCalls').limitToLast(1).on('child_added', snap => {
         if (!callsLoaded) return;
@@ -153,5 +152,4 @@ window.initAllNotifications = function() {
     database.ref('users/' + myId + '/missedCalls').once('value', () => { callsLoaded = true; });
 };
 
-// Запуск слушателей
 setTimeout(() => { if (window.initAllNotifications) window.initAllNotifications(); }, 2500);
