@@ -320,7 +320,32 @@ window.hangUpCall = function() {
         firebase.database().ref('signals/' + targetIdToCancel).push({ type: 'reject', callerName: window.myUsername });
         firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + targetIdToCancel).remove();
         firebase.database().ref('calls/' + targetIdToCancel + '_' + window.myProfileInfo.id).remove();
+        
+        // === ДОБАВЛЕНО: СИГНАЛ ПРОПУЩЕННОГО ВЫЗОВА ДЛЯ УВЕДОМЛЕНИЙ ===
+        try {
+            let callTypeToSend = (window.myLastOutgoingCallType === 'video' || window.currentIncomingCallType === 'video') ? 'video' : 'voice';
+            firebase.database().ref('users/' + targetIdToCancel + '/missedCalls').push({
+                callerId: window.myProfileInfo.id,
+                callerName: window.myUsername || "User",
+                callerPhoto: window.myProfileInfo.photo || "https://ui-avatars.com/api/?name=U",
+                type: callTypeToSend,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+        } catch (err) {
+            console.log("Ошибка отправки пропущенного:", err);
+        }
+        // === КОНЕЦ ===
     }
+    
+    if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+    if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
+    
+    window.currentCallerId = null;
+    window.voiceFriend = null;
+    
+    if (window.switchTab) window.switchTab(0);
+};
+
     
     if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
     if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
