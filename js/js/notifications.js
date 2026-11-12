@@ -55,16 +55,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.insertAdjacentHTML('beforeend', notifyHtml);
 });
 
-// === 2. ЗВУКИ И ЛОГИКА ===
-window.sndEmail = new Audio('email.mp3.wav');
-window.sndMissedCall = new Audio('missed.mp3.wav');
+// === 2. ЗВУКИ И ЛОГИКА (БЕЗ ДУБЛИРОВАНИЯ АУДИО) ===
 
 // Почта
 window.showMailNotify = function(fromName, subject) {
     if (fromName) document.getElementById('notify-mail-from').innerText = fromName;
     if (subject) document.getElementById('notify-mail-subj').innerText = subject;
     document.getElementById('notify-new-mail').style.display = 'flex';
-    window.sndEmail.play().catch(() => {});
+    if (window.playSafeSound && window.sndEmail) window.playSafeSound(window.sndEmail);
 };
 
 // Видеозвонок
@@ -80,7 +78,7 @@ window.showVideoCallNotify = function(name, photo, userId) {
         };
     }
     document.getElementById('notify-video-call').style.display = 'flex';
-    window.sndMissedCall.play().catch(() => {});
+    if (window.playSafeSound && window.sndMissed) window.playSafeSound(window.sndMissed, [200, 100, 200]);
 };
 
 // Аудиозвонок
@@ -96,7 +94,7 @@ window.showAudioCallNotify = function(name, photo, userId) {
         };
     }
     document.getElementById('notify-audio-call').style.display = 'flex';
-    window.sndMissedCall.play().catch(() => {});
+    if (window.playSafeSound && window.sndMissed) window.playSafeSound(window.sndMissed, [200, 100, 200]);
 };
 
 // === 3. СЛУШАТЕЛИ FIREBASE (АВТОМАТИКА) ===
