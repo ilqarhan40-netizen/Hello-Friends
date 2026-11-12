@@ -79,7 +79,7 @@ OneSignalDeferred.push(async function(OneSignal) {
         const db = firebase.database();
     </script>
 
-    <style>
+            <style>
         :root { --wa-bg: #0b141a; --wa-panel: #111b21; --wa-border: #202c33; --wa-green: #00a884; --wa-msg-out: #005c4b; --wa-msg-in: #202c33; --wa-text: #e9edef; --wa-text-muted: #8696a0; --hf-purple: #a29bfe; }
         body { background-color: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100dvh; margin: 0; overflow: hidden; }
         .mobile-screen { width: 100%; max-width: 400px; height: 85dvh; max-height: 850px; background: var(--wa-bg); border-radius: 40px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); border: 4px solid #1f2937; display: flex; flex-direction: column; color: var(--wa-text); overflow: hidden; position: relative; }
@@ -87,7 +87,8 @@ OneSignalDeferred.push(async function(OneSignal) {
         .app-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--wa-panel); border-bottom: 1px solid var(--wa-border); z-index: 50; flex-shrink: 0; }
         .logo-container { display: flex; align-items: center; gap: 12px; }
         .logo-circle { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--wa-green), #028266); display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: white; box-shadow: 0 0 10px rgba(0,168,132,0.4); cursor: pointer; user-select: none; }
-        .header-title { font-size: 1.1rem; font-weight: bold; color: var(--wa-text); }
+        /* ЗДЕСЬ СДЕЛАЛИ ТЕКСТ ЛОГОТИПА ЗЕЛЕНЫМ */
+        .header-title { font-size: 1.1rem; font-weight: bold; color: var(--wa-green); }
         .header-icons { display: flex; gap: 18px; color: var(--wa-text-muted); font-size: 1.2rem; align-items: center;}
         .header-icons i { cursor: pointer; transition: 0.2s; }
         .header-icons i:hover { color: var(--wa-green); }
@@ -168,24 +169,30 @@ OneSignalDeferred.push(async function(OneSignal) {
         .pulse-ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--wa-green); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
         #incoming-call-modal.active { display: flex !important; animation: fadeInBg 0.3s; }
-        .light-theme { background: #efeae2; color: #111b21; border-color: #d1d7db; }
-        .light-theme .app-header { background: #ffffff; border-bottom: 1px solid #d1d7db; }
-        .light-theme .bottom-nav-container { background: #ffffff; border-top: 1px solid #d1d7db; }
-        .light-theme .chat-sidebar { background: #ffffff; border-right: 1px solid #d1d7db;}
-        .light-theme .chat-input-area { background: #ffffff; border-top: 1px solid #d1d7db;}
-        .light-theme .chat-input-pill { background: #f0f2f5; border-color: #d1d7db; }
+        
+        /* ======================================================== */
+        /* СВЕТЛАЯ ТЕМА (ПОЛНОСТЬЮ СВЕТЛО-СЕРАЯ, БЕЗ БЕЛЫХ РАМОК)   */
+        /* ======================================================== */
+        .light-theme { background: #e4e6eb; color: #111b21; border-color: #d1d7db; } /* Темнее фон в центре */
+        .light-theme .app-header { background: #f0f2f5; border-bottom: 1px solid #d1d7db; } /* Светло-серая шапка */
+        .light-theme .bottom-nav-container { background: #f0f2f5; border-top: 1px solid #d1d7db; } /* Светло-серый низ */
+        .light-theme .chat-sidebar { background: #f0f2f5; border-right: 1px solid #d1d7db;} /* Светло-серая боковушка */
+        .light-theme .chat-input-area { background: #f0f2f5; border-top: 1px solid #d1d7db;} 
+        .light-theme .chat-input-pill { background: #e4e6eb; border-color: #d1d7db; } 
         .light-theme .chat-input-pill input { color: #111b21; }
-        .light-theme .mic-btn-chat { background: #f0f2f5; color: #54656f; }
-        .light-theme .incoming .chat-bubble { background: #ffffff; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
+        .light-theme .mic-btn-chat { background: #e4e6eb; color: #54656f; }
+        .light-theme .incoming .chat-bubble { background: #ffffff; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); } /* Пузырь сообщения оставил белым для контраста */
         .light-theme .outgoing .chat-bubble { background: #d9fdd3; color: #111b21; box-shadow: 0 1px 1px rgba(11,20,26,.1); }
-        .light-theme .app-modal-content { background: #ffffff; }
-        .light-theme .form-input-box { background: #f0f2f5; color: #111b21; border-color: #d1d7db; }
-        .light-theme .rhombus-menu { background: #ffffff; border-color: #d1d7db; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .light-theme .action-icon { background: #f0f2f5; border-color: #d1d7db; color: #111b21; }
+        .light-theme .app-modal-content { background: #f0f2f5; }
+        .light-theme .form-input-box { background: #e4e6eb; color: #111b21; border-color: #d1d7db; }
+        .light-theme .rhombus-menu { background: #f0f2f5; border-color: #d1d7db; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .light-theme .action-icon { background: #e4e6eb; border-color: #d1d7db; color: #111b21; }
         .light-theme .action-icon:hover { background: var(--wa-green); color: white; }
         .light-theme .text-white { color: #111b21 !important; }
         .light-theme .chat-info-marquee-container { background: #f0f2f5; border-bottom: 1px solid #d1d7db; }
-        .light-theme .header-dropdown { background: #ffffff; border-color: #d1d7db; }
+        .light-theme .header-dropdown { background: #f0f2f5; border-color: #d1d7db; }
+        /* ======================================================== */
+
         ::-webkit-scrollbar { width: 0px; background: transparent; }
 
         .ai-audio-player { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 12px; margin-top: 5px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
@@ -204,6 +211,10 @@ OneSignalDeferred.push(async function(OneSignal) {
         :root {
             color-scheme: dark;
         }
+</style>
+
+        
+
 
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
