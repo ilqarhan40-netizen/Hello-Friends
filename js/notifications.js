@@ -12,7 +12,7 @@ const notifyHtml = `
     </div>
     <div class="flex gap-2 mt-3">
         <button onclick="document.getElementById('notify-video-call').style.display='none'" class="flex-1 py-2 rounded-xl bg-[#202c33] text-[#8696a0] hover:text-white font-bold text-xs transition">Close</button>
-        <button id="notify-video-btn" onclick="document.getElementById('notify-video-call').style.display='none'; window.switchTab(2);" class="flex-1 py-2 rounded-xl bg-[#00a884] text-[#111b21] font-bold text-xs transition">Call Back</button>
+        <button id="notify-video-btn" class="flex-1 py-2 rounded-xl bg-[#00a884] text-[#111b21] font-bold text-xs transition">Call Back</button>
     </div>
 </div>
 
@@ -28,7 +28,7 @@ const notifyHtml = `
     </div>
     <div class="flex gap-2 mt-3">
         <button onclick="document.getElementById('notify-audio-call').style.display='none'" class="flex-1 py-2 rounded-xl bg-[#202c33] text-[#8696a0] hover:text-white font-bold text-xs transition">Close</button>
-        <button id="notify-audio-btn" onclick="document.getElementById('notify-audio-call').style.display='none'; window.switchTab(1);" class="flex-1 py-2 rounded-xl bg-[#a29bfe] text-[#111b21] font-bold text-xs transition">Call Back</button>
+        <button id="notify-audio-btn" class="flex-1 py-2 rounded-xl bg-[#a29bfe] text-[#111b21] font-bold text-xs transition">Call Back</button>
     </div>
 </div>
 
@@ -50,52 +50,68 @@ const notifyHtml = `
 </div>
 `;
 
-// Ждем загрузки страницы и вставляем HTML в конец body
-document.addEventListener("DOMContentLoaded", () => {
-    document.body.insertAdjacentHTML('beforeend', notifyHtml);
-});
+// Железобетонная вставка HTML (не зависит от скорости интернета и загрузки)
+function injectNotifications() {
+    if (document.body && !document.getElementById('notify-video-call')) {
+        document.body.insertAdjacentHTML('beforeend', notifyHtml);
+    }
+}
+if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", injectNotifications);
+} else {
+    injectNotifications();
+}
 
 // === 2. ЗВУКИ И ЛОГИКА ===
 window.sndEmail = new Audio('email.mp3.wav');
 window.sndMissedCall = new Audio('missed.mp3.wav');
 
-// Почта
 window.showMailNotify = function(fromName, subject) {
+    injectNotifications(); // Перестраховка: если HTML еще нет, вставляем
+    const popup = document.getElementById('notify-new-mail');
+    if (!popup) return;
+    
     if (fromName) document.getElementById('notify-mail-from').innerText = fromName;
     if (subject) document.getElementById('notify-mail-subj').innerText = subject;
-    document.getElementById('notify-new-mail').style.display = 'flex';
+    popup.style.display = 'flex';
     window.sndEmail.play().catch(() => {});
 };
 
-// Видеозвонок
 window.showVideoCallNotify = function(name, photo, userId) {
+    injectNotifications();
+    const popup = document.getElementById('notify-video-call');
+    if (!popup) return;
+
     if (name) document.getElementById('notify-video-name').innerText = name;
     if (photo) document.getElementById('notify-video-photo').src = photo;
     const btn = document.getElementById('notify-video-btn');
     if (btn && userId) {
         btn.onclick = function() {
-            document.getElementById('notify-video-call').style.display = 'none';
+            popup.style.display = 'none';
             window.switchTab(2);
             if (window.makeCallFromContact) window.makeCallFromContact(userId, 'video');
         };
     }
-    document.getElementById('notify-video-call').style.display = 'flex';
+    popup.style.display = 'flex';
     window.sndMissedCall.play().catch(() => {});
 };
 
-// Аудиозвонок
 window.showAudioCallNotify = function(name, photo, userId) {
+    injectNotifications();
+    const popup = document.getElementById('notify-audio-call');
+    if (!popup) return;
+
     if (name) document.getElementById('notify-audio-name').innerText = name;
     if (photo) document.getElementById('notify-audio-photo').src = photo;
     const btn = document.getElementById('notify-audio-btn');
     if (btn && userId) {
         btn.onclick = function() {
-            document.getElementById('notify-audio-call').style.display = 'none';
+            popup.style.display = 'none';
             window.switchTab(1);
             if (window.makeCallFromContact) window.makeCallFromContact(userId, 'voice');
         };
     }
-    document.getElementById('notify-audio-call').style.display = 'flex';
+    popup.style.display = 'flex';
     window.sndMissedCall.play().catch(() => {});
 };
 
@@ -104,9 +120,13 @@ window.initAllNotifications = function() {
     const myId = window.myProfileInfo?.id || localStorage.getItem('hf_active_user');
     if (!myId || myId === 'guest') return;
 
+    // Безопасное подключение к Firebase
+    const database = typeof firebase !== 'undefined' ? firebase.database() : (typeof db !== 'undefined' ? db : null);
+    if (!database) return;
+
     // Слушатель почты
     let mailLoaded = false;
-    db.ref('emails/' + myId).limitToLast(1).on('child_added', snap => {
+    database.ref('emails/' + myId).limitToLast(1).on('child_added', snap => {
         if (!mailLoaded) return;
         const mail = snap.val();
         if (mail) {
@@ -115,11 +135,11 @@ window.initAllNotifications = function() {
             if (badge) badge.classList.remove('hidden');
         }
     });
-    db.ref('emails/' + myId).once('value', () => { mailLoaded = true; });
+    database.ref('emails/' + myId).once('value', () => { mailLoaded = true; });
 
     // Слушатель пропущенных звонков
     let callsLoaded = false;
-    db.ref('users/' + myId + '/missedCalls').limitToLast(1).on('child_added', snap => {
+    database.ref('users/' + myId + '/missedCalls').limitToLast(1).on('child_added', snap => {
         if (!callsLoaded) return;
         const call = snap.val();
         if (call) {
@@ -130,8 +150,8 @@ window.initAllNotifications = function() {
             }
         }
     });
-    db.ref('users/' + myId + '/missedCalls').once('value', () => { callsLoaded = true; });
+    database.ref('users/' + myId + '/missedCalls').once('value', () => { callsLoaded = true; });
 };
 
-// Запуск слушателей с задержкой, чтобы база успела прогрузиться
+// Запуск слушателей
 setTimeout(() => { if (window.initAllNotifications) window.initAllNotifications(); }, 2500);
