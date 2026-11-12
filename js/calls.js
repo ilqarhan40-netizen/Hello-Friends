@@ -424,20 +424,29 @@ window.toggleMyAudio = async function() {
     const isCurrentlyActive = icons[0].classList.contains('fa-microphone');
 
     try {
-        if (window.localAudioTrack) {
-            if (isCurrentlyActive) {
+        if (isCurrentlyActive) {
+            // ВЫКЛЮЧАЕМ МИКРОФОН
+            if (window.localAudioTrack) {
                 await window.localAudioTrack.setEnabled(false);
-                icons.forEach(icon => {
-                    icon.classList.replace('fa-microphone', 'fa-microphone-slash');
-                    if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-                });
-            } else {
-                await window.localAudioTrack.setEnabled(true);
-                icons.forEach(icon => {
-                    icon.classList.replace('fa-microphone-slash', 'fa-microphone');
-                    if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-                });
             }
+            icons.forEach(icon => {
+                icon.classList.replace('fa-microphone', 'fa-microphone-slash');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+            });
+        } else {
+            // ВКЛЮЧАЕМ МИКРОФОН
+            if (!window.localAudioTrack) {
+                // Если его не было - создаем
+                window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
+            } else {
+                // Если был - аппаратно будим
+                await window.localAudioTrack.setEnabled(true);
+            }
+            icons.forEach(icon => {
+                icon.classList.replace('fa-microphone-slash', 'fa-microphone');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+            });
         }
     } catch (e) {
         console.error("Ошибка переключения микрофона:", e);
@@ -450,20 +459,44 @@ window.toggleMyCamera = async function() {
     const isCurrentlyActive = icons[0].classList.contains('fa-video');
 
     try {
-        if (window.localVideoTrack) {
-            if (isCurrentlyActive) {
+        if (isCurrentlyActive) {
+            // ВЫКЛЮЧАЕМ КАМЕРУ
+            if (window.localVideoTrack) {
                 await window.localVideoTrack.setEnabled(false);
-                icons.forEach(icon => {
-                    icon.classList.replace('fa-video', 'fa-video-slash');
-                    if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
-                });
-            } else {
-                await window.localVideoTrack.setEnabled(true);
-                icons.forEach(icon => {
-                    icon.classList.replace('fa-video-slash', 'fa-video');
-                    if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
-                });
             }
+            icons.forEach(icon => {
+                icon.classList.replace('fa-video', 'fa-video-slash');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-[#00a884]', 'text-red-500');
+            });
+        } else {
+            // ВКЛЮЧАЕМ КАМЕРУ
+            if (!window.localVideoTrack) {
+                // Если камеры не было - создаем и публикуем
+                window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+                if (window.agoraClient) await window.agoraClient.publish(window.localVideoTrack);
+                
+                // Привязываем видео к экрану
+                let myVideo = document.getElementById('my-live-video');
+                let newMyVideo = document.getElementById('direct-local-video');
+                let newMyPlaceholder = document.getElementById('direct-local-placeholder');
+                
+                if (newMyVideo && !newMyVideo.classList.contains('hidden')) {
+                    newMyVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
+                    newMyVideo.play().catch(e => console.warn(e));
+                    if (newMyPlaceholder) newMyPlaceholder.classList.add('hidden');
+                } else if (myVideo) {
+                    myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
+                    myVideo.play().catch(e => console.warn(e));
+                }
+            } else {
+                // Если камера была - аппаратно будим
+                await window.localVideoTrack.setEnabled(true);
+            }
+            
+            icons.forEach(icon => {
+                icon.classList.replace('fa-video-slash', 'fa-video');
+                if(icon.parentElement) icon.parentElement.classList.replace('text-red-500', 'text-[#00a884]');
+            });
         }
     } catch (e) {
         console.error("Ошибка переключения камеры:", e);
