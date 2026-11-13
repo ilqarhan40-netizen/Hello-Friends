@@ -308,7 +308,7 @@ window.sendFirebaseMsg = async function() {
     }
 };
 
-window.handleNewMessage = async function(snapshot) {
+    window.handleNewMessage = async function(snapshot) {
     const data = snapshot.val(); 
     if(!data) return; 
 
@@ -319,9 +319,35 @@ window.handleNewMessage = async function(snapshot) {
 
     const chatMessages = document.getElementById('chat-messages');
     
-
     const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id;
     const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
+    
+    // ==========================================
+    // 🧠 УМНАЯ СИСТЕМА: ДИНАМИЧЕСКАЯ ПАМЯТЬ СОБЕСЕДНИКА
+    // ==========================================
+    // Когда приходит чужое сообщение, планшет обновляет флаг и язык собеседника.
+    // Теперь отправка и бегущая строка у собеседника будут подстраиваться под твой новый флаг!
+    if (!isMe && !isAI && data.userId) {
+        let activeSender = window.participants.find(p => p.id === data.userId);
+        if (activeSender) {
+            activeSender.langCode = data.langCode;
+            activeSender.flag = data.flag;
+            activeSender.flagCode = data.flagCode;
+        }
+        if (window.currentTargetUser && window.currentTargetUser.id === data.userId) {
+            window.currentTargetUser.langCode = data.langCode;
+            window.currentTargetUser.flag = data.flag;
+            window.currentTargetUser.flagCode = data.flagCode;
+            
+            // Динамически меняем флаг собеседника прямо в шапке чата
+            const titleEl = document.getElementById('chat-header-title');
+            if (titleEl) {
+                titleEl.innerText = (window.currentTargetUser.name || 'User').split(' ')[0] + " " + data.flag;
+            }
+        }
+    }
+    // ==========================================
+
     let p = isMe ? window.myProfileInfo : (isAI ? { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', flag: '🤖' } : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name=U', langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
 
     let isHistory = data.timestamp && (Date.now() - data.timestamp) > 5000;
@@ -346,12 +372,11 @@ window.handleNewMessage = async function(snapshot) {
 
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
     
-    // 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ ДО ОТРИСОВКИ ФЛАГА
+    // --- 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ И ФЛАГ ---
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
     let senderLang = data.langCode || 'auto'; 
     let finalTranslatedText = data.text; 
 
-    // 2. ДИНАМИЧЕСКИЙ ФЛАГ (Меняется на тот, что ты выбрал в меню комнаты)
     let displayFlag = p.flag || '🌐';
     if (isMe) {
         const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
@@ -363,19 +388,16 @@ window.handleNewMessage = async function(snapshot) {
          displayFlag = data.flag || p.flag || '🌐';
     }
 
-    // 3. СОБИРАЕМ АВАТАР С ПРАВИЛЬНЫМ ФЛАГОМ
     let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : displayFlag}</span></div>`;
 
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    // 4. УМНАЯ ЛОГИКА ПЕРЕВОДА ВХОДЯЩИХ
+    // --- 2. УМНАЯ ЛОГИКА ПЕРЕВОДА ВХОДЯЩИХ (ПЕРЕХВАТЧИК) ---
     if (!isMe && data.originalText) {
         if (senderLang.substring(0,2) === myReadLang.substring(0,2)) {
-            // Языки совпадают — выдаем чистый оригинал, переводы из базы игнорируются
             finalTranslatedText = data.originalText;
         } else {
-            // Языки разные — принудительный перевод на выбранный язык комнаты
             try {
                 const transRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
                 const transData = await transRes.json();
@@ -386,7 +408,7 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    // 5. ОТРИСОВКА ПУЗЫРЯ СООБЩЕНИЯ
+    // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ ---
     if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
         if (window.currentRoomId !== 'global' || isHistory) {
             if (data.originalText !== finalTranslatedText) {
@@ -404,26 +426,6 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    
-    // --- КОНЕЦ УМНОГО ПЕРЕВОДА ПРИЁМА ---
-    
-
-    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
-        if (window.currentRoomId !== 'global' || isHistory) {
-            if (data.originalText !== data.text) {
-                bubbleContent = `
-                    <div class="text-[#e9edef]">${data.originalText}</div>
-                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
-                        ➔ ${data.text}
-                    </div>
-                `;
-            } else {
-                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div>`;
-            }
-        }
-    }
-
-
     if (data.isAIAudio) {
         let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
         let textToPlay = isMe ? (data.text || data.originalText) : finalTranslatedText;
@@ -437,20 +439,13 @@ window.handleNewMessage = async function(snapshot) {
 
         bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${data.originalText}</div>${transHtml}</div>`;
     }
-        else if (data.mediaUrl) {
-        // Очищаем имя файла от лишних иконок, если они есть
+    else if (data.mediaUrl) {
         let fileName = data.text ? data.text.replace('📄 Документ: ', '').replace('🖼️ Photo', 'Файл').replace('📹 Video', 'Видео') : 'Файл';
-        
-        // 1. Если это ВИДЕО
         if (data.mediaType === 'video' || data.mediaUrl.startsWith('data:video/')) {
             bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
-        } 
-        // 2. Если это МУЗЫКА / АУДИО
-        else if (data.mediaType === 'audio' || data.mediaUrl.startsWith('data:audio/')) {
+        } else if (data.mediaType === 'audio' || data.mediaUrl.startsWith('data:audio/')) {
             bubbleContent = `<audio src="${data.mediaUrl}" controls class="w-[200px] sm:w-[250px] mt-1 outline-none"></audio>`;
-        } 
-        // 3. Если это ДОКУМЕНТ (PDF, DOC, HTML и т.д.)
-        else if (data.mediaType === 'document' || data.mediaUrl.startsWith('data:application/') || data.mediaUrl.startsWith('data:text/')) {
+        } else if (data.mediaType === 'document' || data.mediaUrl.startsWith('data:application/') || data.mediaUrl.startsWith('data:text/')) {
             bubbleContent = `
                 <div class="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg border border-[#2a3942] mt-1 min-w-[200px]">
                     <div class="w-10 h-10 rounded-full bg-[#202c33] flex items-center justify-center text-blue-400 shrink-0">
@@ -461,15 +456,11 @@ window.handleNewMessage = async function(snapshot) {
                         <a href="${data.mediaUrl}" download="${fileName}" class="text-[0.7rem] text-[#00a884] font-bold mt-1 uppercase tracking-wide hover:text-white transition">Скачать</a>
                     </div>
                 </div>`;
-        } 
-        // 4. Если это КАРТИНКА (всё остальное)
-        else {
+        } else {
             bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
         }
-        
         bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`;
-        }
-            
+    }
     else if (data.isTransfer) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
         bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; 
@@ -478,40 +469,30 @@ window.handleNewMessage = async function(snapshot) {
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
         bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
     }
-            
-    
 
     const isCurrentRoom = snapshot.ref.parent.key === window.currentRoomId;
 
-        if (isCurrentRoom || (!data.isVoiceRoomMsg && !data.isConfMsg)) {
+    if (isCurrentRoom || (!data.isVoiceRoomMsg && !data.isConfMsg)) {
         if (!data.isVoiceRoomMsg && !data.isConfMsg) {
             msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col" data-id="${snapshot.key}"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col" data-id="${snapshot.key}"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
             messageGroup.appendChild(msgWrapper);
             if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
         }
-        }
+    }
     
+    // --- 4. БЕГУЩАЯ СТРОКА ---
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
             let senderFlag = data.flag || p.flag || '🌐'; 
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
-            let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : (window.myProfileInfo.flag || '🌐');
-
-            const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-            let receiverLang = isMe ? window.getSmartLang(window.currentTargetUser) : window.getLangPref(false, false);
-
-            if (receiverLang && revLangMap[receiverLang.substring(0,2)]) {
-                receiverFlag = revLangMap[receiverLang.substring(0,2)];
-            }
+            let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : displayFlag;
 
             let originalText = data.originalText || data.text;
-            let translatedText = data.text;
-
             let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
 
-            if (originalText !== translatedText) {
-                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${translatedText}</span>`;
+            if (originalText !== finalTranslatedText) {
+                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${finalTranslatedText}</span>`;
             }
 
             mText.innerHTML = marqueeHtml;
@@ -580,7 +561,6 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-
     if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
         let receiverPhoto, receiverFlag, receiverName, receiverText;
@@ -590,11 +570,11 @@ window.handleNewMessage = async function(snapshot) {
 
         if (isMe) {
             senderPhoto = window.myProfileInfo.photo; 
-            senderFlag = data.flag || window.myProfileInfo.flag || '🌐'; 
+            senderFlag = displayFlag; 
             senderName = window.myUsername;
 
             receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U'; 
-            receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐'; 
+            receiverFlag = window.currentTargetUser ? (window.currentTargetUser.flag || '🌐') : '🌐'; 
             receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
         } else {
             senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
@@ -602,7 +582,7 @@ window.handleNewMessage = async function(snapshot) {
             senderName = (data.name || 'User').split(' ')[0];
 
             receiverPhoto = window.myProfileInfo.photo; 
-            receiverFlag = window.myProfileInfo.flag; 
+            receiverFlag = displayFlag; 
             receiverName = window.myUsername;
         }
 
@@ -620,7 +600,8 @@ window.handleNewMessage = async function(snapshot) {
 
         let speakerMarquee = document.getElementById(senderMarqueeId);
         if (speakerMarquee) {
-            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
+            let activeSpeakerFlag = isMe ? displayFlag : (data.flag || '🌐');
+            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${activeSpeakerFlag} ${originalText}</span>`;
             speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
         }
 
@@ -662,6 +643,7 @@ window.handleNewMessage = async function(snapshot) {
         });
     }
 };
+                           
 
 // ==========================================
 // 4. МЕНЮ ФАЙЛОВ АРХИВА, ТРЕШ И ЭМОДЗИ
