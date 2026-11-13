@@ -11,12 +11,11 @@ if (typeof AgoraRTC === 'undefined') {
 window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
-window.isMicMuted = false; // Глобальный статус микрофона
 
-const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
+Const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
 const AGORA_TEMP_TOKEN = "007eJxTYPDumVbrs3a1k3rtIy3WKbfj8mWMY/IXzDt/J1j25zpb44kKDJaGxmmGxolmSRaGBiYpxiZJBsZmlqaJySnJBinmlknm69S+ZzUEMjJMlhFkZGJgBEMQn5UhIzUnJ5+BgQkuxMhgCACfvh9m";
 
-
+    
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
@@ -99,19 +98,12 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         });
 
         const channelName = "hello"; 
-        
-        // ИСПРАВЛЕНО: Жесткая привязка UID 1, чтобы Агора пропустила токен!
-        await window.agoraClient.join(AGORA_APP_ID, "hello", AGORA_TEMP_TOKEN, 1);
+        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, null);
 
         let tracksToPublish = [];
 
         if (!window.localAudioTrack) window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
         tracksToPublish.push(window.localAudioTrack);
-        
-        // Если до этого микрофон был выключен, оставляем его заглушенным
-        if (window.isMicMuted) {
-            await window.localAudioTrack.setMuted(true);
-        }
 
         if (isVideo) {
             if (!window.localVideoTrack) {
@@ -190,7 +182,6 @@ window.endWebRTCCall = async function() {
     
     window.currentCallerId = null;
     window.currentTargetUser = null;
-    window.isMicMuted = false; // Сброс состояния микрофона после звонка
 };
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
@@ -410,51 +401,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// УМНЫЙ КОНТРОЛЛЕР МИКРОФОНА (ПЛАНШЕТЫ + ВЕБ)
+// ПРОСТОЙ РУБИЛЬНИК (РЕЖИМ СНА, БЕЗ РАЗРЫВА СВЯЗИ)
 // ==========================================
 
-window.toggleMyAudio = async function(e) {
-    if (e) { e.preventDefault(); e.stopPropagation(); } // Фикс "залипаний" для iPad и мобильных
+window.toggleMyAudio = async function() {
+    let icons = document.querySelectorAll('#icon-my-mic');
+    if (!icons.length) return;
+    let isOn = icons[0].classList.contains('fa-microphone');
 
-    // 1. Меняем глобальный статус
-    window.isMicMuted = !window.isMicMuted;
-
-    // 2. Физическое управление потоком Agora (режим сна без разрыва)
-    if (window.localAudioTrack) {
-        try {
-            await window.localAudioTrack.setMuted(window.isMicMuted);
-        } catch (err) {
-            console.log("Audio track mute error:", err);
-        }
-    } else if (!window.isMicMuted) {
-        // Если трека не было, просыпаемся и создаем
-        window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-        if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
-    }
-
-    // 3. Синхронизируем интерфейс ВЕЗДЕ (иконки вверху, на видео)
-    let icons = document.querySelectorAll('#icon-my-mic, .master-mic-icon');
-    
-    icons.forEach(i => { 
-        if (window.isMicMuted) {
-            i.classList.replace('fa-microphone', 'fa-microphone-slash'); 
-            // Закрашиваем родителя красным (отключен)
-            if (i.parentElement) {
-                i.parentElement.classList.remove('text-[#00a884]', 'text-white');
-                i.parentElement.classList.add('text-red-500'); 
-            }
+    if (isOn) {
+        // Режим сна: звук не идет, но связь не рвется
+        if (window.localAudioTrack) await window.localAudioTrack.setMuted(true);
+        icons.forEach(i => { i.classList.replace('fa-microphone', 'fa-microphone-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
+    } else {
+        // Просыпаемся
+        if (!window.localAudioTrack) {
+            window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+            if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
         } else {
-            i.classList.replace('fa-microphone-slash', 'fa-microphone'); 
-            // Возвращаем штатный зеленый цвет
-            if (i.parentElement) {
-                i.parentElement.classList.remove('text-red-500');
-                i.parentElement.classList.add('text-[#00a884]'); 
-            }
+            await window.localAudioTrack.setMuted(false);
         }
-    });
-
-    if (window.showToast) {
-        window.showToast(window.isMicMuted ? "Микрофон отключен" : "Микрофон включен", "", "", "");
+        icons.forEach(i => { i.classList.replace('fa-microphone-slash', 'fa-microphone'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
     }
 };
 
@@ -480,3 +447,7 @@ window.toggleMyCamera = async function() {
         icons.forEach(i => { i.classList.replace('fa-video-slash', 'fa-video'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
     }
 };
+
+
+
+
