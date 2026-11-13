@@ -480,19 +480,24 @@ window.sendFirebaseMsg = async function() {
         }
     }
     
-    // --- 4. БЕГУЩАЯ СТРОКА ---
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
             let senderFlag = data.flag || p.flag || '🌐'; 
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
+            
+            // ИСПРАВЛЕНИЕ: Берем динамический флаг комнаты (displayFlag), а не статичный профиль
             let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : displayFlag;
 
             let originalText = data.originalText || data.text;
+            
+            // ИСПРАВЛЕНИЕ: Используем наш умный перехватчик (finalTranslatedText) вместо старого data.text
+            let smartTranslatedText = isMe ? data.text : finalTranslatedText;
+
             let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
 
-            if (originalText !== finalTranslatedText) {
-                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${finalTranslatedText}</span>`;
+            if (originalText !== smartTranslatedText) {
+                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${smartTranslatedText}</span>`;
             }
 
             mText.innerHTML = marqueeHtml;
@@ -502,6 +507,7 @@ window.sendFirebaseMsg = async function() {
         }
     }
 
+        
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
