@@ -985,20 +985,24 @@ window.startUniversalMic = async function(mode) {
     rec.onresult = async (e) => {
         window.speechRecognizedText = e.results[0][0].transcript;
 
+        // УМНАЯ ЛОГИКА: Четко определяем язык получателя, как при текстовой отправке
         let targetLang = 'en';
-        // УМНАЯ ЛОГИКА
         if (isConfTab) {
             targetLang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
         } else if (window.currentTargetUser && targetDbRoom !== 'global') {
-            targetLang = window.getSmartLang(window.currentTargetUser); 
+            // Читаем язык напрямую с тумблера профиля собеседника
+            targetLang = (window.currentTargetUser.langCode && window.currentTargetUser.langCode !== 'auto') ? window.currentTargetUser.langCode : window.getSmartLang(window.currentTargetUser); 
         } else {
             targetLang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
         }
 
         if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = window.speechRecognizedText;
+        
+        let spokenLangCode = rec.lang.substring(0,2);
 
-        if (targetLang.substring(0,2) !== rec.lang.substring(0,2)) {
+        // Переводим только если языки отличаются
+        if (targetLang.substring(0,2) !== spokenLangCode) {
             try {
                 const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`);
                 const data = await res.json();
@@ -1013,7 +1017,6 @@ window.startUniversalMic = async function(mode) {
         let activeFlagCode = window.myProfileInfo.flagCode || 'un';
         let activeFlag = window.myProfileInfo.flag || '🌐';
 
-        let spokenLangCode = rec.lang.substring(0,2);
         if (manualMicLang !== 'auto') {
             const revLangMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
             if (revLangMap[spokenLangCode]) {
@@ -1026,7 +1029,7 @@ window.startUniversalMic = async function(mode) {
             userId: safeId, name: safeName, text: textToShip || "...", originalText: window.speechRecognizedText || "...",
             sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP, photo: safePhoto,
             flag: activeFlag, flagCode: activeFlagCode,
-            langCode: targetLang.substring(0,2), 
+            langCode: spokenLangCode, // ИСПРАВЛЕНО: Теперь в базу летит язык отправителя (твой), а не чужой!
             isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
         };
 
@@ -1035,6 +1038,7 @@ window.startUniversalMic = async function(mode) {
     };
     try { rec.start(); } catch(e){}
 };
+
 
 // ==========================================
 // 6. ПОДДЕРЖКА КЛАВИАТУРЫ И ПРОЧИЕ УТИЛИТЫ
