@@ -350,9 +350,40 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
-    let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg);
+    // --- НАЧАЛО УМНОГО ПЕРЕВОДА ПРИЁМА ---
+    let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
     let senderLang = data.langCode || 'auto'; 
     let finalTranslatedText = data.text; 
+
+    // Если сообщение чужое и языки не совпадают — переводим принудительно на язык комнаты
+    if (!isMe && data.originalText && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
+        try {
+            const transRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
+            const transData = await transRes.json();
+            if (transData && transData[0] && transData[0][0][0]) {
+                finalTranslatedText = transData[0][0][0];
+            }
+        } catch (e) {}
+    }
+
+    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
+        if (window.currentRoomId !== 'global' || isHistory) {
+            if (data.originalText !== finalTranslatedText) {
+                bubbleContent = `
+                    <div class="text-[#e9edef]">${data.originalText}</div>
+                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                        ➔ ${finalTranslatedText}
+                    </div>
+                `;
+            } else {
+                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div>`;
+            }
+        } else {
+             bubbleContent = `<div class="text-[#e9edef]">${finalTranslatedText}</div>`;
+        }
+    }
+    // --- КОНЕЦ УМНОГО ПЕРЕВОДА ПРИЁМА ---
+    
 
     if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
         if (window.currentRoomId !== 'global' || isHistory) {
