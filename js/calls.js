@@ -14,7 +14,9 @@ window.localVideoTrack = null;
 window.isMicMuted = false; // Глобальный статус микрофона
 
 const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7"; 
-const AGORA_TEMP_TOKEN = "007eJxTYNAWR+1oKSF3XduQgZvpXPO6azjJWKbkjPz5zhOVuwoy1BgsDQ0TjM0TjRLsjA0MEkxNkkyMDazNE1MTkk2SDG3TDIvvPUtqyGQkeGa1R4mJgZGMATxWRkyUnNy8hkYmOBCLAyGBgaGAKueIAU=";
+const AGORA_TEMP_TOKEN = "007eJxTYPDumVbrs3a1k3rtIy3WKbfj8mWMY/IXzDt/J1j25zpb44kKDJaGxmmGxolmSRaGBiYpxiZJBsZmlqaJySnJBinmlknm69S+ZzUEMjJMlhFkZGJgBEMQn5UhIzUnJ5+BgQkuxMhgCACfvh9m";
+
+
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
@@ -98,8 +100,8 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
         const channelName = "hello"; 
         
-        // ИСПРАВЛЕНО: Жесткая привязка UID 1001, чтобы Агора пропустила токен!
-        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, 1001);
+        // ИСПРАВЛЕНО: Жесткая привязка UID 1, чтобы Агора пропустила токен!
+        await window.agoraClient.join(AGORA_APP_ID, "hello", AGORA_TEMP_TOKEN, 1);
 
         let tracksToPublish = [];
 
