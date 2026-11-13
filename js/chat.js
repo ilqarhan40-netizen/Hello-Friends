@@ -207,6 +207,12 @@ window.switchChatRoom = function(targetId) {
     const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle;
     const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
 
+
+// ==========================================
+// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
+// ==========================================
+window.isGeminiWaiting = false;
+
 window.sendFirebaseMsg = async function() {
     let isVoiceTab = window.currentIndex === 1;
     let isConfTab = window.currentIndex === 2;
@@ -282,7 +288,7 @@ window.sendFirebaseMsg = async function() {
             sessionId: window.mySessionId || 'sess', 
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             photo: safePhoto, 
-            flag: activeFlag, // Отправляем твой правильный флаг!
+            flag: activeFlag, 
             flagCode: activeFlagCode, 
             langCode: myActiveLang, 
             isVoiceRoomMsg: isVoiceTab, 
@@ -291,19 +297,12 @@ window.sendFirebaseMsg = async function() {
     } catch(err) {
         alert("Ошибка отправки в базу: " + err.message);
     }
-};
-
-
-// ==========================================
-// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
-// ==========================================
-window.isGeminiWaiting = false;
-
 
     const chatMsgs = document.getElementById('chat-messages'); 
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
     if (window.currentTargetUser && !isConfTab && !isVoiceTab && window.sendPushToUser) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
+    // Логика для ИИ-бота (возвращаем на место)
     if (targetDbRoom === 'private_ai_bot') {
         window.isGeminiWaiting = true;
         const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
@@ -321,7 +320,7 @@ window.isGeminiWaiting = false;
     }
 };
 
-    window.handleNewMessage = async function(snapshot) {
+window.handleNewMessage = async function(snapshot) {
     const data = snapshot.val(); 
     if(!data) return; 
 
@@ -380,9 +379,7 @@ window.isGeminiWaiting = false;
     const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
-    let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
-    
-        // --- 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ И ФЛАГ ---
+    // --- 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ И ФЛАГ ---
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
     let senderLang = data.langCode || 'auto'; 
     
@@ -412,7 +409,6 @@ window.isGeminiWaiting = false;
         if (window.currentRoomId !== 'global' || isHistory) {
             if (baseText !== finalTranslatedText) {
                 if (isMe) {
-                    // МОЁ исходящее сообщение: Мой оригинал (сверху) ➔ Чужой перевод (снизу)
                     bubbleContent = `
                         <div class="text-[#e9edef]">${baseText}</div>
                         <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
@@ -420,7 +416,6 @@ window.isGeminiWaiting = false;
                         </div>
                     `;
                 } else {
-                    // ЧУЖОЕ входящее сообщение: Перевод на мой язык (сверху) ➔ Чужой оригинал (снизу)
                     bubbleContent = `
                         <div class="text-[#e9edef]">${finalTranslatedText}</div>
                         <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
@@ -496,7 +491,20 @@ window.isGeminiWaiting = false;
         if (mText && window.isMarqueeEnabled !== false) {
             let senderFlag = data.flag || p.flag || '🌐'; 
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
-            let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : displayFlag;
+            
+            let receiverFlag = '🌐';
+            if (isMe) {
+                receiverFlag = window.currentTargetUser.flag || '🌐';
+            } else {
+                let myLocalLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
+                const revMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+                receiverFlag = revMap[myLocalLang.substring(0,2)] || window.myProfileInfo.flag || '🌐';
+                
+                if (window.currentTargetUser) {
+                    window.currentTargetUser.langCode = data.langCode || senderLang;
+                    window.currentTargetUser.flag = data.flag || senderFlag;
+                }
+            }
 
             let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${baseText}</span>`;
 
@@ -651,9 +659,10 @@ window.isGeminiWaiting = false;
                 }).catch(e => console.log('Meet Translate Error'));
         });
     }
+};
 
-
-                           
+    
+            
 
 // ==========================================
 // 4. МЕНЮ ФАЙЛОВ АРХИВА, ТРЕШ И ЭМОДЗИ
