@@ -325,8 +325,6 @@ window.sendFirebaseMsg = async function() {
     // ==========================================
     // 🧠 УМНАЯ СИСТЕМА: ДИНАМИЧЕСКАЯ ПАМЯТЬ СОБЕСЕДНИКА
     // ==========================================
-    // Когда приходит чужое сообщение, планшет обновляет флаг и язык собеседника.
-    // Теперь отправка и бегущая строка у собеседника будут подстраиваться под твой новый флаг!
     if (!isMe && !isAI && data.userId) {
         let activeSender = window.participants.find(p => p.id === data.userId);
         if (activeSender) {
@@ -339,7 +337,6 @@ window.sendFirebaseMsg = async function() {
             window.currentTargetUser.flag = data.flag;
             window.currentTargetUser.flagCode = data.flagCode;
             
-            // Динамически меняем флаг собеседника прямо в шапке чата
             const titleEl = document.getElementById('chat-header-title');
             if (titleEl) {
                 titleEl.innerText = (window.currentTargetUser.name || 'User').split(' ')[0] + " " + data.flag;
@@ -372,34 +369,45 @@ window.sendFirebaseMsg = async function() {
 
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
     
-    // --- 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ И ФЛАГ ---
+    // --- 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ, ПОЛУЧАТЕЛЯ И ДИНАМИЧЕСКИЕ ФЛАГИ ---
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
     let senderLang = data.langCode || 'auto'; 
     let finalTranslatedText = data.text; 
 
-    let displayFlag = p.flag || '🌐';
+    const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+
+    let displaySenderFlag = '🌐';
+    let displayReceiverFlag = '🌐';
+
     if (isMe) {
-        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-        let baseLang = myReadLang.substring(0,2);
-        if (revLangMap[baseLang]) {
-            displayFlag = revLangMap[baseLang];
+        displaySenderFlag = window.myProfileInfo.flag || '🌐';
+        if (revLangMap[myReadLang.substring(0,2)]) displaySenderFlag = revLangMap[myReadLang.substring(0,2)];
+
+        if (window.currentTargetUser) {
+            let rLang = window.currentTargetUser.langCode && window.currentTargetUser.langCode !== 'auto' ? window.currentTargetUser.langCode : window.getSmartLang(window.currentTargetUser);
+            displayReceiverFlag = window.currentTargetUser.flag || '🌐';
+            if (revLangMap[rLang.substring(0,2)]) displayReceiverFlag = revLangMap[rLang.substring(0,2)];
         }
     } else {
-         displayFlag = data.flag || p.flag || '🌐';
+        displaySenderFlag = data.flag || p.flag || '🌐';
+        if (revLangMap[senderLang.substring(0,2)]) displaySenderFlag = revLangMap[senderLang.substring(0,2)];
+
+        displayReceiverFlag = window.myProfileInfo.flag || '🌐';
+        if (revLangMap[myReadLang.substring(0,2)]) displayReceiverFlag = revLangMap[myReadLang.substring(0,2)];
     }
 
-    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : displayFlag}</span></div>`;
+    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : displaySenderFlag}</span></div>`;
 
     let bubbleContent = data.originalText || data.text;
     let bubbleClasses = `chat-bubble`;
 
     // --- 2. УМНАЯ ЛОГИКА ПЕРЕВОДА ВХОДЯЩИХ (ПЕРЕХВАТЧИК) ---
-    if (!isMe && data.originalText) {
+    if (!isMe && data.originalText && window.currentRoomId !== 'global') {
         if (senderLang.substring(0,2) === myReadLang.substring(0,2)) {
             finalTranslatedText = data.originalText;
         } else {
             try {
-                const transRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
+                const transRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
                 const transData = await transRes.json();
                 if (transData && transData[0] && transData[0][0][0]) {
                     finalTranslatedText = transData[0][0][0];
@@ -480,24 +488,17 @@ window.sendFirebaseMsg = async function() {
         }
     }
     
+    // --- 4. БЕГУЩАЯ СТРОКА ---
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
-            let senderFlag = data.flag || p.flag || '🌐'; 
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
-            
-            // ИСПРАВЛЕНИЕ: Берем динамический флаг комнаты (displayFlag), а не статичный профиль
-            let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : displayFlag;
-
             let originalText = data.originalText || data.text;
             
-            // ИСПРАВЛЕНИЕ: Используем наш умный перехватчик (finalTranslatedText) вместо старого data.text
-            let smartTranslatedText = isMe ? data.text : finalTranslatedText;
+            let marqueeHtml = `<span class="text-white mr-2">${displaySenderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
 
-            let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
-
-            if (originalText !== smartTranslatedText) {
-                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${smartTranslatedText}</span>`;
+            if (originalText !== finalTranslatedText) {
+                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${displayReceiverFlag} ${receiverName}: ${finalTranslatedText}</span>`;
             }
 
             mText.innerHTML = marqueeHtml;
@@ -507,14 +508,12 @@ window.sendFirebaseMsg = async function() {
         }
     }
 
-        
+    // --- БЕГУЩАЯ СТРОКА ГЛОБАЛЬНОГО ЧАТА ---
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
 
         let myFanFlag = window.myProfileInfo.flag || '🌐';
-        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-
         let manualLang = window.getLangPref(false, false);
         if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
 
@@ -568,33 +567,28 @@ window.sendFirebaseMsg = async function() {
     }
 
     if (data.isVoiceRoomMsg) {
-        let senderPhoto, senderFlag, senderName, senderText;
-        let receiverPhoto, receiverFlag, receiverName, receiverText;
+        let senderPhoto, senderName, senderText, receiverPhoto, receiverName, receiverText;
 
         senderText = data.originalText || data.text;
         receiverText = data.text || data.originalText;
 
         if (isMe) {
             senderPhoto = window.myProfileInfo.photo; 
-            senderFlag = displayFlag; 
             senderName = window.myUsername;
 
             receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U'; 
-            receiverFlag = window.currentTargetUser ? (window.currentTargetUser.flag || '🌐') : '🌐'; 
             receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
         } else {
             senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
-            senderFlag = data.flag || '🌐'; 
             senderName = (data.name || 'User').split(' ')[0];
 
             receiverPhoto = window.myProfileInfo.photo; 
-            receiverFlag = displayFlag; 
             receiverName = window.myUsername;
         }
 
         const vMarquee = document.getElementById('voice-info-marquee');
         if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
-            vMarquee.innerHTML = `<div class="flex items-center"><img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm"><span class="text-white font-bold mr-1">${senderName}:</span><span class="text-[#e9edef] mr-2">${senderFlag} ${senderText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]"><span class="text-white font-bold mr-1">${receiverName}:</span><span class="text-[#00a884] font-bold">${receiverFlag} ${receiverText}</span></div>`;
+            vMarquee.innerHTML = `<div class="flex items-center"><img src="${senderPhoto}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm"><span class="text-white font-bold mr-1">${senderName}:</span><span class="text-[#e9edef] mr-2">${displaySenderFlag} ${senderText}</span> <i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.6rem] animate-pulse"></i> <img src="${receiverPhoto}" class="w-5 h-5 rounded-full border border-[#00a884] mr-1 object-cover shadow-[0_0_5px_rgba(0,168,132,0.5)]"><span class="text-white font-bold mr-1">${receiverName}:</span><span class="text-[#00a884] font-bold">${displayReceiverFlag} ${receiverText}</span></div>`;
             vMarquee.style.animation = 'none'; void vMarquee.offsetWidth; vMarquee.style.animation = null;
         }
     }
@@ -606,8 +600,7 @@ window.sendFirebaseMsg = async function() {
 
         let speakerMarquee = document.getElementById(senderMarqueeId);
         if (speakerMarquee) {
-            let activeSpeakerFlag = isMe ? displayFlag : (data.flag || '🌐');
-            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${activeSpeakerFlag} ${originalText}</span>`;
+            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${displaySenderFlag} ${originalText}</span>`;
             speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
         }
 
@@ -628,7 +621,6 @@ window.sendFirebaseMsg = async function() {
                     }
                 } else if (listenerMarquee.id === 'speaker-marquee') {
                     targetLang = window.getLangPref(false, true) || window.getSmartLang(window.myProfileInfo);
-                    const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
                     let baseL = targetLang.substring(0,2);
                     if (revLangMap[baseL]) targetFlag = revLangMap[baseL];
                 }
@@ -649,6 +641,7 @@ window.sendFirebaseMsg = async function() {
         });
     }
 };
+
                            
 
 // ==========================================
