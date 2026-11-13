@@ -447,3 +447,5 @@ window.toggleMyCamera = async function() {
         icons.forEach(i => { i.classList.replace('fa-video-slash', 'fa-video'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
     }
 };
+
+
