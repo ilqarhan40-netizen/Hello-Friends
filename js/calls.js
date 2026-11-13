@@ -98,8 +98,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         });
 
         const channelName = "hello"; 
-        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, null);
-
+        await window.agoraClient.join(AGORA_APP_ID, "hello", AGORA_TEMP_TOKEN, 1);
         let tracksToPublish = [];
 
         if (!window.localAudioTrack) window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
