@@ -165,7 +165,7 @@ window.renderSidebar = function() {
 };
 
 window.switchChatRoom = function(targetId) {
-    if (window.activeChatListener) { firebase.database().ref(window.currentRoomId).off("child_added", window.activeChatListener); }
+    if (window.currentRoomId) { firebase.database().ref(window.currentRoomId).off("child_added"); }
     const chatMessages = document.getElementById('chat-messages'); 
     if (chatMessages) chatMessages.innerHTML = '';
 
