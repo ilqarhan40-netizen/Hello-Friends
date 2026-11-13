@@ -453,36 +453,7 @@ window.handleNewMessage = async function(snapshot) {
         }
         }
     
-    if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        const mText = document.getElementById('chat-info-marquee');
-        if (mText && window.isMarqueeEnabled !== false) {
-            let senderFlag = data.flag || p.flag || '🌐'; 
-            let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
-            let receiverFlag = isMe ? (window.currentTargetUser.flag || '🌐') : (window.myProfileInfo.flag || '🌐');
-
-            const revLangMap = { 'en':'🇬🇧', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-            let receiverLang = isMe ? window.getSmartLang(window.currentTargetUser) : window.getLangPref(false, false);
-
-            if (receiverLang && revLangMap[receiverLang.substring(0,2)]) {
-                receiverFlag = revLangMap[receiverLang.substring(0,2)];
-            }
-
-            let originalText = data.originalText || data.text;
-            let translatedText = data.text;
-
-            let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
-
-            if (originalText !== translatedText) {
-                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${translatedText}</span>`;
-            }
-
-            mText.innerHTML = marqueeHtml;
-            mText.style.animation = 'none'; 
-            void mText.offsetWidth; 
-            mText.style.animation = null;
-        }
-    }
-
+    
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
         let targetUsers = []; 
         let neededLangs = new Set(); 
@@ -498,6 +469,41 @@ window.handleNewMessage = async function(snapshot) {
             neededLangs.add(myReadLang.substring(0,2));
         }
 
+    // --- 4. БЕГУЩАЯ СТРОКА (ТОЧНЫЕ ФЛАГИ) ---
+    if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
+        const mText = document.getElementById('chat-info-marquee');
+        if (mText && window.isMarqueeEnabled !== false) {
+            let senderFlag = data.flag || p.flag || '🌐'; 
+            let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
+            
+            // ИСПРАВЛЕНИЕ: Теперь флаг получателя вычисляется строго правильно (мой для входящих, чужой для исходящих)
+            let receiverFlag = '🌐';
+            if (isMe) {
+                receiverFlag = window.currentTargetUser.flag || '🌐';
+            } else {
+                let myLocalLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
+                const revMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+                receiverFlag = revMap[myLocalLang.substring(0,2)] || window.myProfileInfo.flag || '🌐';
+                
+                // Крошечный апдейт памяти: запоминаем чужой язык, чтобы при ответе отправить ему правильный перевод
+                window.currentTargetUser.langCode = data.langCode || senderLang;
+                window.currentTargetUser.flag = data.flag || senderFlag;
+            }
+
+            let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${baseText}</span>`;
+
+            if (baseText !== finalTranslatedText) {
+                 marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${finalTranslatedText}</span>`;
+            }
+
+            mText.innerHTML = marqueeHtml;
+            mText.style.animation = 'none'; 
+            void mText.offsetWidth; 
+            mText.style.animation = null;
+        }
+    }
+
+        
         window.participants.filter(part => part.id !== 'ai').forEach(member => {
             let memberLang = window.getSmartLang(member);
             if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
