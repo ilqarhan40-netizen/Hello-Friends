@@ -207,20 +207,6 @@ window.switchChatRoom = function(targetId) {
     const titleEl = document.getElementById('chat-header-title'); if(titleEl) titleEl.innerText = headerTitle;
     const roomEl = document.getElementById('chat-header-room'); if(roomEl) roomEl.innerText = "ID: " + headerRoomId;
 
-    window.updateRoomMarquee();
-    window.renderSidebar();
-
-    window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
-    localStorage.removeItem(window.getLangKey(false, false));
-    localStorage.removeItem(window.getMicLangKey());
-    if (typeof window.syncMicLangUI === 'function') window.syncMicLangUI();
-};
-
-// ==========================================
-// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
-// ==========================================
-window.isGeminiWaiting = false;
-
 window.sendFirebaseMsg = async function() {
     let isVoiceTab = window.currentIndex === 1;
     let isConfTab = window.currentIndex === 2;
@@ -248,44 +234,71 @@ window.sendFirebaseMsg = async function() {
     }
     inputField.value = '';
 
+    // 1. УМНАЯ ЛОГИКА: Читаем твой выбранный флаг комнаты
     let myActiveLang = window.getLangPref(isVoiceTab, isConfTab) || 'en';
 
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
     let safeName = window.myUsername || 'User';
     let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+    
     let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
     let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
     const langMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
     if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
 
+    // Перевод на твой активный язык (если вдруг пишешь на другом)
     let myBaseText = rawText;
     try {
-        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`);
+        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang.substring(0,2)}&dt=t&q=${encodeURIComponent(rawText)}`);
         const data1 = await res1.json();
         if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
     } catch (e) {}
 
-    let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
+    // 2. УМНАЯ ЛОГИКА: Вычисляем язык собеседника напрямую из текущей сессии
+    let targetSendLang = myActiveLang;
+    if (window.currentTargetUser) {
+        targetSendLang = window.currentTargetUser.langCode || window.getSmartLang(window.currentTargetUser) || 'en';
+    }
+
     let textToShip = myBaseText;
-    if (targetSendLang !== myActiveLang && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
+    
+    // 3. ЗЕРКАЛО: Переводим ТОЛЬКО если тумблеры (флаги) разные
+    if (targetSendLang.substring(0,2) !== myActiveLang.substring(0,2) && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
         try {
-            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang}&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`);
+            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang.substring(0,2)}&tl=${targetSendLang.substring(0,2)}&dt=t&q=${encodeURIComponent(myBaseText)}`);
             const data2 = await res2.json();
             if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
         } catch (e) {}
     }
 
+    // 4. КОНВЕЙЕР: Кидаем готовый переведенный пакет в базу
     try {
         firebase.database().ref(targetDbRoom).push({
-            userId: safeId, name: safeName, text: textToShip || "Error", originalText: myBaseText || "Error",
-            sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: safePhoto, flag: activeFlag, flagCode: activeFlagCode, langCode: myActiveLang,
-            isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
+            userId: safeId, 
+            name: safeName, 
+            text: textToShip || "Error", 
+            originalText: myBaseText || "Error",
+            sessionId: window.mySessionId || 'sess', 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: safePhoto, 
+            flag: activeFlag, // Отправляем твой правильный флаг!
+            flagCode: activeFlagCode, 
+            langCode: myActiveLang, 
+            isVoiceRoomMsg: isVoiceTab, 
+            isConfMsg: isConfTab
         });
     } catch(err) {
         alert("Ошибка отправки в базу: " + err.message);
     }
+};
+
+
+// ==========================================
+// 3. ОТПРАВКА И ПОЛУЧЕНИЕ СООБЩЕНИЙ
+// ==========================================
+window.isGeminiWaiting = false;
+
 
     const chatMsgs = document.getElementById('chat-messages'); 
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
