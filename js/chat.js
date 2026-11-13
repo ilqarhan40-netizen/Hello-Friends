@@ -345,27 +345,48 @@ window.handleNewMessage = async function(snapshot) {
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
     let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
-    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
-
-    let bubbleContent = data.originalText || data.text;
-    let bubbleClasses = `chat-bubble`;
-
-    // --- НАЧАЛО УМНОГО ПЕРЕВОДА ПРИЁМА ---
+    
+    // 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ ДО ОТРИСОВКИ ФЛАГА
     let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
     let senderLang = data.langCode || 'auto'; 
     let finalTranslatedText = data.text; 
 
-    // Если сообщение чужое и языки не совпадают — переводим принудительно на язык комнаты
-    if (!isMe && data.originalText && senderLang.substring(0,2) !== myReadLang.substring(0,2)) {
-        try {
-            const transRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
-            const transData = await transRes.json();
-            if (transData && transData[0] && transData[0][0][0]) {
-                finalTranslatedText = transData[0][0][0];
-            }
-        } catch (e) {}
+    // 2. ДИНАМИЧЕСКИЙ ФЛАГ (Меняется на тот, что ты выбрал в меню комнаты)
+    let displayFlag = p.flag || '🌐';
+    if (isMe) {
+        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+        let baseLang = myReadLang.substring(0,2);
+        if (revLangMap[baseLang]) {
+            displayFlag = revLangMap[baseLang];
+        }
+    } else {
+         displayFlag = data.flag || p.flag || '🌐';
     }
 
+    // 3. СОБИРАЕМ АВАТАР С ПРАВИЛЬНЫМ ФЛАГОМ
+    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : displayFlag}</span></div>`;
+
+    let bubbleContent = data.originalText || data.text;
+    let bubbleClasses = `chat-bubble`;
+
+    // 4. УМНАЯ ЛОГИКА ПЕРЕВОДА ВХОДЯЩИХ
+    if (!isMe && data.originalText) {
+        if (senderLang.substring(0,2) === myReadLang.substring(0,2)) {
+            // Языки совпадают — выдаем чистый оригинал, переводы из базы игнорируются
+            finalTranslatedText = data.originalText;
+        } else {
+            // Языки разные — принудительный перевод на выбранный язык комнаты
+            try {
+                const transRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang.substring(0,2)}&tl=${myReadLang.substring(0,2)}&dt=t&q=${encodeURIComponent(data.originalText)}`);
+                const transData = await transRes.json();
+                if (transData && transData[0] && transData[0][0][0]) {
+                    finalTranslatedText = transData[0][0][0];
+                }
+            } catch (e) {}
+        }
+    }
+
+    // 5. ОТРИСОВКА ПУЗЫРЯ СООБЩЕНИЯ
     if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
         if (window.currentRoomId !== 'global' || isHistory) {
             if (data.originalText !== finalTranslatedText) {
@@ -382,6 +403,8 @@ window.handleNewMessage = async function(snapshot) {
              bubbleContent = `<div class="text-[#e9edef]">${finalTranslatedText}</div>`;
         }
     }
+
+    
     // --- КОНЕЦ УМНОГО ПЕРЕВОДА ПРИЁМА ---
     
 
