@@ -589,13 +589,19 @@ window.handleNewMessage = async function(snapshot) {
             receiverFlag = window.currentTargetUser ? (window.currentTargetUser.flag || '🌐') : '🌐'; 
             receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
         } else {
-            senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
+                        senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
             senderFlag = data.flag || '🌐'; 
             senderName = (data.name || 'User').split(' ')[0];
 
+            let myLocalLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
+            const revMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+            let myActiveFlag = revMap[myLocalLang.substring(0,2)] || window.myProfileInfo.flag || '🌐';
+
             receiverPhoto = window.myProfileInfo.photo; 
-            receiverFlag = displayFlag; 
+            receiverFlag = myActiveFlag; 
             receiverName = window.myUsername;
+            
+
         }
 
         const vMarquee = document.getElementById('voice-info-marquee');
