@@ -481,7 +481,7 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = baseText;
     let bubbleClasses = `chat-bubble`;
 
-        // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ (ИДЕАЛЬНОЕ ЗЕРКАЛО + ПЕРЕВЕРТЫШ) ---
+             // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ (ИДЕАЛЬНОЕ ЗЕРКАЛО + ПЕРЕВЕРТЫШ) ---
     // 🔀 СТРЕЛОЧНИК ПРИЕМА: РАЗДЕЛЕНИЕ БАБЛОВ (СЕКЦИЯ 1 и СЕКЦИЯ 2)
     
     if (data.isVoiceRoomMsg || data.isAudioBubble) {
@@ -531,9 +531,7 @@ window.handleNewMessage = async function(snapshot) {
     }
 
     // --- ОБРАБОТКА МЕДИА И СПЕЦИАЛЬНЫХ СООБЩЕНИЙ ---
-    // (Они идут после разделения, так как не зависят от текста/голоса)
     if (data.isAIAudio && !data.isVoiceRoomMsg && !data.isAudioBubble) {
-        // Оставили резерв для старых голосовых, если они без новых маркеров
         let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
         let textToPlay = isMe ? (data.text || data.originalText) : finalTranslatedText;
         let transHtml = '';
@@ -584,6 +582,7 @@ window.handleNewMessage = async function(snapshot) {
             if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
         }
     }
+       
     
     
     // --- 4. БЕГУЩАЯ СТРОКА (ТОЧНЫЕ ФЛАГИ) ---
