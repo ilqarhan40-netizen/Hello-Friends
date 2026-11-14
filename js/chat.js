@@ -481,44 +481,67 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = baseText;
     let bubbleClasses = `chat-bubble`;
 
-    // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ (ИДЕАЛЬНОЕ ЗЕРКАЛО + ПЕРЕВЕРТЫШ) ---
-    if (baseText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
-        if (window.currentRoomId !== 'global' || isHistory) {
-            if (baseText !== finalTranslatedText) {
-                if (isMe) {
-                    bubbleContent = `
-                        <div class="text-[#e9edef]">${baseText}</div>
-                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
-                            ➔ ${finalTranslatedText}
-                        </div>
-                    `;
+        // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ (ИДЕАЛЬНОЕ ЗЕРКАЛО + ПЕРЕВЕРТЫШ) ---
+    // 🔀 СТРЕЛОЧНИК ПРИЕМА: РАЗДЕЛЕНИЕ БАБЛОВ (СЕКЦИЯ 1 и СЕКЦИЯ 2)
+    
+    if (data.isVoiceRoomMsg || data.isAudioBubble) {
+        // 🎙️ СЕКЦИЯ 1: МИКРОФОН (Аудио-бабл и Голосовая строка)
+        
+        let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
+        let textToPlay = isMe ? (data.text || data.originalText) : finalTranslatedText;
+        let transHtml = '';
+        
+        if (baseText !== finalTranslatedText) {
+            let colorTrans = isMe ? 'text-yellow-400' : 'text-[#00a884]';
+            let prefixTrans = isMe ? 'Перевод: ' : '';
+            transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] ${colorTrans} font-bold tracking-wide">➔ ${prefixTrans}${finalTranslatedText}</div>`;
+        }
+        
+        bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${baseText}</div>${transHtml}</div>`;
+        bubbleClasses = `chat-bubble`; 
+        
+    } else {
+        // ⌨️ СЕКЦИЯ 2: КЛАВИАТУРА (Стандартный текстовый бабл)
+        
+        if (baseText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
+            if (window.currentRoomId !== 'global' || isHistory) {
+                if (baseText !== finalTranslatedText) {
+                    if (isMe) {
+                        bubbleContent = `
+                            <div class="text-[#e9edef]">${baseText}</div>
+                            <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                                ➔ ${finalTranslatedText}
+                            </div>
+                        `;
+                    } else {
+                        bubbleContent = `
+                            <div class="text-[#e9edef]">${finalTranslatedText}</div>
+                            <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                                ➔ ${baseText}
+                            </div>
+                        `;
+                    }
                 } else {
-                    bubbleContent = `
-                        <div class="text-[#e9edef]">${finalTranslatedText}</div>
-                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
-                            ➔ ${baseText}
-                        </div>
-                    `;
+                    bubbleContent = `<div class="text-[#e9edef]">${baseText}</div>`;
                 }
             } else {
-                bubbleContent = `<div class="text-[#e9edef]">${baseText}</div>`;
+                 bubbleContent = `<div class="text-[#e9edef]">${finalTranslatedText}</div>`;
             }
-        } else {
-             bubbleContent = `<div class="text-[#e9edef]">${finalTranslatedText}</div>`;
         }
     }
 
-    if (data.isAIAudio) {
+    // --- ОБРАБОТКА МЕДИА И СПЕЦИАЛЬНЫХ СООБЩЕНИЙ ---
+    // (Они идут после разделения, так как не зависят от текста/голоса)
+    if (data.isAIAudio && !data.isVoiceRoomMsg && !data.isAudioBubble) {
+        // Оставили резерв для старых голосовых, если они без новых маркеров
         let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
         let textToPlay = isMe ? (data.text || data.originalText) : finalTranslatedText;
-
         let transHtml = '';
         if (baseText !== finalTranslatedText) {
             let colorTrans = isMe ? 'text-yellow-400' : 'text-[#00a884]';
             let prefixTrans = isMe ? 'Перевод: ' : '';
             transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] ${colorTrans} font-bold tracking-wide">➔ ${prefixTrans}${finalTranslatedText}</div>`;
         }
-
         bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${baseText}</div>${transHtml}</div>`;
     }
     else if (data.mediaUrl) {
@@ -561,6 +584,7 @@ window.handleNewMessage = async function(snapshot) {
             if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
         }
     }
+    
     
     // --- 4. БЕГУЩАЯ СТРОКА (ТОЧНЫЕ ФЛАГИ) ---
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
