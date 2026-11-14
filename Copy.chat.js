@@ -165,7 +165,7 @@ window.renderSidebar = function() {
 };
 
 window.switchChatRoom = function(targetId) {
-    if (window.activeChatListener) { firebase.database().ref(window.currentRoomId).off("child_added", window.activeChatListener); }
+    if (window.currentRoomId) { firebase.database().ref(window.currentRoomId).off("child_added"); }
     const chatMessages = document.getElementById('chat-messages'); 
     if (chatMessages) chatMessages.innerHTML = '';
 
@@ -248,34 +248,45 @@ window.sendFirebaseMsg = async function() {
     }
     inputField.value = '';
 
+    // 1. УМНАЯ ЛОГИКА: Читаем твой выбранный флаг комнаты
     let myActiveLang = window.getLangPref(isVoiceTab, isConfTab) || 'en';
 
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
     let safeName = window.myUsername || 'User';
     let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+    
     let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
     let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
     const langMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
     if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
 
+    // Перевод на твой активный язык (если вдруг пишешь на другом)
     let myBaseText = rawText;
     try {
-        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang}&dt=t&q=${encodeURIComponent(rawText)}`);
+        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang.substring(0,2)}&dt=t&q=${encodeURIComponent(rawText)}`);
         const data1 = await res1.json();
         if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
     } catch (e) {}
 
-    let targetSendLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : myActiveLang;
+    // 2. УМНАЯ ЛОГИКА: Вычисляем язык собеседника напрямую с экрана
+    let targetSendLang = myActiveLang;
+    if (window.currentTargetUser) {
+        targetSendLang = window.currentTargetUser.langCode || window.getSmartLang(window.currentTargetUser) || 'en';
+    }
+
     let textToShip = myBaseText;
-    if (targetSendLang !== myActiveLang && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global') {
+    
+    // 3. ЗЕРКАЛО: Переводим ТОЛЬКО если тумблеры (флаги) разные и это не бот
+    if (targetSendLang.substring(0,2) !== myActiveLang.substring(0,2) && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global' && targetDbRoom !== 'private_ai_bot') {
         try {
-            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang}&tl=${targetSendLang}&dt=t&q=${encodeURIComponent(myBaseText)}`);
+            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${myActiveLang.substring(0,2)}&tl=${targetSendLang.substring(0,2)}&dt=t&q=${encodeURIComponent(myBaseText)}`);
             const data2 = await res2.json();
             if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
         } catch (e) {}
     }
 
+    // 4. КОНВЕЙЕР: Кидаем готовый переведенный пакет в базу
     try {
         firebase.database().ref(targetDbRoom).push({
             userId: safeId, name: safeName, text: textToShip || "Error", originalText: myBaseText || "Error",
@@ -291,6 +302,7 @@ window.sendFirebaseMsg = async function() {
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100); 
     if (window.currentTargetUser && !isConfTab && !isVoiceTab && window.sendPushToUser) { window.sendPushToUser(window.currentTargetUser.id, window.myUsername, textToShip); }
 
+    // Логика для ИИ-бота 
     if (targetDbRoom === 'private_ai_bot') {
         window.isGeminiWaiting = true;
         const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY"; 
@@ -319,9 +331,32 @@ window.handleNewMessage = async function(snapshot) {
 
     const chatMessages = document.getElementById('chat-messages');
     
-
     const isMe = data.sessionId === window.mySessionId || data.userId === window.myProfileInfo.id;
     const isAI = data.userId === "ai" || data.sessionId === "ai-bot-session";
+    
+    // ==========================================
+    // 🧠 УМНАЯ СИСТЕМА: ДИНАМИЧЕСКАЯ ПАМЯТЬ СОБЕСЕДНИКА
+    // ==========================================
+    if (!isMe && !isAI && data.userId) {
+        let activeSender = window.participants.find(p => p.id === data.userId);
+        if (activeSender) {
+            activeSender.langCode = data.langCode;
+            activeSender.flag = data.flag;
+            activeSender.flagCode = data.flagCode;
+        }
+        if (window.currentTargetUser && window.currentTargetUser.id === data.userId) {
+            window.currentTargetUser.langCode = data.langCode;
+            window.currentTargetUser.flag = data.flag;
+            window.currentTargetUser.flagCode = data.flagCode;
+            
+            const titleEl = document.getElementById('chat-header-title');
+            if (titleEl) {
+                titleEl.innerText = (window.currentTargetUser.name || 'User').split(' ')[0] + " " + data.flag;
+            }
+        }
+    }
+    // ==========================================
+
     let p = isMe ? window.myProfileInfo : (isAI ? { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', flag: '🤖' } : (window.participants.find(part => part.id === data.userId) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name=U', langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
 
     let isHistory = data.timestamp && (Date.now() - data.timestamp) > 5000;
@@ -344,48 +379,92 @@ window.handleNewMessage = async function(snapshot) {
     const messageGroup = document.createElement('div'); messageGroup.className = "flex flex-col w-full mt-3 mb-2";
     const msgWrapper = document.createElement('div'); msgWrapper.className = `flex gap-2 w-full ${isMe ? 'justify-end' : 'justify-start'}`;
 
-    let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
-    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : (p.flag || '🌐')}</span></div>`;
-
-    let bubbleContent = data.originalText || data.text;
-    let bubbleClasses = `chat-bubble`;
-
-    let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg);
+    // --- 1. ОПРЕДЕЛЯЕМ ЯЗЫК КОМНАТЫ И ФЛАГ ---
+    let myReadLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
     let senderLang = data.langCode || 'auto'; 
+    
+    // БЕЗ ЗАПРОСОВ ДЛЯ ЛИЧНЫХ ЧАТОВ: тупо читаем готовые тексты, которые УЖЕ прилетели из базы!
+    let baseText = data.originalText || data.text; 
     let finalTranslatedText = data.text; 
 
-    if (data.originalText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
-        if (window.currentRoomId !== 'global' || isHistory) {
-            if (data.originalText !== data.text) {
-                bubbleContent = `
-                    <div class="text-[#e9edef]">${data.originalText}</div>
-                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
-                        ➔ ${data.text}
-                    </div>
-                `;
-            } else {
-                bubbleContent = `<div class="text-[#e9edef]">${data.originalText}</div>`;
-            }
+    let displayFlag = p.flag || '🌐';
+    if (isMe) {
+        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+        let baseLang = myReadLang.substring(0,2);
+        if (revLangMap[baseLang]) {
+            displayFlag = revLangMap[baseLang];
         }
+    } else {
+         displayFlag = data.flag || p.flag || '🌐';
     }
 
+    let avatarClick = isMe ? `window.openPersonalLangModal()` : `window.openAvatarModal('${p.id}')`;
+    let avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer hover:scale-105 transition" onclick="${avatarClick}"><img src="${isAI ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : p.photo}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942] shadow-md"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] shadow border border-[#2a3942] leading-none">${isAI ? '🤖' : displayFlag}</span></div>`;
+
+    let bubbleContent = baseText;
+    let bubbleClasses = `chat-bubble`;
+
+    // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ (ИДЕАЛЬНОЕ ЗЕРКАЛО + ПЕРЕВЕРТЫШ) ---
+    if (baseText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
+        if (window.currentRoomId !== 'global' || isHistory) {
+            if (baseText !== finalTranslatedText) {
+                if (isMe) {
+                    bubbleContent = `
+                        <div class="text-[#e9edef]">${baseText}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                            ➔ ${finalTranslatedText}
+                        </div>
+                    `;
+                } else {
+                    bubbleContent = `
+                        <div class="text-[#e9edef]">${finalTranslatedText}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                            ➔ ${baseText}
+                        </div>
+                    `;
+                }
+            } else {
+                bubbleContent = `<div class="text-[#e9edef]">${baseText}</div>`;
+            }
+        } else {
+             bubbleContent = `<div class="text-[#e9edef]">${finalTranslatedText}</div>`;
+        }
+    }
 
     if (data.isAIAudio) {
         let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
         let textToPlay = isMe ? (data.text || data.originalText) : finalTranslatedText;
 
         let transHtml = '';
-        if (!isMe && data.originalText !== finalTranslatedText) {
-            transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${finalTranslatedText}</div>`;
-        } else if (isMe && data.originalText !== data.text) {
-            transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] text-yellow-400 font-bold tracking-wide">➔ Перевод: ${data.text}</div>`;
+        if (baseText !== finalTranslatedText) {
+            let colorTrans = isMe ? 'text-yellow-400' : 'text-[#00a884]';
+            let prefixTrans = isMe ? 'Перевод: ' : '';
+            transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] ${colorTrans} font-bold tracking-wide">➔ ${prefixTrans}${finalTranslatedText}</div>`;
         }
 
-        bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${data.originalText}</div>${transHtml}</div>`;
+        bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${baseText}</div>${transHtml}</div>`;
     }
-    else if (data.mediaUrl) { 
-        bubbleContent = data.mediaType === 'video' ? `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>` : `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`; 
-        bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`; 
+    else if (data.mediaUrl) {
+        let fileName = data.text ? data.text.replace('📄 Документ: ', '').replace('🖼️ Photo', 'Файл').replace('📹 Video', 'Видео') : 'Файл';
+        if (data.mediaType === 'video' || data.mediaUrl.startsWith('data:video/')) {
+            bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
+        } else if (data.mediaType === 'audio' || data.mediaUrl.startsWith('data:audio/')) {
+            bubbleContent = `<audio src="${data.mediaUrl}" controls class="w-[200px] sm:w-[250px] mt-1 outline-none"></audio>`;
+        } else if (data.mediaType === 'document' || data.mediaUrl.startsWith('data:application/') || data.mediaUrl.startsWith('data:text/')) {
+            bubbleContent = `
+                <div class="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg border border-[#2a3942] mt-1 min-w-[200px]">
+                    <div class="w-10 h-10 rounded-full bg-[#202c33] flex items-center justify-center text-blue-400 shrink-0">
+                        <i class="fa-solid fa-file-arrow-down text-xl"></i>
+                    </div>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-white text-sm font-bold truncate max-w-[140px]">${fileName}</span>
+                        <a href="${data.mediaUrl}" download="${fileName}" class="text-[0.7rem] text-[#00a884] font-bold mt-1 uppercase tracking-wide hover:text-white transition">Скачать</a>
+                    </div>
+                </div>`;
+        } else {
+            bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
+        }
+        bubbleClasses = `chat-bubble !bg-[#202c33] !p-2`;
     }
     else if (data.isTransfer) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
@@ -395,80 +474,17 @@ window.handleNewMessage = async function(snapshot) {
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
         bubbleContent = `<div class="flex flex-col w-[200px] sm:w-[250px]"><iframe width="100%" height="150" frameborder="0" scrolling="no" src="${data.embedLink}" style="pointer-events: none;"></iframe><a href="${data.mapLink}" target="_blank" class="bg-[#202c33] p-2.5 text-center text-[0.8rem] text-blue-400 font-bold hover:bg-[#2a3942] transition flex items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot"></i> Open in Maps</a></div>`; 
     }
-            else if (data.isConferenceInvite) { 
-        // 1. Умная логика языков (только через выбор системы/экосистемы)
-        let uiLang = 'en';
-        if (typeof window.getLangPref === 'function') {
-            uiLang = (window.getLangPref(false, false) || 'en').substring(0,2);
-        }
-        
-        // Подстраховка: если система вернула kz вместо kk
-        if (uiLang === 'kz') uiLang = 'kk';
-
-        // 2. Локальный словарь для 13 языков (с правильным казахским)
-        const invDict = {
-            'ru': { t: 'КОНФЕРЕНЦИЯ', d: 'Приглашение', b: 'Войти' },
-            'en': { t: 'CONFERENCE', d: 'Room Invite', b: 'Join' },
-            'it': { t: 'CONFERENZA', d: 'Invito', b: 'Entra' },
-            'es': { t: 'CONFERENCIA', d: 'Invitación', b: 'Unirse' },
-            'fr': { t: 'CONFÉRENCE', d: 'Invitation', b: 'Rejoindre' },
-            'de': { t: 'KONFERENZ', d: 'Einladung', b: 'Beitreten' },
-            'pt': { t: 'CONFERÊNCIA', d: 'Convite', b: 'Entrar' },
-            'tr': { t: 'KONFERANS', d: 'Davet', b: 'Katıl' },
-            'az': { t: 'KONFRANS', d: 'Dəvət', b: 'Qoşul' },
-            'kk': { t: 'БЕЙНЕЖИЫН', d: 'Шақыру', b: 'Қосылу' },
-            'ar': { t: 'مؤتمر', d: 'دعوة', b: 'انضمام' },
-            'ja': { t: '会議', d: '招待', b: '参加' },
-            'zh': { t: '会议', d: '邀请', b: '加入' }
-        };
-        
-        let txt = invDict[uiLang] || invDict['en'];
-
-        // 3. Компактный горизонтальный дизайн
-        bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_10px_rgba(0,168,132,0.15)] !p-0 overflow-hidden`; 
-        bubbleContent = `
-            <div class="flex items-center gap-3 p-2.5 w-[190px]">
-                <div class="w-10 h-10 shrink-0 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] shadow-md">
-                    <i class="fa-solid fa-users text-lg"></i>
-                </div>
-                <div class="flex flex-col flex-1">
-                    <span class="text-[0.6rem] text-[#00a884] font-bold uppercase tracking-widest leading-none mb-1">${txt.t}</span>
-                    <span class="text-white text-[0.75rem] font-bold leading-tight mb-2">${txt.d}</span>
-                    <button onclick="window.switchTab(2)" class="w-full bg-[#00a884] text-[#111b21] py-1.5 rounded-lg font-bold text-[0.7rem] hover:scale-95 transition shadow-sm flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i> ${txt.b}
-                    </button>
-                </div>
-            </div>`; 
-            }
-    
-    
 
     const isCurrentRoom = snapshot.ref.parent.key === window.currentRoomId;
 
-        if (isCurrentRoom || (!data.isVoiceRoomMsg && !data.isConfMsg)) {
+    if (isCurrentRoom || (!data.isVoiceRoomMsg && !data.isConfMsg)) {
         if (!data.isVoiceRoomMsg && !data.isConfMsg) {
             msgWrapper.innerHTML = isMe ? `<div class="chat-bubble-wrapper outgoing items-end flex flex-col" data-id="${snapshot.key}"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>` + avatarHtml : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col" data-id="${snapshot.key}"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
             messageGroup.appendChild(msgWrapper);
             if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
         }
-        }
+    }
     
-    
-    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        let targetUsers = []; 
-        let neededLangs = new Set(); 
-
-        let myFanFlag = window.myProfileInfo.flag || '🌐';
-        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
-
-        let manualLang = window.getLangPref(false, false);
-        if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
-
-        if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
-            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: window.myProfileInfo.photo });
-            neededLangs.add(myReadLang.substring(0,2));
-        }
-
     // --- 4. БЕГУЩАЯ СТРОКА (ТОЧНЫЕ ФЛАГИ) ---
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
         const mText = document.getElementById('chat-info-marquee');
@@ -476,7 +492,6 @@ window.handleNewMessage = async function(snapshot) {
             let senderFlag = data.flag || p.flag || '🌐'; 
             let receiverName = isMe ? window.currentTargetUser.name.split(' ')[0] : window.myUsername;
             
-            // ИСПРАВЛЕНИЕ: Теперь флаг получателя вычисляется строго правильно (мой для входящих, чужой для исходящих)
             let receiverFlag = '🌐';
             if (isMe) {
                 receiverFlag = window.currentTargetUser.flag || '🌐';
@@ -484,10 +499,6 @@ window.handleNewMessage = async function(snapshot) {
                 let myLocalLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
                 const revMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
                 receiverFlag = revMap[myLocalLang.substring(0,2)] || window.myProfileInfo.flag || '🌐';
-                
-                // Крошечный апдейт памяти: запоминаем чужой язык, чтобы при ответе отправить ему правильный перевод
-                window.currentTargetUser.langCode = data.langCode || senderLang;
-                window.currentTargetUser.flag = data.flag || senderFlag;
             }
 
             let marqueeHtml = `<span class="text-white mr-2">${senderFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${baseText}</span>`;
@@ -503,7 +514,21 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-        
+    if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
+        let targetUsers = []; 
+        let neededLangs = new Set(); 
+
+        let myFanFlag = window.myProfileInfo.flag || '🌐';
+        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+
+        let manualLang = window.getLangPref(false, false);
+        if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
+
+        if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
+            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: window.myProfileInfo.photo });
+            neededLangs.add(myReadLang.substring(0,2));
+        }
+
         window.participants.filter(part => part.id !== 'ai').forEach(member => {
             let memberLang = window.getSmartLang(member);
             if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
@@ -548,30 +573,35 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-
     if (data.isVoiceRoomMsg) {
         let senderPhoto, senderFlag, senderName, senderText;
         let receiverPhoto, receiverFlag, receiverName, receiverText;
 
         senderText = data.originalText || data.text;
-        receiverText = data.text || data.originalText;
+        receiverText = finalTranslatedText || data.originalText; // Подтягивает финальный текст
 
         if (isMe) {
             senderPhoto = window.myProfileInfo.photo; 
-            senderFlag = data.flag || window.myProfileInfo.flag || '🌐'; 
+            senderFlag = displayFlag; 
             senderName = window.myUsername;
 
             receiverPhoto = window.currentTargetUser ? window.currentTargetUser.photo : 'https://ui-avatars.com/api/?name=U'; 
-            receiverFlag = window.currentTargetUser ? window.currentTargetUser.flag : '🌐'; 
+            receiverFlag = window.currentTargetUser ? (window.currentTargetUser.flag || '🌐') : '🌐'; 
             receiverName = window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'User';
         } else {
-            senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
+                        senderPhoto = data.photo || 'https://ui-avatars.com/api/?name=U'; 
             senderFlag = data.flag || '🌐'; 
             senderName = (data.name || 'User').split(' ')[0];
 
+            let myLocalLang = window.getLangPref(data.isVoiceRoomMsg, data.isConfMsg) || 'en';
+            const revMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+            let myActiveFlag = revMap[myLocalLang.substring(0,2)] || window.myProfileInfo.flag || '🌐';
+
             receiverPhoto = window.myProfileInfo.photo; 
-            receiverFlag = window.myProfileInfo.flag; 
+            receiverFlag = myActiveFlag; 
             receiverName = window.myUsername;
+            
+
         }
 
         const vMarquee = document.getElementById('voice-info-marquee');
@@ -588,7 +618,8 @@ window.handleNewMessage = async function(snapshot) {
 
         let speakerMarquee = document.getElementById(senderMarqueeId);
         if (speakerMarquee) {
-            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
+            let activeSpeakerFlag = isMe ? displayFlag : (data.flag || '🌐');
+            speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${activeSpeakerFlag} ${originalText}</span>`;
             speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
         }
 
@@ -745,7 +776,6 @@ window.closeArchiveActionMenu = function() {
     if(contentBox) contentBox.classList.add('translate-y-full');
     setTimeout(() => { if(modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } }, 300);
 };
-
 window.archiveAction = function(actionType) {
     if (!window.currentArchiveItem) return;
     const { id, content } = window.currentArchiveItem;
@@ -961,20 +991,24 @@ window.startUniversalMic = async function(mode) {
     rec.onresult = async (e) => {
         window.speechRecognizedText = e.results[0][0].transcript;
 
+        // УМНАЯ ЛОГИКА: Четко определяем язык получателя, как при текстовой отправке
         let targetLang = 'en';
-        // УМНАЯ ЛОГИКА
         if (isConfTab) {
             targetLang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
         } else if (window.currentTargetUser && targetDbRoom !== 'global') {
-            targetLang = window.getSmartLang(window.currentTargetUser); 
+            // Читаем язык напрямую с тумблера профиля собеседника
+            targetLang = (window.currentTargetUser.langCode && window.currentTargetUser.langCode !== 'auto') ? window.currentTargetUser.langCode : window.getSmartLang(window.currentTargetUser); 
         } else {
             targetLang = (manualMicLang !== 'auto') ? manualMicLang : mySpokenLang;
         }
 
         if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = window.speechRecognizedText;
+        
+        let spokenLangCode = rec.lang.substring(0,2);
 
-        if (targetLang.substring(0,2) !== rec.lang.substring(0,2)) {
+        // Переводим только если языки отличаются
+        if (targetLang.substring(0,2) !== spokenLangCode) {
             try {
                 const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang.substring(0,2)}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`);
                 const data = await res.json();
@@ -989,7 +1023,6 @@ window.startUniversalMic = async function(mode) {
         let activeFlagCode = window.myProfileInfo.flagCode || 'un';
         let activeFlag = window.myProfileInfo.flag || '🌐';
 
-        let spokenLangCode = rec.lang.substring(0,2);
         if (manualMicLang !== 'auto') {
             const revLangMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
             if (revLangMap[spokenLangCode]) {
@@ -1002,7 +1035,7 @@ window.startUniversalMic = async function(mode) {
             userId: safeId, name: safeName, text: textToShip || "...", originalText: window.speechRecognizedText || "...",
             sessionId: window.mySessionId || 'sess', timestamp: firebase.database.ServerValue.TIMESTAMP, photo: safePhoto,
             flag: activeFlag, flagCode: activeFlagCode,
-            langCode: targetLang.substring(0,2), 
+            langCode: spokenLangCode, // ИСПРАВЛЕНО: Теперь в базу летит язык отправителя (твой), а не чужой!
             isVoiceRoomMsg: isVoiceTab, isConfMsg: isConfTab
         };
 
@@ -1011,6 +1044,7 @@ window.startUniversalMic = async function(mode) {
     };
     try { rec.start(); } catch(e){}
 };
+
 
 // ==========================================
 // 6. ПОДДЕРЖКА КЛАВИАТУРЫ И ПРОЧИЕ УТИЛИТЫ
@@ -1108,29 +1142,6 @@ window.sendGroupInvites = function() {
     
     if (window.showToast) window.showToast(dict.toast_ok || "Sent", (dict.toast_ok_desc || "Invited:") + " " + selected.length, "", "");
     window.closeGroupInviteModal();
-};
-window.sendGroupInvites = function() {
-    const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
-    if (checkboxes.length === 0) {
-        if (window.showToast) window.showToast("Ошибка", "Выберите пользователей!", "", "");
-        return;
-    }
-    const myId = window.myProfileInfo.id;
-    checkboxes.forEach(cb => {
-        const targetId = cb.value;
-        const roomId = "private_" + [myId, targetId].sort().join('_');
-        firebase.database().ref(roomId).push({
-            userId: myId,
-            name: window.myUsername,
-            text: "🎥 Приглашение в видеоконференцию",
-            isConferenceInvite: true, 
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: window.myProfileInfo.photo,
-            flag: window.myProfileInfo.flag || '🌐'
-        });
-    });
-    if (window.showToast) window.showToast("Успех", "Приглашения разосланы", "", "");
-    if (typeof window.closeGroupInviteModal === 'function') window.closeGroupInviteModal();
 };
 window.sendGroupInvites = function() {
     const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
