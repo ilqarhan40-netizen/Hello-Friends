@@ -251,100 +251,23 @@ window.sendFirebaseMsg = async function() {
     // 1. УМНАЯ ЛОГИКА: Читаем твой выбранный флаг комнаты
     let myActiveLang = window.getLangPref(isVoiceTab, isConfTab) || 'en';
 
-        // БАЗОВЫЕ ДАННЫЕ ПРОФИЛЯ
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
     let safeName = window.myUsername || 'User';
     let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+    
+    let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+    let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
-    let finalSendLang = 'en';
-    let finalFlag = '🌐';
-    let finalFlagCode = 'un';
-    let sourceLangForGoogle = 'auto';
-
-    // 🌍 ГЛОБАЛЬНЫЙ СЛОВАРЬ ЯЗЫКОВ
     const langMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
+    if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
 
-    // =========================================================
-    // 🔀 СТРЕЛОЧНИК: РАЗДЕЛЕНИЕ ПУТЕЙ (СЕКЦИЯ 1 и СЕКЦИЯ 2)
-    // =========================================================
-
-    if (isVoiceTab) {
-        // 🎙️ ПУТЬ 1: СЕКЦИЯ МИКРОФОНА (Ромб)
-        // Берем ID прямо из твоего HTML (строка 832)
-        let micSelect = document.getElementById('plus-mic-lang'); 
-        let pLang = (window.myProfileInfo && window.myProfileInfo.langCode) ? window.myProfileInfo.langCode : 'en';
-        
-        let rawMicLang = (micSelect && micSelect.value !== 'auto') ? micSelect.value : ((pLang !== 'auto') ? pLang : 'en');
-        
-        // Обрезаем 'ru-RU' до 'ru', чтобы словарь нашел правильный флаг
-        finalSendLang = rawMicLang.substring(0, 2).toLowerCase(); 
-        
-        if (langMap[finalSendLang]) {
-            finalFlagCode = langMap[finalSendLang][0];
-            finalFlag = langMap[finalSendLang][1];
-        } else {
-            finalFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
-            finalFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
-        }
-        
-        sourceLangForGoogle = 'auto'; // Google сам слушает и определяет язык голоса
-
-    } else {
-        // ⌨️ ПУТЬ 2: СЕКЦИЯ КЛАВИАТУРА (Аватар)
-        let chatPref = window.getLangPref(false, isConfTab);
-        finalSendLang = (chatPref && chatPref !== 'auto') ? chatPref : 'en';
-        
-        if (langMap[finalSendLang]) { 
-            finalFlagCode = langMap[finalSendLang][0]; 
-            finalFlag = langMap[finalSendLang][1]; 
-        } else {
-            finalFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
-            finalFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
-        }
-        
-        sourceLangForGoogle = finalSendLang.substring(0, 2); 
-    }
-    // =========================================================
-
-    // ОПРЕДЕЛЯЕМ ЯЗЫК ПОЛУЧАТЕЛЯ
-    let targetSendLang = 'en';
-    if (window.currentTargetUser) {
-        targetSendLang = window.currentTargetUser.langCode || window.getSmartLang(window.currentTargetUser) || 'en';
-    }
-
+    // Перевод на твой активный язык (если вдруг пишешь на другом)
     let myBaseText = rawText;
-    let textToShip = rawText;
-
-    // ПЕРЕВОД (Срабатывает на своем пути)
-    if (targetSendLang.substring(0,2) !== finalSendLang.substring(0,2) && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global' && targetDbRoom !== 'private_ai_bot') {
-        try {
-            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLangForGoogle}&tl=${targetSendLang.substring(0,2)}&dt=t&q=${encodeURIComponent(myBaseText)}`);
-            const data2 = await res2.json();
-            if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
-        } catch (e) {}
-    }
-
-    // ОТПРАВКА В БАЗУ СО ВСЕМИ МАРКЕРАМИ
     try {
-        firebase.database().ref(targetDbRoom).push({
-            userId: safeId, 
-            name: safeName, 
-            text: textToShip || "Error", 
-            originalText: myBaseText || "Error",
-            sessionId: window.mySessionId || 'sess', 
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: safePhoto, 
-            flag: finalFlag,            
-            flagCode: finalFlagCode, 
-            langCode: finalSendLang,    
-            isVoiceRoomMsg: isVoiceTab, 
-            isAudioBubble: isVoiceTab,  
-            isConfMsg: isConfTab
-        });
-    } catch(err) {
-        console.error("Ошибка отправки в базу:", err);
-    }
-        
+        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang.substring(0,2)}&dt=t&q=${encodeURIComponent(rawText)}`);
+        const data1 = await res1.json();
+        if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
+    } catch (e) {}
 
     // 2. УМНАЯ ЛОГИКА: Вычисляем язык собеседника напрямую с экрана
     let targetSendLang = myActiveLang;
@@ -481,73 +404,63 @@ window.handleNewMessage = async function(snapshot) {
     let bubbleContent = baseText;
     let bubbleClasses = `chat-bubble`;
 
-        // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ (ИДЕАЛЬНОЕ ЗЕРКАЛО + ПЕРЕВЕРТЫШ) ---
-    // 🔀 СТРЕЛОЧНИК ПРИЕМА: БРОНЕБОЙНАЯ ВЕРСИЯ (Защита от сбоев)
-    
-    if (data.isVoiceRoomMsg || data.isAudioBubble) {
-        // Безопасное извлечение языка
-        var safeMyLang = (typeof myReadLang !== 'undefined') ? myReadLang : 'en';
-        var vPlayLang = isMe ? (data.langCode || safeMyLang) : safeMyLang;
-        vPlayLang = String(vPlayLang || 'en').substring(0,2);
-        
-        var safeFinal = (typeof finalTranslatedText !== 'undefined') ? finalTranslatedText : '';
-        var vTextToPlay = isMe ? (data.text || data.originalText || '') : safeFinal;
-        
-        var vTransHtml = '';
-        if (baseText !== safeFinal) {
-            var vColor = isMe ? 'text-yellow-400' : 'text-[#00a884]';
-            var vPrefix = isMe ? 'Перевод: ' : '';
-            vTransHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] ${vColor} font-bold tracking-wide">➔ ${vPrefix}${safeFinal}</div>`;
-        }
-        
-        bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(vTextToPlay)}', '${vPlayLang}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${baseText}</div>${vTransHtml}</div>`;
-        bubbleClasses = `chat-bubble`; 
-        
-    } else {
-        // ⌨️ СЕКЦИЯ 2: КЛАВИАТУРА
-        if (baseText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
-            var safeFinal2 = (typeof finalTranslatedText !== 'undefined') ? finalTranslatedText : '';
-            if (window.currentRoomId !== 'global' || isHistory) {
-                if (baseText !== safeFinal2) {
-                    if (isMe) {
-                        bubbleContent = `<div class="text-[#e9edef]">${baseText}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${safeFinal2}</div>`;
-                    } else {
-                        bubbleContent = `<div class="text-[#e9edef]">${safeFinal2}</div><div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${baseText}</div>`;
-                    }
+    // --- 3. ОТРИСОВКА ПУЗЫРЯ С ТЕКСТОМ (ИДЕАЛЬНОЕ ЗЕРКАЛО + ПЕРЕВЕРТЫШ) ---
+    if (baseText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
+        if (window.currentRoomId !== 'global' || isHistory) {
+            if (baseText !== finalTranslatedText) {
+                if (isMe) {
+                    bubbleContent = `
+                        <div class="text-[#e9edef]">${baseText}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                            ➔ ${finalTranslatedText}
+                        </div>
+                    `;
                 } else {
-                    bubbleContent = `<div class="text-[#e9edef]">${baseText}</div>`;
+                    bubbleContent = `
+                        <div class="text-[#e9edef]">${finalTranslatedText}</div>
+                        <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">
+                            ➔ ${baseText}
+                        </div>
+                    `;
                 }
             } else {
-                 bubbleContent = `<div class="text-[#e9edef]">${safeFinal2}</div>`;
+                bubbleContent = `<div class="text-[#e9edef]">${baseText}</div>`;
             }
+        } else {
+             bubbleContent = `<div class="text-[#e9edef]">${finalTranslatedText}</div>`;
         }
     }
 
-    // --- ОБРАБОТКА МЕДИА И СПЕЦИАЛЬНЫХ СООБЩЕНИЙ ---
-    if (data.isAIAudio && !data.isVoiceRoomMsg && !data.isAudioBubble) {
-        var safeMyLang3 = (typeof myReadLang !== 'undefined') ? myReadLang : 'en';
-        var aiPlayLang = isMe ? (data.langCode || safeMyLang3) : safeMyLang3;
-        aiPlayLang = String(aiPlayLang || 'en').substring(0,2);
-        
-        var safeFinal3 = (typeof finalTranslatedText !== 'undefined') ? finalTranslatedText : '';
-        var aiTextToPlay = isMe ? (data.text || data.originalText || '') : safeFinal3;
-        
-        var aiTransHtml = '';
-        if (baseText !== safeFinal3) {
-            var aiColor = isMe ? 'text-yellow-400' : 'text-[#00a884]';
-            var aiPrefix = isMe ? 'Перевод: ' : '';
-            aiTransHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] ${aiColor} font-bold tracking-wide">➔ ${aiPrefix}${safeFinal3}</div>`;
+    if (data.isAIAudio) {
+        let playLang = isMe ? (data.langCode || myReadLang) : myReadLang;
+        let textToPlay = isMe ? (data.text || data.originalText) : finalTranslatedText;
+
+        let transHtml = '';
+        if (baseText !== finalTranslatedText) {
+            let colorTrans = isMe ? 'text-yellow-400' : 'text-[#00a884]';
+            let prefixTrans = isMe ? 'Перевод: ' : '';
+            transHtml = `<div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] ${colorTrans} font-bold tracking-wide">➔ ${prefixTrans}${finalTranslatedText}</div>`;
         }
-        bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(aiTextToPlay)}', '${aiPlayLang}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${baseText}</div>${aiTransHtml}</div>`;
+
+        bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${encodeURIComponent(textToPlay)}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${baseText}</div>${transHtml}</div>`;
     }
     else if (data.mediaUrl) {
-        var fName = data.text ? data.text.replace('📄 Документ: ', '').replace('🖼️ Photo', 'Файл').replace('📹 Video', 'Видео') : 'Файл';
-        if (data.mediaType === 'video' || String(data.mediaUrl).startsWith('data:video/')) {
+        let fileName = data.text ? data.text.replace('📄 Документ: ', '').replace('🖼️ Photo', 'Файл').replace('📹 Video', 'Видео') : 'Файл';
+        if (data.mediaType === 'video' || data.mediaUrl.startsWith('data:video/')) {
             bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
-        } else if (data.mediaType === 'audio' || String(data.mediaUrl).startsWith('data:audio/')) {
+        } else if (data.mediaType === 'audio' || data.mediaUrl.startsWith('data:audio/')) {
             bubbleContent = `<audio src="${data.mediaUrl}" controls class="w-[200px] sm:w-[250px] mt-1 outline-none"></audio>`;
-        } else if (data.mediaType === 'document' || String(data.mediaUrl).startsWith('data:application/') || String(data.mediaUrl).startsWith('data:text/')) {
-            bubbleContent = `<div class="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg border border-[#2a3942] mt-1 min-w-[200px]"><div class="w-10 h-10 rounded-full bg-[#202c33] flex items-center justify-center text-blue-400 shrink-0"><i class="fa-solid fa-file-arrow-down text-xl"></i></div><div class="flex flex-col overflow-hidden"><span class="text-white text-sm font-bold truncate max-w-[140px]">${fName}</span><a href="${data.mediaUrl}" download="${fName}" class="text-[0.7rem] text-[#00a884] font-bold mt-1 uppercase tracking-wide hover:text-white transition">Скачать</a></div></div>`;
+        } else if (data.mediaType === 'document' || data.mediaUrl.startsWith('data:application/') || data.mediaUrl.startsWith('data:text/')) {
+            bubbleContent = `
+                <div class="flex items-center gap-3 bg-[#111b21] p-3 rounded-lg border border-[#2a3942] mt-1 min-w-[200px]">
+                    <div class="w-10 h-10 rounded-full bg-[#202c33] flex items-center justify-center text-blue-400 shrink-0">
+                        <i class="fa-solid fa-file-arrow-down text-xl"></i>
+                    </div>
+                    <div class="flex flex-col overflow-hidden">
+                        <span class="text-white text-sm font-bold truncate max-w-[140px]">${fileName}</span>
+                        <a href="${data.mediaUrl}" download="${fileName}" class="text-[0.7rem] text-[#00a884] font-bold mt-1 uppercase tracking-wide hover:text-white transition">Скачать</a>
+                    </div>
+                </div>`;
         } else {
             bubbleContent = `<img src="${data.mediaUrl}" class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 cursor-pointer border border-[#2a3942] hover:opacity-90 transition" onclick="window.openFullscreenImage(this.src)">`;
         }
@@ -555,8 +468,7 @@ window.handleNewMessage = async function(snapshot) {
     }
     else if (data.isTransfer) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
-        var safeTrans = data.transferTypeLabel || 'Transfer';
-        bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${safeTrans}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; 
+        bubbleContent = `<div class="flex flex-col items-center p-4 min-w-[200px]"><div class="w-12 h-12 rounded-full bg-[#00a884] flex items-center justify-center text-[#111b21] mb-2 shadow-lg"><i class="fa-solid fa-check text-2xl"></i></div><span class="text-[0.7rem] text-[#00a884] font-bold uppercase tracking-widest mb-1 text-center">${data.transferTypeLabel || 'Transfer'}</span><span class="text-2xl font-bold text-white mb-1">$${data.amount}</span><div class="w-full h-[1px] bg-[#2a3942] mb-2"></div><span class="text-xs text-[#8696a0]">To: <span class="text-white font-bold">${data.recName}</span></span></div>`; 
     }
     else if (data.isLocation) { 
         bubbleClasses = `chat-bubble !bg-[#0b141a] border border-[#00a884] shadow-[0_0_15px_rgba(0,168,132,0.3)] !p-0 overflow-hidden`; 
@@ -572,20 +484,6 @@ window.handleNewMessage = async function(snapshot) {
             if(chatMessages) { chatMessages.appendChild(messageGroup); chatMessages.scrollTop = chatMessages.scrollHeight; }
         }
     }
-
-    // ВОТ ТОТ БЛОК, КОТОРЫЙ Я ПОТЕРЯЛ: Отрисовка бегущей строки поверх видео
-    if (data.isConfMsg || data.isVoiceRoomMsg) {
-        if (isMe) {
-            let marq = document.getElementById('speaker-marquee');
-            if (marq) marq.innerHTML = `<span class="bg-[#00a884] text-white px-3 py-1 rounded-full mr-3 border-2 border-white/20 shadow-lg">${data.flag}</span> ${baseText} <span class="text-white/70 mx-3 opacity-50">||</span> <span class="text-yellow-300 font-bold">${finalTranslatedText}</span>`;
-        } else {
-            let lMarq = document.getElementById('conf-listener-marquee');
-            if (lMarq) lMarq.innerHTML = `<span class="bg-[#00a884] text-white px-3 py-1 rounded-full mr-3 border-2 border-white/20 shadow-lg">${data.flag}</span> ${baseText} <span class="text-white/70 mx-3 opacity-50">||</span> <span class="text-yellow-300 font-bold">${finalTranslatedText}</span>`;
-            if (window.playSafeSound) window.playSafeSound(window.sndMsg);
-        }
-    }
-
-    
     
     // --- 4. БЕГУЩАЯ СТРОКА (ТОЧНЫЕ ФЛАГИ) ---
     if (window.currentRoomId !== 'global' && window.currentTargetUser && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isAIAudio && !data.isVoiceRoomMsg && !data.isConfMsg) {
