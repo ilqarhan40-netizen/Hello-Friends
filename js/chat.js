@@ -251,23 +251,100 @@ window.sendFirebaseMsg = async function() {
     // 1. УМНАЯ ЛОГИКА: Читаем твой выбранный флаг комнаты
     let myActiveLang = window.getLangPref(isVoiceTab, isConfTab) || 'en';
 
+        // БАЗОВЫЕ ДАННЫЕ ПРОФИЛЯ
     let safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
     let safeName = window.myUsername || 'User';
     let safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
-    
-    let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
-    let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
+    let finalSendLang = 'en';
+    let finalFlag = '🌐';
+    let finalFlagCode = 'un';
+    let sourceLangForGoogle = 'auto';
+
+    // 🌍 ГЛОБАЛЬНЫЙ СЛОВАРЬ ЯЗЫКОВ
     const langMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
-    if (langMap[myActiveLang]) { activeFlagCode = langMap[myActiveLang][0]; activeFlag = langMap[myActiveLang][1]; }
 
-    // Перевод на твой активный язык (если вдруг пишешь на другом)
+    // =========================================================
+    // 🔀 СТРЕЛОЧНИК: РАЗДЕЛЕНИЕ ПУТЕЙ (СЕКЦИЯ 1 и СЕКЦИЯ 2)
+    // =========================================================
+
+    if (isVoiceTab) {
+        // 🎙️ ПУТЬ 1: СЕКЦИЯ МИКРОФОНА (Ромб)
+        // Берем ID прямо из твоего HTML (строка 832)
+        let micSelect = document.getElementById('plus-mic-lang'); 
+        let pLang = (window.myProfileInfo && window.myProfileInfo.langCode) ? window.myProfileInfo.langCode : 'en';
+        
+        let rawMicLang = (micSelect && micSelect.value !== 'auto') ? micSelect.value : ((pLang !== 'auto') ? pLang : 'en');
+        
+        // Обрезаем 'ru-RU' до 'ru', чтобы словарь нашел правильный флаг
+        finalSendLang = rawMicLang.substring(0, 2).toLowerCase(); 
+        
+        if (langMap[finalSendLang]) {
+            finalFlagCode = langMap[finalSendLang][0];
+            finalFlag = langMap[finalSendLang][1];
+        } else {
+            finalFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+            finalFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+        }
+        
+        sourceLangForGoogle = 'auto'; // Google сам слушает и определяет язык голоса
+
+    } else {
+        // ⌨️ ПУТЬ 2: СЕКЦИЯ КЛАВИАТУРА (Аватар)
+        let chatPref = window.getLangPref(false, isConfTab);
+        finalSendLang = (chatPref && chatPref !== 'auto') ? chatPref : 'en';
+        
+        if (langMap[finalSendLang]) { 
+            finalFlagCode = langMap[finalSendLang][0]; 
+            finalFlag = langMap[finalSendLang][1]; 
+        } else {
+            finalFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+            finalFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+        }
+        
+        sourceLangForGoogle = finalSendLang.substring(0, 2); 
+    }
+    // =========================================================
+
+    // ОПРЕДЕЛЯЕМ ЯЗЫК ПОЛУЧАТЕЛЯ
+    let targetSendLang = 'en';
+    if (window.currentTargetUser) {
+        targetSendLang = window.currentTargetUser.langCode || window.getSmartLang(window.currentTargetUser) || 'en';
+    }
+
     let myBaseText = rawText;
+    let textToShip = rawText;
+
+    // ПЕРЕВОД (Срабатывает на своем пути)
+    if (targetSendLang.substring(0,2) !== finalSendLang.substring(0,2) && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global' && targetDbRoom !== 'private_ai_bot') {
+        try {
+            const res2 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLangForGoogle}&tl=${targetSendLang.substring(0,2)}&dt=t&q=${encodeURIComponent(myBaseText)}`);
+            const data2 = await res2.json();
+            if (data2 && data2[0] && data2[0][0][0]) textToShip = data2[0][0][0];
+        } catch (e) {}
+    }
+
+    // ОТПРАВКА В БАЗУ СО ВСЕМИ МАРКЕРАМИ
     try {
-        const res1 = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang.substring(0,2)}&dt=t&q=${encodeURIComponent(rawText)}`);
-        const data1 = await res1.json();
-        if (data1 && data1[0] && data1[0][0][0]) myBaseText = data1[0][0][0];
-    } catch (e) {}
+        firebase.database().ref(targetDbRoom).push({
+            userId: safeId, 
+            name: safeName, 
+            text: textToShip || "Error", 
+            originalText: myBaseText || "Error",
+            sessionId: window.mySessionId || 'sess', 
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: safePhoto, 
+            flag: finalFlag,            
+            flagCode: finalFlagCode, 
+            langCode: finalSendLang,    
+            isVoiceRoomMsg: isVoiceTab, 
+            isAudioBubble: isVoiceTab,  
+            isConfMsg: isConfTab
+        });
+    } catch(err) {
+        console.error("Ошибка отправки в базу:", err);
+    }
+        
 
     // 2. УМНАЯ ЛОГИКА: Вычисляем язык собеседника напрямую с экрана
     let targetSendLang = myActiveLang;
