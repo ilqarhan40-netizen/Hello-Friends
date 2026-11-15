@@ -485,14 +485,7 @@ window.openViewCVModal = function(id) {
     }
     
     const contentBox = document.getElementById('cv-view-content');
-    if (contentBox) contentBox.innerHTML = cvContent;
 
-    const actionButtons = document.getElementById('cv-action-buttons');
-    if (actionButtons) {
-        if (id === 'me') {
-            actionButtons.innerHTML = `
-            <button onclick="window.closeViewCVModal(); window.openEditCV();" 
-// --- ПРОСМОТР CV ---
 window.closeViewCVModal = function() { document.getElementById('view-cv-modal')?.classList.remove('active'); };
 
 window.openViewCVModal = function(id) {
