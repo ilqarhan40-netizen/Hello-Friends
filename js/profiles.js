@@ -492,7 +492,116 @@ window.openViewCVModal = function(id) {
         if (id === 'me') {
             actionButtons.innerHTML = `
             <button onclick="window.closeViewCVModal(); window.openEditCV();" 
-                    class="w-full py-3.5 rounded-2xl bg-[#a29bfe] text-[#111b21] font-bold text-[0.85rem] flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition mt-2">
+// --- ПРОСМОТР CV ---
+window.closeViewCVModal = function() { document.getElementById('view-cv-modal')?.classList.remove('active'); };
+
+window.openViewCVModal = function(id) {
+    if (window.closeDropdown) window.closeDropdown(); 
+    let p = id === 'me' ? window.myProfileInfo : (window.participants || []).find(part => part && String(part.id) === String(id)); 
+    if (!p) return;
+
+    let defaultPhoto = p.flag === '🤖' ? 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff' : 'https://ui-avatars.com/api/?name=U&background=202c33&color=fff';
+    let photoEl = document.getElementById('cv-view-img');
+    if (photoEl) photoEl.src = p.photo ? p.photo : defaultPhoto;
+
+    let nameEl = document.getElementById('cv-view-name');
+    let profEl = document.getElementById('cv-view-prof');
+
+    if (nameEl && profEl) {
+        let parent = nameEl.parentNode;
+        let wrapper = document.getElementById('cv-header-main-box');
+        
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.id = 'cv-header-main-box';
+            wrapper.className = 'flex flex-col gap-1.5 w-full overflow-hidden'; 
+            parent.insertBefore(wrapper, nameEl);
+            
+            let row1 = document.createElement('div');
+            row1.className = 'flex items-center gap-3 flex-nowrap w-full';
+            row1.appendChild(nameEl);
+            row1.appendChild(profEl);
+            wrapper.appendChild(row1);
+        }
+        
+        nameEl.innerText = (p.name||'User').split(' ')[0];
+        nameEl.className = 'text-gray-900 dark:text-white font-bold text-lg whitespace-nowrap shrink-0'; 
+        
+        profEl.innerText = p.cvProfession || p.profession || '—';
+        profEl.className = 'text-gray-500 dark:text-[#8696a0] text-xs font-medium truncate italic opacity-90';
+    }
+
+    let displayPhone = p.cvPhone || p.phone || '—';
+    let displayEmail = p.cvEmail || p.email || '—';
+    let displayLoc = p.cvCountryName || p.country || 'Global';
+    let displayFlag = p.cvCountryCode || p.flagCode || 'un';
+
+    let oldLoc = document.getElementById('cv-dynamic-loc');
+    if (oldLoc) oldLoc.remove();
+    
+    let mainWrapper = document.getElementById('cv-header-main-box');
+    if (mainWrapper) {
+        let locHtml = document.createElement('div');
+        locHtml.id = 'cv-dynamic-loc';
+        locHtml.className = 'flex items-center gap-1.5 bg-gray-100 dark:bg-[#202c33] border border-gray-200 dark:border-[#2a3942] rounded-full px-2.5 py-0.5 w-max shadow-sm mt-0.5';
+        locHtml.innerHTML = `<i class="fa-solid fa-location-dot text-red-400 text-[0.6rem]"></i><img src="https://flagcdn.com/w20/${displayFlag}.png" class="w-3.5 rounded-sm object-cover"><span class="text-gray-700 dark:text-[#e9edef] text-[0.65rem] font-bold">${displayLoc}</span>`;
+        mainWrapper.appendChild(locHtml);
+    }
+
+    let phoneAction = (id !== 'me' && displayPhone !== '—') 
+        ? `<span class="text-[#00a884] text-[0.75rem] font-mono font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); window.currentTargetUser = (window.participants||[]).find(x=>x&&String(x.id)==='${p.id}'); if(document.getElementById('phone-choice-modal')) document.getElementById('phone-choice-modal').classList.add('active');"><i class="fa-solid fa-phone-volume mr-1"></i>${displayPhone}</span>`
+        : `<span class="text-gray-900 dark:text-white text-[0.75rem] font-mono truncate">${displayPhone}</span>`;
+
+    // ИСПОЛЬЗУЕМ shrink-0 ДЛЯ ВСЕХ БЛОКОВ, ЧТОБЫ ОНИ НЕ СПЛЮЩИВАЛИСЬ
+    let cvContent = `
+    <div class="grid grid-cols-2 gap-3 mb-3 mt-2 shrink-0">
+        <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
+            <div class="flex items-center gap-2 mb-1.5">
+                <div class="w-6 h-6 rounded-full bg-white dark:bg-[#111b21] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#2a3942]"><i class="fa-solid fa-phone text-[#00a884] text-[0.6rem]"></i></div>
+                <span class="text-[0.6rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold truncate" data-i18n="business_phone">Business Phone</span>
+            </div>
+            ${phoneAction}
+        </div>
+        <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] flex flex-col justify-center overflow-hidden shadow-sm">
+            <span class="text-[0.65rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="languages_spoken">Languages</span>
+            <span class="text-gray-900 dark:text-white text-sm font-bold whitespace-nowrap block truncate">${p.cvLanguages || p.profileLangs || '—'}</span>
+        </div>
+    </div>
+    
+    <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 flex flex-col shadow-sm shrink-0 min-h-min">
+        <div class="flex items-center gap-2 mb-1.5">
+            <div class="w-6 h-6 rounded-full bg-white dark:bg-[#111b21] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
+            <span class="text-[0.6rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold" data-i18n="business_email">Business Email</span>
+        </div>
+        <div class="text-gray-900 dark:text-white text-[0.8rem] break-all whitespace-pre-wrap mt-1 leading-tight">${displayEmail}</div>
+    </div>`;
+
+    if (p.cvSkills) cvContent += `<div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 shrink-0"><span class="text-[0.65rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="core_skills">Core Skills</span><div class="text-gray-900 dark:text-white text-sm font-bold truncate">${p.cvSkills}</div></div>`;
+    
+    if (p.cvExperience) cvContent += `<div class="bg-gray-100 dark:bg-[#202c33] p-4 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 shrink-0"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-1" data-i18n="work_exp">Work Experience</span><div class="text-[0.8rem] text-gray-800 dark:text-[#e9edef] whitespace-pre-wrap break-words">${p.cvExperience}</div></div>`;
+    
+    if (p.cvEducation) cvContent += `<div class="bg-gray-100 dark:bg-[#202c33] p-4 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 shrink-0"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="education">Education</span><div class="leading-relaxed text-[0.85rem] text-gray-800 dark:text-[#e9edef] whitespace-pre-wrap break-words">${p.cvEducation}</div></div>`;
+    
+    if (p.cvDesc) cvContent += `<div class="bg-gray-100 dark:bg-[#202c33] p-4 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 shrink-0"><span class="text-[#a29bfe] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="about_cv">About Me (CV)</span><div class="leading-relaxed text-[0.85rem] text-gray-800 dark:text-[#e9edef] whitespace-pre-wrap break-words">${p.cvDesc}</div></div>`;
+    
+    if (!p.cvLanguages && !p.cvSkills && !p.cvExperience && !p.cvEducation && !p.cvDesc && !p.cvPhone && !p.cvEmail) {
+        cvContent = `<p class="text-center text-gray-500 dark:text-[#8696a0] mt-4 text-sm shrink-0" data-i18n="cv_empty">This user hasn't filled out their CV yet.</p>`;
+    }
+    
+    const contentBox = document.getElementById('cv-view-content');
+    if (contentBox) {
+        contentBox.innerHTML = cvContent;
+        // КРИТИЧНОЕ ИСПРАВЛЕНИЕ: принудительно даем контейнеру возможность скроллиться и не сжимать контент
+        contentBox.classList.add('overflow-y-auto', 'flex', 'flex-col');
+        contentBox.style.paddingBottom = "10px";
+    }
+
+    const actionButtons = document.getElementById('cv-action-buttons');
+    if (actionButtons) {
+        if (id === 'me') {
+            actionButtons.innerHTML = `
+            <button onclick="window.closeViewCVModal(); window.openEditCV();" 
+                    class="w-full py-3.5 rounded-2xl bg-[#a29bfe] text-[#111b21] font-bold text-[0.85rem] flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition mt-2 shrink-0">
                 <i class="fa-solid fa-file-signature text-lg"></i> <span data-i18n="edit_my_cv">Edit My CV</span>
             </button>`;
         } else {
@@ -500,7 +609,7 @@ window.openViewCVModal = function(id) {
             let mailAction = displayEmail !== '—' ? `if(window.openDirectEmail) window.openDirectEmail('${displayEmail}'); else window.location.href='mailto:${displayEmail}';` : "if(window.showToast) window.showToast('Error', 'User has no business email', '', '');";
 
             actionButtons.innerHTML = `
-            <div class="flex w-full gap-3 mt-4">
+            <div class="flex w-full gap-3 mt-4 shrink-0">
                 <button onclick="window.closeViewCVModal(); window.switchTab(0); window.switchChatRoom('${p.id}');" 
                         class="flex-1 py-3.5 rounded-2xl bg-[#00a884] text-white font-bold text-[0.7rem] flex flex-col items-center justify-center gap-1.5 shadow-md active:scale-95 transition">
                     <i class="fa-solid fa-comment text-xl"></i> <span data-i18n="chat">CHAT</span>
@@ -520,6 +629,7 @@ window.openViewCVModal = function(id) {
     if (window.applyTranslations) window.applyTranslations();
     document.getElementById('view-cv-modal')?.classList.add('active');
 };
+    
 
 // --- ОТРИСОВКА ВКЛАДКИ "GLOBAL TALENTS" (БЕЗ ФЕЙКОВ) ---
 window.renderProfessionList = function() { 
