@@ -464,13 +464,14 @@ window.openViewCVModal = function(id) {
             <span class="text-gray-900 dark:text-white text-sm font-bold whitespace-nowrap block truncate">${p.cvLanguages || p.profileLangs || '—'}</span>
         </div>
     </div>
-    <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 overflow-hidden">
+    <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 h-auto flex flex-col overflow-hidden shadow-sm">
         <div class="flex items-center gap-2 mb-1.5">
             <div class="w-6 h-6 rounded-full bg-white dark:bg-[#111b21] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
             <span class="text-[0.6rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Business Email</span>
         </div>
-        <span class="block text-gray-900 dark:text-white text-[0.8rem] truncate mt-1">${displayEmail}</span>
+        <span class="block text-gray-900 dark:text-white text-[0.8rem] break-all whitespace-pre-wrap mt-1">${displayEmail}</span>
     </div>`;
+
 
     
     
