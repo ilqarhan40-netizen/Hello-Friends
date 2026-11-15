@@ -410,44 +410,55 @@ window.toggleMyAudio = async function() {
     if (!icons.length) return;
     let isOn = icons[0].classList.contains('fa-microphone');
 
-    if (isOn) {
-        // Физически отключаем захват звука
-        if (window.localAudioTrack) {
-            await window.localAudioTrack.setEnabled(false);
-        }
-        icons.forEach(i => { i.classList.replace('fa-microphone', 'fa-microphone-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
-    } else {
-        // Включаем захват звука
-        if (!window.localAudioTrack) {
+    try {
+        if (isOn) {
+            // Полное отключение аудио
+            if (window.localAudioTrack) {
+                if (window.agoraClient) await window.agoraClient.unpublish(window.localAudioTrack);
+                window.localAudioTrack.close();
+                window.localAudioTrack = null;
+            }
+            icons.forEach(i => { i.classList.replace('fa-microphone', 'fa-microphone-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
+        } else {
+            // Включаем аудио заново
             window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
             if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
-        } else {
-            await window.localAudioTrack.setEnabled(true);
+            
+            icons.forEach(i => { i.classList.replace('fa-microphone-slash', 'fa-microphone'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
         }
-        icons.forEach(i => { i.classList.replace('fa-microphone-slash', 'fa-microphone'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
+    } catch (error) {
+        console.error("Audio error:", error);
     }
 };
 
 
-window.toggleMyAudio = async function() {
-    let icons = document.querySelectorAll('#icon-my-mic');
+window.toggleMyCamera = async function() {
+    let icons = document.querySelectorAll('#icon-my-cam');
     if (!icons.length) return;
-    let isOn = icons[0].classList.contains('fa-microphone');
+    let isOn = icons[0].classList.contains('fa-video');
 
-    if (isOn) {
-        // Физически отключаем захват звука
-        if (window.localAudioTrack) {
-            await window.localAudioTrack.setEnabled(false);
-        }
-        icons.forEach(i => { i.classList.replace('fa-microphone', 'fa-microphone-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
-    } else {
-        // Включаем захват звука
-        if (!window.localAudioTrack) {
-            window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-            if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
+    try {
+        if (isOn) {
+            // Полное отключение: удаляем трек, собеседник увидит черный экран, а не зависший кадр
+            if (window.localVideoTrack) {
+                if (window.agoraClient) await window.agoraClient.unpublish(window.localVideoTrack);
+                window.localVideoTrack.close();
+                window.localVideoTrack = null;
+            }
+            icons.forEach(i => { i.classList.replace('fa-video', 'fa-video-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
         } else {
-            await window.localAudioTrack.setEnabled(true);
+            // Включаем: запрашиваем камеру заново
+            window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+            if (window.agoraClient) await window.agoraClient.publish(window.localVideoTrack);
+            
+            let v = document.getElementById('direct-local-video') || document.getElementById('my-live-video');
+            if (v) { 
+                v.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]); 
+                v.play().catch(()=>{}); 
+            }
+            icons.forEach(i => { i.classList.replace('fa-video-slash', 'fa-video'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
         }
-        icons.forEach(i => { i.classList.replace('fa-microphone-slash', 'fa-microphone'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
+    } catch (error) {
+        console.error("Camera error:", error);
     }
 };
