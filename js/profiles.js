@@ -450,7 +450,7 @@ window.openViewCVModal = function(id) {
         ? `<span class="text-[#00a884] text-[0.75rem] font-mono font-bold truncate cursor-pointer hover:underline" onclick="window.closeViewCVModal(); window.currentTargetUser = (window.participants||[]).find(x=>x&&String(x.id)==='${p.id}'); if(document.getElementById('phone-choice-modal')) document.getElementById('phone-choice-modal').classList.add('active');"><i class="fa-solid fa-phone-volume mr-1"></i>${displayPhone}</span>`
         : `<span class="text-gray-900 dark:text-white text-[0.75rem] font-mono truncate">${displayPhone}</span>`;
 
-    let cvContent = `
+        let cvContent = `
     <div class="grid grid-cols-2 gap-3 mb-3 mt-2">
         <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
             <div class="flex items-center gap-2 mb-1.5">
@@ -459,19 +459,19 @@ window.openViewCVModal = function(id) {
             </div>
             ${phoneAction}
         </div>
-        <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] flex flex-col overflow-hidden shadow-sm">
-            <div class="flex items-center gap-2 mb-1.5">
-                <div class="w-6 h-6 rounded-full bg-white dark:bg-[#111b21] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
-                <span class="text-[0.6rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Business Email</span>
-            </div>
-            <span class="text-gray-900 dark:text-white text-[0.7rem] truncate">${displayEmail}</span>
+        <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] flex flex-col justify-center overflow-hidden shadow-sm">
+            <span class="text-[0.65rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="languages_spoken">Languages</span>
+            <span class="text-gray-900 dark:text-white text-sm font-bold whitespace-nowrap block truncate">${p.cvLanguages || p.profileLangs || '—'}</span>
         </div>
     </div>
     <div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 overflow-hidden">
-        <span class="text-[0.65rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="languages_spoken">Languages</span>
-        <span class="text-gray-900 dark:text-white text-sm font-bold whitespace-nowrap block truncate">${p.cvLanguages || p.profileLangs || '—'}</span>
+        <div class="flex items-center gap-2 mb-1.5">
+            <div class="w-6 h-6 rounded-full bg-white dark:bg-[#111b21] flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#2a3942]"><i class="fa-solid fa-envelope text-blue-400 text-[0.6rem]"></i></div>
+            <span class="text-[0.6rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold truncate" data-i18n="business_email">Business Email</span>
+        </div>
+        <span class="text-gray-900 dark:text-white text-[0.7rem] truncate">${displayEmail}</span>
     </div>`;
-
+    
     if (p.cvSkills) cvContent += `<div class="bg-gray-100 dark:bg-[#202c33] p-3 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3 overflow-hidden"><span class="text-[0.65rem] text-gray-500 dark:text-[#8696a0] uppercase font-bold mb-1 block" data-i18n="core_skills">Core Skills</span><span class="text-gray-900 dark:text-white text-sm font-bold truncate">${p.cvSkills}</span></div>`;
     if (p.cvExperience) cvContent += `<div class="bg-gray-100 dark:bg-[#202c33] p-4 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-1" data-i18n="work_exp">Work Experience</span><p class="text-[0.8rem] text-gray-800 dark:text-[#e9edef] whitespace-pre-wrap">${p.cvExperience}</p></div>`;
     if (p.cvEducation) cvContent += `<div class="bg-gray-100 dark:bg-[#202c33] p-4 rounded-2xl border border-transparent dark:border-[#2a3942] mb-3"><span class="text-[#00a884] text-[0.7rem] font-bold uppercase block mb-2" data-i18n="education">Education</span><p class="leading-relaxed text-[0.85rem] text-gray-800 dark:text-[#e9edef] whitespace-pre-wrap">${p.cvEducation}</p></div>`;
