@@ -13,7 +13,8 @@ window.localAudioTrack = null;
 window.localVideoTrack = null;
 
 const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
-const AGORA_TEMP_TOKEN = "007eJxTYFh9PlrtyxLPiFkBIY+vX/O+FcUoLyP96c4x8dD895zp81YrMFgaGqcZGieaJVkYGpikGJskGRibWZomJqckG6SYWyaZ3y74mdUQyMjgy1/CwMTACIYgPitDRmpOTj4DVBAkxMJgaGBgCACP7CGV";
+const AGORA_TEMP_TOKEN = "007eJxTYKhLz84wENdb17k5adfnB2qfDHj8BDlFHWvDfqanL9urvFSBwdLQOM3QONEsycLQwCTF2CTJwNjM0jQxOSXZIMXcMsmc+dmvrIZARobzgVKsTAyMYAjiszJkpObk5DMwMMGFWBgMDQwMAbXbH5E=";
+
 
 
     
