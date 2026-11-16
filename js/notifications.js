@@ -33,26 +33,29 @@ const notifyHtml = `
 </div>
 
 <!-- УВЕДОМЛЕНИЕ: НОВАЯ ПОЧТА (EMAIL) -->
-<div id="notify-new-mail" style="display: none;" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] w-[92%] max-w-sm bg-[#111b21] border border-blue-400 rounded-2xl shadow-2xl p-4 flex-col gap-3 pointer-events-auto relative">
-    <button onclick="document.getElementById('notify-new-mail').style.display='none'" class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-[#8696a0] hover:text-white hover:bg-[#202c33] rounded-full transition">
-        <i class="fa-solid fa-xmark text-lg"></i>
-    </button>
-    <div class="flex items-center gap-3 pr-8">
-        <div class="w-11 h-11 rounded-full bg-[#202c33] text-blue-400 flex items-center justify-center shrink-0 border border-blue-400/40">
+<div id="notify-new-mail" style="display: none;" class="fixed top-4 left-0 right-0 mx-auto z-[9999] w-[92%] max-w-sm bg-[#111b21] border border-blue-500 rounded-2xl shadow-2xl p-3 flex-col gap-3 pointer-events-auto">
+    <div class="flex items-center gap-3">
+        <!-- Иконка слева (как аватарка в видеозвонке) -->
+        <div class="w-11 h-11 rounded-full bg-[#202c33] text-blue-500 flex items-center justify-center border border-blue-500/50 shrink-0">
             <i class="fa-solid fa-envelope text-lg"></i>
         </div>
-        <div class="flex-grow overflow-hidden">
-            <h4 id="notify-mail-from" class="text-white font-bold text-sm truncate">New Email</h4>
-            <p id="notify-mail-subj" class="text-[#8696a0] text-xs truncate">You have a new message</p>
+        <!-- Текст -->
+        <div class="flex-grow overflow-hidden text-left">
+            <h4 id="notify-mail-from" class="text-white font-bold text-sm truncate">От: Den</h4>
+            <p id="notify-mail-subj" class="text-[#8696a0] text-xs truncate">У вас новое сообщение</p>
         </div>
     </div>
-    <div class="flex mt-1">
-        <button id="notify-mail-btn" onclick="document.getElementById('notify-new-mail').style.display='none'; window.switchTab(5); if(window.switchArchiveTab) window.switchArchiveTab('mail');" class="w-full py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm transition shadow-lg">
-            Перейти в архив
+    <!-- Две кнопки снизу (как на 3-м фото) -->
+    <div class="flex gap-2 mt-1">
+        <button onclick="document.getElementById('notify-new-mail').style.display='none'" class="flex-1 py-2 rounded-xl bg-[#202c33] text-[#8696a0] hover:text-white font-bold text-xs transition">
+            Закрыть
+        </button>
+        <button id="notify-mail-btn" onclick="document.getElementById('notify-new-mail').style.display='none'; window.switchTab(5); if(window.switchArchiveTab) window.switchArchiveTab('mail');" class="flex-1 py-2 rounded-xl bg-blue-500 text-white font-bold text-xs transition">
+            В архив
         </button>
     </div>
 </div>
-`;
+
 
 function injectNotifications() {
     if (document.body && !document.getElementById('notify-video-call')) {
