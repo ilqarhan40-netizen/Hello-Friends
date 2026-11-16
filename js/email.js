@@ -52,10 +52,9 @@ window.sendEmailForm = function(e) {
         from_name: window.myUsername || "User"
     };
     
-    // ИСПРАВЛЕННЫЙ КЛЮЧ (с нулем на конце)
     emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScx0").then(function() {
         
-                // === СИГНАЛ В FIREBASE ДЛЯ УВЕДОМЛЕНИЙ ===
+        // === СИГНАЛ В FIREBASE ДЛЯ УВЕДОМЛЕНИЙ ===
         try {
             const database = (typeof db !== 'undefined') ? db : firebase.database();
             database.ref('users').orderByChild('email').equalTo(to).once('value', snapshot => {
@@ -63,7 +62,6 @@ window.sendEmailForm = function(e) {
                     snapshot.forEach(childSnap => {
                         const receiverId = childSnap.key;
                         
-                        // 1. Сохраняем письмо в историю
                         database.ref('emails/' + receiverId).push({
                             from: window.myUsername || "User",
                             subject: subj,
@@ -71,7 +69,6 @@ window.sendEmailForm = function(e) {
                             timestamp: firebase.database.ServerValue.TIMESTAMP
                         });
                         
-                        // 2. Бросаем одноразовую метку для Toast-уведомления
                         database.ref('notifications/' + receiverId).push({
                             type: 'email',
                             from: window.myUsername || "User",
@@ -97,7 +94,6 @@ window.sendEmailForm = function(e) {
             console.log("Firebase push error:", err);
         }
         // === КОНЕЦ ===
-        
 
         btn.classList.remove('animate-pulse'); 
         btn.innerText = dict['email_success'] || 'Success! ✔️'; 
