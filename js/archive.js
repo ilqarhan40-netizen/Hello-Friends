@@ -305,3 +305,13 @@ function connectMailListener() {
 // Запускаем слушатель с задержкой, чтобы профиль юзера успел загрузиться
 setTimeout(connectMailListener, 2000);
         
+window.closeArchiveAndGoToChat = function() {
+    const archiveScreen = document.getElementById('archive') || document.getElementById('cloud-storage-screen');
+    if (archiveScreen) {
+        archiveScreen.classList.add('hidden');
+        archiveScreen.style.display = 'none';
+    }
+    if (typeof window.switchTab === 'function') {
+        window.switchTab(1); 
+    }
+};
