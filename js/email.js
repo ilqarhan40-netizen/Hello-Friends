@@ -55,17 +55,26 @@ window.sendEmailForm = function(e) {
     // ИСПРАВЛЕННЫЙ КЛЮЧ (с нулем на конце)
     emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScx0").then(function() {
         
-        // === СИГНАЛ В FIREBASE ДЛЯ УВЕДОМЛЕНИЙ ===
+                // === СИГНАЛ В FIREBASE ДЛЯ УВЕДОМЛЕНИЙ ===
         try {
             const database = (typeof db !== 'undefined') ? db : firebase.database();
             database.ref('users').orderByChild('email').equalTo(to).once('value', snapshot => {
                 if (snapshot.exists()) {
                     snapshot.forEach(childSnap => {
                         const receiverId = childSnap.key;
+                        
+                        // 1. Сохраняем письмо в историю
                         database.ref('emails/' + receiverId).push({
                             from: window.myUsername || "User",
                             subject: subj,
                             text: text,
+                            timestamp: firebase.database.ServerValue.TIMESTAMP
+                        });
+                        
+                        // 2. Бросаем одноразовую метку для Toast-уведомления
+                        database.ref('notifications/' + receiverId).push({
+                            type: 'email',
+                            from: window.myUsername || "User",
                             timestamp: firebase.database.ServerValue.TIMESTAMP
                         });
                     });
@@ -77,12 +86,18 @@ window.sendEmailForm = function(e) {
                         text: text,
                         timestamp: firebase.database.ServerValue.TIMESTAMP
                     });
+                    database.ref('notifications/' + safeId).push({
+                        type: 'email',
+                        from: window.myUsername || "User",
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
                 }
             });
         } catch (err) {
             console.log("Firebase push error:", err);
         }
         // === КОНЕЦ ===
+        
 
         btn.classList.remove('animate-pulse'); 
         btn.innerText = dict['email_success'] || 'Success! ✔️'; 
