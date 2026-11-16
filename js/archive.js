@@ -1,36 +1,6 @@
 // ==========================================
-// MODULE: ARCHIVE & DATA CENTER
+// MODULE: ARCHIVE & DATA CENTER (FIREBASE SYNCED)
 // ==========================================
-
-window.sendEmailForm = function(event) {
-    event.preventDefault();
-    const to = document.getElementById('email-to').value.trim();
-    const subject = document.getElementById('email-subject').value.trim();
-    const text = document.getElementById('email-text').value.trim();
-
-    const btn = document.querySelector('#email-form-element button[type="submit"]');
-    const origText = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>...';
-
-    setTimeout(() => {
-        btn.innerHTML = origText;
-        if (window.showToast) window.showToast("Success", "Email sent & archived!", "", "");
-        document.getElementById('email-form-element').reset();
-        if (window.closeEmailModal) window.closeEmailModal();
-
-        window.mailArchiveDB = window.mailArchiveDB || [];
-        let mailDate = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        let newMailId = 'mail_sent_' + Date.now();
-        window.mailArchiveDB.unshift({
-            id: newMailId, unread: false, date: mailDate, from: 'To: ' + to, subject: subject, text: text
-        });
-        
-        if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
-            window.renderArchiveList('email', window.mailArchiveDB);
-        }
-        window.updateTopTabsGlow(); 
-    }, 800);
-};
 
 window.updateTopTabsGlow = function() {
     const tabs = document.querySelectorAll('[onclick^="window.switchArchiveTab"]');
@@ -54,6 +24,7 @@ window.updateTopTabsGlow = function() {
 
 window.docsArchiveDB = window.docsArchiveDB || [];
 window.mediaArchiveDB = window.mediaArchiveDB || [];
+window.mailArchiveDB = window.mailArchiveDB || [];
 window.currentArchiveTab = 'mail';
 
 window.switchArchiveTab = function(tab) {
@@ -106,7 +77,14 @@ window.renderArchiveList = function(type, dbArray) {
             
         let textBold = item.unread ? 'text-white font-bold' : 'text-[#e9edef]';
         let safeTitle = (item.title || item.subject || 'File').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        
+        // Правильное отображение времени из Firebase
         let subtitle = item.date || item.size || 'Saved Item';
+        if (item.timestamp) {
+            const d = new Date(item.timestamp);
+            subtitle = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+
         let sender = item.sender || item.from || 'System';
         let clickAction = type === 'email' ? `onclick="window.viewSpecificEmail('${item.id}')"` : '';
 
@@ -140,6 +118,18 @@ window.renderArchiveList = function(type, dbArray) {
 window.viewSpecificEmail = function(id) {
     const email = window.mailArchiveDB.find(e => String(e.id) === String(id));
     if (!email) return;
+    
+    // Снимаем метку "Непрочитано" в Firebase с жесткой проверкой ошибок
+    const myId = window.myProfileInfo?.id || localStorage.getItem('hf_active_user');
+    const database = (typeof db !== 'undefined') ? db : (typeof firebase !== 'undefined' ? firebase.database() : null);
+    
+    if (myId && myId !== 'guest' && database) {
+        database.ref('emails/' + myId + '/' + id).update({ unread: false })
+        .catch(err => {
+            alert("Ошибка сервера при сохранении статуса прочтения: " + err.message);
+        });
+    }
+
     email.unread = false;
     window.renderArchiveList('email', window.mailArchiveDB);
     
@@ -147,8 +137,15 @@ window.viewSpecificEmail = function(id) {
     if(subEl) subEl.innerText = email.subject || 'No Subject';
     const fromEl = document.getElementById('email-read-from');
     if(fromEl) fromEl.innerText = email.from || 'Unknown';
+    
+    let displayDate = email.date || '';
+    if (email.timestamp) {
+        const d = new Date(email.timestamp);
+        displayDate = d.toLocaleString();
+    }
     const dateEl = document.getElementById('email-read-date');
-    if(dateEl) dateEl.innerText = email.date || '';
+    if(dateEl) dateEl.innerText = displayDate;
+    
     let bodyText = email.text || email.body || 'Empty message';
     const bodyEl = document.getElementById('email-read-body');
     if(bodyEl) bodyEl.innerHTML = bodyText.replace(/\n/g, '<br>');
@@ -196,7 +193,6 @@ window.openArchiveActionMenu = function(e, itemId, itemTitle, itemType) {
     const titleEl = document.getElementById('action-modal-title');
     if (titleEl) titleEl.innerText = itemTitle || "File Action";
     
-    // Фикс меню внутри телефона
     const phoneScreen = document.querySelector('.mobile-screen') || document.querySelector('#phone-body') || document.body;
     if (modal.parentElement !== phoneScreen) phoneScreen.appendChild(modal);
     modal.classList.remove('fixed'); modal.classList.add('absolute');
@@ -217,9 +213,23 @@ window.archiveAction = function(actionType) {
     const { id, content, type, url, title } = window.currentArchiveItem;
 
     if (actionType === 'delete') {
+        const myId = window.myProfileInfo?.id || localStorage.getItem('hf_active_user');
+        const database = (typeof db !== 'undefined') ? db : (typeof firebase !== 'undefined' ? firebase.database() : null);
+
         if (type === 'email' && window.mailArchiveDB) { 
+            // 1. Убираем письмо с экрана локально
             window.mailArchiveDB = window.mailArchiveDB.filter(i => String(i.id) !== String(id)); 
             window.renderArchiveList('email', window.mailArchiveDB); 
+            
+            // 2. Уничтожаем в Firebase с жесткой проверкой ошибок
+            if (myId && myId !== 'guest' && database) {
+                database.ref('emails/' + myId + '/' + id).remove()
+                .then(() => console.log("Письмо успешно удалено из базы"))
+                .catch(err => {
+                    alert("ВНИМАНИЕ! База данных отклонила удаление. Причина: " + err.message);
+                });
+            }
+
             const readerView = document.getElementById('email-reader-view');
             if (readerView && !readerView.classList.contains('hidden') && window.backToEmailList) { window.backToEmailList(); }
         }
@@ -257,35 +267,41 @@ window.smartArchive = function() {
     if (window.closeTrashModal) window.closeTrashModal(); 
 };
 
-// --- СЛУШАТЕЛЬ FIREBASE (НАДЕЖНОЕ ПОДКЛЮЧЕНИЕ) ---
+// --- СЛУШАТЕЛЬ FIREBASE (ЧИТАЕМ ИЗ ПРАВИЛЬНОГО УЗЛА EMAILS) ---
 function connectMailListener() {
-    // Проверяем, проснулась ли база данных
-    if (typeof firebase !== 'undefined' && typeof db !== 'undefined') {
-        db.ref('mailArchive').on('value', (snapshot) => {
+    const myId = window.myProfileInfo?.id || localStorage.getItem('hf_active_user');
+    if (!myId || myId === 'guest') return;
+
+    const database = (typeof db !== 'undefined') ? db : (typeof firebase !== 'undefined' ? firebase.database() : null);
+    
+    if (database) {
+        database.ref('emails/' + myId).on('value', (snapshot) => {
             const data = snapshot.val();
+            window.mailArchiveDB = [];
+            
             if (data) {
-                window.mailArchiveDB = [];
                 Object.keys(data).forEach(key => {
                     let mailItem = data[key];
                     mailItem.id = key; 
+                    // Если поле unread не существует, ставим true (новое письмо)
+                    if (mailItem.unread === undefined) mailItem.unread = true;
                     window.mailArchiveDB.push(mailItem);
                 });
-                // Сортируем: новые сверху
-                window.mailArchiveDB.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 
-                // Перерисовываем список или зажигаем зеленую кнопку
-                if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
-                    window.renderArchiveList('email', window.mailArchiveDB);
-                } else {
-                    if (window.updateTopTabsGlow) window.updateTopTabsGlow(); 
-                }
+                // Сортировка: новые письма сверху
+                window.mailArchiveDB.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             }
+            
+            if (window.currentArchiveTab === 'mail' && window.renderArchiveList) {
+                window.renderArchiveList('email', window.mailArchiveDB);
+            }
+            if (window.updateTopTabsGlow) window.updateTopTabsGlow(); 
         });
     } else {
-        // Если база еще не загрузилась, ждем полсекунды и пробуем снова
         setTimeout(connectMailListener, 500);
     }
 }
 
-// Запускаем нашу умную проверку
-connectMailListener();
+// Запускаем слушатель с задержкой, чтобы профиль юзера успел загрузиться
+setTimeout(connectMailListener, 2000);
+        
