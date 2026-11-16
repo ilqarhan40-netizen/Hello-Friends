@@ -52,7 +52,7 @@ window.sendEmailForm = function(e) {
         from_name: window.myUsername || "User"
     };
     
-    emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScx0").then(function() {
+    emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScxo").then(function() {
         
         // === СИГНАЛ В FIREBASE ДЛЯ УВЕДОМЛЕНИЙ ===
         try {
