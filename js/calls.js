@@ -8,6 +8,13 @@ if (typeof AgoraRTC === 'undefined') {
     document.head.appendChild(script);
 }
 
+if (typeof AIDenoiserExtension === 'undefined') {
+    const aiScript = document.createElement('script');
+    aiScript.src = "https://download.agora.io/sdk/release/agora-extension-ai-denoiser-1.1.0.js";
+    document.head.appendChild(aiScript);
+}
+
+
 window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
