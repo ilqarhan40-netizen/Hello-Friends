@@ -104,8 +104,16 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         
         let tracksToPublish = [];
 
-        if (!window.localAudioTrack) window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-        tracksToPublish.push(window.localAudioTrack);
+                // Внедрение 3A фильтров и речевого кодека по стандарту мессенджеров
+        if (!window.localAudioTrack) {
+            window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+                AEC: true, // Подавление акустического эха (убивает микрофонную петлю)
+                ANS: true, // Подавление фонового шума
+                AGC: true, // Автовыравнивание громкости
+                encoderConfig: "speech_standard" // Фокус кодека строго на голосе
+            });
+        }
+        
 
         if (isVideo) {
             if (!window.localVideoTrack) {
@@ -412,26 +420,26 @@ window.toggleMyAudio = async function() {
     let isOn = icons[0].classList.contains('fa-microphone');
 
     try {
+        if (window.localAudioTrack) {
+            // Метод setMuted(true) отправляет собеседнику тишину, не уничтожая поток
+            await window.localAudioTrack.setMuted(isOn);
+        }
+        
         if (isOn) {
-            // Полное отключение аудио
-            if (window.localAudioTrack) {
-                if (window.agoraClient) await window.agoraClient.unpublish(window.localAudioTrack);
-                window.localAudioTrack.close();
-                window.localAudioTrack = null;
-            }
-            icons.forEach(i => { i.classList.replace('fa-microphone', 'fa-microphone-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
+            icons.forEach(i => { 
+                i.classList.replace('fa-microphone', 'fa-microphone-slash'); 
+                i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); 
+            });
         } else {
-            // Включаем аудио заново
-            window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-            if (window.agoraClient) await window.agoraClient.publish(window.localAudioTrack);
-            
-            icons.forEach(i => { i.classList.replace('fa-microphone-slash', 'fa-microphone'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
+            icons.forEach(i => { 
+                i.classList.replace('fa-microphone-slash', 'fa-microphone'); 
+                i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); 
+            });
         }
     } catch (error) {
         console.error("Audio error:", error);
     }
 };
-
 
 window.toggleMyCamera = async function() {
     let icons = document.querySelectorAll('#icon-my-cam');
@@ -439,27 +447,24 @@ window.toggleMyCamera = async function() {
     let isOn = icons[0].classList.contains('fa-video');
 
     try {
+        if (window.localVideoTrack) {
+            // Метод setMuted(true) отправляет собеседнику черный экран, сохраняя стабильность WebRTC
+            await window.localVideoTrack.setMuted(isOn);
+        }
+        
         if (isOn) {
-            // Полное отключение: удаляем трек, собеседник увидит черный экран, а не зависший кадр
-            if (window.localVideoTrack) {
-                if (window.agoraClient) await window.agoraClient.unpublish(window.localVideoTrack);
-                window.localVideoTrack.close();
-                window.localVideoTrack = null;
-            }
-            icons.forEach(i => { i.classList.replace('fa-video', 'fa-video-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
+            icons.forEach(i => { 
+                i.classList.replace('fa-video', 'fa-video-slash'); 
+                i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); 
+            });
         } else {
-            // Включаем: запрашиваем камеру заново
-            window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-            if (window.agoraClient) await window.agoraClient.publish(window.localVideoTrack);
-            
-            let v = document.getElementById('direct-local-video') || document.getElementById('my-live-video');
-            if (v) { 
-                v.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]); 
-                v.play().catch(()=>{}); 
-            }
-            icons.forEach(i => { i.classList.replace('fa-video-slash', 'fa-video'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
+            icons.forEach(i => { 
+                i.classList.replace('fa-video-slash', 'fa-video'); 
+                i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); 
+            });
         }
     } catch (error) {
         console.error("Camera error:", error);
     }
 };
+
