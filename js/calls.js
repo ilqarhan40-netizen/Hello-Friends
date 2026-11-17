@@ -16,10 +16,6 @@ const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
 const AGORA_TEMP_TOKEN = "007eJxTYFjx3Fx1YQz/hoVHc8t/sDULLvzx7dl83oX2wbttv4jvE+hRYLA0NE4zNE40S7IwNDBJMTZJMjA2szRNTE5JNkgxt0wy33zxT1ZDICPD5BpPBiYGRjAE8VkZMlJzcvIZoIIgIRYGQwMDQwDHTiKe";
 
 
-
-
-    
-
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 window.currentIncomingCallType = 'voice';
@@ -105,15 +101,35 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         
         let tracksToPublish = [];
 
-                // Внедрение 3A фильтров и речевого кодека по стандарту мессенджеров
+                // 1. Аппаратный захват микрофона
         if (!window.localAudioTrack) {
             window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
-                AEC: true, // Подавление акустического эха (убивает микрофонную петлю)
-                ANS: true, // Подавление фонового шума
-                AGC: true, // Автовыравнивание громкости
-                encoderConfig: "speech_standard" // Фокус кодека строго на голосе
+                AEC: true, // Акустическое эхо
+                ANS: true, // Фоновый шум
+                AGC: true  // Громкость
             });
+
+            // 2. Искусственное ИИ-шумоподавление (AI Denoiser)
+            try {
+                if (typeof AIDenoiserExtension !== 'undefined') {
+                    // Подгружаем внешние ресурсы нейросети через CDN
+                    const denoiser = new AIDenoiserExtension({
+                        assetsPath: "https://unpkg.com/agora-extension-ai-denoiser@1.1.0/external/"
+                    });
+                    AgoraRTC.registerExtension(denoiser);
+                    const processor = denoiser.createProcessor();
+                    await processor.enable();
+                    
+                    // Заворачиваем аудиопоток в фильтр
+                    window.localAudioTrack.pipe(processor).pipe(window.localAudioTrack.processorDestination);
+                    console.log("AI-Шумоподавление успешно активировано. Канал очищен.");
+                }
+            } catch (e) {
+                console.error("Ошибка запуска AI-фильтра:", e);
+            }
         }
+        tracksToPublish.push(window.localAudioTrack);
+        
         
 
         if (isVideo) {
