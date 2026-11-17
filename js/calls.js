@@ -441,54 +441,37 @@ document.addEventListener('DOMContentLoaded', () => {
 window.toggleMyAudio = async function() {
     let icons = document.querySelectorAll('#icon-my-mic');
     if (!icons.length) return;
-    let isOn = icons[0].classList.contains('fa-microphone');
+    let isOn = icons[0].classList.contains('fa-microphone'); 
 
     try {
         if (window.localAudioTrack) {
-            // Метод setMuted(true) отправляет собеседнику тишину, не уничтожая поток
-            await window.localAudioTrack.setMuted(isOn);
+            // Аппаратное отключение без разрыва соединения
+            await window.localAudioTrack.setEnabled(!isOn);
         }
         
         if (isOn) {
-            icons.forEach(i => { 
-                i.classList.replace('fa-microphone', 'fa-microphone-slash'); 
-                i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); 
-            });
+            icons.forEach(i => { i.classList.replace('fa-microphone', 'fa-microphone-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
         } else {
-            icons.forEach(i => { 
-                i.classList.replace('fa-microphone-slash', 'fa-microphone'); 
-                i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); 
-            });
+            icons.forEach(i => { i.classList.replace('fa-microphone-slash', 'fa-microphone'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
         }
-    } catch (error) {
-        console.error("Audio error:", error);
-    }
+    } catch (error) { console.error("Audio error:", error); }
 };
 
 window.toggleMyCamera = async function() {
     let icons = document.querySelectorAll('#icon-my-cam');
     if (!icons.length) return;
-    let isOn = icons[0].classList.contains('fa-video');
+    let isOn = icons[0].classList.contains('fa-video'); 
 
     try {
         if (window.localVideoTrack) {
-            // Метод setMuted(true) отправляет собеседнику черный экран, сохраняя стабильность WebRTC
-            await window.localVideoTrack.setMuted(isOn);
+            // Аппаратное отключение камеры без "зависания" кадра
+            await window.localVideoTrack.setEnabled(!isOn);
         }
         
         if (isOn) {
-            icons.forEach(i => { 
-                i.classList.replace('fa-video', 'fa-video-slash'); 
-                i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); 
-            });
+            icons.forEach(i => { i.classList.replace('fa-video', 'fa-video-slash'); i.parentElement.classList.replace('text-[#00a884]', 'text-red-500'); });
         } else {
-            icons.forEach(i => { 
-                i.classList.replace('fa-video-slash', 'fa-video'); 
-                i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); 
-            });
+            icons.forEach(i => { i.classList.replace('fa-video-slash', 'fa-video'); i.parentElement.classList.replace('text-red-500', 'text-[#00a884]'); });
         }
-    } catch (error) {
-        console.error("Camera error:", error);
-    }
+    } catch (error) { console.error("Camera error:", error); }
 };
-
