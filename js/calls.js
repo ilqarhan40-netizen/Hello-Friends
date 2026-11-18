@@ -19,8 +19,9 @@ window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
 
-const AGORA_APP_ID = "57b7c940c0cd478e8648cf8ff15650dd";
+const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
 const AGORA_TEMP_TOKEN = null;
+
 
 
 window.currentCallerId = null;
@@ -105,12 +106,22 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false, channel
             }
         });
 
-        // --- ДИНАМИЧЕСКИЙ ТОКЕН ОТ NETLIFY СЕРВЕРА ---
-        const response = await fetch(`/.netlify/functions/token?channel=${channelName}`);
+                // --- ДИНАМИЧЕСКИЙ ТОКЕН ОТ NETLIFY СЕРВЕРА ---
+        const response = await fetch(`https://hellofreinds.netlify.app/.netlify/functions/token?channel=${channelName}`);
+        
+        if (!response.ok) {
+            console.error("Ошибка ответа от Netlify:", response.status);
+            throw new Error("Не удалось получить токен");
+        }
+        
         const data = await response.json();
         const dynamicToken = data.token;
+        
+        console.log("Токен успешно получен, подключаемся к Агоре...");
 
         await window.agoraClient.join(AGORA_APP_ID, channelName, dynamicToken, null);
+        
+
         
         let tracksToPublish = [];
 
