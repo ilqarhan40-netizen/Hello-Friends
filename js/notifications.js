@@ -200,3 +200,78 @@ window.initAllNotifications = function() {
 
 setTimeout(() => { if (window.initAllNotifications) window.initAllNotifications(); }, 2500);
         
+// === 4. ФУНКЦИЯ ОТПРАВКИ PUSH В ONESIGNAL ===
+window.sendPushNotification = async function(targetUserId, payload, title, body) {
+    if (!targetUserId) return;
+    
+    try {
+        const database = typeof firebase !== 'undefined' ? firebase.database() : (typeof db !== 'undefined' ? db : null);
+        if (!database) return;
+
+        // 1. Достаем токен устройства получателя из базы
+        const snapshot = await database.ref(`users/${targetUserId}/pushToken`).once('value');
+        const targetPushToken = snapshot.val();
+
+        if (!targetPushToken) {
+            console.warn(`Нет токена для юзера ${targetUserId}. Пуш не отправлен.`);
+            return;
+        }
+
+        // 2. Отправляем в OneSignal
+        const response = await fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                // Тот самый правильный длинный ключ:
+                "Authorization": "Basic Os_v2_app_6f6pqhv6fngrfgvvubo2lofpugko4vplekzucdezivrsowlwlznwrozlshdmdbudntarg3g6tqeqeqgpa3zpbrq3jy7gfgsfmqiacni"
+            },
+            body: JSON.stringify({
+                app_id: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1", 
+                include_player_ids: [targetPushToken], 
+                headings: { "en": title, "ru": title },
+                contents: { "en": body, "ru": body },
+                data: payload // Передаем type, чтобы sw.js понял, что рисовать
+            })
+        });
+
+        if (!response.ok) {
+            console.error("Ошибка OneSignal:", await response.text());
+        }
+    } catch (error) {
+        console.error("Ошибка сети при отправке пуша:", error);
+    }
+};
+
+// === 5. РЕГИСТРАЦИЯ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ В ONESIGNAL ===
+window.registerOneSignal = function() {
+    const myId = window.myProfileInfo?.id || localStorage.getItem('hf_active_user');
+    if (!myId || myId === 'guest') return;
+
+    if (typeof OneSignal !== 'undefined') {
+        OneSignal.push(function() {
+            OneSignal.init({
+                appId: "f17cf81e-be2b-4d12-9ab5-a05da5b8afa1",
+                allowLocalhostAsSecureOrigin: true, // Для тестов
+            });
+            
+            // Если юзер дал разрешение - сохраняем его токен в Firebase
+            OneSignal.on('subscriptionChange', function(isSubscribed) {
+                if (isSubscribed) {
+                    OneSignal.getUserId(function(userId) {
+                        if (userId) {
+                            firebase.database().ref(`users/${myId}/pushToken`).set(userId);
+                            console.log("Push-токен сохранен:", userId);
+                        }
+                    });
+                }
+            });
+            
+            // Показываем окно запроса разрешений, если еще не дали
+            OneSignal.showNativePrompt();
+        });
+    }
+};
+
+// Вызываем регистрацию после загрузки
+setTimeout(() => { if (window.registerOneSignal) window.registerOneSignal(); }, 3000);
+            
