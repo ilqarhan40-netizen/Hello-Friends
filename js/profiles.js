@@ -13,24 +13,24 @@ window.myProfileInfo = window.myProfileInfo || {
 };
 window.myUsername = window.myUsername || (window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : 'User');
 
-// --- УМНАЯ БАЗА СТРАН ДЛЯ ПРОФИЛЯ ---
+// --- УМНАЯ БАЗА СТРАН ДЛЯ ПРОФИЛЯ (С ОПИСАНИЕМ ИЗ INDEX) ---
 window.countryData = {
-    'az': { phone: '+994', lang: 'az' },
-    'kz': { phone: '+7', lang: 'kk' },
-    'pt': { phone: '+351', lang: 'pt' },
-    'ru': { phone: '+7', lang: 'ru' },
-    'de': { phone: '+49', lang: 'de' },
-    'it': { phone: '+39', lang: 'it' },
-    'gb': { phone: '+44', lang: 'en' },
-    'tr': { phone: '+90', lang: 'tr' },
-    'es': { phone: '+34', lang: 'es' },
-    'fr': { phone: '+33', lang: 'fr' },
-    'us': { phone: '+1', lang: 'en' },
-    'ae': { phone: '+971', lang: 'ar' },
-    'cn': { phone: '+86', lang: 'zh' },
-    'jp': { phone: '+81', lang: 'ja' },
-    'un': { phone: '+', lang: 'en' }
+    "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
+    "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan - The Land of Fire." },
+    "kz": { phone: "+7", pop: "19.8M", seas: "Caspian, Aral Sea", desc: "The ninth-largest country in the world." },
+    "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." },
+    "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." },
+    "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." },
+    "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." },
+    "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." },
+    "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." },
+    "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." },
+    "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." },
+    "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." },
+    "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." },
+    "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." }
 };
+
 
 // --- МОЙ ПРОФИЛЬ (Редактирование) ---
 window.openMyProfile = function() { 
