@@ -1123,7 +1123,6 @@ window.selectAllForInvite = function() {
     document.querySelectorAll('.invite-checkbox').forEach(cb => cb.checked = true);
 };
 
-
 window.sendGroupInvites = function() {
     const selected = Array.from(document.querySelectorAll('.invite-checkbox:checked')).map(cb => cb.value);
     
@@ -1150,7 +1149,6 @@ window.sendGroupInvites = function() {
         if (window.showToast) window.showToast("Ошибка", "Выберите пользователей!", "", "");
         return;
     }
-
     const myId = window.myProfileInfo.id;
     checkboxes.forEach(cb => {
         const targetId = cb.value;
