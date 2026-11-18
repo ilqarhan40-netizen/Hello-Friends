@@ -19,14 +19,16 @@ window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
 
-const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
-const AGORA_TEMP_TOKEN = "007eJxTYFjx3Fx1YQz/hoVHc8t/sDULLvzx7dl83oX2wbttv4jvE+hRYLA0NE4zNE40S7IwNDBJMTZJMjA2szRNTE5JNkgxt0wy33zxT1ZDICPD5BpPBiYGRjAE8VkZMlJzcvIZoIIgIRYGQwMDQwDHTiKe";
+const AGORA_APP_ID = "57b7c940c0cd478e8648cf8ff15650dd";
+const AGORA_TEMP_TOKEN = null;
 
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
 window.currentIncomingCallType = 'voice';
 window.myLastOutgoingCallType = 'voice';
+window.currentActiveChannel = null;
+window.currentIncomingChannel = null;
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
@@ -67,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
-window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
+window.startWebRTC = async function(isCaller, targetId, isVideo = false, channelName = "default_room") {
     if (typeof AgoraRTC === 'undefined') {
         alert("Модуль связи загружается, подождите секунду...");
         window.hangUpCall();
@@ -103,12 +105,16 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             }
         });
 
-        const channelName = "hello"; 
-        await window.agoraClient.join(AGORA_APP_ID, channelName, AGORA_TEMP_TOKEN, null);
+        // --- ДИНАМИЧЕСКИЙ ТОКЕН ОТ NETLIFY СЕРВЕРА ---
+        const response = await fetch(`/.netlify/functions/token?channel=${channelName}`);
+        const data = await response.json();
+        const dynamicToken = data.token;
+
+        await window.agoraClient.join(AGORA_APP_ID, channelName, dynamicToken, null);
         
         let tracksToPublish = [];
 
-                // 1. Аппаратный захват микрофона
+        // 1. Аппаратный захват микрофона
         if (!window.localAudioTrack) {
             window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
                 AEC: true, // Акустическое эхо
@@ -137,8 +143,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         }
         tracksToPublish.push(window.localAudioTrack);
         
-        
-
         if (isVideo) {
             if (!window.localVideoTrack) {
                 window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
@@ -216,6 +220,8 @@ window.endWebRTCCall = async function() {
     
     window.currentCallerId = null;
     window.currentTargetUser = null;
+    window.currentActiveChannel = null;
+    window.currentIncomingChannel = null;
 };
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
@@ -232,6 +238,10 @@ window.startInAppCall = function(callType = 'voice') {
     window.myLastOutgoingCallType = callType;
     firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
 
+    // --- ПРОФЕССИОНАЛЬНАЯ ГЕНЕРАЦИЯ КОМНАТЫ ---
+    const sessionId = Date.now();
+    window.currentActiveChannel = `${callType}_${window.myProfileInfo.id}_${target.id}_${sessionId}`;
+
     let callRef = firebase.database().ref('signals/' + target.id).push();
     callRef.set({ 
         type: 'call', 
@@ -239,6 +249,7 @@ window.startInAppCall = function(callType = 'voice') {
         callerId: window.myProfileInfo.id, 
         callerName: window.myUsername, 
         callerPhoto: window.myProfileInfo.photo, 
+        channelName: window.currentActiveChannel, 
         timestamp: firebase.database.ServerValue.TIMESTAMP 
     }); 
     
@@ -295,10 +306,11 @@ window.startInAppCall = function(callType = 'voice') {
     }, 30000);
 };
 
-window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey, callType) { 
+window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey, callType, channelName) { 
     window.currentIncomingSignalKey = signalKey; 
     window.currentCallerId = callerId; 
     window.currentIncomingCallType = callType || 'voice';
+    window.currentIncomingChannel = channelName; 
 
     const nameEl = document.getElementById('incoming-call-name'); 
     const photoEl = document.getElementById('incoming-call-photo');
@@ -330,7 +342,7 @@ window.acceptCall = function() {
         if(window.switchChatRoom) window.switchChatRoom(target.id); 
         if (window.switchTab) window.switchTab(window.currentIncomingCallType === 'video' ? 1 : 1); 
         
-        window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video'); 
+        window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video', window.currentIncomingChannel); 
     } 
 };
 
@@ -376,7 +388,7 @@ window.initSignalListener = function() {
         const sig = snap.val(); if (!sig) return; 
         
         if (sig.type === 'call') { 
-            if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType); 
+            if (Date.now() - sig.timestamp < 30000) window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType, sig.channelName); 
             else firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + snap.key).remove();
         } 
         else if (sig.type === 'reject') {
@@ -396,7 +408,7 @@ window.initSignalListener = function() {
             if (window.voiceFriend) window.currentTargetUser = window.voiceFriend;
             if (window.switchChatRoom && window.currentTargetUser) window.switchChatRoom(window.currentTargetUser.id);
             
-            window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video');
+            window.startWebRTC(true, window.currentTargetUser.id, window.myLastOutgoingCallType === 'video', window.currentActiveChannel);
         }
     }); 
 };
