@@ -1123,32 +1123,51 @@ window.selectAllForInvite = function() {
     document.querySelectorAll('.invite-checkbox').forEach(cb => cb.checked = true);
 };
 
+
 window.sendGroupInvites = function() {
-    const selected = Array.from(document.querySelectorAll('.invite-checkbox:checked')).map(cb => cb.value);
+    // Собираем всех отмеченных пользователей
+    const checkboxes = document.querySelectorAll('.invite-checkbox:checked');
+    const selected = Array.from(checkboxes).map(cb => cb.value);
     
-    // Одна строчка: обращаемся к глобальному словарю
+    // Подключаем словарь для языков
     let dict = window.i18n ? (window.i18n[window.appLang || 'en'] || window.i18n['en']) : {};
 
     if (selected.length === 0) {
-        if (window.showToast) window.showToast(dict.toast_err || "Error", dict.toast_err_desc || "Select user", "", "");
+        if (window.showToast) window.showToast(dict.toast_err || "Ошибка", dict.toast_err_desc || "Выберите пользователей!", "", "");
         return;
     }
-    
-    selected.forEach(userId => {
-        if (window.sendVideoCallPush) {
-            window.sendVideoCallPush(userId, window.currentRoomId, window.myUsername, window.myProfileInfo.photo);
+
+    const myId = window.myProfileInfo.id;
+    // Определяем, откуда была нажата кнопка (вкладка 2 - это видео)
+    const isConfTab = (window.currentIndex === 2); 
+
+    selected.forEach(targetId => {
+        if (isConfTab) {
+            // === ЛОГИКА ДЛЯ ВИДЕОКОМНАТЫ (отправка сообщения в чат) ===
+            const roomId = "private_" + [myId, targetId].sort().join('_');
+            firebase.database().ref(roomId).push({
+                userId: myId,
+                name: window.myUsername,
+                text: "🎥 Приглашение в видеоконференцию",
+                isConferenceInvite: true, 
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                photo: window.myProfileInfo.photo,
+                flag: window.myProfileInfo.flag || '🌐'
+            });
+        } else {
+            // === ЛОГИКА ДЛЯ АУДИОКОМНАТЫ (отправка пуша) ===
+            if (window.sendVideoCallPush) {
+                // Если нужно, чтобы пуш для аудио отличался, можно будет заменить sendVideoCallPush 
+                // на функцию sendPushNotification, которую мы написали ранее
+                window.sendVideoCallPush(targetId, window.currentRoomId, window.myUsername, window.myProfileInfo.photo);
+            }
         }
     });
     
-    if (window.showToast) window.showToast(dict.toast_ok || "Sent", (dict.toast_ok_desc || "Invited:") + " " + selected.length, "", "");
-    window.closeGroupInviteModal();
+    if (window.showToast) window.showToast(dict.toast_ok || "Успех", (dict.toast_ok_desc || "Приглашения разосланы:") + " " + selected.length, "", "");
+    if (typeof window.closeGroupInviteModal === 'function') window.closeGroupInviteModal();
 };
-window.sendGroupInvites = function() {
-    const checkboxes = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
-    if (checkboxes.length === 0) {
-        if (window.showToast) window.showToast("Ошибка", "Выберите пользователей!", "", "");
-        return;
-    }
+
     const myId = window.myProfileInfo.id;
     checkboxes.forEach(cb => {
         const targetId = cb.value;
