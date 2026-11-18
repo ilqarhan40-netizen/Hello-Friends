@@ -19,10 +19,9 @@ window.agoraClient = null;
 window.localAudioTrack = null;
 window.localVideoTrack = null;
 
+// Твои вшитые ключи Agora (Token нам больше не нужен, мы генерируем его в браузере)
 const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
-const AGORA_TEMP_TOKEN = null;
-
-
+const AGORA_APP_CERT = "1a1bb517f44841cdbb1ab4cdd47e75d1";
 
 window.currentCallerId = null;
 window.currentIncomingSignalKey = null;
@@ -106,22 +105,35 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false, channel
             }
         });
 
-                // --- ДИНАМИЧЕСКИЙ ТОКЕН ОТ NETLIFY СЕРВЕРА ---
-        const response = await fetch(`https://hellofreinds.netlify.app/.netlify/functions/token?channel=${channelName}`);
+        // ====================================================
+        // ХАК: ГЕНЕРАЦИЯ ТОКЕНА ПРЯМО В БРАУЗЕРЕ (БЕЗ СЕРВЕРОВ)
+        // ====================================================
+        console.log("Генерируем приватный токен в браузере для:", channelName);
+        let myUid = String(window.myProfileInfo?.id || localStorage.getItem('hf_active_user'));
         
-        if (!response.ok) {
-            console.error("Ошибка ответа от Netlify:", response.status);
-            throw new Error("Не удалось получить токен");
-        }
+        // Подтягиваем бэкенд-генератор через облачный мост esm.sh
+        const { RtcTokenBuilder, RtcRole } = await import('https://esm.sh/agora-token');
         
-        const data = await response.json();
-        const dynamicToken = data.token;
-        
-        console.log("Токен успешно получен, подключаемся к Агоре...");
+        const role = RtcRole.PUBLISHER;
+        const expirationTimeInSeconds = 3600; // Токен живет 1 час
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        const privilegeExpiredTs = currentTimestamp + expirationTimeInSeconds;
 
-        await window.agoraClient.join(AGORA_APP_ID, channelName, dynamicToken, null);
+        // Математически высчитываем токен
+        const dynamicToken = RtcTokenBuilder.buildTokenWithAccount(
+            AGORA_APP_ID, 
+            AGORA_APP_CERT, 
+            channelName, 
+            myUid, 
+            role, 
+            privilegeExpiredTs
+        );
         
+        console.log("Токен сгенерирован и принят!", dynamicToken);
 
+        // Заходим в Агору с нашим сгенерированным токеном
+        await window.agoraClient.join(AGORA_APP_ID, channelName, dynamicToken, myUid);
+        // ====================================================
         
         let tracksToPublish = [];
 
@@ -136,7 +148,6 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false, channel
             // 2. Искусственное ИИ-шумоподавление (AI Denoiser)
             try {
                 if (typeof AIDenoiserExtension !== 'undefined') {
-                    // Подгружаем внешние ресурсы нейросети через CDN
                     const denoiser = new AIDenoiserExtension({
                         assetsPath: "https://unpkg.com/agora-extension-ai-denoiser@1.1.0/external/"
                     });
@@ -144,9 +155,8 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false, channel
                     const processor = denoiser.createProcessor();
                     await processor.enable();
                     
-                    // Заворачиваем аудиопоток в фильтр
                     window.localAudioTrack.pipe(processor).pipe(window.localAudioTrack.processorDestination);
-                    console.log("AI-Шумоподавление успешно активировано. Канал очищен.");
+                    console.log("AI-Шумоподавление успешно активировано.");
                 }
             } catch (e) {
                 console.error("Ошибка запуска AI-фильтра:", e);
@@ -251,7 +261,10 @@ window.startInAppCall = function(callType = 'voice') {
 
     // --- ПРОФЕССИОНАЛЬНАЯ ГЕНЕРАЦИЯ КОМНАТЫ ---
     const sessionId = Date.now();
-    window.currentActiveChannel = `${callType}_${window.myProfileInfo.id}_${target.id}_${sessionId}`;
+    // Имя канала теперь генерируется с сортировкой ID, чтобы оно всегда было одинаковым для двоих
+    let id1 = String(window.myProfileInfo.id);
+    let id2 = String(target.id);
+    window.currentActiveChannel = (id1 < id2) ? (`${callType}_${id1}_${id2}_${sessionId}`) : (`${callType}_${id2}_${id1}_${sessionId}`);
 
     let callRef = firebase.database().ref('signals/' + target.id).push();
     callRef.set({ 
@@ -468,7 +481,6 @@ window.toggleMyAudio = async function() {
 
     try {
         if (window.localAudioTrack) {
-            // Аппаратное отключение без разрыва соединения
             await window.localAudioTrack.setEnabled(!isOn);
         }
         
@@ -487,7 +499,6 @@ window.toggleMyCamera = async function() {
 
     try {
         if (window.localVideoTrack) {
-            // Аппаратное отключение камеры без "зависания" кадра
             await window.localVideoTrack.setEnabled(!isOn);
         }
         
