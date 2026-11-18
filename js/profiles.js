@@ -13,23 +13,25 @@ window.myProfileInfo = window.myProfileInfo || {
 };
 window.myUsername = window.myUsername || (window.myProfileInfo.name ? window.myProfileInfo.name.split(' ')[0] : 'User');
 
-// --- УМНАЯ БАЗА СТРАН ДЛЯ ПРОФИЛЯ (С ОПИСАНИЕМ ИЗ INDEX) ---
+// --- УМНАЯ БАЗА СТРАН ДЛЯ ПРОФИЛЯ ---
 window.countryData = {
-    "un": { phone: "+", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
-    "az": { phone: "+994", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan - The Land of Fire." },
-    "kz": { phone: "+7", pop: "19.8M", seas: "Caspian, Aral Sea", desc: "The ninth-largest country in the world." },
-    "ru": { phone: "+7", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." },
-    "gb": { phone: "+44", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." },
-    "us": { phone: "+1", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." },
-    "de": { phone: "+49", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." },
-    "it": { phone: "+39", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." },
-    "ae": { phone: "+971", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." },
-    "fr": { phone: "+33", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." },
-    "jp": { phone: "+81", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." },
-    "es": { phone: "+34", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." },
-    "cn": { phone: "+86", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." },
-    "pt": { phone: "+351", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." }
+    "un": { phone: "+", lang: "en", pop: "Global", seas: "World Oceans", desc: "International user connecting globally." },
+    "az": { phone: "+994", lang: "az", pop: "10.1M", seas: "Caspian Sea", desc: "Azerbaijan - The Land of Fire." },
+    "kz": { phone: "+7", lang: "kk", pop: "19.8M", seas: "Caspian, Aral Sea", desc: "The ninth-largest country in the world." },
+    "ru": { phone: "+7", lang: "ru", pop: "144M", seas: "Arctic, Black Sea", desc: "The largest country in the world." },
+    "gb": { phone: "+44", lang: "en", pop: "67M", seas: "North Sea, Atlantic", desc: "An island nation with deep historical influence." },
+    "us": { phone: "+1", lang: "en", pop: "331M", seas: "Atlantic, Pacific", desc: "A massive country with diverse geography." },
+    "de": { phone: "+49", lang: "de", pop: "84M", seas: "Baltic Sea, North Sea", desc: "The economic powerhouse of Europe." },
+    "tr": { phone: "+90", lang: "tr", pop: "85M", seas: "Black Sea, Mediterranean", desc: "A bridge between Europe and Asia." },
+    "it": { phone: "+39", lang: "it", pop: "59M", seas: "Mediterranean", desc: "Famous for its rich history and art." },
+    "ae": { phone: "+971", lang: "ar", pop: "9.9M", seas: "Persian Gulf", desc: "Known for ultra-modern architecture and luxury." },
+    "fr": { phone: "+33", lang: "fr", pop: "68M", seas: "Atlantic, Mediterranean", desc: "Center of art, philosophy, and romance." },
+    "jp": { phone: "+81", lang: "ja", pop: "125M", seas: "Pacific, Sea of Japan", desc: "Land of the rising sun and high tech." },
+    "es": { phone: "+34", lang: "es", pop: "47M", seas: "Atlantic, Mediterranean", desc: "Known for its rich culture, history, and cuisine." },
+    "cn": { phone: "+86", lang: "zh", pop: "1.4B", seas: "East China Sea", desc: "A global economic and technological hub." },
+    "pt": { phone: "+351", lang: "pt", pop: "10M", seas: "Atlantic Ocean", desc: "Famous for its maritime history and coastline." }
 };
+
 
 
 // --- МОЙ ПРОФИЛЬ (Редактирование) ---
@@ -325,7 +327,14 @@ window.openAvatarModal = function(id, fromSidebar = false) {
         let targetLangs = p.profileLangs || p.langCode || "Auto";
         let targetEmail = p.email ? `✉️ ${p.email}<br>` : "";
         let targetPhone = p.phone || ""; 
-        let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${p.flag || '🌐'} ${p.country || 'Global'}</b><br><span class="text-gray-600 dark:text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}🗣️ ${targetLangs}</span>`; 
+        let cData = (window.countryData && window.countryData[p.flagCode || 'un']) || (window.countryData && window.countryData['un']) || { pop: 'Global', seas: 'World Oceans', desc: '' };
+        let dict = window.i18n ? (window.i18n[window.appLang || 'en'] || window.i18n['en']) : {};
+        let popLabel = dict['pop_label'] || 'Pop';
+        let translatedSeas = dict['seas_' + (p.flagCode || 'un')] || cData.seas;
+        let translatedDesc = dict['desc_' + (p.flagCode || 'un')] || cData.desc;
+        let extraInfo = `<span class="text-[#8696a0] text-[0.65rem] block mt-1 border-t border-[#2a3942] pt-1">👥 ${popLabel}: ${cData.pop} | 🌊 ${translatedSeas}<br><i>${translatedDesc}</i></span>`;
+        let infoHtml = `<b class="text-[#00a884] uppercase tracking-wider">${p.flag || '🌐'} ${p.country || 'Global'}</b><br><span class="text-gray-600 dark:text-[#e9edef] text-[0.7rem] block mt-1 leading-relaxed">${targetEmail}🗣️ ${targetLangs}</span>${extraInfo}`;
+        
         if (window.showToast) window.showToast((p.name || 'User').split(' ')[0], infoHtml, p.photo, targetPhone);
     }
 
