@@ -1,10 +1,8 @@
 // ==========================================
-// MODULE: AUDIO ROOM & UNIVERSAL MIC (13 LANGUAGES, ISOLATED)
+// MODULE: 1-ON-1 VIDEO ROOM (ISOLATED FIREBASE, TRANSLATION & BOTTOM MIC)
 // ==========================================
 
-window.currentMicInputTarget = 'chat-input';
-
-window.VOICE_LANG_MAP = {
+window.VIDEO_LANG_MAP = {
     en: { speech: 'en-US', flagCode: 'gb', flag: '🇬🇧' },
     ru: { speech: 'ru-RU', flagCode: 'ru', flag: '🇷🇺' },
     az: { speech: 'az-AZ', flagCode: 'az', flag: '🇦🇿' },
@@ -20,57 +18,40 @@ window.VOICE_LANG_MAP = {
     zh: { speech: 'zh-CN', flagCode: 'cn', flag: '🇨🇳' }
 };
 
-window.normalizeMicLang = function(raw) {
-    if (!raw) return 'auto';
+window.videoRoomFixLang = function(raw) {
+    if (!raw) return null;
     const val = String(raw).trim().toLowerCase();
-    if (!val || val === 'auto') return 'auto';
+    if (!val || val === 'auto' || val === 'un') return null;
     const base = val.split(/[-_]/)[0].substring(0, 2);
     const fix = { kz: 'kk', cn: 'zh', jp: 'ja', ae: 'ar', gb: 'en', us: 'en' };
     return fix[base] || base;
 };
 
-// Язык микрофона берётся СТРОГО из своего меню (#plus-mic-lang), без профиля и экосистемы
-window.getSelectedMicMenuLang = function() {
-    const langSelect = document.getElementById('plus-mic-lang');
-    if (langSelect && langSelect.value) {
-        return window.normalizeMicLang(langSelect.value);
+// Язык микрофона видеокомнаты — СТРОГО из своего меню (#plus-mic-lang), без профиля и экосистемы
+window.videoRoomGetMicLang = function() {
+    if (window.videoRoomMicLangOverride) {
+        const parsed = window.videoRoomFixLang(window.videoRoomMicLangOverride);
+        if (parsed) return parsed;
     }
-    const storageKey = (typeof window.getMicLangKey === 'function') ? window.getMicLangKey() : 'hf_mic_lang_chat_global';
-    return window.normalizeMicLang(localStorage.getItem(storageKey) || 'auto');
-};
-
-window.toggleUniversalMic = function(e, inputId) {
-    if (e) e.stopPropagation();
-    window.currentMicInputTarget = inputId || 'chat-input';
-    const popup = document.getElementById('universal-mic-popup');
-    if (popup) popup.classList.toggle('active');
-};
-
-window.handleSmartCall = function() {
-    if (!window.currentRoomId || window.currentRoomId === 'global' || window.currentRoomId.startsWith('private_me') || window.currentRoomId === 'private_ai_bot') {
-        alert("Please select a user from the Contacts list to make a call.");
-    } else if (window.startInAppCall) {
-        window.startInAppCall();
+    const micPanel = document.getElementById('plus-mic-lang');
+    if (micPanel && micPanel.value && micPanel.value !== 'auto') {
+        const parsed = window.videoRoomFixLang(micPanel.value);
+        if (parsed) return parsed;
     }
+    return null; // null = auto (язык устройства)
 };
 
-// ==========================================
-// 1. АВТОНОМНАЯ ВЕТКА И ПЕРЕВОД АУДИОКОМНАТЫ
-// ==========================================
-window.activeAudioRoomRef = null;
-window.activeAudioRoomHandler = null;
-
-window.getAudioRoomDbPath = function() {
+window.getVideoRoomDbPath = function() {
     if (window.currentTargetUser && window.myProfileInfo && window.myProfileInfo.id && window.currentTargetUser.id) {
         const id1 = String(window.myProfileInfo.id);
         const id2 = String(window.currentTargetUser.id);
-        return (id1 < id2) ? `audio_rooms/${id1}_${id2}` : `audio_rooms/${id2}_${id1}`;
+        return (id1 < id2) ? `video_rooms/${id1}_${id2}` : `video_rooms/${id2}_${id1}`;
     }
-    return 'audio_rooms/global';
+    return 'video_rooms/global';
 };
 
-window.translateAudioText = async function(text, targetLang) {
-    if (!text || !targetLang || targetLang === 'auto') return text;
+window.videoRoomTranslate = async function(text, targetLang) {
+    if (!text || !targetLang) return text;
     try {
         const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`);
         const data = await res.json();
@@ -81,22 +62,28 @@ window.translateAudioText = async function(text, targetLang) {
     return text;
 };
 
-window.syncAudioRoomListener = function() {
-    if (typeof firebase === 'undefined' || !firebase.database) return;
-    const dbPath = window.getAudioRoomDbPath();
+// ==========================================
+// 1. СЛУШАТЕЛЬ FIREBASE И БЕГУЩАЯ СТРОКА ВИДЕОКОМНАТЫ
+// ==========================================
+window.activeVideoRoomRef = null;
+window.activeVideoRoomHandler = null;
 
-    if (window.activeAudioRoomRef && window.activeAudioRoomHandler) {
-        window.activeAudioRoomRef.off('child_added', window.activeAudioRoomHandler);
+window.syncVideoRoomListener = function() {
+    if (typeof firebase === 'undefined' || !firebase.database) return;
+    const dbPath = window.getVideoRoomDbPath();
+
+    if (window.activeVideoRoomRef && window.activeVideoRoomHandler) {
+        window.activeVideoRoomRef.off('child_added', window.activeVideoRoomHandler);
     }
 
     const ref = firebase.database().ref(dbPath).limitToLast(1);
-    const handler = (snapshot) => window.handleAudioRoomMessage(snapshot);
-    window.activeAudioRoomRef = ref;
-    window.activeAudioRoomHandler = handler;
+    const handler = (snapshot) => window.handleVideoRoomMessage(snapshot);
+    window.activeVideoRoomRef = ref;
+    window.activeVideoRoomHandler = handler;
     ref.on('child_added', handler);
 };
 
-window.handleAudioRoomMessage = function(snapshot) {
+window.handleVideoRoomMessage = function(snapshot) {
     const data = snapshot.val();
     if (!data) return;
     if (data.timestamp && (Date.now() - data.timestamp) > 15000) return;
@@ -107,8 +94,8 @@ window.handleAudioRoomMessage = function(snapshot) {
     const origText = data.originalText || data.text || '';
     const transText = data.text || origText;
 
-    const vMarquee = document.getElementById('voice-info-marquee');
-    if (vMarquee && window.isVoiceMarqueeEnabled !== false) {
+    const marquee = document.getElementById('video-info-marquee');
+    if (marquee) {
         const receiverName = isMe
             ? (window.currentTargetUser ? (window.currentTargetUser.name || 'User').split(' ')[0] : 'Partner')
             : (window.myUsername || 'You');
@@ -120,44 +107,50 @@ window.handleAudioRoomMessage = function(snapshot) {
         if (transText && transText.toLowerCase() !== origText.toLowerCase()) {
             html += `<span class="text-[#00a884] font-bold ml-2">➔ ${receiverFlag} ${receiverName}: ${transText}</span>`;
         }
-        vMarquee.innerHTML = html;
-        vMarquee.style.animation = 'none';
-        void vMarquee.offsetWidth;
-        vMarquee.style.animation = null;
+        marquee.innerHTML = html;
+        marquee.style.animation = 'none';
+        void marquee.offsetWidth;
+        marquee.style.animation = null;
     }
 
-    if (!isMe && data.isAIAudio && transText) {
+    if (!isMe && data.isAIAudio && transText && typeof window.playAIVoice === 'function') {
         window.playAIVoice(encodeURIComponent(transText), data.targetLang || data.langCode || 'en');
     }
 };
 
-window.sendAudioRoomText = async function(rawText, isAIAudio = false, forcedMicLang = null) {
+// ==========================================
+// 2. ОТПРАВКА ТЕКСТА И ГОЛОСА В ВИДЕОКОМНАТУ
+// ==========================================
+window.sendVideoRoomPayload = async function(rawText, isAIAudio = false) {
     const text = (rawText || '').trim();
     if (!text) return;
 
-    window.syncAudioRoomListener();
+    window.syncVideoRoomListener();
 
-    const selectedLang = forcedMicLang ? window.normalizeMicLang(forcedMicLang) : window.getSelectedMicMenuLang();
-    const isManual = selectedLang !== 'auto';
-    const spokenLang = isManual ? selectedLang : window.normalizeMicLang(navigator.language || 'ru');
+    const manualLang = window.videoRoomGetMicLang();
+    const spokenLang = manualLang || window.videoRoomFixLang(navigator.language) || 'ru';
 
-    const partnerLang = window.currentTargetUser
-        ? window.normalizeMicLang((window.currentTargetUser.langCode && window.currentTargetUser.langCode !== 'auto') ? window.currentTargetUser.langCode : window.getSmartLang(window.currentTargetUser))
-        : 'en';
+    let partnerLang = 'en';
+    if (window.currentTargetUser) {
+        const rawPartner = (window.currentTargetUser.langCode && window.currentTargetUser.langCode !== 'auto')
+            ? window.currentTargetUser.langCode
+            : (typeof window.getSmartLang === 'function' ? window.getSmartLang(window.currentTargetUser) : 'en');
+        partnerLang = window.videoRoomFixLang(rawPartner) || 'en';
+    }
 
     let translatedText = text;
-    if (partnerLang && partnerLang !== 'auto' && partnerLang !== spokenLang) {
-        translatedText = await window.translateAudioText(text, partnerLang);
+    if (partnerLang && partnerLang !== spokenLang) {
+        translatedText = await window.videoRoomTranslate(text, partnerLang);
     }
 
     let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
     let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
-    if (isManual && window.VOICE_LANG_MAP[selectedLang]) {
-        activeFlag = window.VOICE_LANG_MAP[selectedLang].flag;
-        activeFlagCode = window.VOICE_LANG_MAP[selectedLang].flagCode;
+    if (manualLang && window.VIDEO_LANG_MAP[manualLang]) {
+        activeFlag = window.VIDEO_LANG_MAP[manualLang].flag;
+        activeFlagCode = window.VIDEO_LANG_MAP[manualLang].flagCode;
     }
 
-    firebase.database().ref(window.getAudioRoomDbPath()).push({
+    firebase.database().ref(window.getVideoRoomDbPath()).push({
         userId: (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest',
         name: window.myUsername || 'User',
         text: translatedText,
@@ -170,226 +163,96 @@ window.sendAudioRoomText = async function(rawText, isAIAudio = false, forcedMicL
         langCode: spokenLang,
         targetLang: partnerLang,
         isAIAudio: Boolean(isAIAudio),
-        isVoiceRoomMsg: true
+        isVideoRoomMsg: true
     });
 };
 
-window.sendAudioRoomMsg = async function() {
-    const input = document.getElementById('voice-chat-input');
+window.sendVideoRoomMsg = async function() {
+    const input = document.getElementById('video-chat-input');
     if (!input) return;
     const val = input.value.trim();
     if (!val) return;
     input.value = '';
-    await window.sendAudioRoomText(val, false);
+    await window.sendVideoRoomPayload(val, false);
 };
 
 // ==========================================
-// 2. УНИВЕРСАЛЬНЫЙ МИКРОФОН (БЕЗЛИМИТКА + РОУТИНГ ПО КОМНАТАМ)
+// 3. НИЖНИЙ МИКРОФОН ВИДЕОКОМНАТЫ (СТАБИЛЬНЫЙ, БЕЗ ЭКОСИСТЕМЫ)
 // ==========================================
-window.universalMicRec = null;
-window.isManualMicStop = false;
+window.videoRoomRec = null;
+window.isManualVideoMicStop = false;
 
-window.startUniversalMic = async function(mode) {
-    if (window.closeAllMenus) window.closeAllMenus();
+window.startVideoRoomMic = async function(mode = 'text') {
+    window.syncVideoRoomListener();
 
-    // Если нажали микрофон в нижнем баре видеокомнаты — отдаём в video-room.js
-    if (window.currentMicInputTarget === 'video-chat-input' && typeof window.startVideoRoomMic === 'function') {
-        window.startVideoRoomMic(mode);
-        return;
-    }
-
-    window.speechRecognizedText = "";
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) return alert("Browser does not support Speech Recognition.");
+    if (!SpeechRec) return alert("Голосовой ввод не поддерживается браузером.");
 
     if (window.localAudioTrack) {
         try { await window.localAudioTrack.setMuted(true); } catch (e) {}
     }
 
-    if (window.universalMicRec) {
-        window.isManualMicStop = true;
-        try { window.universalMicRec.stop(); } catch (e) {}
+    if (window.videoRoomRec) {
+        window.isManualVideoMicStop = true;
+        try { window.videoRoomRec.stop(); } catch (e) {}
     }
 
-    window.isManualMicStop = false;
+    window.isManualVideoMicStop = false;
     const rec = new SpeechRec();
-    window.universalMicRec = rec;
+    window.videoRoomRec = rec;
     rec.continuous = true;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
 
-    const selectedMicLang = window.getSelectedMicMenuLang();
-    const isMicManual = selectedMicLang !== 'auto';
-    rec.lang = isMicManual
-        ? (window.VOICE_LANG_MAP[selectedMicLang]?.speech || selectedMicLang)
+    const manualLang = window.videoRoomGetMicLang();
+    rec.lang = manualLang
+        ? (window.VIDEO_LANG_MAP[manualLang]?.speech || manualLang)
         : (navigator.language || 'ru-RU');
 
-    if (window.showToast) window.showToast("Listening...", "Speak into the microphone", "", "");
+    if (window.showToast) window.showToast("Video Mic", "Говорите...", "", "");
 
     rec.onresult = async (e) => {
         const transcript = (e.results[e.results.length - 1][0].transcript || '').trim();
         if (!transcript) return;
-        window.speechRecognizedText = transcript;
-
-        // Аудиокомната — шлём строго в её изолированную ветку
-        if (window.currentMicInputTarget === 'voice-chat-input') {
-            await window.sendAudioRoomText(transcript, mode === 'ai-audio', selectedMicLang);
-            return;
-        }
-
-        const isConf = (window.currentMicInputTarget === 'conf-chat-input' || window.currentIndex === 2);
-        let targetDbRoom = window.currentRoomId || 'global';
-        if (isConf && targetDbRoom === 'global') targetDbRoom = 'video_room_global';
-
-        const spokenLangCode = window.normalizeMicLang(rec.lang);
-        let textToShip = transcript;
-
-        // В личном чате переводим на язык собеседника; в глобальном — оставляем оригинал для веера
-        if (!isConf && window.currentTargetUser && targetDbRoom !== 'global' && targetDbRoom !== 'video_room_global' && targetDbRoom !== 'private_ai_bot') {
-            const partnerLang = window.normalizeMicLang(
-                (window.currentTargetUser.langCode && window.currentTargetUser.langCode !== 'auto')
-                    ? window.currentTargetUser.langCode
-                    : window.getSmartLang(window.currentTargetUser)
-            );
-            if (partnerLang && partnerLang !== 'auto' && partnerLang !== spokenLangCode) {
-                textToShip = await window.translateAudioText(transcript, partnerLang);
-            }
-        }
-
-        let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
-        let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
-        if (isMicManual && window.VOICE_LANG_MAP[selectedMicLang]) {
-            activeFlag = window.VOICE_LANG_MAP[selectedMicLang].flag;
-            activeFlagCode = window.VOICE_LANG_MAP[selectedMicLang].flagCode;
-        }
-
-        const payload = {
-            userId: (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest',
-            name: window.myUsername || 'User',
-            text: textToShip,
-            originalText: transcript,
-            sessionId: window.mySessionId || 'sess',
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U',
-            flag: activeFlag,
-            flagCode: activeFlagCode,
-            langCode: (spokenLangCode !== 'auto') ? spokenLangCode : 'ru',
-            isConfMsg: isConf
-        };
-
-        if (mode === 'ai-audio') payload.isAIAudio = true;
-        firebase.database().ref(targetDbRoom).push(payload);
+        await window.sendVideoRoomPayload(transcript, mode === 'ai-audio');
     };
 
     rec.onend = () => {
-        if (!window.isManualMicStop && window.universalMicRec) {
-            try { window.universalMicRec.start(); } catch (err) {}
+        if (!window.isManualVideoMicStop && window.videoRoomRec) {
+            try { window.videoRoomRec.start(); } catch (err) {}
         }
     };
 
     rec.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'aborted') window.isManualMicStop = true;
+        if (e.error === 'not-allowed' || e.error === 'aborted') {
+            window.isManualVideoMicStop = true;
+        }
     };
 
     try { rec.start(); } catch (e) {}
 };
 
-window.stopUniversalMic = async function() {
-    window.isManualMicStop = true;
-    if (window.universalMicRec) {
-        try { window.universalMicRec.stop(); } catch (e) {}
-        window.universalMicRec = null;
-    }
-    if (typeof window.stopVideoRoomMic === 'function') {
-        window.stopVideoRoomMic();
+window.stopVideoRoomMic = async function() {
+    window.isManualVideoMicStop = true;
+    if (window.videoRoomRec) {
+        try { window.videoRoomRec.stop(); } catch (e) {}
+        window.videoRoomRec = null;
     }
     if (window.localAudioTrack) {
         try { await window.localAudioTrack.setMuted(false); } catch (e) {}
     }
-    if (window.showToast) window.showToast("Stopped", "Voice recording finished.", "", "");
 };
 
-window.playAIVoice = function(encodedText, langCode) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    let text = "";
-    try { text = decodeURIComponent(encodedText); } catch (e) { text = unescape(encodedText); }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    const norm = window.normalizeMicLang(langCode);
-    const voiceMap = {
-        en: 'en-US', ru: 'ru-RU', az: 'tr-TR', tr: 'tr-TR', de: 'de-DE',
-        kk: 'kk-KZ', ar: 'ar-AE', it: 'it-IT', es: 'es-ES', fr: 'fr-FR',
-        pt: 'pt-PT', ja: 'ja-JP', zh: 'zh-CN'
-    };
-    utterance.lang = voiceMap[norm] || langCode || 'en-US';
-    utterance.rate = 1.0;
-    window.speechSynthesis.speak(utterance);
-};
-
-// ==========================================
-// 3. ЖИВОЙ ПЕРЕВОДЧИК АУДИОЗВОНКА
-// ==========================================
-window.liveCallRec = null;
-window.isManualLiveCallStop = false;
-
-window.startVoiceAI = function() {
-    window.syncAudioRoomListener();
-
-    if (window.liveCallRec) {
-        window.isManualLiveCallStop = true;
-        try { window.liveCallRec.stop(); } catch (e) {}
-    }
-
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) return;
-
-    window.isManualLiveCallStop = false;
-    window.liveCallRec = new SpeechRec();
-    window.liveCallRec.continuous = true;
-    window.liveCallRec.interimResults = false;
-
-    const selectedMicLang = window.getSelectedMicMenuLang();
-    window.liveCallRec.lang = (selectedMicLang !== 'auto')
-        ? (window.VOICE_LANG_MAP[selectedMicLang]?.speech || selectedMicLang)
-        : (navigator.language || 'ru-RU');
-
-    window.liveCallRec.onresult = async (e) => {
-        const transcript = (e.results[e.results.length - 1][0].transcript || '').trim();
-        if (!transcript) return;
-        await window.sendAudioRoomText(transcript, false, selectedMicLang);
-    };
-
-    window.liveCallRec.onend = () => {
-        if (!window.isManualLiveCallStop && window.liveCallRec) {
-            try { window.liveCallRec.start(); } catch (err) {}
-        }
-    };
-
-    window.liveCallRec.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'aborted') window.isManualLiveCallStop = true;
-    };
-
-    try { window.liveCallRec.start(); } catch (err) {}
-};
-
-window.stopVoiceAI = function() {
-    window.isManualLiveCallStop = true;
-    if (window.liveCallRec) {
-        try { window.liveCallRec.stop(); } catch (err) {}
-        window.liveCallRec = null;
-    }
-};
-
-// Привязка Enter на поле ввода аудиокомнаты
+// Привязка Enter на поле ввода видеокомнаты
 document.addEventListener('DOMContentLoaded', () => {
-    const vInput = document.getElementById('voice-chat-input');
-    if (vInput) {
-        vInput.addEventListener('keydown', (e) => {
+    const vidInput = document.getElementById('video-chat-input');
+    if (vidInput) {
+        vidInput.addEventListener('keydown', (e) => 
             if (e.key === 'Enter') {
                 e.preventDefault();
-                window.sendAudioRoomMsg();
+                window.sendVideoRoomMsg();
             }
         });
     }
 });
+
