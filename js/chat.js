@@ -1037,10 +1037,8 @@ window.startUniversalMic = async function(mode) {
 
     // КАНАЛ МИКРОФОНА: язык берётся СТРОГО из своего меню (#plus-mic-lang / hf_mic_lang_*).
     // Без привязки к профилю (myProfileInfo) и экосистеме (appLang).
-    const micSelect = document.getElementById('plus-mic-lang');
-    let manualMicLang = (micSelect && micSelect.value)
-        ? micSelect.value
-        : (localStorage.getItem(window.getMicLangKey()) || 'auto');
+    let manualMicLang = localStorage.getItem(window.getMicLangKey()) || 'auto';
+    
 
     if (manualMicLang === 'kz') manualMicLang = 'kk';
     if (manualMicLang === 'cn') manualMicLang = 'zh';
@@ -1060,7 +1058,9 @@ window.startUniversalMic = async function(mode) {
         let base2 = manualMicLang.substring(0, 2).toLowerCase();
         rec.lang = speechLocaleMap[base2] || manualMicLang;
     } else {
-        rec.lang = navigator.language || 'ru-RU';
+                let autoBase = (window.getSmartLang(window.myProfileInfo) || 'en').substring(0, 2).toLowerCase();
+        rec.lang = speechLocaleMap[autoBase] || autoBase;
+        
     }
     rec.interimResults = false;
     rec.maxAlternatives = 1;
