@@ -57,26 +57,47 @@ setTimeout(() => {
     window.changeAppLanguage(saved);
 }, 1000);
 
+window.getLangByFlag = function(flagCode, flagEmoji) {
+    const codeMap = {
+        'ru': 'ru', 'kz': 'kk', 'az': 'az', 'it': 'it', 'de': 'de',
+        'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt',
+        'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr'
+    };
+    const emojiMap = {
+        '🇷🇺': 'ru', '🇰🇿': 'kk', '🇦🇿': 'az', '🇮🇹': 'it', '🇩🇪': 'de',
+        '🇫🇷': 'fr', '🇯🇵': 'ja', '🇪🇸': 'es', '🇨🇳': 'zh', '🇵🇹': 'pt',
+        '🇬🇧': 'en', '🇺🇸': 'en', '🇦🇪': 'ar', '🇹🇷': 'tr'
+    };
+    let c = flagCode ? String(flagCode).toLowerCase().trim() : '';
+    if (c && c !== 'un' && codeMap[c]) return codeMap[c];
+    if (flagEmoji && flagEmoji !== '🌐' && emojiMap[flagEmoji]) return emojiMap[flagEmoji];
+    return null;
+};
+
 window.getSmartLang = function(userData) {
-    if (!userData) return navigator.language ? navigator.language.slice(0, 2) : 'en'; 
+    if (!userData) return navigator.language ? navigator.language.slice(0, 2) : 'en';
 
-    let rawPhone = typeof userData === 'object' ? userData.phone : userData;
-    let flag = (typeof userData === 'object' && userData.flagCode) ? String(userData.flagCode).toLowerCase() : "un";
+    // 1. Главный приоритет — флаг профиля (или переключённый флаг)
+    if (typeof userData === 'object') {
+        let langFromFlag = window.getLangByFlag(userData.flagCode, userData.flag);
+        if (langFromFlag) return langFromFlag;
+    }
+
+    // 2. Если флаг не задан — смотрим сохранённый langCode
     let langPref = typeof userData === 'object' ? userData.langCode : null;
-
     if (langPref === 'kz') langPref = 'kk';
     if (langPref === 'cn') langPref = 'zh';
     if (langPref === 'jp') langPref = 'ja';
     if (langPref === 'ae') langPref = 'ar';
-
     if (langPref && langPref !== 'auto' && langPref !== 'un') return langPref;
 
-    if (flag === 'kz') return 'kk';
-
+    // 3. Запасной вариант — код телефона
+    let rawPhone = typeof userData === 'object' ? userData.phone : userData;
     let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
 
     if (phone.startsWith('+7')) return 'ru';
     if (phone.startsWith('+994')) return 'az';
+    if (phone.startsWith('+90')) return 'tr';
     if (phone.startsWith('+39')) return 'it';
     if (phone.startsWith('+49')) return 'de';
     if (phone.startsWith('+33')) return 'fr';
@@ -86,9 +107,6 @@ window.getSmartLang = function(userData) {
     if (phone.startsWith('+351')) return 'pt';
     if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
     if (phone.startsWith('+971')) return 'ar';
-
-    const flagToLang = { 'ru': 'ru', 'kz': 'kk', 'az': 'az', 'it': 'it', 'de': 'de', 'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en', 'us': 'en', 'ae': 'ar', 'tr': 'tr' };
-    if (flagToLang[flag]) return flagToLang[flag];
 
     return navigator.language ? navigator.language.slice(0, 2) : 'en';
 };
