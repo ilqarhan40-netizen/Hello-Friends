@@ -1,293 +1,343 @@
-//==========================================
-// MODULE: CALLS, VIDEO & AGORA ENGINE
-//==========================================
+// ==========================================
+// MODULE: VOICE, MIC, AI AUDIO & LIVE CALL TRANSLATOR
+// ==========================================
 
-if (typeof AgoraRTC === 'undefined') {
-    const script = document.createElement('script');
-    script.src = "https://download.agora.io/sdk/release/AgoraRTC_N-4.22.0.js";
-    document.head.appendChild(script);
-}
+window.currentMicInputTarget = 'chat-input';
 
-if (typeof AIDenoiserExtension === 'undefined') {
-    const aiScript = document.createElement('script');
-    aiScript.src = "https://download.agora.io/sdk/release/agora-extension-ai-denoiser-1.1.0.js";
-    document.head.appendChild(aiScript);
-}
+window.normalizeLangCode = function(code) {
+    let tl = String(code || 'en').substring(0, 2).toLowerCase();
+    const codeFix = { 'us': 'en', 'gb': 'en', 'kz': 'kk', 'cn': 'zh', 'jp': 'ja', 'ae': 'ar' };
+    return codeFix[tl] || tl;
+};
 
-window.agoraClient = null;
-window.localAudioTrack = null;
-window.localVideoTrack = null;
+window.toggleUniversalMic = function(e, inputId) {
+    e.stopPropagation();
+    window.currentMicInputTarget = inputId;
+    const popup = document.getElementById('universal-mic-popup');
+    if (popup) popup.classList.toggle('active');
+};
 
-// Ключи Agora (временный токен для канала "hello")
-const AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
-const AGORA_APP_CERT = "1a1bb517f44841cdbb1ab4cdd47e75d1";
-const AGORA_TEMP_TOKEN = "007eJxTYCg0Ond/XWhQ980vqXsnHA6N1+C4d0rXsOCZQJu5tmLPIiEFBktD4zRD40SzJAtDA5MUY5MkA2MzS9PE5JRkgxRzyyTz24n/shoCGRkufPNgYWJgBEMQn5UhIzUnJ5+BgQkuxMJgaGBgCAB79SHp";
-const AGORA_TEST_CHANNEL = "hello";
-
-window.currentCallerId = null;
-window.currentIncomingSignalKey = null;
-window.currentIncomingCallType = 'voice';
-window.myLastOutgoingCallType = 'voice';
-window.currentActiveChannel = null;
-window.currentIncomingChannel = null;
-
-// --- 0. ЗВУКОВОЙ ДВИЖОК ---
-window.sndMsg = new Audio('message.mp3.wav');
-window.sndCash = new Audio('cash.mp3.wav');
-window.sndEmail = new Audio('email.mp3.wav');
-window.sndMissed = new Audio('missed.mp3.wav');
-window.sndRing = new Audio('ringtone.mp3.wav');
-window.sndCallOut = new Audio('calling.mp3.wav');
-
-window.sndRing.loop = true;
-window.sndCallOut.loop = true;
-
-window.playSafeSound = function(audioElement, vibratePattern) {
-    if (!audioElement) return;
-    audioElement.muted = false;
-    audioElement.currentTime = 0;
-    let playPromise = audioElement.play();
-    if (playPromise !== undefined) {
-        playPromise.catch(error => { console.warn("Звук заблокирован до клика по экрану."); });
-    }
-    if (vibratePattern && "vibrate" in navigator) {
-        try { navigator.vibrate(vibratePattern); } catch(e){}
+window.handleSmartCall = function() {
+    if (window.currentRoomId === 'global' || window.currentRoomId.startsWith('private_me') || window.currentRoomId === 'private_ai_bot') {
+        alert("Please select a user from the Contacts list to make a call.");
+    } else {
+        if (window.startInAppCall) window.startInAppCall();
     }
 };
 
-window.stopAllRings = function() {
-    if(window.sndRing) { window.sndRing.pause(); window.sndRing.currentTime = 0; }
-    if(window.sndCallOut) { window.sndCallOut.pause(); window.sndCallOut.currentTime = 0; }
-    if ("vibrate" in navigator) { try { navigator.vibrate(0); } catch(e){} }
+window.getSmartLang = function(userProfile) {
+    if (!userProfile) return 'en';
+    let phone = String(userProfile.phone || "").replace(/[\s\-()]/g, "");
+    let flag = String(userProfile.flagCode || "un").toLowerCase();
+
+    // Сначала проверяем флаг Казахстана (чтобы +7 не перебивал казахский на русский)
+    if (flag === 'kz') return 'kk';
+
+    if (phone.startsWith('+77') || phone.startsWith('+76')) return 'kk';
+    if (phone.startsWith('+7')) return 'ru';
+    if (phone.startsWith('+994')) return 'az';
+    if (phone.startsWith('+90')) return 'tr';
+    if (phone.startsWith('+39')) return 'it';
+    if (phone.startsWith('+49')) return 'de';
+    if (phone.startsWith('+33')) return 'fr';
+    if (phone.startsWith('+81')) return 'ja';
+    if (phone.startsWith('+34')) return 'es';
+    if (phone.startsWith('+86')) return 'zh';
+    if (phone.startsWith('+351')) return 'pt';
+    if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
+    if (phone.startsWith('+971')) return 'ar';
+
+    const flagToLang = {
+        'kz': 'kk', 'ru': 'ru', 'az': 'az', 'tr': 'tr', 'it': 'it', 'de': 'de',
+        'fr': 'fr', 'jp': 'ja', 'es': 'es', 'cn': 'zh', 'pt': 'pt', 'gb': 'en',
+        'us': 'en', 'ae': 'ar'
+    };
+    if (flagToLang[flag]) return flagToLang[flag];
+
+    return window.normalizeLangCode(userProfile.langCode || 'en');
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.body.addEventListener('click', function unlockAudio() {
-        const allSounds = [window.sndMsg, window.sndCash, window.sndEmail, window.sndMissed, window.sndRing, window.sndCallOut];
-        allSounds.forEach(snd => { snd.play().then(() => snd.pause()).catch(e => {}); });
-        document.body.removeEventListener('click', unlockAudio);
-    }, { once: true });
-});
+window.toSpeechLocale = function(shortLang) {
+    const map = {
+        'kk': 'kk-KZ', 'ru': 'ru-RU', 'az': 'az-AZ', 'tr': 'tr-TR',
+        'en': 'en-US', 'it': 'it-IT', 'de': 'de-DE', 'fr': 'fr-FR',
+        'ja': 'ja-JP', 'es': 'es-ES', 'zh': 'zh-CN', 'pt': 'pt-PT', 'ar': 'ar-AE'
+    };
+    let clean = window.normalizeLangCode(shortLang);
+    return map[clean] || 'en-US';
+};
 
-// --- ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
-window.startWebRTC = async function(isCaller, targetId, isVideo = false, channelName = "hello") {
-    if (typeof AgoraRTC === 'undefined') {
-        alert("Модуль связи загружается, подождите секунду...");
-        window.hangUpCall();
-        return;
+// --- ФУНКЦИЯ 1: ОДИНОЧНОЕ ГОЛОСОВОЕ СООБЩЕНИЕ (Безлимитка + Обход Agora) ---
+window.universalMicRec = null;
+window.isManualMicStop = false;
+
+window.startUniversalMic = async function(mode) {
+    window.speechRecognizedText = "";
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) return alert("Browser does not support Speech Recognition.");
+
+    // 1. ОБХОД КОНФЛИКТА: Временно "глушим" микрофон Агоры
+    if (window.localAudioTrack) {
+        try { await window.localAudioTrack.setMuted(true); } catch(e){}
     }
 
-    try {
-        if (window.agoraClient) {
-            try { await window.agoraClient.leave(); } catch (e) {}
-            window.agoraClient = null;
+    if (window.universalMicRec) {
+        window.isManualMicStop = true;
+        try { window.universalMicRec.stop(); } catch(e){}
+    }
+
+    window.isManualMicStop = false;
+    let rec = new SpeechRec();
+    window.universalMicRec = rec;
+
+    // 2. БЕЗЛИМИТКА
+    rec.continuous = true;
+    rec.interimResults = false;
+
+    let langSelect = document.getElementById('plus-mic-lang');
+    let selectedMicLang = langSelect ? langSelect.value : 'auto';
+
+    if (selectedMicLang === 'auto') {
+        rec.lang = window.toSpeechLocale(window.getSmartLang(window.myProfileInfo));
+    } else {
+        rec.lang = selectedMicLang;
+    }
+
+    if (window.showToast) window.showToast("Listening...", "Speak into the microphone", "", "");
+
+    rec.onresult = async (e) => {
+        window.speechRecognizedText = e.results[e.results.length - 1][0].transcript;
+        if (!window.speechRecognizedText.trim()) return;
+
+        let targetLang = 'en';
+        if (selectedMicLang !== 'auto') {
+            targetLang = window.normalizeLangCode(selectedMicLang.split('-')[0]);
+        } else {
+            if (window.currentTargetUser && window.currentRoomId !== 'global') {
+                targetLang = window.getSmartLang(window.currentTargetUser);
+            } else {
+                targetLang = window.normalizeLangCode(window.appLang || window.getSmartLang(window.myProfileInfo));
+            }
         }
 
-        window.agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
+        let textToShip = window.speechRecognizedText;
 
-        window.agoraClient.on("user-published", async (user, mediaType) => {
-            await window.agoraClient.subscribe(user, mediaType);
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(window.speechRecognizedText)}`);
+            const data = await res.json();
+            if (data && data[0]) {
+                textToShip = data[0].map(item => item[0]).join('');
+            }
+        } catch (err) {}
 
-            if (mediaType === "video") {
-                let newDirectVideo = document.getElementById('direct-remote-video');
-                let newDirectPlaceholder = document.getElementById('direct-remote-placeholder');
-                let gridVideo = document.getElementById(`remote-video-${targetId}`);
+        let isVoice = window.currentMicInputTarget === 'voice-chat-input';
+        let isConf = window.currentMicInputTarget === 'conf-chat-input';
 
-                if (newDirectVideo) {
-                    newDirectVideo.srcObject = new MediaStream([user.videoTrack.getMediaStreamTrack()]);
-                    newDirectVideo.style.display = 'block';
-                    newDirectVideo.classList.remove('hidden');
-                    newDirectVideo.play().catch(e => console.warn(e));
-                    if (newDirectPlaceholder) newDirectPlaceholder.classList.add('hidden');
-                } else if (gridVideo) {
-                    gridVideo.srcObject = new MediaStream([user.videoTrack.getMediaStreamTrack()]);
-                    gridVideo.style.display = 'block';
-                    gridVideo.classList.remove('hidden');
-                    gridVideo.play().catch(e => console.warn(e));
+        const payload = {
+            userId: window.myProfileInfo.id,
+            name: window.myUsername,
+            text: textToShip,
+            originalText: window.speechRecognizedText,
+            sessionId: window.mySessionId,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: window.myProfileInfo.photo,
+            flag: window.myProfileInfo.flag,
+            flagCode: window.myProfileInfo.flagCode,
+            langCode: targetLang,
+            isVoiceRoomMsg: isVoice,
+            isConfMsg: isConf
+        };
+
+        if (mode === 'ai-audio') payload.isAIAudio = true;
+        firebase.database().ref(window.currentRoomId).push(payload);
+    };
+
+    // === ХАК АВТОПЕРЕЗАПУСКА ПРИ ТИШИНЕ ===
+    rec.onend = () => {
+        if (!window.isManualMicStop && window.universalMicRec) {
+            try { window.universalMicRec.start(); } catch(err) {}
+        }
+    };
+
+    rec.onerror = (e) => {
+        if (e.error === 'not-allowed' || e.error === 'aborted') {
+            window.isManualMicStop = true;
+        }
+    };
+
+    try { rec.start(); } catch(e){}
+};
+
+// --- ФУНКЦИЯ РУЧНОЙ ОСТАНОВКИ ---
+window.stopUniversalMic = async function() {
+    window.isManualMicStop = true;
+
+    if (window.universalMicRec) {
+        try { window.universalMicRec.stop(); } catch(e){}
+        window.universalMicRec = null;
+    }
+
+    if (window.localAudioTrack) {
+        try { await window.localAudioTrack.setMuted(false); } catch(e){}
+    }
+
+    if (window.showToast) window.showToast("Stopped", "Voice recording finished.", "", "");
+};
+
+window.playAIVoice = function(encodedText, langCode) {
+    if (!window.speechSynthesis) return alert("Your browser does not support AI Voice.");
+    window.speechSynthesis.cancel();
+
+    let text = "";
+    try { text = decodeURIComponent(encodedText); } catch(e) { text = unescape(encodedText); }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voiceMap = {
+        'en': 'en-US', 'ru': 'ru-RU', 'kk': 'kk-KZ', 'az': 'tr-TR', 'tr': 'tr-TR',
+        'de': 'de-DE', 'ar': 'ar-AE', 'it': 'it-IT', 'es': 'es-ES',
+        'fr': 'fr-FR', 'pt': 'pt-PT', 'ja': 'ja-JP', 'zh': 'zh-CN'
+    };
+    let cleanCode = window.normalizeLangCode(langCode);
+    utterance.lang = voiceMap[cleanCode] || cleanCode;
+    utterance.rate = 1.0;
+    window.speechSynthesis.speak(utterance);
+};
+
+window.autoSetMicLang = function() {
+    let rMic = document.getElementById('plus-mic-lang');
+    if(rMic && !rMic.value) rMic.value = 'auto';
+};
+
+// =========================================================================
+// ФУНКЦИЯ 2: ЖИВОЙ ПЕРЕВОДЧИК ДЛЯ АУДИО/ВИДЕО ЗВОНКОВ (Через Firebase)
+// =========================================================================
+window.liveCallRec = null;
+window.isManualLiveCallStop = false;
+
+window.startVoiceAI = function() {
+    if (window.liveCallRec) {
+        window.isManualLiveCallStop = true;
+        try { window.liveCallRec.stop(); } catch(e){}
+    }
+
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) return console.warn("Speech Recognition not supported.");
+
+    window.isManualLiveCallStop = false;
+    window.liveCallRec = new SpeechRec();
+    window.liveCallRec.continuous = true;
+    window.liveCallRec.interimResults = false;
+
+    let manualMicLang = localStorage.getItem(window.getMicLangKey ? window.getMicLangKey() : 'hf_mic_lang') || 'auto';
+    let mySpokenLang = window.getSmartLang(window.myProfileInfo);
+    window.liveCallRec.lang = (manualMicLang !== 'auto') ? manualMicLang : window.toSpeechLocale(mySpokenLang);
+
+    window.liveCallRec.onresult = async (e) => {
+        let transcript = e.results[e.results.length - 1][0].transcript;
+        if (!transcript.trim()) return;
+
+        let targetLang = window.currentTargetUser ? window.getSmartLang(window.currentTargetUser) : 'en';
+        targetLang = window.normalizeLangCode(targetLang);
+
+        let textToShip = transcript;
+        let spokenLangCode = window.normalizeLangCode(window.liveCallRec.lang);
+
+        try {
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(transcript)}`);
+            const data = await res.json();
+            if (data && data[0]) {
+                textToShip = data[0].map(item => item[0]).join('');
+            }
+
+            let activeFlagCode = window.myProfileInfo.flagCode || 'un';
+            let activeFlag = window.myProfileInfo.flag || '🌐';
+
+            if (manualMicLang !== 'auto') {
+                const revLangMap = {
+                    'en': ['gb', '🇬🇧'], 'kk': ['kz', '🇰🇿'], 'ru': ['ru', '🇷🇺'],
+                    'az': ['az', '🇦🇿'], 'de': ['de', '🇩🇪'], 'tr': ['tr', '🇹🇷'],
+                    'ar': ['ae', '🇦🇪'], 'it': ['it', '🇮🇹'], 'es': ['es', '🇪🇸'],
+                    'fr': ['fr', '🇫🇷'], 'pt': ['pt', '🇵🇹'], 'ja': ['jp', '🇯🇵'],
+                    'zh': ['cn', '🇨🇳']
+                };
+                if (revLangMap[spokenLangCode]) {
+                    activeFlagCode = revLangMap[spokenLangCode][0];
+                    activeFlag = revLangMap[spokenLangCode][1];
                 }
             }
-            if (mediaType === "audio") {
-                user.audioTrack.play();
+
+            let isVideoCall = (window.myLastOutgoingCallType === 'video' || window.currentIncomingCallType === 'video');
+
+            let targetDbRoom = 'global';
+            if (window.currentTargetUser) {
+                let id1 = String(window.myProfileInfo.id);
+                let id2 = String(window.currentTargetUser.id);
+                targetDbRoom = (id1 < id2) ? ("private_" + id1 + "_" + id2) : ("private_" + id2 + "_" + id1);
+            } else if (window.currentRoomId && window.currentRoomId !== 'global') {
+                targetDbRoom = window.currentRoomId;
             }
-        });
 
-        // ====================================================
-        // ВХОД В AGORA ПО ВРЕМЕННОМУ ТОКЕНУ (КАНАЛ "hello")
-        // ====================================================
-        await window.agoraClient.join(AGORA_APP_ID, AGORA_TEST_CHANNEL, AGORA_TEMP_TOKEN, null);
-        // ====================================================
-
-        let tracksToPublish = [];
-
-        // 1. Аппаратный захват микрофона
-        if (!window.localAudioTrack) {
-            window.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
-                AEC: true, // Акустическое эхо
-                ANS: true, // Фоновый шум
-                AGC: true  // Громкость
+            firebase.database().ref(targetDbRoom).push({
+                userId: window.myProfileInfo.id,
+                name: window.myUsername || 'User',
+                text: textToShip,
+                originalText: transcript,
+                sessionId: window.mySessionId || 'sess',
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
+                flag: activeFlag,
+                flagCode: activeFlagCode,
+                langCode: targetLang,
+                isVoiceRoomMsg: !isVideoCall,
+                isConfMsg: isVideoCall
             });
 
-            // 2. Искусственное ИИ-шумоподавление (AI Denoiser)
-            try {
-                if (typeof AIDenoiserExtension !== 'undefined') {
-                    const denoiser = new AIDenoiserExtension({
-                        assetsPath: "https://unpkg.com/agora-extension-ai-denoiser@1.1.0/external/"
-                    });
-                    AgoraRTC.registerExtension(denoiser);
-                    const processor = denoiser.createProcessor();
-                    await processor.enable();
+        } catch(err) { console.error("Ошибка перевода звонка:", err); }
+    };
 
-                    window.localAudioTrack.pipe(processor).pipe(window.localAudioTrack.processorDestination);
-                    console.log("AI-Шумоподавление успешно активировано.");
-                }
-            } catch (e) {
-                console.error("Ошибка запуска AI-фильтра:", e);
-            }
+    // === ХАК АВТОПЕРЕЗАПУСКА ДЛЯ ЗВОНКОВ ===
+    window.liveCallRec.onend = () => {
+        if (!window.isManualLiveCallStop && window.liveCallRec) {
+            try { window.liveCallRec.start(); } catch(err) {}
         }
-        tracksToPublish.push(window.localAudioTrack);
+    };
 
-        if (isVideo) {
-            if (!window.localVideoTrack) {
-                window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-                let newMyVideo = document.getElementById('direct-local-video');
-                let newMyPlaceholder = document.getElementById('direct-local-placeholder');
-                let myVideo = document.getElementById('my-live-video');
-
-                if (newMyVideo) {
-                    newMyVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
-                    newMyVideo.classList.remove('hidden');
-                    newMyVideo.play().catch(e=>{});
-                    if (newMyPlaceholder) newMyPlaceholder.classList.add('hidden');
-                } else if (myVideo) {
-                    myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
-                    myVideo.play().catch(e=>{});
-                }
-            }
-            tracksToPublish.push(window.localVideoTrack);
+    window.liveCallRec.onerror = (e) => {
+        if (e.error === 'not-allowed' || e.error === 'aborted') {
+            window.isManualLiveCallStop = true;
         }
+    };
 
-        await window.agoraClient.publish(tracksToPublish);
+    try { window.liveCallRec.start(); } catch(err){}
+};
 
-        if (window.startVoiceAI) window.startVoiceAI();
-
-    } catch (e) {
-        console.error("Ошибка Agora: ", e);
-        alert("Ошибка подключения Agora: " + (e.message || e));
-        window.hangUpCall();
+window.stopVoiceAI = function() {
+    window.isManualLiveCallStop = true;
+    if (window.liveCallRec) {
+        try { window.liveCallRec.stop(); } catch(err){}
+        window.liveCallRec = null;
     }
 };
 
-window.endWebRTCCall = async function() {
-    if (window.stopVoiceAI) window.stopVoiceAI();
+window.handleIncomingSpeech = function(payload) {
+    console.log("Входящий перевод:", payload.text);
 
-    if (window.localAudioTrack) { window.localAudioTrack.close(); window.localAudioTrack = null; }
-    if (window.localVideoTrack) { window.localVideoTrack.close(); window.localVideoTrack = null; }
-    if (window.agoraClient) {
-        try { await window.agoraClient.leave(); } catch (e) {}
-        window.agoraClient = null;
+    if (window.currentIncomingCallType === 'video' || window.myLastOutgoingCallType === 'video') {
+        let callerId = window.currentTargetUser ? window.currentTargetUser.id : 'speaker';
+        let marquee = document.getElementById(`conf-marquee-${callerId}`) || document.getElementById('speaker-marquee');
+        if (marquee) {
+            let callerName = window.currentTargetUser ? window.currentTargetUser.name.split(' ')[0] : 'Собеседник';
+            marquee.innerText = `[${callerName}]: ${payload.text}`;
+            marquee.style.animation = 'none';
+            marquee.offsetHeight;
+            marquee.style.animation = null;
+        }
+    } else {
+        let voiceMarquee = document.getElementById('voice-info-marquee');
+        if (voiceMarquee) voiceMarquee.innerText = `[Перевод]: ${payload.text}`;
+
+        let langToPlay = payload.langCode || payload.lang || 'en';
+        window.playAIVoice(encodeURIComponent(payload.text), langToPlay);
     }
-
-    document.querySelectorAll('[id^="remote-video-"]').forEach(v => {
-        v.srcObject = null;
-        v.classList.add('hidden');
-        v.style.display = 'none';
-    });
-
-    let newDirectVideo = document.getElementById('direct-remote-video');
-    let newDirectPlaceholder = document.getElementById('direct-remote-placeholder');
-    if (newDirectVideo) {
-        newDirectVideo.srcObject = null;
-        newDirectVideo.classList.add('hidden');
-        if (newDirectPlaceholder) newDirectPlaceholder.classList.remove('hidden');
-    }
-
-    let newMyVideo = document.getElementById('direct-local-video');
-    let newMyPlaceholder = document.getElementById('direct-local-placeholder');
-    if (newMyVideo) {
-        newMyVideo.srcObject = null;
-        newMyVideo.classList.add('hidden');
-        if (newMyPlaceholder) newMyPlaceholder.classList.remove('hidden');
-    }
-
-    const myVideo = document.getElementById('my-live-video');
-    if (myVideo) {
-        myVideo.srcObject = null;
-        myVideo.src = window.myProfileInfo?.video || 'https://assets.mixkit.co/videos/preview/mixkit-young-man-having-a-video-call-with-his-friends-41212-large.mp4';
-    }
-
-    const camBtn = document.getElementById('conf-cam-btn');
-    if (camBtn) {
-        camBtn.classList.replace('bg-red-500', 'bg-[#202c33]');
-        camBtn.querySelector('i').className = 'fa-solid fa-video-slash text-[#8696a0]';
-    }
-
-    window.currentCallerId = null;
-    window.currentTargetUser = null;
-    window.currentActiveChannel = null;
-    window.currentIncomingChannel = null;
 };
-
-// --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
-window.openPhoneChoiceModal = function() { if(window.closeDropdown) window.closeDropdown(); document.getElementById('phone-choice-modal').classList.add('active'); };
-window.closePhoneChoiceModal = function() { document.getElementById('phone-choice-modal').classList.remove('active'); };
-
-window.startInAppCall = function(callType = 'voice') {
-    if (!window.currentTargetUser) {
-        alert("Выберите контакт для звонка!"); window.closePhoneChoiceModal(); return;
-    }
-    const target = window.currentTargetUser;
-    window.closePhoneChoiceModal();
-
-    window.myLastOutgoingCallType = callType;
-    firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
-
-    // На время теста используем канал "hello" под временный токен
-    window.currentActiveChannel = AGORA_TEST_CHANNEL;
-
-    let callRef = firebase.database().ref('signals/' + target.id).push();
-    callRef.set({
-        type: 'call',
-        callType: callType,
-        callerId: window.myProfileInfo.id,
-        callerName: window.myUsername,
-        callerPhoto: window.myProfileInfo.photo,
-        channelName: window.currentActiveChannel,
-        timestamp: firebase.database.ServerValue.TIMESTAMP
-    });
-
-    let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
-    if (window.sendPushNotification) {
-        window.sendPushNotification(
-            target.id,
-            { type: 'call', callerName: window.myUsername, callType: callType },
-            pushTitle,
-            `${window.myUsername} звонит вам!`
-        );
-    }
-
-    const photoEl = document.getElementById('voice-friend-photo'); const flagEl = document.getElementById('voice-friend-flag'); const nameEl = document.getElementById('voice-friend-name');
-    if(photoEl) photoEl.src = target.photo; if(flagEl) flagEl.innerText = target.flag; if(nameEl) nameEl.innerText = target.name.split(' ')[0];
-
-    window.voiceFriend = target;
-    if (window.switchTab) window.switchTab(callType === 'video' ? 1 : 1);
-
-    if(window.showToast) window.showToast("Calling...", `Звоним ${target.name.split(' ')[0]}...`, target.photo, "");
-
-    window.stopAllRings();
-    setTimeout(() => { window.playSafeSound(window.sndCallOut); }, 100);
-
-    if (window.callTimeout) clearTimeout(window.callTimeout);
-    window.callTimeout = setTimeout(() => {
-        firebase.database().ref('users/' + target.id + '/missedCalls').push({
-            type: callType,
-            callerId: window.myProfileInfo.id,
-            callerName: window.myUsername,
-            callerPhoto: window.myProfileInfo.photo,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        });
-
-        callRef.remove();
-        window.callTimeout = null;
-        window.stopAllRings();
-        window.playSafeSound(window.sndMissed, [200, 100, 200]);
-        if(
