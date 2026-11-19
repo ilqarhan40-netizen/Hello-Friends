@@ -24,7 +24,7 @@ window.VIDEO_LANG_MAP = {
     az: { flagCode: 'az', flag: '🇦🇿', speech: 'az-AZ' },
     tr: { flagCode: 'tr', flag: '🇹🇷', speech: 'tr-TR' },
     de: { flagCode: 'de', flag: '🇩🇪', speech: 'de-DE' },
-    kk: { flagCode: 'kk', flag: '🇰🇿', speech: 'kk-KZ' },
+    kk: { flagCode: 'kz', flag: '🇰🇿', speech: 'kk-KZ' },
     ar: { flagCode: 'ae', flag: '🇦🇪', speech: 'ar-AE' },
     it: { flagCode: 'it', flag: '🇮🇹', speech: 'it-IT' },
     es: { flagCode: 'es', flag: '🇪🇸', speech: 'es-ES' },
@@ -63,7 +63,6 @@ window.videoRoomLangFromPhone = function(phone) {
     if (!phone) return '';
     const digits = String(phone).replace(/\D/g, '');
     if (!digits) return '';
-    // Длинные префиксы проверяем раньше коротких
     const prefixes = [
         ['994', 'az'], ['971', 'ar'], ['966', 'ar'], ['351', 'pt'],
         ['77', 'kk'], ['76', 'kk'], ['90', 'tr'], ['49', 'de'],
@@ -127,12 +126,13 @@ window.setVideoRoomMicLang = function(langCode) {
     }
 };
 
+// Язык микрофона — СТРОГО из своего меню (#plus-mic-lang), без профиля и экосистемы
 window.videoRoomGetMicLang = function() {
     if (window.videoRoomMicLangOverride) return window.videoRoomMicLangOverride;
 
     const selectors = [
-        '#video-mic-lang', '#mic-lang-select', '#voice-mic-lang',
-        '#micLangSelect', 'select[data-mic-lang]'
+        '#plus-mic-lang', '#video-mic-lang', '#mic-lang-select',
+        '#voice-mic-lang', '#micLangSelect', 'select[data-mic-lang]'
     ];
     for (const sel of selectors) {
         const el = document.querySelector(sel);
@@ -145,7 +145,7 @@ window.videoRoomGetMicLang = function() {
         const parsed = window.videoRoomFixLang(window.selectedMicLang);
         if (parsed) return parsed;
     }
-    return window.videoRoomResolveLang(window.myProfileInfo, window.videoRoomGetManualPanelLang());
+    return window.videoRoomFixLang(navigator.language) || 'ru';
 };
 
 // Единый чистый переводчик без двойного перевода
@@ -287,7 +287,7 @@ window.sendVideoRoomPayload = async function(rawText, sourceType = 'keyboard') {
             photo: safePhoto,
             flag: activeFlag,
             flagCode: activeFlagCode,
-            isVoiceRoomMsg: true,
+            isVoiceRoomMsg: false,
             isVideoRoomMsg: true,
             isConfMsg: false
         });
@@ -310,8 +310,8 @@ window.sendVideoRoomMsg = async function() {
     await window.sendVideoRoomPayload(rawText, 'keyboard');
 };
 
-// --- 4. ГОЛОСОВОЙ МИКРОФОН ВИДЕОКОМНАТЫ (АВТОНОМНЫЙ) ---
-window.startVideoRoomMic = function() {
+// --- 4. ГОЛОСОВОЙ МИКРОФОН ВИДЕОКОМНАТЫ (АВТОНОМНЫЙ + ОБХОД AGORA) ---
+window.startVideoRoomMic = async function() {
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRec) {
         console.warn('VideoRoom Mic: SpeechRecognition не поддерживается в этом браузере.');
@@ -319,7 +319,13 @@ window.startVideoRoomMic = function() {
     }
     if (window.videoRoomMicActive) return;
 
+    // Временно глушим микрофон Agora, чтобы Android/планшет отдал канал распознаванию речи
+    if (window.localAudioTrack) {
+        try { await window.localAudioTrack.setMuted(true); } catch (e) {}
+    }
+
     window.videoRoomMicActive = true;
+    window.syncVideoRoomListener();
 
     const launchRecognition = () => {
         if (!window.videoRoomMicActive) return;
@@ -333,7 +339,7 @@ window.startVideoRoomMic = function() {
             const micTl = window.videoRoomGetMicLang();
             const meta = window.VIDEO_LANG_MAP[micTl];
 
-            rec.lang = meta ? meta.speech : 'ru-RU';
+            rec.lang = meta ? meta.speech : (navigator.language || 'ru-RU');
             rec.continuous = false; // На Android/планшетах без continuous работает стабильнее
             rec.interimResults = false;
             rec.maxAlternatives = 1;
@@ -382,7 +388,7 @@ window.startVideoRoomMic = function() {
     launchRecognition();
 };
 
-window.stopVideoRoomMic = function() {
+window.stopVideoRoomMic = async function() {
     window.videoRoomMicActive = false;
     if (window.videoRoomMicRestartTimer) {
         clearTimeout(window.videoRoomMicRestartTimer);
@@ -392,6 +398,10 @@ window.stopVideoRoomMic = function() {
         try { window.videoRoomRecognition.onend = null; } catch (e) {}
         try { window.videoRoomRecognition.stop(); } catch (e) {}
         window.videoRoomRecognition = null;
+    }
+    // Возвращаем микрофон обратно в Agora
+    if (window.localAudioTrack && !window.isMyMicMuted) {
+        try { await window.localAudioTrack.setMuted(false); } catch (e) {}
     }
 };
 
@@ -554,6 +564,31 @@ window.syncVideoRoomListener = function() {
 
             window._videoOnlyMicHooked = true;
             clearInterval(hookVoiceAI);
+        }
+    }, 500);
+
+    // Перехват нижнего микрофона (startUniversalMic) в видеокомнате
+    const hookUniversalMic = setInterval(() => {
+        if (typeof window.startUniversalMic === 'function' && !window._videoOnlyUniversalMicHooked) {
+            const origStartUni = window.startUniversalMic;
+            const origStopUni = window.stopUniversalMic;
+
+            window.startUniversalMic = function() {
+                if (window.currentMicInputTarget === 'video-chat-input' || window.isDirectVideoCallActive()) {
+                    return window.startVideoRoomMic();
+                }
+                return origStartUni.apply(this, arguments);
+            };
+
+            if (typeof origStopUni === 'function') {
+                window.stopUniversalMic = function() {
+                    window.stopVideoRoomMic();
+                    return origStopUni.apply(this, arguments);
+                };
+            }
+
+            window._videoOnlyUniversalMicHooked = true;
+            clearInterval(hookUniversalMic);
         }
     }, 500);
 })();
