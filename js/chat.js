@@ -328,6 +328,20 @@ window.sendFirebaseMsg = async function() {
         } catch (e) {}
     }
 
+        if (targetDbRoom === 'global' && myBaseText) {
+        let tl = (myActiveLang || 'en').substring(0, 2).toLowerCase();
+        const codeFix = { 'us': 'en', 'gb': 'en', 'kz': 'kk', 'cn': 'zh', 'jp': 'ja', 'ae': 'ar' };
+        if (codeFix[tl]) tl = codeFix[tl];
+        try {
+            const resG = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(myBaseText)}`);
+            const dataG = await resG.json();
+            if (dataG && dataG[0]) {
+                myBaseText = dataG[0].map(s => (s && s[0]) ? s[0] : '').join('');
+                textToShip = myBaseText;
+            }
+        } catch (e) {}
+    }
+
     // 4. ОТПРАВКА В БАЗУ
     try {
         firebase.database().ref(targetDbRoom).push({
