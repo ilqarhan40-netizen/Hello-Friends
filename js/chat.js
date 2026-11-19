@@ -560,65 +560,104 @@ window.handleNewMessage = async function(snapshot) {
         }
     }
 
-    // --- 5. ВЕЕР ПЕРЕВОДОВ И БЕГУЩАЯ СТРОКА ГЛОБАЛЬНОГО ЧАТА ---
+        // --- 5. ВЕЕР ПЕРЕВОДОВ И БЕГУЩАЯ СТРОКА ГЛОБАЛЬНОГО ЧАТА ---
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && !data.isVoiceRoomMsg && !data.isConfMsg) {
-        let targetUsers = []; 
-        let neededLangs = new Set(); 
+        let targetUsers = [];
+        let neededLangs = new Set();
+        let origText = (data.originalText || data.text || '').trim();
 
-        let myFanFlag = window.myProfileInfo.flag || '🌐';
-        const revLangMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+        const revLangMap = {
+            'en': '🇬🇧', 'kk': '🇰🇿', 'ru': '🇷🇺', 'az': '🇦🇿', 'de': '🇩🇪',
+            'tr': '🇹🇷', 'ar': '🇦🇪', 'it': '🇮🇹', 'es': '🇪🇸', 'fr': '🇫🇷',
+            'pt': '🇵🇹', 'ja': '🇯🇵', 'zh': '🇨🇳'
+        };
 
-        let manualLang = window.getManualLangPref(false, false);
-        if (manualLang && revLangMap[manualLang.substring(0,2)]) { myFanFlag = revLangMap[manualLang.substring(0,2)]; }
+        // Твоя строка в веере (если написал другой участник)
+        if (!isMe && window.myProfileInfo) {
+            let manualGlobal = window.getManualLangPref(false, false);
+            let myFanFlag = window.myProfileInfo.flag || '🌐';
+            let myFanLang = null;
 
-        if (myReadLang && myReadLang !== 'un' && myReadLang.substring(0,2) !== senderLang.substring(0,2)) {
-            targetUsers.push({ code: myReadLang.substring(0,2), flag: myFanFlag, photo: window.myProfileInfo.photo });
-            neededLangs.add(myReadLang.substring(0,2));
+            if (manualGlobal) {
+                myFanLang = manualGlobal.substring(0, 2);
+                if (revLangMap[myFanLang]) myFanFlag = revLangMap[myFanLang];
+            } else {
+                myFanLang = window.getLangByFlag(window.myProfileInfo.flagCode, window.myProfileInfo.flag) || window.getSmartLang(window.myProfileInfo);
+            }
+
+            if (myFanLang && myFanLang !== 'un') {
+                let code2 = myFanLang.substring(0, 2);
+                targetUsers.push({ code: code2, flag: myFanFlag, photo: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U' });
+                neededLangs.add(code2);
+            }
         }
 
-        window.participants.filter(part => part.id !== 'ai').forEach(member => {
-            let memberLang = window.getSmartLang(member);
-            if (memberLang && memberLang !== 'un' && memberLang.substring(0,2) !== senderLang.substring(0,2)) {
-                targetUsers.push({ code: memberLang.substring(0,2), flag: member.flag, photo: member.photo });
-                neededLangs.add(memberLang.substring(0,2));
+        // Все остальные участники глобального чата — строго по флагу их профиля
+        (window.participants || []).filter(part =>
+            part && part.id !== 'ai' &&
+            String(part.id) !== String(data.userId) &&
+            (!window.myProfileInfo || String(part.id) !== String(window.myProfileInfo.id))
+        ).forEach(member => {
+            let memberFlag = member.flag || '🌐';
+            let memberLang = window.getLangByFlag(member.flagCode, member.flag) || window.getSmartLang(member);
+
+            if (memberLang && memberLang !== 'un') {
+                let code2 = memberLang.substring(0, 2);
+                targetUsers.push({ code: code2, flag: memberFlag, photo: member.photo || 'https://ui-avatars.com/api/?name=U' });
+                neededLangs.add(code2);
             }
         });
 
-        if (targetUsers.length > 0) {
+        // Перевод через sl=auto на язык флага каждого участника
+        if (targetUsers.length > 0 && origText) {
             try {
                 let transCache = {};
                 for (let langCode of neededLangs) {
                     try {
-                        let res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${senderLang}&tl=${langCode}&dt=t&q=${encodeURIComponent(data.originalText || data.text)}`);
+                        let res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${langCode}&dt=t&q=${encodeURIComponent(origText)}`);
                         let resData = await res.json();
-                        transCache[langCode] = (resData && resData[0] && resData[0][0]) ? resData[0][0][0] : (data.originalText || data.text);
+                        transCache[langCode] = (resData && resData[0]) ? resData[0].map(s => (s && s[0]) ? s[0] : '').join('') : origText;
                         await new Promise(resolve => setTimeout(resolve, 250));
                     } catch (e) {
-                        transCache[langCode] = data.originalText || data.text;
+                        transCache[langCode] = origText;
                     }
                 }
 
                 const transContainer = document.createElement('div');
                 transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
                 let marqueeTextStr = '';
+                let marqueeAddedLangs = new Set();
+                let hasTranslations = false;
 
                 targetUsers.forEach(u => {
-                    let translatedText = transCache[u.code] || data.originalText || data.text;
-                    const rowClass = isMe ? 'flex-row-reverse' : 'flex-row'; const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
+                    let translatedText = (transCache[u.code] || origText).trim();
+                    if (translatedText.toLowerCase() === origText.toLowerCase()) return;
+                    hasTranslations = true;
+
+                    const rowClass = isMe ? 'flex-row-reverse' : 'flex-row';
+                    const radiusClass = isMe ? 'rounded-tr-sm' : 'rounded-tl-sm';
                     transContainer.innerHTML += `<div class="flex items-end gap-2 opacity-95 max-w-[85%] ${rowClass}"><div class="relative shrink-0"><img src="${u.photo}" class="w-6 h-6 rounded-full object-cover border border-[#00a884]"><span class="absolute -bottom-1 -right-1 text-[8px] bg-[#111b21] rounded-full px-[2px] leading-none">${u.flag}</span></div><div class="bg-[#202c33] border border-[#2a3942] rounded-2xl ${radiusClass} px-3 py-1.5 text-[0.8rem] text-yellow-400 font-bold shadow-sm">${translatedText}</div></div>`;
-                    marqueeTextStr += `${u.flag} ${translatedText}        `;
+
+                    if (!marqueeAddedLangs.has(u.code)) {
+                        marqueeAddedLangs.add(u.code);
+                        marqueeTextStr += `${u.flag} ${translatedText}        `;
+                    }
                 });
 
-                messageGroup.appendChild(transContainer); chatMessages.scrollTop = chatMessages.scrollHeight;
+                if (hasTranslations) {
+                    messageGroup.appendChild(transContainer);
+                    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                const mText = document.getElementById('chat-info-marquee');
-                if (window.isMarqueeEnabled !== false && mText) {
-                    mText.innerHTML = `<span class="text-white mr-2">${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
-                    mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
+                    const mText = document.getElementById('chat-info-marquee');
+                    if (window.isMarqueeEnabled !== false && mText) {
+                        mText.innerHTML = `<span class="text-white mr-2">${displayFlag} ${senderDisplayName}:</span> <span class="text-[#00a884] font-bold">${marqueeTextStr}</span>`;
+                        mText.style.animation = 'none'; void mText.offsetWidth; mText.style.animation = null;
+                    }
                 }
             } catch (e) {}
         }
     }
+
 
     // --- 6. БЕГУЩАЯ СТРОКА ГОЛОСОВОЙ ВКЛАДКИ ---
     if (data.isVoiceRoomMsg) {
