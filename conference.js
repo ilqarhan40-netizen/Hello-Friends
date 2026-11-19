@@ -318,3 +318,201 @@ window.listenForDirectInvites = function() {
 
 // Запуск слушателя при загрузке приложения
 window.addEventListener('load', () => { setTimeout(window.listenForDirectInvites, 2500); });
+
+// =======================================================
+// 6. АВТОНОМНЫЙ ДВИЖОК КОНФЕРЕНЦИИ (ПЕРЕХВАТ КНОПОК + ПЕРЕВОДЫ)
+// =======================================================
+
+window.bindConfControls = function() {
+    const inputField = document.getElementById('conf-chat-input');
+    if (!inputField || inputField.dataset.confBound) return;
+    inputField.dataset.confBound = '1';
+
+    // Перехват Enter в поле ввода конференции
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            window.sendConfMsg();
+        }
+    }, true);
+
+    // Ищем кнопки отправки и микрофона рядом с полем ввода конференции
+    const bar = inputField.parentElement ? (inputField.parentElement.parentElement || inputField.parentElement) : document;
+    bar.querySelectorAll('button').forEach(btn => {
+        const attr = btn.getAttribute('onclick') || '';
+        if (attr.includes('sendFirebaseMsg')) {
+            btn.removeAttribute('onclick');
+            btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); window.sendConfMsg(); };
+        } else if (attr.includes('startUniversalMic')) {
+            btn.removeAttribute('onclick');
+            btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); window.startConfMic(); };
+        }
+    });
+};
+
+window.startConfChatListener = function() {
+    if (window.confChatListener) {
+        firebase.database().ref('video_room_global').off('child_added', window.confChatListener);
+    }
+    window.confChatListener = firebase.database().ref('video_room_global').on('child_added', window.handleConfMessage);
+};
+
+// Автозапуск слушателя и перехвата кнопок при открытии конференции
+const _origInitConf = window.initConference;
+window.initConference = function() {
+    if (_origInitConf) _origInitConf();
+    window.bindConfControls();
+    window.startConfChatListener();
+};
+window.addEventListener('load', () => { setTimeout(window.bindConfControls, 1500); });
+
+// Отправка с клавиатуры конференции (#conf-chat-input)
+window.sendConfMsg = async function() {
+    const inputField = document.getElementById('conf-chat-input');
+    if (!inputField) return;
+    const rawText = inputField.value.trim();
+    if (!rawText) return;
+    inputField.value = '';
+
+    let manualLang = (typeof window.getManualLangPref === 'function') ? window.getManualLangPref(false, true) : null;
+    let myActiveLang = manualLang || (typeof window.getSmartLang === 'function' ? window.getSmartLang(window.myProfileInfo) : 'en');
+
+    let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+    let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+
+    if (manualLang) {
+        const langMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
+        let b = manualLang.substring(0, 2);
+        if (langMap[b]) { activeFlagCode = langMap[b][0]; activeFlag = langMap[b][1]; }
+    }
+
+    let myBaseText = rawText;
+    try {
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${myActiveLang.substring(0, 2)}&dt=t&q=${encodeURIComponent(rawText)}`);
+        const data = await res.json();
+        if (data && data[0]) myBaseText = data[0].map(s => (s && s[0]) ? s[0] : '').join('');
+    } catch (e) {}
+
+    firebase.database().ref('video_room_global').push({
+        userId: (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest',
+        name: window.myUsername || 'User',
+        text: myBaseText,
+        originalText: myBaseText,
+        sessionId: window.mySessionId || 'sess',
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        photo: (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : '',
+        flag: activeFlag,
+        flagCode: activeFlagCode,
+        langCode: myActiveLang.substring(0, 2),
+        isConfMsg: true
+    });
+};
+
+// Отправка с микрофона конференции
+window.startConfMic = function() {
+    if (window.closeAllMenus) window.closeAllMenus();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
+
+    let manualMic = localStorage.getItem('hf_mic_lang_tab_meet') || 'auto';
+    if (manualMic === 'kz') manualMic = 'kk';
+    if (manualMic === 'cn') manualMic = 'zh';
+    if (manualMic === 'jp') manualMic = 'ja';
+    if (manualMic === 'ae') manualMic = 'ar';
+
+    let isManual = (manualMic !== 'auto');
+    let myLang = isManual ? manualMic : (typeof window.getSmartLang === 'function' ? window.getSmartLang(window.myProfileInfo) : 'en');
+
+    const rec = new SpeechRecognition();
+    rec.lang = myLang;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    rec.onstart = () => { if (window.showToast) window.showToast("Conf Mic", "Говорите...", "", ""); };
+    rec.onerror = (e) => { if (window.showToast) window.showToast("Mic Error", e.error, "", ""); };
+
+    rec.onresult = (e) => {
+        let spokenText = e.results[0][0].transcript;
+        let spokenCode = rec.lang.substring(0, 2);
+
+        let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+        let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+
+        if (isManual) {
+            const langMap = { 'en':['gb','🇬🇧'], 'kk':['kz','🇰🇿'], 'ru':['ru','🇷🇺'], 'az':['az','🇦🇿'], 'de':['de','🇩🇪'], 'tr':['tr','🇹🇷'], 'ar':['ae','🇦🇪'], 'it':['it','🇮🇹'], 'es':['es','🇪🇸'], 'fr':['fr','🇫🇷'], 'pt':['pt','🇵🇹'], 'ja':['jp','🇯🇵'], 'zh':['cn','🇨🇳'] };
+            if (langMap[spokenCode]) { activeFlagCode = langMap[spokenCode][0]; activeFlag = langMap[spokenCode][1]; }
+        }
+
+        firebase.database().ref('video_room_global').push({
+            userId: (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest',
+            name: window.myUsername || 'User',
+            text: spokenText,
+            originalText: spokenText,
+            sessionId: window.mySessionId || 'sess',
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : '',
+            flag: activeFlag,
+            flagCode: activeFlagCode,
+            langCode: spokenCode,
+            isConfMsg: true
+        });
+    };
+    try { rec.start(); } catch (e) {}
+};
+
+// Приём и перевод бегущих строк конференции
+window.handleConfMessage = function(snapshot) {
+    const data = snapshot.val();
+    if (!data || !data.isConfMsg) return;
+    if (data.timestamp && (Date.now() - data.timestamp) > 8000) return;
+
+    const isMe = data.sessionId === window.mySessionId || String(data.userId) === String(window.myProfileInfo.id);
+    const senderDisplayName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
+    const originalText = data.originalText || data.text || '';
+    if (!originalText) return;
+
+    const senderMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
+    const speakerMarquee = document.getElementById(senderMarqueeId);
+    if (speakerMarquee) {
+        speakerMarquee.innerHTML = `<span class="text-white font-bold">${senderDisplayName}:</span> <span class="text-[#00a884] ml-2">${data.flag || '🌐'} ${originalText}</span>`;
+        speakerMarquee.style.animation = 'none'; void speakerMarquee.offsetWidth; speakerMarquee.style.animation = null;
+    }
+
+    document.querySelectorAll('.conf-listener-marquee').forEach(listenerMarquee => {
+        if (listenerMarquee.id === senderMarqueeId) return;
+
+        let targetLang = listenerMarquee.getAttribute('data-lang') || 'en';
+        let targetFlag = listenerMarquee.getAttribute('data-flag') || '🌐';
+
+        if (listenerMarquee.id === 'speaker-marquee') {
+            let manualConf = (typeof window.getManualLangPref === 'function') ? window.getManualLangPref(false, true) : null;
+            targetLang = manualConf || (typeof window.getSmartLang === 'function' ? window.getSmartLang(window.myProfileInfo) : 'en');
+            if (manualConf) {
+                const revMap = { 'en':'🇬🇧', 'kk':'🇰🇿', 'ru':'🇷🇺', 'az':'🇦🇿', 'de':'🇩🇪', 'tr':'🇹🇷', 'ar':'🇦🇪', 'it':'🇮🇹', 'es':'🇪🇸', 'fr':'🇫🇷', 'pt':'🇵🇹', 'ja':'🇯🇵', 'zh':'🇨🇳' };
+                targetFlag = revMap[manualConf.substring(0, 2)] || window.myProfileInfo.flag || '🌐';
+            } else {
+                targetFlag = window.myProfileInfo.flag || '🌐';
+            }
+        } else if (listenerMarquee.id && listenerMarquee.id.startsWith('conf-marquee-')) {
+            let pId = listenerMarquee.id.replace('conf-marquee-', '');
+            let part = (window.participants || []).find(x => String(x.id) === String(pId));
+            if (part) {
+                targetLang = (typeof window.getSmartLang === 'function') ? window.getSmartLang(part) : 'en';
+                targetFlag = part.flag || '🌐';
+            }
+        }
+
+        const codeFix = { 'us': 'en', 'gb': 'en', 'kz': 'kk', 'cn': 'zh', 'jp': 'ja', 'ae': 'ar' };
+        let tl = targetLang.substring(0, 2).toLowerCase();
+        if (codeFix[tl]) tl = codeFix[tl];
+
+        fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${tl}&dt=t&q=${encodeURIComponent(originalText)}`)
+            .then(r => r.json())
+            .then(resData => {
+                let translatedText = (resData && resData[0]) ? resData[0].map(s => (s && s[0]) ? s[0] : '').join('') : originalText;
+                listenerMarquee.innerHTML = `<span class="text-[#8696a0] text-[0.65rem] uppercase tracking-widest">${senderDisplayName}:</span> <span class="text-yellow-400 font-bold ml-2">${targetFlag} ${translatedText}</span>`;
+                listenerMarquee.style.animation = 'none'; void listenerMarquee.offsetWidth; listenerMarquee.style.animation = null;
+            }).catch(() => {});
+    });
+};
