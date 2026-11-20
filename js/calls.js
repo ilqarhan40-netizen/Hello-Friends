@@ -23,6 +23,12 @@ window.currentCallerFallback = null;
 window.currentIncomingSignalKey = null;
 window.currentIncomingCallType = 'voice';
 window.myLastOutgoingCallType = 'voice';
+window.currentActiveCallType = 'voice';
+
+window.activeOutgoingCallTargetId = null;
+window.activeOutgoingCallRef = null;
+window.activeOutgoingCallType = 'voice';
+window.callWasAnswered = false;
 
 window.isMyMicMuted = false;
 window.isMyCamMuted = false;
@@ -92,6 +98,21 @@ window.updateCamToggleUI = function(isMuted) {
     });
 };
 
+window.hideDirectVideoElements = function() {
+    const directRemote = document.getElementById('direct-remote-video');
+    if (directRemote) {
+        directRemote.srcObject = null;
+        directRemote.classList.add('hidden');
+        directRemote.style.display = 'none';
+    }
+    const directLocal = document.getElementById('direct-local-video');
+    if (directLocal) {
+        directLocal.srcObject = null;
+        directLocal.classList.add('hidden');
+        directLocal.style.display = 'none';
+    }
+};
+
 // --- 1. ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
 window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
     if (window._isStartingAgora) return;
@@ -100,9 +121,21 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         return;
     }
 
+    const allowVideo = Boolean(isVideo);
+    window.currentActiveCallType = allowVideo ? 'video' : 'voice';
+
     window._isStartingAgora = true;
     window.updateMicToggleUI(false);
-    window.updateCamToggleUI(!isVideo);
+    window.updateCamToggleUI(!allowVideo);
+
+    // В аудиозвонке гарантированно закрываем камеру и прячем видео-блоки
+    if (!allowVideo) {
+        if (window.localVideoTrack) {
+            try { window.localVideoTrack.close(); } catch (e) {}
+            window.localVideoTrack = null;
+        }
+        window.hideDirectVideoElements();
+    }
 
     try {
         if (window.agoraClient) {
@@ -116,6 +149,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             await window.agoraClient.subscribe(user, mediaType);
 
             if (mediaType === "video") {
+                if (!allowVideo && window.currentIndex === 1) return;
                 let gridVideo =
                     document.getElementById('direct-remote-video') ||
                     document.getElementById(`remote-video-${targetId}`);
@@ -152,7 +186,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
         }
         tracksToPublish.push(window.localAudioTrack);
 
-        if (isVideo) {
+        if (allowVideo) {
             try {
                 if (!window.localVideoTrack) {
                     window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
@@ -161,6 +195,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
                         document.getElementById('my-live-video');
                     if (myVideo) {
                         myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
+                        myVideo.style.display = 'block';
                         myVideo.classList.remove('hidden');
                         myVideo.play().catch(() => {});
                     }
@@ -176,7 +211,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             await window.agoraClient.publish(tracksToPublish);
         }
 
-        if (typeof window.startVoiceAI === 'function') {
+        if (!allowVideo && typeof window.startVoiceAI === 'function') {
             window.startVoiceAI();
         }
 
@@ -206,17 +241,7 @@ window.endWebRTCCall = async function() {
         v.style.display = 'none';
     });
 
-    const directRemote = document.getElementById('direct-remote-video');
-    if (directRemote) {
-        directRemote.srcObject = null;
-        directRemote.classList.add('hidden');
-    }
-
-    const directLocal = document.getElementById('direct-local-video');
-    if (directLocal) {
-        directLocal.srcObject = null;
-        directLocal.classList.add('hidden');
-    }
+    window.hideDirectVideoElements();
 
     const myVideo = document.getElementById('my-live-video');
     if (myVideo) {
@@ -232,11 +257,17 @@ window.endWebRTCCall = async function() {
     }
 
     window.updateMicToggleUI(false);
-    window.updateCamToggleUI(false);
+    window.updateCamToggleUI(true);
 
     window.currentCallerId = null;
     window.currentCallerFallback = null;
     window.currentTargetUser = null;
+    window.currentActiveCallType = 'voice';
+    window.myLastOutgoingCallType = 'voice';
+    window.currentIncomingCallType = 'voice';
+    window.activeOutgoingCallTargetId = null;
+    window.activeOutgoingCallRef = null;
+    window.callWasAnswered = false;
 };
 
 // --- 2. ЛОГИКА ЗВОНКОВ (АУДИО И ВИДЕО) ---
@@ -258,26 +289,38 @@ window.startInAppCall = function(callType = 'voice') {
         return;
     }
     const target = window.currentTargetUser;
+    const normalizedType = (callType === 'video') ? 'video' : 'voice';
     window.closePhoneChoiceModal();
 
-    window.myLastOutgoingCallType = callType;
+    window.myLastOutgoingCallType = normalizedType;
+    window.currentActiveCallType = normalizedType;
+    window.activeOutgoingCallTargetId = target.id;
+    window.activeOutgoingCallType = normalizedType;
+    window.callWasAnswered = false;
+
+    if (normalizedType !== 'video') {
+        window.hideDirectVideoElements();
+        window.updateCamToggleUI(true);
+    }
+
     firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
 
     let callRef = firebase.database().ref('signals/' + target.id).push();
+    window.activeOutgoingCallRef = callRef;
     callRef.set({
         type: 'call',
-        callType: callType,
+        callType: normalizedType,
         callerId: window.myProfileInfo.id,
         callerName: window.myUsername,
         callerPhoto: window.myProfileInfo.photo,
         timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 
-    let pushTitle = callType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
+    let pushTitle = normalizedType === 'video' ? "📹 Входящий видеозвонок" : "📞 Входящий аудиозвонок";
     if (window.sendPushNotification) {
         window.sendPushNotification(
             target.id,
-            { type: 'call', callerName: window.myUsername, callType: callType },
+            { type: 'call', callerName: window.myUsername, callType: normalizedType },
             pushTitle,
             `${window.myUsername} звонит вам!`
         );
@@ -300,22 +343,35 @@ window.startInAppCall = function(callType = 'voice') {
 
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
+        if (window.callWasAnswered) return;
+
         firebase.database().ref('signals/' + target.id).push({
             type: 'missed',
+            callType: normalizedType,
             callerName: window.myUsername,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         });
+
+        // Отдельный баннер пропущенного аудио или видео вызова
+        if (normalizedType === 'video') {
+            window.sendMissedVideoNotice(target.id);
+        } else {
+            window.sendMissedAudioNotice(target.id);
+        }
+
         callRef.remove();
         window.callTimeout = null;
+        window.activeOutgoingCallTargetId = null;
+        window.activeOutgoingCallRef = null;
         window.stopAllRings();
         window.playSafeSound(window.sndMissed, [200, 100, 200]);
         if (window.showToast) window.showToast("Нет ответа", "Абонент недоступен", "", "");
 
-        let missedTitle = callType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
+        let missedTitle = normalizedType === 'video' ? "📵 Пропущенный видеозвонок" : "📵 Пропущенный вызов";
         if (window.sendPushNotification) {
             window.sendPushNotification(
                 target.id,
-                { type: 'missed', callerName: window.myUsername },
+                { type: 'missed', callType: normalizedType, callerName: window.myUsername },
                 missedTitle,
                 `Вы пропустили вызов от ${window.myUsername}`
             );
@@ -328,13 +384,15 @@ window.startInAppCall = function(callType = 'voice') {
 window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey, callType) {
     window.currentIncomingSignalKey = signalKey;
     window.currentCallerId = callerId;
+    window.callWasAnswered = false;
     window.currentCallerFallback = {
         id: callerId,
         name: callerName || 'User',
         photo: callerPhoto || 'https://ui-avatars.com/api/?name=U',
         flag: '🌐'
     };
-    window.currentIncomingCallType = callType || 'voice';
+    window.currentIncomingCallType = (callType === 'video') ? 'video' : 'voice';
+    window.currentActiveCallType = window.currentIncomingCallType;
 
     const nameEl = document.getElementById('incoming-call-name');
     const photoEl = document.getElementById('incoming-call-photo');
@@ -342,7 +400,7 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey,
 
     if (nameEl) nameEl.innerText = callerName || 'User';
     if (photoEl) photoEl.src = callerPhoto || 'https://ui-avatars.com/api/?name=U';
-    if (typeLabel) typeLabel.innerText = callType === 'video' ? '📹 Входящий видеозвонок' : '📞 Входящий аудиозвонок';
+    if (typeLabel) typeLabel.innerText = window.currentIncomingCallType === 'video' ? '📹 Входящий видеозвонок' : '📞 Входящий аудиозвонок';
 
     const modal = document.getElementById('incoming-call-modal');
     if (modal) modal.classList.add('active');
@@ -353,8 +411,18 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey,
 
 window.acceptCall = function() {
     window.stopAllRings();
+    window.callWasAnswered = true;
+
     const modal = document.getElementById('incoming-call-modal');
     if (modal) modal.classList.remove('active');
+
+    const incomingIsVideo = (window.currentIncomingCallType === 'video');
+    window.currentActiveCallType = incomingIsVideo ? 'video' : 'voice';
+
+    if (!incomingIsVideo) {
+        window.hideDirectVideoElements();
+        window.updateCamToggleUI(true);
+    }
 
     if (window.currentCallerId) {
         firebase.database().ref('signals/' + window.currentCallerId).push({
@@ -383,7 +451,7 @@ window.acceptCall = function() {
         if (window.switchChatRoom) window.switchChatRoom(target.id);
         if (window.switchTab) window.switchTab(1);
 
-        window.startWebRTC(false, window.currentCallerId, window.currentIncomingCallType === 'video');
+        window.startWebRTC(false, window.currentCallerId, incomingIsVideo);
     }
 };
 
@@ -408,16 +476,37 @@ window.declineCall = function() {
 window.hangUpCall = function() {
     window.stopAllRings();
 
+    // Фиксируем до сброса состояния: сбросил ли звонящий трубку до ответа
+    const unansweredTargetId = (!window.callWasAnswered && window.activeOutgoingCallTargetId)
+        ? window.activeOutgoingCallTargetId
+        : null;
+    const unansweredType = window.activeOutgoingCallType || 'voice';
+    const outgoingRef = window.activeOutgoingCallRef;
+
     let targetIdToCancel = null;
     if (window.voiceFriend) targetIdToCancel = window.voiceFriend.id;
     else if (window.currentCallerId) targetIdToCancel = window.currentCallerId;
     else if (window.currentTargetUser) targetIdToCancel = window.currentTargetUser.id;
+    else if (unansweredTargetId) targetIdToCancel = unansweredTargetId;
+
+    if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
+    if (outgoingRef) { try { outgoingRef.remove(); } catch (e) {} }
+
+    // Если звонящий сбросил ДО ответа — отправляем отдельный пропущенный вызов (аудио или видео)
+    if (unansweredTargetId) {
+        if (unansweredType === 'video') {
+            window.sendMissedVideoNotice(unansweredTargetId);
+        } else {
+            window.sendMissedAudioNotice(unansweredTargetId);
+        }
+    }
 
     window.endWebRTCCall();
 
     if (targetIdToCancel && window.myProfileInfo) {
         firebase.database().ref('signals/' + targetIdToCancel).push({
-            type: 'reject',
+            type: unansweredTargetId ? 'missed' : 'reject',
+            callType: unansweredType,
             callerName: window.myUsername,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         });
@@ -425,7 +514,6 @@ window.hangUpCall = function() {
         firebase.database().ref('calls/' + targetIdToCancel + '_' + window.myProfileInfo.id).remove();
     }
 
-    if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
     if (window.showToast) window.showToast("Call Ended", "Разговор завершен", "", "");
 
     window.currentCallerId = null;
@@ -458,6 +546,8 @@ window.initSignalListener = function() {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             if (age > 15000) return;
 
+            window.activeOutgoingCallTargetId = null;
+            window.activeOutgoingCallRef = null;
             window.stopAllRings();
             const incomingModal = document.getElementById('incoming-call-modal');
             if (incomingModal) incomingModal.classList.remove('active');
@@ -470,6 +560,9 @@ window.initSignalListener = function() {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             if (age > 15000) return;
 
+            window.callWasAnswered = true;
+            window.activeOutgoingCallTargetId = null;
+            window.activeOutgoingCallRef = null;
             window.stopAllRings();
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             if (window.voiceFriend) window.currentTargetUser = window.voiceFriend;
@@ -534,7 +627,7 @@ window.toggleMyAudio = async function() {
         }
         if (nextMuted) {
             if (typeof window.stopVoiceAI === 'function') window.stopVoiceAI();
-        } else if (window.agoraClient) {
+        } else if (window.agoraClient && window.currentActiveCallType !== 'video') {
             if (typeof window.startVoiceAI === 'function') window.startVoiceAI();
         }
         window.updateMicToggleUI(nextMuted);
@@ -547,6 +640,13 @@ window.toggleMyAudio = async function() {
 
 window.toggleMyCamera = async function() {
     if (window._isTogglingCam) return;
+
+    // Запрещаем включать камеру во время аудиозвонка на вкладке 1
+    if (window.currentIndex === 1 && window.currentActiveCallType !== 'video') {
+        window.updateCamToggleUI(true);
+        return;
+    }
+
     window._isTogglingCam = true;
 
     const nextMuted = !window.isMyCamMuted;
@@ -560,6 +660,7 @@ window.toggleMyCamera = async function() {
                 document.getElementById('my-live-video');
             if (myVideo) {
                 myVideo.srcObject = new MediaStream([window.localVideoTrack.getMediaStreamTrack()]);
+                myVideo.style.display = 'block';
                 myVideo.classList.remove('hidden');
                 myVideo.play().catch(() => {});
             }
@@ -575,7 +676,9 @@ window.toggleMyCamera = async function() {
             if (myVideo) {
                 if (nextMuted) {
                     myVideo.classList.add('hidden');
+                    myVideo.style.display = 'none';
                 } else {
+                    myVideo.style.display = 'block';
                     myVideo.classList.remove('hidden');
                     myVideo.play().catch(() => {});
                 }
@@ -589,3 +692,214 @@ window.toggleMyCamera = async function() {
         window._isTogglingCam = false;
     }
 };
+
+// ==========================================
+// 4. ОТДЕЛЬНЫЕ ВЕРХНИЕ БАННЕРЫ ПРОПУЩЕННЫХ ВЫЗОВОВ (АУДИО И ВИДЕО)
+// ==========================================
+
+window.getCallsBannerI18n = function() {
+    const raw = (typeof window.getSmartLang === 'function' && window.myProfileInfo)
+        ? window.getSmartLang(window.myProfileInfo)
+        : 'en';
+    const base = String(raw || 'en').toLowerCase().split(/[-_]/)[0].substring(0, 2);
+    const fix = { kz: 'kk', cn: 'zh', jp: 'ja', ae: 'ar', gb: 'en', us: 'en' };
+    const code = fix[base] || base;
+    if (window.i18n) {
+        return window.i18n[code] || window.i18n['en'] || {};
+    }
+    return {};
+};
+
+window._escapeCallsHtml = function(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+};
+
+window._getCallsBannerStack = function() {
+    let stack = document.getElementById('hf-top-banner-stack');
+    if (!stack) {
+        stack = document.createElement('div');
+        stack.id = 'hf-top-banner-stack';
+        stack.className = 'fixed top-3 left-1/2 -translate-x-1/2 z-[9999] w-[92%] max-w-sm flex flex-col gap-2.5 pointer-events-none';
+        document.body.appendChild(stack);
+    }
+    return stack;
+};
+
+// --- БАННЕР 1: ПРОПУЩЕННЫЙ АУДИОВЫЗОВ ---
+window.sendMissedAudioNotice = function(targetUserId) {
+    if (!targetUserId || !window.myProfileInfo || !window.myProfileInfo.id) return;
+    firebase.database().ref('missed_audio/' + targetUserId).push({
+        fromId: String(window.myProfileInfo.id),
+        fromName: window.myUsername || window.myProfileInfo.name || 'User',
+        fromPhoto: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
+        fromFlag: window.myProfileInfo.flag || '🌐',
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+};
+
+window.showMissedAudioBanner = function(dbKey, data) {
+    if (!data) return;
+    const d = window.getCallsBannerI18n();
+    const stack = window._getCallsBannerStack();
+
+    let el = document.getElementById('hf-banner-missed-audio');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'hf-banner-missed-audio';
+        el.className = 'pointer-events-auto bg-[#111b21]/95 backdrop-blur-md border border-[#00a884] rounded-2xl shadow-[0_0_24px_rgba(0,168,132,0.35)] p-3.5 flex flex-col gap-3';
+        stack.appendChild(el);
+    }
+
+    const name = window._escapeCallsHtml((data.fromName || 'User').split(' ')[0]);
+    const flag = window._escapeCallsHtml(data.fromFlag || '🌐');
+    const photo = window._escapeCallsHtml(data.fromPhoto || 'https://ui-avatars.com/api/?name=U');
+
+    window._activeMissedAudioData = { dbKey: dbKey || null, ...data };
+
+    el.innerHTML = `
+        <div class="flex items-center gap-3">
+            <img src="${photo}" class="w-11 h-11 rounded-full object-cover border-2 border-[#00a884] shrink-0">
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[#00a884] text-[0.7rem] font-bold uppercase tracking-wider">${d.missed_audio_title || 'MISSED AUDIO CALL'}</span>
+                <span class="text-white text-sm font-bold leading-snug truncate">${flag} ${d.missed_audio_text || 'Missed audio call from'} ${name}</span>
+            </div>
+        </div>
+        <div class="flex gap-2.5 w-full">
+            <button onclick="window.closeMissedAudioBanner()" class="flex-1 py-2.5 rounded-xl bg-[#2a3942] hover:bg-[#374a56] text-[#e9edef] text-xs font-bold transition">${d.btn_later || 'Later'}</button>
+            <button onclick="window.callbackMissedAudio()" class="flex-1 py-2.5 rounded-xl bg-[#00a884] hover:bg-[#00c49a] text-[#111b21] text-xs font-bold transition flex items-center justify-center"><i class="fa-solid fa-phone mr-1.5"></i>${d.btn_callback || 'Call back'}</button>
+        </div>
+    `;
+
+    window.playSafeSound(window.sndMissed, [200, 100, 200]);
+};
+
+window.closeMissedAudioBanner = function() {
+    const active = window._activeMissedAudioData;
+    const myId = window.myProfileInfo?.id;
+    if (active && active.dbKey && myId && typeof firebase !== 'undefined') {
+        firebase.database().ref('missed_audio/' + myId + '/' + active.dbKey).remove().catch(() => {});
+    }
+    document.getElementById('hf-banner-missed-audio')?.remove();
+    window._activeMissedAudioData = null;
+};
+
+window.callbackMissedAudio = function() {
+    const info = window._activeMissedAudioData;
+    window.closeMissedAudioBanner();
+    if (!info || !info.fromId) return;
+
+    const target = (window.participants || []).find(p => String(p.id) === String(info.fromId)) || {
+        id: info.fromId,
+        name: info.fromName || 'User',
+        photo: info.fromPhoto || 'https://ui-avatars.com/api/?name=U',
+        flag: info.fromFlag || '🌐'
+    };
+    window.currentTargetUser = { ...target };
+    if (typeof window.switchChatRoom === 'function') window.switchChatRoom(target.id);
+    setTimeout(() => window.startInAppCall('voice'), 150);
+};
+
+// --- БАННЕР 2: ПРОПУЩЕННЫЙ ВИДЕОВЫЗОВ ---
+window.sendMissedVideoNotice = function(targetUserId) {
+    if (!targetUserId || !window.myProfileInfo || !window.myProfileInfo.id) return;
+    firebase.database().ref('missed_video/' + targetUserId).push({
+        fromId: String(window.myProfileInfo.id),
+        fromName: window.myUsername || window.myProfileInfo.name || 'User',
+        fromPhoto: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
+        fromFlag: window.myProfileInfo.flag || '🌐',
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+};
+
+window.showMissedVideoBanner = function(dbKey, data) {
+    if (!data) return;
+    const d = window.getCallsBannerI18n();
+    const stack = window._getCallsBannerStack();
+
+    let el = document.getElementById('hf-banner-missed-video');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'hf-banner-missed-video';
+        el.className = 'pointer-events-auto bg-[#111b21]/95 backdrop-blur-md border border-[#00a884] rounded-2xl shadow-[0_0_24px_rgba(0,168,132,0.35)] p-3.5 flex flex-col gap-3';
+        stack.appendChild(el);
+    }
+
+    const name = window._escapeCallsHtml((data.fromName || 'User').split(' ')[0]);
+    const flag = window._escapeCallsHtml(data.fromFlag || '🌐');
+    const photo = window._escapeCallsHtml(data.fromPhoto || 'https://ui-avatars.com/api/?name=U');
+
+    window._activeMissedVideoData = { dbKey: dbKey || null, ...data };
+
+    el.innerHTML = `
+        <div class="flex items-center gap-3">
+            <img src="${photo}" class="w-11 h-11 rounded-full object-cover border-2 border-[#00a884] shrink-0">
+            <div class="flex flex-col overflow-hidden">
+                <span class="text-[#00a884] text-[0.7rem] font-bold uppercase tracking-wider">${d.missed_video_title || 'MISSED VIDEO CALL'}</span>
+                <span class="text-white text-sm font-bold leading-snug truncate">${flag} ${d.missed_video_text || 'Missed video call from'} ${name}</span>
+            </div>
+        </div>
+        <div class="flex gap-2.5 w-full">
+            <button onclick="window.closeMissedVideoBanner()" class="flex-1 py-2.5 rounded-xl bg-[#2a3942] hover:bg-[#374a56] text-[#e9edef] text-xs font-bold transition">${d.btn_later || 'Later'}</button>
+            <button onclick="window.callbackMissedVideo()" class="flex-1 py-2.5 rounded-xl bg-[#00a884] hover:bg-[#00c49a] text-[#111b21] text-xs font-bold transition flex items-center justify-center"><i class="fa-solid fa-video mr-1.5"></i>${d.btn_callback || 'Call back'}</button>
+        </div>
+    `;
+
+    window.playSafeSound(window.sndMissed, [200, 100, 200]);
+};
+
+window.closeMissedVideoBanner = function() {
+    const active = window._activeMissedVideoData;
+    const myId = window.myProfileInfo?.id;
+    if (active && active.dbKey && myId && typeof firebase !== 'undefined') {
+        firebase.database().ref('missed_video/' + myId + '/' + active.dbKey).remove().catch(() => {});
+    }
+    document.getElementById('hf-banner-missed-video')?.remove();
+    window._activeMissedVideoData = null;
+};
+
+window.callbackMissedVideo = function() {
+    const info = window._activeMissedVideoData;
+    window.closeMissedVideoBanner();
+    if (!info || !info.fromId) return;
+
+    const target = (window.participants || []).find(p => String(p.id) === String(info.fromId)) || {
+        id: info.fromId,
+        name: info.fromName || 'User',
+        photo: info.fromPhoto || 'https://ui-avatars.com/api/?name=U',
+        flag: info.fromFlag || '🌐'
+    };
+    window.currentTargetUser = { ...target };
+    if (typeof window.switchChatRoom === 'function') window.switchChatRoom(target.id);
+    setTimeout(() => window.startInAppCall('video'), 150);
+};
+
+// Отдельные слушатели Firebase для missed_audio и missed_video
+(function initMissedCallBannersListener() {
+    window._seenMissedAudioKeys = window._seenMissedAudioKeys || new Set();
+    window._seenMissedVideoKeys = window._seenMissedVideoKeys || new Set();
+
+    const timer = setInterval(() => {
+        const myId = window.myProfileInfo?.id;
+        if (!myId || myId === 'guest' || typeof firebase === 'undefined' || !firebase.database) return;
+
+        clearInterval(timer);
+
+        firebase.database().ref('missed_audio/' + myId).on('child_added', (snap) => {
+            const data = snap.val();
+            if (!data || window._seenMissedAudioKeys.has(snap.key)) return;
+            window._seenMissedAudioKeys.add(snap.key);
+            window.showMissedAudioBanner(snap.key, data);
+        });
+
+        firebase.database().ref('missed_video/' + myId).on('child_added', (snap) => {
+            const data = snap.val();
+            if (!data || window._seenMissedVideoKeys.has(snap.key)) return;
+            window._seenMissedVideoKeys.add(snap.key);
+            window.showMissedVideoBanner(snap.key, data);
+        });
+    }, 800);
+})();
