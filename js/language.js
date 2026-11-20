@@ -30,22 +30,32 @@ function getPrivateRoomId() {
 }
 
 function getPrivateTargetUser() {
-    if (window.currentTargetUser && window.currentTargetUser.id) return window.currentTargetUser;
-
     const roomId = getPrivateRoomId();
-    if (!roomId || !roomId.startsWith('private_') || !window.myProfileInfo) return null;
-    const myId = String(window.myProfileInfo.id);
-    const parts = roomId.replace('private_', '').split('_');
-    const otherId = parts.find(id => String(id) !== myId);
-    if (!otherId || !Array.isArray(window.participants)) return null;
+    const myId = window.myProfileInfo ? String(window.myProfileInfo.id) : '';
 
-    const found = window.participants.find(p => String(p.id) === String(otherId));
-    if (found) {
-        window.currentTargetUser = { ...found };
+    if (roomId && roomId.startsWith('private_') && myId) {
+        const parts = roomId.replace('private_', '').split('_');
+        const otherId = parts.find(id => String(id) !== myId);
+        if (otherId) {
+            if (window.currentTargetUser && String(window.currentTargetUser.id) === String(otherId)) {
+                return window.currentTargetUser;
+            }
+            if (Array.isArray(window.participants)) {
+                const found = window.participants.find(p => String(p.id) === String(otherId));
+                if (found) {
+                    window.currentTargetUser = { ...found };
+                    return window.currentTargetUser;
+                }
+            }
+        }
+    }
+
+    if (window.currentTargetUser && window.currentTargetUser.id && String(window.currentTargetUser.id) !== myId) {
         return window.currentTargetUser;
     }
     return null;
 }
+
 
 function getMyPrivateNativeLang() {
     if (window.myProfileInfo) {
