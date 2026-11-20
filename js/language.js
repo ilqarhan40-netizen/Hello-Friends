@@ -1,6 +1,6 @@
 // ==========================================
 // ПРИВАТНЫЙ ЧАТ — ПОЛНОСТЬЮ ИЗОЛИРОВАННЫЙ МИР (js/language.js)
-// Клавиатура, микрофон, независимая игра флагами, переводы и бегущая строка
+// Два раздельных канала (avatar / mic) + тупое зеркальное копирование
 // ==========================================
 
 const PRIV_LANG_MAP = {
@@ -32,7 +32,6 @@ function getPrivateRoomId() {
 function getPrivateTargetUser() {
     if (window.currentTargetUser && window.currentTargetUser.id) return window.currentTargetUser;
 
-    // Автовосстановление собеседника по ID приватной комнаты
     const roomId = getPrivateRoomId();
     if (!roomId || !roomId.startsWith('private_') || !window.myProfileInfo) return null;
     const myId = String(window.myProfileInfo.id);
@@ -62,10 +61,8 @@ function getMyPrivateNativeLang() {
     return 'en';
 }
 
-function getTargetPrivateLang(targetUser) {
+function getTargetPrivateNativeLang(targetUser) {
     if (!targetUser) return getMyPrivateNativeLang();
-    const liveLang = privNormLang(targetUser.langCode);
-    if (liveLang) return liveLang;
     if (typeof window.getLangByFlag === 'function') {
         const byFlag = privNormLang(window.getLangByFlag(targetUser.flagCode, targetUser.flag));
         if (byFlag) return byFlag;
@@ -74,12 +71,7 @@ function getTargetPrivateLang(targetUser) {
         const smart = privNormLang(window.getSmartLang(targetUser));
         if (smart) return smart;
     }
-    return 'en';
-}
-
-function getPrivateReadLang(roomId) {
-    const manualRead = roomId ? privNormLang(localStorage.getItem('hf_priv_read_lang_' + roomId)) : null;
-    return manualRead || getMyPrivateNativeLang();
+    return privNormLang(targetUser.langCode) || 'en';
 }
 
 async function privTranslateText(text, targetLang) {
@@ -98,11 +90,123 @@ async function privTranslateText(text, targetLang) {
 }
 
 // ==========================================
-// 1. МЕНЮ ЯЗЫКА АВАТАРА И МИКРОФОНА (ТОЛЬКО ПРИВАТ)
+// 0. ЖИВАЯ СИНХРОНИЗАЦИЯ ФЛАГОВ ПРИВАТА (РАЗДЕЛЬНО: avatar / mic)
+// ==========================================
+window.privateLiveLangs = {};
+window.privateLiveLangsLoaded = {};
+window.activePrivateLangRoom = null;
+window.activePrivateLangListener = null;
+
+window.syncMyPrivateChannelLang = function(roomId, channel, forcedLang) {
+    if (typeof firebase === 'undefined' || !roomId || !window.myProfileInfo || !window.myProfileInfo.id) return;
+    if (channel !== 'avatar' && channel !== 'mic') return;
+
+    const myId = String(window.myProfileInfo.id);
+    const storageKey = (channel === 'mic') ? ('hf_priv_mic_lang_' + roomId) : ('hf_priv_avatar_lang_' + roomId);
+    const activeLang = forcedLang !== undefined
+        ? privNormLang(forcedLang)
+        : privNormLang(localStorage.getItem(storageKey));
+
+    const userRef = firebase.database().ref(`private_active_langs/${roomId}/${myId}`);
+    const chRef = userRef.child(channel);
+
+    if (!window.privateLiveLangs[roomId]) window.privateLiveLangs[roomId] = {};
+    if (!window.privateLiveLangs[roomId][myId]) window.privateLiveLangs[roomId][myId] = {};
+
+    if (activeLang && PRIV_LANG_MAP[activeLang]) {
+        const payload = {
+            langCode: activeLang,
+            flagCode: PRIV_LANG_MAP[activeLang][0],
+            flag: PRIV_LANG_MAP[activeLang][1],
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        window.privateLiveLangs[roomId][myId][channel] = payload;
+        chRef.set(payload).catch(() => {});
+        try { userRef.onDisconnect().remove(); } catch (e) {}
+    } else {
+        delete window.privateLiveLangs[roomId][myId][channel];
+        chRef.remove().catch(() => {});
+    }
+};
+
+window.initPrivateLiveLangSync = function(roomId) {
+    const rId = roomId || getPrivateRoomId();
+    if (!rId || typeof firebase === 'undefined' || !window.myProfileInfo || !window.myProfileInfo.id) return;
+
+    if (window.activePrivateLangRoom && window.activePrivateLangRoom !== rId && window.activePrivateLangListener) {
+        firebase.database().ref('private_active_langs/' + window.activePrivateLangRoom).off('value', window.activePrivateLangListener);
+        window.activePrivateLangListener = null;
+    }
+
+    if (window.activePrivateLangRoom !== rId || !window.activePrivateLangListener) {
+        window.activePrivateLangRoom = rId;
+        window.activePrivateLangListener = firebase.database().ref('private_active_langs/' + rId).on('value', (snap) => {
+            window.privateLiveLangs[rId] = snap.val() || {};
+            window.privateLiveLangsLoaded[rId] = true;
+        });
+    }
+
+    window.syncMyPrivateChannelLang(rId, 'avatar');
+    window.syncMyPrivateChannelLang(rId, 'mic');
+};
+
+async function getTargetLivePrivateChannel(roomId, targetUser, channel) {
+    if (!targetUser) {
+        return {
+            lang: getMyPrivateNativeLang(),
+            flag: window.myProfileInfo?.flag || '🌐',
+            flagCode: window.myProfileInfo?.flagCode || 'un',
+            name: 'User'
+        };
+    }
+
+    // Страховка: если живая таблица комнаты ещё не подгрузилась, забираем разово из базы
+    if (roomId && !window.privateLiveLangsLoaded[roomId] && typeof firebase !== 'undefined') {
+        try {
+            const snap = await firebase.database().ref('private_active_langs/' + roomId).once('value');
+            window.privateLiveLangs[roomId] = snap.val() || {};
+            window.privateLiveLangsLoaded[roomId] = true;
+        } catch (e) {}
+    }
+
+    const roomMap = window.privateLiveLangs[roomId] || {};
+    const targetLiveAll = roomMap[String(targetUser.id)] || null;
+    const live = targetLiveAll ? targetLiveAll[channel] : null;
+
+    const targetLang = (live && live.langCode)
+        ? privNormLang(live.langCode)
+        : getTargetPrivateNativeLang(targetUser);
+    const targetFlag = (live && live.flag)
+        ? live.flag
+        : (targetUser.flag || '🌐');
+    const targetFlagCode = (live && live.flagCode)
+        ? live.flagCode
+        : (targetUser.flagCode || 'un');
+
+    return {
+        lang: targetLang || 'en',
+        flag: targetFlag,
+        flagCode: targetFlagCode,
+        name: (targetUser.name || 'User').split(' ')[0]
+    };
+}
+
+function buildPrivateMirrorMarquee(senderFlag, senderName, originalText, targetFlag, targetName, translatedText) {
+    let html = `<span class="text-white mr-2">${senderFlag} ${senderName}:</span> <span class="text-[#e9edef]">${originalText}</span>`;
+    if (translatedText && originalText.toLowerCase() !== translatedText.toLowerCase()) {
+        html += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${targetFlag} ${targetName}: ${translatedText}</span>`;
+    }
+    return html;
+}
+
+// ==========================================
+// 1. МЕНЮ ЯЗЫКА АВАТАРА (КЛАВИАТУРА) И МИКРОФОНА (ТОЛЬКО ПРИВАТ)
 // ==========================================
 window.openPrivateLangModal = function() {
     const roomId = getPrivateRoomId();
     if (!roomId) return;
+    window.initPrivateLiveLangSync(roomId);
+
     const listContainer = document.getElementById('personal-lang-list');
     if (!listContainer) return;
 
@@ -120,7 +224,7 @@ window.openPrivateLangModal = function() {
         { code: 'ja', name: '日本語', flag: '🇯🇵' }, { code: 'zh', name: '中文', flag: '🇨🇳' }
     ];
 
-    let html = `<div class="text-[0.7rem] text-[#00a884] mb-3 text-center uppercase tracking-widest border-b border-[#2a3942] pb-2">Settings strictly for:<br><b class="text-white text-sm">${roomLabel}</b></div>`;
+    let html = `<div class="text-[0.7rem] text-[#00a884] mb-3 text-center uppercase tracking-widest border-b border-[#2a3942] pb-2">Settings strictly for:<br><b class="text-white text-sm">${roomLabel} (Keyboard)</b></div>`;
     langs.forEach(l => {
         const isActive = (currentPref === l.code) ? 'border-[#00a884] bg-[#202c33]' : 'border-[#2a3942] bg-[#111b21]';
         html += `<div onclick="window.savePrivateAvatarLang('${l.code}', '${roomId}')" class="flex items-center p-3 rounded-xl border ${isActive} cursor-pointer mb-2 hover:border-[#00a884] transition shadow-sm"><span class="text-white font-bold text-[0.9rem] flex gap-3 items-center"><span class="text-xl">${l.flag}</span> ${l.name}</span></div>`;
@@ -136,16 +240,15 @@ window.savePrivateAvatarLang = function(langCode, roomId) {
 
     if (langCode === 'auto') {
         localStorage.removeItem('hf_priv_avatar_lang_' + rId);
-        const micFallback = localStorage.getItem('hf_priv_mic_lang_' + rId);
-        if (micFallback) localStorage.setItem('hf_priv_read_lang_' + rId, micFallback);
-        else localStorage.removeItem('hf_priv_read_lang_' + rId);
     } else {
         localStorage.setItem('hf_priv_avatar_lang_' + rId, langCode);
-        localStorage.setItem('hf_priv_read_lang_' + rId, langCode);
     }
 
+    // Обновляем в базе СТРОГО канал клавиатуры (микрофон не трогаем)
+    window.syncMyPrivateChannelLang(rId, 'avatar');
+
     document.getElementById('personal-lang-modal')?.classList.remove('active');
-    if (window.showToast) window.showToast("Language Saved", "Applied strictly to this Private Chat.", "", "");
+    if (window.showToast) window.showToast("Keyboard Language", "Saved strictly for this Private Chat.", "", "");
 };
 
 window.savePrivateMicLang = function(val) {
@@ -154,30 +257,31 @@ window.savePrivateMicLang = function(val) {
 
     if (!val || val === 'auto') {
         localStorage.removeItem('hf_priv_mic_lang_' + roomId);
-        const avatarFallback = localStorage.getItem('hf_priv_avatar_lang_' + roomId);
-        if (avatarFallback) localStorage.setItem('hf_priv_read_lang_' + roomId, avatarFallback);
-        else localStorage.removeItem('hf_priv_read_lang_' + roomId);
     } else {
         localStorage.setItem('hf_priv_mic_lang_' + roomId, val);
-        localStorage.setItem('hf_priv_read_lang_' + roomId, val);
     }
+
+    // Обновляем в базе СТРОГО канал микрофона (клавиатуру не трогаем)
+    window.syncMyPrivateChannelLang(roomId, 'mic');
 
     if (window.showToast) window.showToast("Mic Language", "Saved strictly for this Private Chat", "", "");
 };
 
 window.syncPrivateMicLangUI = function() {
     const roomId = getPrivateRoomId();
+    if (!roomId) return;
+    window.initPrivateLiveLangSync(roomId);
     const sel = document.getElementById('plus-mic-lang');
-    if (!sel || !roomId) return;
-    sel.value = localStorage.getItem('hf_priv_mic_lang_' + roomId) || 'auto';
+    if (sel) sel.value = localStorage.getItem('hf_priv_mic_lang_' + roomId) || 'auto';
 };
 
 // ==========================================
-// 2. ОТПРАВКА С КЛАВИАТУРЫ (КАНАЛ АВАТАРА)
+// 2. ОТПРАВКА С КЛАВИАТУРЫ (КАНАЛ avatar — ЗЕРКАЛЬНЫЙ ПАКЕТ)
 // ==========================================
 window.sendPrivateMsg = async function() {
     const roomId = getPrivateRoomId();
     if (!roomId) return;
+    window.initPrivateLiveLangSync(roomId);
 
     const inputField = document.getElementById('chat-input');
     if (!inputField) return;
@@ -185,7 +289,7 @@ window.sendPrivateMsg = async function() {
     if (!rawText) return;
     inputField.value = '';
 
-    // Канал клавиатуры слушает ТОЛЬКО hf_priv_avatar_lang_<roomId>
+    // КАНАЛ КЛАВИАТУРЫ: читает СТРОГО hf_priv_avatar_lang_<roomId>
     const manualLang = privNormLang(localStorage.getItem('hf_priv_avatar_lang_' + roomId));
     const myActiveLang = manualLang || getMyPrivateNativeLang();
 
@@ -206,14 +310,20 @@ window.sendPrivateMsg = async function() {
         myBaseText = await privTranslateText(rawText, manualLang);
     }
 
-    // Зеркало: переводим для собеседника на его актуальный язык
+    // Берём актуальный живой флаг собеседника СТРОГО в канале 'avatar'
     const targetUser = getPrivateTargetUser();
-    const targetSendLang = getTargetPrivateLang(targetUser);
+    const targetInfo = await getTargetLivePrivateChannel(roomId, targetUser, 'avatar');
     let textToShip = myBaseText;
 
-    if (targetSendLang && targetSendLang !== myActiveLang) {
-        textToShip = await privTranslateText(myBaseText, targetSendLang);
+    if (targetInfo.lang && targetInfo.lang !== myActiveLang) {
+        textToShip = await privTranslateText(myBaseText, targetInfo.lang);
     }
+
+    // Готовая зеркальная бегущая дорожка (одна на двоих)
+    const mirrorMarquee = buildPrivateMirrorMarquee(
+        activeFlag, safeName, myBaseText,
+        targetInfo.flag, targetInfo.name, textToShip
+    );
 
     try {
         firebase.database().ref(roomId).push({
@@ -227,7 +337,11 @@ window.sendPrivateMsg = async function() {
             flag: activeFlag,
             flagCode: activeFlagCode,
             langCode: myActiveLang,
-            targetLang: targetSendLang,
+            targetLang: targetInfo.lang,
+            targetFlag: targetInfo.flag,
+            targetName: targetInfo.name,
+            inputChannel: 'avatar',
+            mirrorMarquee: mirrorMarquee,
             isConfMsg: false
         });
     } catch (err) {
@@ -242,16 +356,18 @@ window.sendPrivateMsg = async function() {
 };
 
 // ==========================================
-// 3. ГОЛОСОВОЙ ВВОД ПРИВАТА (КАНАЛ МИКРОФОНА)
+// 3. ГОЛОСОВОЙ ВВОД ПРИВАТА (КАНАЛ mic — ЗЕРКАЛЬНЫЙ ПАКЕТ)
 // ==========================================
 window.startPrivateMic = async function(mode) {
     const roomId = getPrivateRoomId();
     if (!roomId) return;
+    window.initPrivateLiveLangSync(roomId);
+    if (window.closeAllMenus) window.closeAllMenus();
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
 
-    // Канал микрофона слушает ТОЛЬКО hf_priv_mic_lang_<roomId>
+    // КАНАЛ МИКРОФОНА: читает СТРОГО hf_priv_mic_lang_<roomId>
     const manualMicLang = privNormLang(localStorage.getItem('hf_priv_mic_lang_' + roomId));
     const isMicManual = Boolean(manualMicLang);
     const recBase = isMicManual ? manualMicLang : getMyPrivateNativeLang();
@@ -270,13 +386,15 @@ window.startPrivateMic = async function(mode) {
 
         const spokenLangCode = privNormLang(rec.lang) || recBase;
         const targetUser = getPrivateTargetUser();
-        const targetSendLang = getTargetPrivateLang(targetUser);
+
+        // Берём актуальный живой флаг собеседника СТРОГО в канале 'mic'
+        const targetInfo = await getTargetLivePrivateChannel(roomId, targetUser, 'mic');
 
         if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = recognized;
 
-        if (targetSendLang && targetSendLang !== spokenLangCode) {
-            textToShip = await privTranslateText(recognized, targetSendLang);
+        if (targetInfo.lang && targetInfo.lang !== spokenLangCode) {
+            textToShip = await privTranslateText(recognized, targetInfo.lang);
         }
 
         const safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
@@ -291,6 +409,12 @@ window.startPrivateMic = async function(mode) {
             activeFlag = PRIV_LANG_MAP[spokenLangCode][1];
         }
 
+        // Готовая зеркальная бегущая дорожка (одна на двоих)
+        const mirrorMarquee = buildPrivateMirrorMarquee(
+            activeFlag, safeName, recognized,
+            targetInfo.flag, targetInfo.name, textToShip
+        );
+
         const msgPayload = {
             userId: safeId,
             name: safeName,
@@ -302,7 +426,11 @@ window.startPrivateMic = async function(mode) {
             flag: activeFlag,
             flagCode: activeFlagCode,
             langCode: spokenLangCode,
-            targetLang: targetSendLang,
+            targetLang: targetInfo.lang,
+            targetFlag: targetInfo.flag,
+            targetName: targetInfo.name,
+            inputChannel: 'mic',
+            mirrorMarquee: mirrorMarquee,
             isConfMsg: false
         };
 
@@ -318,15 +446,17 @@ window.startPrivateMic = async function(mode) {
 };
 
 // ==========================================
-// 4. ПРИЁМ, ПЕРЕВОД И БЕГУЩАЯ СТРОКА ПРИВАТА
+// 4. ПРИЁМ СООБЩЕНИЙ ПРИВАТА: ТУПОЕ ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ (БЕЗ ПОВТОРНЫХ ПЕРЕВОДОВ)
 // ==========================================
-window.handlePrivateMessage = async function(snapshot) {
+window.handlePrivateMessage = function(snapshot) {
     const data = snapshot.val();
     if (!data) return;
     if (data.isVoiceRoomMsg || data.isVideoRoomMsg || data.isConfMsg) return;
 
     const roomKey = snapshot.ref.parent ? snapshot.ref.parent.key : window.currentRoomId;
     if (roomKey !== window.currentRoomId) return;
+
+    window.initPrivateLiveLangSync(roomKey);
 
     try {
         const deletedMsgs = JSON.parse(localStorage.getItem('hf_deleted_msgs') || '[]');
@@ -338,19 +468,6 @@ window.handlePrivateMessage = async function(snapshot) {
     const isMe = data.sessionId === window.mySessionId || (myId && String(data.userId) === myId);
     const isHistory = data.timestamp && (Date.now() - data.timestamp) > 5000;
 
-    // Динамическая память собеседника (ТОЛЬКО на живых сообщениях, не трогает window.participants)
-    const targetUser = getPrivateTargetUser();
-    if (!isMe && !isHistory && data.userId && targetUser && String(targetUser.id) === String(data.userId)) {
-        if (data.langCode) targetUser.langCode = data.langCode;
-        if (data.flag) targetUser.flag = data.flag;
-        if (data.flagCode) targetUser.flagCode = data.flagCode;
-
-        const titleEl = document.getElementById('chat-header-title');
-        if (titleEl && data.flag) {
-            titleEl.innerText = (targetUser.name || 'User').split(' ')[0] + " " + data.flag;
-        }
-    }
-
     const p = isMe
         ? window.myProfileInfo
         : ((window.participants || []).find(part => String(part.id) === String(data.userId)) || {
@@ -360,22 +477,10 @@ window.handlePrivateMessage = async function(snapshot) {
             flag: data.flag || '🌐'
         });
 
-    const myReadLang = getPrivateReadLang(roomKey);
-    const manualRead = privNormLang(localStorage.getItem('hf_priv_read_lang_' + roomKey));
+    // Берём готовые тексты напрямую из пакета сообщения (НИКАКИХ повторных переводов)
     const baseText = (data.originalText || data.text || '').trim();
-    let finalTranslatedText = (data.text || baseText).trim();
-
-    // Страховка на стороне получателя: гарантируем перевод на МОЙ активный язык (выбранный или родной)
-    if (!isMe && !isHistory && baseText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isFile) {
-        const senderLang = privNormLang(data.langCode);
-        const shippedTargetLang = privNormLang(data.targetLang);
-
-        if (senderLang && senderLang === myReadLang && !manualRead) {
-            finalTranslatedText = baseText;
-        } else if (shippedTargetLang !== myReadLang || (finalTranslatedText.toLowerCase() === baseText.toLowerCase() && senderLang !== myReadLang)) {
-            finalTranslatedText = await privTranslateText(baseText, myReadLang);
-        }
-    }
+    const translatedText = (data.text || baseText).trim();
+    const hasDiff = Boolean(baseText && translatedText && baseText.toLowerCase() !== translatedText.toLowerCase());
 
     const isAppActiveAndInChat = (document.visibilityState === 'visible' && window.currentIndex === 0);
     const senderDisplayName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
@@ -384,7 +489,7 @@ window.handlePrivateMessage = async function(snapshot) {
         if (data.isTransfer) { window.sndCash?.play().catch(() => {}); }
         else { window.sndMsg?.play().catch(() => {}); }
 
-        let textPreview = finalTranslatedText;
+        let textPreview = translatedText;
         if (data.isAIAudio) textPreview = "🤖 AI Voice Message";
         if (data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo";
         if (data.isLocation) textPreview = "📍 Shared Location";
@@ -408,15 +513,15 @@ window.handlePrivateMessage = async function(snapshot) {
     let bubbleClasses = `chat-bubble`;
 
     if (baseText && !data.mediaUrl && !data.isTransfer && !data.isLocation && !data.isAIAudio) {
-        if (baseText.toLowerCase() !== finalTranslatedText.toLowerCase()) {
+        if (hasDiff) {
             if (isMe) {
                 bubbleContent = `
                     <div class="text-[#e9edef]">${baseText}</div>
-                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${finalTranslatedText}</div>
+                    <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${translatedText}</div>
                 `;
             } else {
                 bubbleContent = `
-                    <div class="text-[#e9edef]">${finalTranslatedText}</div>
+                    <div class="text-[#e9edef]">${translatedText}</div>
                     <div class="mt-1 pt-1 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${baseText}</div>
                 `;
             }
@@ -424,20 +529,22 @@ window.handlePrivateMessage = async function(snapshot) {
     }
 
     if (data.isAIAudio) {
-        const playLang = isMe ? (privNormLang(data.langCode) || myReadLang) : myReadLang;
-        const textToPlay = isMe ? baseText : finalTranslatedText;
+        const playLang = isMe
+            ? (privNormLang(data.langCode) || getMyPrivateNativeLang())
+            : (privNormLang(data.targetLang) || getMyPrivateNativeLang());
+        const textToPlay = isMe ? baseText : translatedText;
         const safeEncodedText = encodeURIComponent(textToPlay || '').replace(/'/g, "%27");
 
         let audioBodyHtml = `<div class="text-[#e9edef]">${baseText}</div>`;
-        if (baseText.toLowerCase() !== finalTranslatedText.toLowerCase()) {
+        if (hasDiff) {
             if (isMe) {
                 audioBodyHtml = `
                     <div class="text-[#e9edef]">${baseText}</div>
-                    <div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] text-yellow-400 font-bold tracking-wide">➔ ${finalTranslatedText}</div>
+                    <div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] text-yellow-400 font-bold tracking-wide">➔ ${translatedText}</div>
                 `;
             } else {
                 audioBodyHtml = `
-                    <div class="text-[#e9edef]">${finalTranslatedText}</div>
+                    <div class="text-[#e9edef]">${translatedText}</div>
                     <div class="mt-2 pt-1.5 border-t border-white/20 text-[0.75rem] text-[#00a884] font-bold tracking-wide">➔ ${baseText}</div>
                 `;
             }
@@ -473,25 +580,18 @@ window.handlePrivateMessage = async function(snapshot) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Бегущая строка Приватного чата
-    if (targetUser && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
+    // ГОТОВАЯ ЗЕРКАЛЬНАЯ БЕГУЩАЯ ДОРОЖКА (берётся напрямую из сообщения)
+    if (!isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
-            const receiverName = isMe ? (targetUser.name || 'User').split(' ')[0] : window.myUsername;
-            let receiverFlag = '🌐';
+            const targetUser = getPrivateTargetUser();
+            const fallbackReceiverName = data.targetName || (isMe ? (targetUser?.name || 'User').split(' ')[0] : window.myUsername);
+            const fallbackReceiverFlag = data.targetFlag || (isMe ? (targetUser?.flag || '🌐') : (window.myProfileInfo?.flag || '🌐'));
 
-            if (isMe) {
-                receiverFlag = targetUser.flag || '🌐';
-            } else if (manualRead && PRIV_LANG_MAP[manualRead]) {
-                receiverFlag = PRIV_LANG_MAP[manualRead][1];
-            } else {
-                receiverFlag = window.myProfileInfo?.flag || '🌐';
-            }
-
-            let marqueeHtml = `<span class="text-white mr-2">${displayFlag} ${senderDisplayName}:</span> <span class="text-[#e9edef]">${baseText}</span>`;
-            if (baseText.toLowerCase() !== finalTranslatedText.toLowerCase()) {
-                marqueeHtml += ` &nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp; <span class="text-[#00a884] font-bold">${receiverFlag} ${receiverName}: ${finalTranslatedText}</span>`;
-            }
+            const marqueeHtml = data.mirrorMarquee || buildPrivateMirrorMarquee(
+                displayFlag, senderDisplayName, baseText,
+                fallbackReceiverFlag, fallbackReceiverName, translatedText
+            );
 
             mText.innerHTML = marqueeHtml;
             mText.style.animation = 'none';
