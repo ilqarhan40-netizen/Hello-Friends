@@ -43,6 +43,7 @@
     <script src="conference.js"></script>
     <script src="js/video-room.js?v=2026"></script>
     <script src="js/notifications.js?v=2027"></script>
+    <script src="js/microphones.js?v=2"></script>
     
     
     
@@ -534,11 +535,6 @@ if (window.OneSignalDeferred) {
                 </div>
             </div>
             
-            <div id="universal-mic-popup" onclick="event.stopPropagation();">
-                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startInAppCall()"><i class="fa-solid fa-phone mic-opt-call"></i><span data-i18n="call_user">Call User</span></button>
-                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('ai-audio')"><i class="fa-solid fa-robot mic-opt-ai"></i> <span data-i18n="voice_msg_ai">Voice Message (AI)</span></button>
-                <button class="mic-option-btn" onclick="window.closeAllMenus(); window.startUniversalMic('text')"><i class="fa-solid fa-microphone mic-opt-text"></i> <span data-i18n="voice_text">Voice Text</span></button>
-            </div>
 
             <div id="message" class="page-content active h-full flex flex-col relative z-10">
               <div class="flex justify-between items-center px-4 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
@@ -824,25 +820,7 @@ if (window.OneSignalDeferred) {
         <div class="rhombus-wrapper">
                 <div id="rhombus-btn" class="rhombus-btn" onclick="window.toggleRhombusMenu(event)"><i class="fa-solid fa-plus"></i></div>
                 <div id="rhombus-actions" class="rhombus-menu" onclick="event.stopPropagation();">
-                    <span class="col-span-3 text-[0.65rem] text-[#8696a0] uppercase font-bold text-center tracking-widest mt-1">Mic Language</span>
                     
-                <select id="plus-mic-lang" onchange="window.saveRoomMicLang(this.value)" class="col-span-3 bg-[#111b21] border border-[#2a3942] text-[#00a884] p-2 rounded-xl text-center font-bold outline-none mb-2">
-    <option value="auto" selected>🤖 Auto (Profile)</option>
-    <option value="en-US">🇬🇧 English</option>
-    <option value="kk-KZ">🇰🇿 Қазақша</option>
-    <option value="pt-PT">🇵🇹 Português</option>
-    <option value="ru-RU">🇷🇺 Русский</option>
-    <option value="az-AZ">🇦🇿 Azərbaycanca</option>
-    <option value="de-DE">🇩🇪 Deutsch</option>
-    <option value="tr-TR">🇹🇷 Türkçe</option>
-    <option value="ar-AE">🇦🇪 العربية</option>
-    <option value="it-IT">🇮🇹 Italiano</option>
-    <option value="es-ES">🇪🇸 Español</option>
-    <option value="fr-FR">🇫🇷 Français</option>
-    <option value="ja-JP">🇯🇵 日本語</option>
-    <option value="zh-CN">🇨🇳 中文</option>
-</select>
-
                     <div class="action-icon text-[#f59e0b] hover:text-white hover:bg-[#f59e0b]" onclick="window.openPlannerModal(); window.closeAllMenus();" title="Блокнот и Напоминания">
                         <i class="fa-solid fa-calendar-check"></i>
                     </div>
