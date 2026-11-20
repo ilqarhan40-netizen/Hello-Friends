@@ -300,15 +300,15 @@ window.sendPrivateMsg = async function() {
     let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
     let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
-    let myBaseText = rawText;
-
-    if (manualLang) {
-        if (PRIV_LANG_MAP[manualLang]) {
-            activeFlagCode = PRIV_LANG_MAP[manualLang][0];
-            activeFlag = PRIV_LANG_MAP[manualLang][1];
-        }
-        myBaseText = await privTranslateText(rawText, manualLang);
+        if (manualLang && PRIV_LANG_MAP[manualLang]) {
+        activeFlagCode = PRIV_LANG_MAP[manualLang][0];
+        activeFlag = PRIV_LANG_MAP[manualLang][1];
     }
+
+    let myBaseText = myActiveLang
+        ? await privTranslateText(rawText, myActiveLang)
+        : rawText;
+    
 
     // Берём актуальный живой флаг собеседника СТРОГО в канале 'avatar'
     const targetUser = getPrivateTargetUser();
