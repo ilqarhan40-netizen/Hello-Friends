@@ -1,29 +1,12 @@
 // ==========================================
-// MODULE: AI VOICE SYNTHESIS & ECHO GUARD (CLEAN v3)
-// Озвучка текста на 13 языках + защита бесконечного микрофона от эха
+// MODULE: AI VOICE SYNTHESIS (CLEAN v4)
+// Озвучка текста на 13 языках + защита от эха
 // ==========================================
 
-window.currentMicInputTarget = window.currentMicInputTarget || 'chat-input';
 window._currentUtterance = null;
 window._aiVoiceEndFallbackTimer = null;
 
-window.VOICE_LANG_MAP = {
-    en: { speech: 'en-US', flagCode: 'gb', flag: '🇬🇧' },
-    ru: { speech: 'ru-RU', flagCode: 'ru', flag: '🇷🇺' },
-    az: { speech: 'az-AZ', flagCode: 'az', flag: '🇦🇿' },
-    tr: { speech: 'tr-TR', flagCode: 'tr', flag: '🇹🇷' },
-    de: { speech: 'de-DE', flagCode: 'de', flag: '🇩🇪' },
-    kk: { speech: 'kk-KZ', flagCode: 'kz', flag: '🇰🇿' },
-    ar: { speech: 'ar-AE', flagCode: 'ae', flag: '🇦🇪' },
-    it: { speech: 'it-IT', flagCode: 'it', flag: '🇮🇹' },
-    es: { speech: 'es-ES', flagCode: 'es', flag: '🇪🇸' },
-    fr: { speech: 'fr-FR', flagCode: 'fr', flag: '🇫🇷' },
-    pt: { speech: 'pt-PT', flagCode: 'pt', flag: '🇵🇹' },
-    ja: { speech: 'ja-JP', flagCode: 'jp', flag: '🇯🇵' },
-    zh: { speech: 'zh-CN', flagCode: 'cn', flag: '🇨🇳' }
-};
-
-window.normalizeMicLang = function(raw) {
+window.normalizeMicLang = function (raw) {
     if (!raw) return 'auto';
     const val = String(raw).trim().toLowerCase();
     if (!val || val === 'auto' || val === 'un') return 'auto';
@@ -32,37 +15,7 @@ window.normalizeMicLang = function(raw) {
     return fix[base] || base;
 };
 
-window.getAutoMicLang = function() {
-    if (typeof window.getSmartLang === 'function' && window.myProfileInfo) {
-        const smart = window.normalizeMicLang(window.getSmartLang(window.myProfileInfo));
-        if (smart && smart !== 'auto') return smart;
-    }
-    return 'en';
-};
-
-window.getSelectedMicMenuLang = function() {
-    if (window.currentIndex === 1) {
-        const savedVideo = localStorage.getItem('hf_video_mic_lang');
-        if (savedVideo && savedVideo !== 'auto') return window.normalizeMicLang(savedVideo);
-    }
-    if (typeof window.getMicLangKey === 'function') {
-        const saved = localStorage.getItem(window.getMicLangKey());
-        if (saved && saved !== 'auto') return window.normalizeMicLang(saved);
-    }
-    return 'auto';
-};
-
-if (typeof window.toggleUniversalMic !== 'function') {
-    window.toggleUniversalMic = function(e, inputId) {
-        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-        window.currentMicInputTarget = inputId || 'chat-input';
-        if (typeof window.hfOpenRoomMic === 'function') {
-            window.hfOpenRoomMic(window.currentIndex === 1 ? 'video' : 'global', e, inputId);
-        }
-    };
-}
-
-window.handleSmartCall = function() {
+window.handleSmartCall = function () {
     if (!window.currentRoomId || window.currentRoomId === 'global' || window.currentRoomId.startsWith('private_me') || window.currentRoomId === 'private_ai_bot') {
         alert("Please select a user from the Contacts list to make a call.");
     } else if (typeof window.startInAppCall === 'function') {
@@ -70,18 +23,11 @@ window.handleSmartCall = function() {
     }
 };
 
-// ==========================================
-// 1. ДВИЖОК ОЗВУЧКИ ТЕКСТА (13 ЯЗЫКОВ + АНТИ-ЭХО)
-// ==========================================
-window.playAIVoice = function(encodedText, langCode) {
+window.playAIVoice = function (encodedText, langCode) {
     if (!window.speechSynthesis || !encodedText) return;
 
     let text = '';
-    try {
-        text = decodeURIComponent(encodedText);
-    } catch (e) {
-        text = String(encodedText);
-    }
+    try { text = decodeURIComponent(encodedText); } catch (e) { text = String(encodedText); }
     text = text.trim();
     if (!text) return;
 
@@ -90,23 +36,48 @@ window.playAIVoice = function(encodedText, langCode) {
 
     const norm = window.normalizeMicLang(langCode);
     const voiceMap = {
-        en: 'en-US',
-        ru: 'ru-RU',
-        az: 'az-AZ',
-        tr: 'tr-TR',
-        de: 'de-DE',
-        kk: 'kk-KZ',
-        ar: 'ar-AE',
-        it: 'it-IT',
-        es: 'es-ES',
-        fr: 'fr-FR',
-        pt: 'pt-PT',
-        ja: 'ja-JP',
-        zh: 'zh-CN'
+        en: 'en-US', ru: 'ru-RU', az: 'az-AZ', tr: 'tr-TR', de: 'de-DE',
+        kk: 'kk-KZ', ar: 'ar-AE', it: 'it-IT', es: 'es-ES', fr: 'fr-FR',
+        pt: 'pt-PT', ja: 'ja-JP', zh: 'zh-CN'
     };
 
-    let targetBcp = voiceMap[norm] || (langCode && langCode !== 'auto' ? langCode : 'en-US');
-
+    let targetBcp = voiceMap[norm] || 'en-US';
     const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+
     if (norm === 'az' && voices.length > 0) {
-        const hasAz = voices.some(v => v.lang && v.lang
+        const hasAz = voices.some(v => v.lang && v.lang.toLowerCase().startsWith('az'));
+        if (!hasAz) targetBcp = 'tr-TR';
+    }
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = targetBcp;
+    utter.rate = 1.0;
+
+    if (voices.length > 0) {
+        const prefix = targetBcp.split('-')[0].toLowerCase();
+        const match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
+        if (match) utter.voice = match;
+    }
+
+    const finish = () => {
+        clearTimeout(window._aiVoiceEndFallbackTimer);
+        window._currentUtterance = null;
+        if (typeof window.onAIVoiceEnd === 'function') window.onAIVoiceEnd();
+    };
+
+    utter.onstart = () => {
+        if (typeof window.onAIVoiceStart === 'function') window.onAIVoiceStart();
+    };
+    utter.onend = finish;
+    utter.onerror = finish;
+
+    window._currentUtterance = utter;
+    window._aiVoiceEndFallbackTimer = setTimeout(finish, Math.max(4000, text.length * 120));
+    window.speechSynthesis.speak(utter);
+};
+
+window.stopVoiceAI = function () {
+    clearTimeout(window._aiVoiceEndFallbackTimer);
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+    window._currentUtterance = null;
+};
