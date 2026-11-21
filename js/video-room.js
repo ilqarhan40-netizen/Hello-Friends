@@ -1,23 +1,22 @@
 // ==========================================
-// ФАЙЛ: js/video-room.js (ISOLATED VIDEO WORLD v10)
-// Сверено с index.html и js/language.js:
-// 1. Меню строго внутри #voice-translator (в рамках #phone-body на планшете)
-// 2. Авто строго от флага профиля
-// 3. Связь с экосистемой: window.i18n, window.appLang, window.changeAppLanguage
-// 4. Клик вне меню закрывает окна, флаг аватара не сбрасывается базой users
-// 5. Текст отправителя соответствует его активному флагу
+// ФАЙЛ: js/video-room.js (ISOLATED VIDEO WORLD v11)
+// Движок 1-в-1 из js/language.js (приват 1-на-1), полностью изолированный:
+// - Свои ветки БД: video_rooms / video_active_langs
+// - Свои ключи: hf_vid_avatar_lang_ / hf_vid_mic_lang_
+// - Два раздельных канала (avatar / mic) + тупое зеркальное копирование
+// - Меню строго внутри #voice-translator (фикс планшета) + словарь window.i18n
 // ==========================================
 
 (function () {
     'use strict';
 
-    const LANG_MAP = {
+    const VID_LANG_MAP = {
         en: { name: 'English', flagCode: 'gb', flag: '🇬🇧', speech: 'en-US' },
-        ru: { name: 'Русский', flagCode: 'ru', flag: '🇷🇺', speech: 'ru-RU' },
-        az: { name: 'Azərbaycan', flagCode: 'az', flag: '🇦🇿', speech: 'az-AZ' },
-        tr: { name: 'Türkçe', flagCode: 'tr', flag: '🇹🇷', speech: 'tr-TR' },
-        de: { name: 'Deutsch', flagCode: 'de', flag: '🇩🇪', speech: 'de-DE' },
         kk: { name: 'Қазақша', flagCode: 'kz', flag: '🇰🇿', speech: 'kk-KZ' },
+        ru: { name: 'Русский', flagCode: 'ru', flag: '🇷🇺', speech: 'ru-RU' },
+        az: { name: 'Azərbaycanca', flagCode: 'az', flag: '🇦🇿', speech: 'az-AZ' },
+        de: { name: 'Deutsch', flagCode: 'de', flag: '🇩🇪', speech: 'de-DE' },
+        tr: { name: 'Türkçe', flagCode: 'tr', flag: '🇹🇷', speech: 'tr-TR' },
         ar: { name: 'العربية', flagCode: 'ae', flag: '🇦🇪', speech: 'ar-AE' },
         it: { name: 'Italiano', flagCode: 'it', flag: '🇮🇹', speech: 'it-IT' },
         es: { name: 'Español', flagCode: 'es', flag: '🇪🇸', speech: 'es-ES' },
@@ -27,7 +26,7 @@
         zh: { name: '中文', flagCode: 'cn', flag: '🇨🇳', speech: 'zh-CN' }
     };
 
-    const UI_FALLBACK = {
+    const VID_UI_FALLBACK = {
         en: { langTitle: 'Chat Language', autoProfile: 'Auto (Profile)', micTitle: 'Microphone', voiceToText: 'Voice Text', waiting: 'Waiting for voice input...', on: 'ON', stop: 'STOP' },
         ru: { langTitle: 'Язык Чата', autoProfile: 'Авто (Профиль)', micTitle: 'Микрофон', voiceToText: 'Текст голосом', waiting: 'Ожидание голоса...', on: 'ВКЛ', stop: 'СТОП' },
         az: { langTitle: 'Çat Dili', autoProfile: 'Avto (Profil)', micTitle: 'Mikrofon', voiceToText: 'Səsli Mətn', waiting: 'Səs gözlənilir...', on: 'AÇIQ', stop: 'DAYAN' },
@@ -44,12 +43,12 @@
     };
 
     const VR = {
-        manualAvatarLang: null, // null = Авто строго от флага профиля
-        manualMicLang: null,    // null = Авто строго от флага профиля
         queue: [],
         seenKeys: new Set(),
-        activeDbPath: null,
-        activeListener: null,
+        activeMsgRoom: null,
+        activeMsgListener: null,
+        activeLangRoom: null,
+        activeLangListener: null,
         listenerStartedAt: 0,
         serverOffset: 0,
         offsetSynced: false,
@@ -71,12 +70,14 @@
     };
 
     window.HF_VIDEO_ROOM = VR;
+    window.videoLiveLangs = {};
+    window.videoLiveLangsLoaded = {};
 
     function isVideoMode() {
         return window.currentActiveCallType === 'video';
     }
 
-    function escapeHtml(str) {
+    function vidEscapeHtml(str) {
         return String(str || '')
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -84,40 +85,40 @@
             .replace(/"/g, '&quot;');
     }
 
-    function isRealFlag(flag) {
+    function vidNormLang(code) {
+        if (!code || code === 'auto' || code === 'un') return null;
+        const raw = String(code).trim().toLowerCase();
+        if (!raw || raw === 'auto' || raw === 'un') return null;
+        const c = raw.split(/[-_]/)[0].substring(0, 2);
+        const fix = {
+            kz: 'kk', cn: 'zh', jp: 'ja',
+            ae: 'ar', sa: 'ar', eg: 'ar',
+            us: 'en', gb: 'en', uk: 'en',
+            br: 'pt', mx: 'es'
+        };
+        return fix[c] || c;
+    }
+
+    function vidIsRealFlag(flag) {
         const f = String(flag || '').trim();
         return Boolean(f && f !== '🌐' && f !== '🏳️' && f !== 'un');
     }
 
-    function fixLang(code) {
-        if (!code) return '';
-        const raw = String(code).trim().toLowerCase();
-        if (!raw || raw === 'auto' || raw === 'un') return '';
-        const tl = raw.split(/[-_]/)[0].substring(0, 2);
+    function vidLangFromEmoji(flag) {
+        if (!flag) return null;
         const map = {
-            us: 'en', gb: 'en', uk: 'en',
-            kz: 'kk', cn: 'zh', jp: 'ja',
-            ae: 'ar', sa: 'ar', eg: 'ar',
-            br: 'pt', mx: 'es'
-        };
-        return map[tl] || tl;
-    }
-
-    function langFromFlagEmoji(flag) {
-        if (!flag) return '';
-        const emojiMap = {
             '🇬🇧': 'en', '🇺🇸': 'en', '🇷🇺': 'ru', '🇦🇿': 'az',
             '🇹🇷': 'tr', '🇩🇪': 'de', '🇰🇿': 'kk', '🇦🇪': 'ar',
             '🇸🇦': 'ar', '🇮🇹': 'it', '🇪🇸': 'es', '🇫🇷': 'fr',
             '🇵🇹': 'pt', '🇧🇷': 'pt', '🇯🇵': 'ja', '🇨🇳': 'zh'
         };
-        return emojiMap[String(flag).trim()] || '';
+        return map[String(flag).trim()] || null;
     }
 
-    function langFromPhone(phone) {
-        if (!phone) return '';
+    function vidLangFromPhone(phone) {
+        if (!phone) return null;
         const digits = String(phone).replace(/\D/g, '');
-        if (!digits) return '';
+        if (!digits) return null;
         const prefixes = [
             ['994', 'az'], ['971', 'ar'], ['966', 'ar'], ['351', 'pt'],
             ['77', 'kk'], ['76', 'kk'], ['90', 'tr'], ['49', 'de'],
@@ -128,48 +129,42 @@
         for (const [pref, lang] of prefixes) {
             if (digits.startsWith(pref)) return lang;
         }
-        return '';
+        return null;
     }
 
     // СТРОГО ОТ ФЛАГА ПРОФИЛЯ
-    function resolveProfileLang(userObj) {
+    function getVideoNativeLang(userObj) {
         if (!userObj) return 'en';
-        const byFlag = langFromFlagEmoji(userObj.flag);
-        if (byFlag) return byFlag;
-        const byFlagCode = fixLang(userObj.flagCode);
+        const byEmoji = vidLangFromEmoji(userObj.flag);
+        if (byEmoji) return byEmoji;
+        const byFlagCode = vidNormLang(userObj.flagCode);
         if (byFlagCode) return byFlagCode;
-        const byPhone = langFromPhone(userObj.phone || userObj.phoneNumber || userObj.tel);
+        const byPhone = vidLangFromPhone(userObj.phone || userObj.phoneNumber || userObj.tel);
         if (byPhone) return byPhone;
-        const byCode = fixLang(userObj.langCode || userObj.lang);
+        const byCode = vidNormLang(userObj.langCode || userObj.lang);
         if (byCode) return byCode;
         return 'en';
     }
 
-    function resolveProfileFlag(userObj) {
-        if (userObj && isRealFlag(userObj.flag)) return String(userObj.flag).trim();
-        const lang = resolveProfileLang(userObj);
-        return (LANG_MAP[lang] && LANG_MAP[lang].flag) ? LANG_MAP[lang].flag : '🇬🇧';
+    function getVideoNativeFlag(userObj) {
+        if (userObj && vidIsRealFlag(userObj.flag)) return String(userObj.flag).trim();
+        const lang = getVideoNativeLang(userObj);
+        return (VID_LANG_MAP[lang] && VID_LANG_MAP[lang].flag) ? VID_LANG_MAP[lang].flag : '🇬🇧';
     }
 
-    // Язык подписей меню: при принудительном языке экосистемы — от экосистемы; в Auto — от флага профиля
-    function getUiLang() {
-        const savedEco = localStorage.getItem('hf_app_lang');
-        if (savedEco && savedEco !== 'auto') {
-            const ecoCode = fixLang(savedEco);
-            if (ecoCode && UI_FALLBACK[ecoCode]) return ecoCode;
-        }
-        if (VR.manualAvatarLang && UI_FALLBACK[VR.manualAvatarLang]) {
-            return VR.manualAvatarLang;
-        }
-        const prof = resolveProfileLang(window.myProfileInfo);
-        if (prof && UI_FALLBACK[prof]) return prof;
-        const appEco = fixLang(window.appLang);
-        return (appEco && UI_FALLBACK[appEco]) ? appEco : 'en';
+    // Подписи меню привязаны к общему языку экосистемы (window.appLang / window.i18n)
+    function getVideoUiLang() {
+        const eco = vidNormLang(window.appLang);
+        if (eco && VID_UI_FALLBACK[eco]) return eco;
+        const savedEco = vidNormLang(localStorage.getItem('hf_app_lang'));
+        if (savedEco && VID_UI_FALLBACK[savedEco]) return savedEco;
+        const prof = getVideoNativeLang(window.myProfileInfo);
+        return VID_UI_FALLBACK[prof] ? prof : 'en';
     }
 
-    function getUiDict() {
-        const lang = getUiLang();
-        const fb = UI_FALLBACK[lang] || UI_FALLBACK.en;
+    function getVideoUiDict() {
+        const lang = getVideoUiLang();
+        const fb = VID_UI_FALLBACK[lang] || VID_UI_FALLBACK.en;
         const globalDict = (window.i18n && (window.i18n[lang] || window.i18n.en)) || {};
         return {
             langTitle: globalDict.chat_lang || fb.langTitle,
@@ -182,14 +177,7 @@
         };
     }
 
-    // Точный контейнер экрана видеокомнаты внутри рамки #phone-body (фикс планшета)
-    function getVideoHostContainer() {
-        return document.getElementById('voice-translator')
-            || document.getElementById('phone-body')
-            || document.body;
-    }
-
-    function getPartner() {
+    function getVideoTargetUser() {
         let base = null;
         if (window.voiceFriend && window.voiceFriend.id) base = window.voiceFriend;
         else if (window.currentTargetUser && window.currentTargetUser.id) base = window.currentTargetUser;
@@ -202,56 +190,200 @@
         return Object.assign({}, fromList || {}, base);
     }
 
-    function getDbPath() {
+    function getVideoRoomId() {
         if (!isVideoMode()) return null;
-        const partner = getPartner();
-        if (!partner || !partner.id || !window.myProfileInfo || !window.myProfileInfo.id) return null;
-        const pair = [String(window.myProfileInfo.id), String(partner.id)].sort();
-        return `video_rooms/${pair[0]}_${pair[1]}`;
+        const target = getVideoTargetUser();
+        if (!target || !target.id || !window.myProfileInfo || !window.myProfileInfo.id) return null;
+        const pair = [String(window.myProfileInfo.id), String(target.id)].sort();
+        return `${pair[0]}_${pair[1]}`;
     }
 
-    async function translateText(text, targetTl) {
+    function getVideoChannelStorageKey(roomId, channel) {
+        return (channel === 'mic')
+            ? ('hf_vid_mic_lang_' + roomId)
+            : ('hf_vid_avatar_lang_' + roomId);
+    }
+
+    function getMyManualVideoLang(roomId, channel) {
+        if (!roomId) return null;
+        return vidNormLang(localStorage.getItem(getVideoChannelStorageKey(roomId, channel)));
+    }
+
+    async function vidTranslateText(text, targetLang) {
         const clean = String(text || '').trim();
-        if (!clean || !targetTl) return clean;
+        const tl = vidNormLang(targetLang);
+        if (!clean || !tl) return clean;
         try {
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(targetTl)}&dt=t&q=${encodeURIComponent(clean)}`;
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(clean)}`;
             const res = await fetch(url);
             const data = await res.json();
             if (data && Array.isArray(data[0])) {
-                return data[0].map(p => (p && p[0]) ? p[0] : '').join('') || clean;
+                const joined = data[0].map(s => (s && s[0]) ? s[0] : '').join('');
+                if (joined) return joined;
             }
-            return clean;
-        } catch (e) {
-            return clean;
+        } catch (e) {}
+        return clean;
+    }
+
+    // ==========================================
+    // 0. ЖИВАЯ СИНХРОНИЗАЦИЯ ФЛАГОВ ВИДЕОКОМНАТЫ (РАЗДЕЛЬНО: avatar / mic)
+    // ==========================================
+    window.syncMyVideoChannelLang = function (roomId, channel, forcedLang) {
+        if (typeof firebase === 'undefined' || !roomId || !window.myProfileInfo || !window.myProfileInfo.id) return;
+        if (channel !== 'avatar' && channel !== 'mic') return;
+
+        const myId = String(window.myProfileInfo.id);
+        const activeLang = forcedLang !== undefined
+            ? vidNormLang(forcedLang)
+            : getMyManualVideoLang(roomId, channel);
+
+        const userRef = firebase.database().ref(`video_active_langs/${roomId}/${myId}`);
+        const chRef = userRef.child(channel);
+
+        if (!window.videoLiveLangs[roomId]) window.videoLiveLangs[roomId] = {};
+        if (!window.videoLiveLangs[roomId][myId]) window.videoLiveLangs[roomId][myId] = {};
+
+        if (activeLang && VID_LANG_MAP[activeLang]) {
+            const payload = {
+                langCode: activeLang,
+                flagCode: VID_LANG_MAP[activeLang].flagCode,
+                flag: VID_LANG_MAP[activeLang].flag,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            window.videoLiveLangs[roomId][myId][channel] = payload;
+            chRef.set(payload).catch(() => {});
+            try { userRef.onDisconnect().remove(); } catch (e) {}
+        } else {
+            delete window.videoLiveLangs[roomId][myId][channel];
+            chRef.remove().catch(() => {});
+        }
+    };
+
+    window.initVideoLiveLangSync = function (roomId) {
+        const rId = roomId || getVideoRoomId();
+        if (!rId || typeof firebase === 'undefined' || !window.myProfileInfo || !window.myProfileInfo.id) return;
+
+        if (VR.activeLangRoom && VR.activeLangRoom !== rId && VR.activeLangListener) {
+            firebase.database().ref('video_active_langs/' + VR.activeLangRoom).off('value', VR.activeLangListener);
+            VR.activeLangListener = null;
+        }
+
+        if (VR.activeLangRoom !== rId || !VR.activeLangListener) {
+            VR.activeLangRoom = rId;
+            VR.activeLangListener = firebase.database().ref('video_active_langs/' + rId).on('value', (snap) => {
+                window.videoLiveLangs[rId] = snap.val() || {};
+                window.videoLiveLangsLoaded[rId] = true;
+                updateVideoRoomFlagsUI();
+            });
+        }
+
+        window.syncMyVideoChannelLang(rId, 'avatar');
+        window.syncMyVideoChannelLang(rId, 'mic');
+    };
+
+    async function getTargetLiveVideoChannel(roomId, targetUser, channel) {
+        if (!targetUser) {
+            return {
+                lang: getVideoNativeLang(window.myProfileInfo),
+                flag: getVideoNativeFlag(window.myProfileInfo),
+                photo: (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U',
+                name: (window.myUsername || 'User').split(' ')[0]
+            };
+        }
+
+        if (roomId && !window.videoLiveLangsLoaded[roomId] && typeof firebase !== 'undefined') {
+            try {
+                const snap = await firebase.database().ref('video_active_langs/' + roomId).once('value');
+                window.videoLiveLangs[roomId] = snap.val() || {};
+                window.videoLiveLangsLoaded[roomId] = true;
+            } catch (e) {}
+        }
+
+        const roomMap = window.videoLiveLangs[roomId] || {};
+        const targetLiveAll = roomMap[String(targetUser.id)] || null;
+        const live = targetLiveAll ? targetLiveAll[channel] : null;
+
+        const targetLang = (live && live.langCode)
+            ? vidNormLang(live.langCode)
+            : getVideoNativeLang(targetUser);
+        const targetFlag = (live && vidIsRealFlag(live.flag))
+            ? live.flag
+            : getVideoNativeFlag(targetUser);
+
+        return {
+            lang: targetLang || 'en',
+            flag: targetFlag,
+            photo: targetUser.photo || 'https://ui-avatars.com/api/?name=U',
+            name: (targetUser.name || 'User').split(' ')[0]
+        };
+    }
+
+    function buildVideoMirrorMarquee(senderPhoto, senderFlag, senderName, originalText, receiverPhoto, receiverFlag, receiverName, translatedText, sourceType) {
+        const icon = sourceType === 'voice'
+            ? '<i class="fa-solid fa-microphone text-yellow-400 mx-2 text-[0.65rem]"></i>'
+            : '<i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.65rem]"></i>';
+
+        return (
+            `<span class="inline-flex items-center">` +
+                `<img src="${vidEscapeHtml(senderPhoto)}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">` +
+                `<span class="text-white font-bold mr-1">${vidEscapeHtml(senderName)}:</span>` +
+                `<span class="text-[#e9edef] mr-1">${vidEscapeHtml(senderFlag)} ${vidEscapeHtml(originalText)}</span>` +
+                `${icon}` +
+                `<img src="${vidEscapeHtml(receiverPhoto)}" class="w-5 h-5 rounded-full border border-yellow-400 mr-1 object-cover">` +
+                `<span class="text-white font-bold mr-1">${vidEscapeHtml(receiverName)}:</span>` +
+                `<span class="text-yellow-400 font-bold">${vidEscapeHtml(receiverFlag)} ${vidEscapeHtml(translatedText)}</span>` +
+            `</span>`
+        );
+    }
+
+    function updateVideoRoomFlagsUI() {
+        if (!isVideoMode()) return;
+        const roomId = getVideoRoomId();
+
+        const meFlagEl = document.getElementById('voice-me-flag');
+        if (meFlagEl) {
+            const myManual = getMyManualVideoLang(roomId, 'avatar');
+            const desiredMe = (myManual && VID_LANG_MAP[myManual])
+                ? VID_LANG_MAP[myManual].flag
+                : getVideoNativeFlag(window.myProfileInfo);
+            if (meFlagEl.textContent !== desiredMe) meFlagEl.textContent = desiredMe;
+        }
+
+        const friendFlagEl = document.getElementById('voice-friend-flag');
+        const target = getVideoTargetUser();
+        if (friendFlagEl && target) {
+            const roomMap = (roomId && window.videoLiveLangs[roomId]) || {};
+            const liveAvatar = roomMap[String(target.id)] && roomMap[String(target.id)].avatar;
+            const desiredFriend = (liveAvatar && vidIsRealFlag(liveAvatar.flag))
+                ? liveAvatar.flag
+                : getVideoNativeFlag(target);
+            if (friendFlagEl.textContent !== desiredFriend) friendFlagEl.textContent = desiredFriend;
         }
     }
 
-    function getTab1Input() {
+    // ==========================================
+    // 1. СТИЛИ И ПАНЕЛИ СТРОГО ВНУТРИ #voice-translator (#phone-body)
+    // ==========================================
+    function getVideoHost() {
+        return document.getElementById('voice-translator')
+            || document.getElementById('phone-body')
+            || document.body;
+    }
+
+    function getVideoInput() {
         return document.getElementById('voice-chat-input');
     }
 
-    function getTab1Bar() {
-        const inp = getTab1Input();
-        return inp ? inp.closest('.chat-input-area') : null;
-    }
-
-    function getTab1MicBtn() {
-        const bar = getTab1Bar();
+    function getVideoMicBtn() {
+        const inp = getVideoInput();
+        const bar = inp ? inp.closest('.chat-input-area') : null;
         return bar ? bar.querySelector('button[onclick*="toggleUniversalMic"]') : null;
     }
 
-    function getTab1SendBtn() {
-        const bar = getTab1Bar();
-        return bar ? bar.querySelector('button[onclick*="sendFirebaseMsg"]') : null;
-    }
-
-    // ==========================================
-    // 1. СТИЛИ И ПАНЕЛИ ВНУТРИ #voice-translator (#phone-body)
-    // ==========================================
     function injectStyles() {
-        if (document.getElementById('hf-vr-v10-styles')) return;
+        if (document.getElementById('hf-vr-v11-styles')) return;
         const style = document.createElement('style');
-        style.id = 'hf-vr-v10-styles';
+        style.id = 'hf-vr-v11-styles';
         style.textContent = `
             #voice-marquee-container-anim {
                 position: relative;
@@ -372,29 +504,6 @@
         document.head.appendChild(style);
     }
 
-    function updateMyAvatarFlagUI() {
-        const flagEl = document.getElementById('voice-me-flag');
-        if (!flagEl) return;
-        const desired = (VR.manualAvatarLang && LANG_MAP[VR.manualAvatarLang])
-            ? LANG_MAP[VR.manualAvatarLang].flag
-            : resolveProfileFlag(window.myProfileInfo);
-        if (flagEl.textContent !== desired) {
-            flagEl.textContent = desired;
-        }
-    }
-
-    function syncEcosystemLanguage(chosenCode) {
-        const target = chosenCode || 'auto';
-        if (typeof window.changeAppLanguage === 'function') {
-            try { window.changeAppLanguage(target); } catch (e) {}
-        } else {
-            localStorage.setItem('hf_app_lang', target);
-            if (typeof window.applyTranslations === 'function') {
-                try { window.applyTranslations(); } catch (e) {}
-            }
-        }
-    }
-
     function closeAllVideoPopups() {
         const a = document.getElementById('hf-vr-avatar-modal');
         const m = document.getElementById('hf-vr-mic-popup');
@@ -402,7 +511,7 @@
         if (m) m.classList.remove('active');
     }
 
-    // ПАНЕЛЬ ЯЗЫКОВ С АВАТАРА (ВНУТРИ #voice-translator + СВЯЗЬ С ЭКОСИСТЕМОЙ)
+    // МЕНЮ АВАТАРА (КАНАЛ avatar — СТРОГО ДЛЯ ЭТОЙ ВИДЕОКОМНАТЫ)
     function openVideoAvatarLangPanel() {
         injectStyles();
         const existing = document.getElementById('hf-vr-avatar-modal');
@@ -410,7 +519,10 @@
         closeAllVideoPopups();
         if (wasOpen) return;
 
-        const host = getVideoHostContainer();
+        const roomId = getVideoRoomId();
+        if (roomId) window.initVideoLiveLangSync(roomId);
+
+        const host = getVideoHost();
         let modal = existing;
         if (!modal) {
             modal = document.createElement('div');
@@ -419,22 +531,23 @@
         }
         if (modal.parentNode !== host) host.appendChild(modal);
 
-        const d = getUiDict();
-        const profileFlag = resolveProfileFlag(window.myProfileInfo);
+        const d = getVideoUiDict();
+        const profileFlag = getVideoNativeFlag(window.myProfileInfo);
+        const currentPref = getMyManualVideoLang(roomId, 'avatar');
 
         let html = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-size:0.78rem;font-weight:800;color:#00a884;">🌐 ${escapeHtml(d.langTitle)}</span>
+                <span style="font-size:0.78rem;font-weight:800;color:#00a884;">🌐 ${vidEscapeHtml(d.langTitle)}</span>
                 <button type="button" id="hf-vr-avatar-close" style="background:none;border:none;color:#8696a0;font-size:1rem;cursor:pointer;">✕</button>
             </div>
-            <button type="button" data-lang="auto" class="hf-vr-lang-btn ${!VR.manualAvatarLang ? 'selected' : ''}" style="width:100%;justify-content:center;">
-                ${profileFlag} ${escapeHtml(d.autoProfile)}
+            <button type="button" data-lang="auto" class="hf-vr-lang-btn ${!currentPref ? 'selected' : ''}" style="width:100%;justify-content:center;">
+                ${profileFlag} ${vidEscapeHtml(d.autoProfile)}
             </button>
             <div class="hf-vr-lang-grid">
         `;
-        Object.keys(LANG_MAP).forEach(code => {
-            const item = LANG_MAP[code];
-            html += `<button type="button" data-lang="${code}" class="hf-vr-lang-btn ${VR.manualAvatarLang === code ? 'selected' : ''}">${item.flag} ${item.name}</button>`;
+        Object.keys(VID_LANG_MAP).forEach(code => {
+            const item = VID_LANG_MAP[code];
+            html += `<button type="button" data-lang="${code}" class="hf-vr-lang-btn ${currentPref === code ? 'selected' : ''}">${item.flag} ${item.name}</button>`;
         });
         html += `</div>`;
         modal.innerHTML = html;
@@ -444,10 +557,14 @@
             btn.onclick = (e) => {
                 e.stopPropagation();
                 const chosen = btn.getAttribute('data-lang');
-                VR.manualAvatarLang = (chosen === 'auto') ? null : chosen;
-                updateMyAvatarFlagUI();
-                syncEcosystemLanguage(chosen);
-                updateMicPill();
+                const rId = getVideoRoomId();
+                if (rId) {
+                    const key = getVideoChannelStorageKey(rId, 'avatar');
+                    if (chosen === 'auto') localStorage.removeItem(key);
+                    else localStorage.setItem(key, chosen);
+                    window.syncMyVideoChannelLang(rId, 'avatar', chosen === 'auto' ? null : chosen);
+                }
+                updateVideoRoomFlagsUI();
                 modal.classList.remove('active');
             };
         });
@@ -455,7 +572,7 @@
         modal.classList.add('active');
     }
 
-    // МЕНЮ МИКРОФОНА (ВНУТРИ #voice-translator + СВЯЗЬ С ЭКОСИСТЕМОЙ)
+    // МЕНЮ МИКРОФОНА (КАНАЛ mic — СТРОГО ДЛЯ ЭТОЙ ВИДЕОКОМНАТЫ)
     function openVideoMicMenu() {
         injectStyles();
         const existing = document.getElementById('hf-vr-mic-popup');
@@ -463,7 +580,10 @@
         closeAllVideoPopups();
         if (wasOpen) return;
 
-        const host = getVideoHostContainer();
+        const roomId = getVideoRoomId();
+        if (roomId) window.initVideoLiveLangSync(roomId);
+
+        const host = getVideoHost();
         let popup = existing;
         if (!popup) {
             popup = document.createElement('div');
@@ -472,32 +592,39 @@
         }
         if (popup.parentNode !== host) host.appendChild(popup);
 
-        const d = getUiDict();
-        const profileFlag = resolveProfileFlag(window.myProfileInfo);
+        const d = getVideoUiDict();
+        const profileFlag = getVideoNativeFlag(window.myProfileInfo);
+        const currentPref = getMyManualVideoLang(roomId, 'mic');
 
-        let optionsHtml = `<option value="auto" ${!VR.manualMicLang ? 'selected' : ''}>${profileFlag} ${escapeHtml(d.autoProfile)}</option>`;
-        Object.keys(LANG_MAP).forEach(code => {
-            const item = LANG_MAP[code];
-            optionsHtml += `<option value="${code}" ${VR.manualMicLang === code ? 'selected' : ''}>${item.flag} ${item.name}</option>`;
+        let optionsHtml = `<option value="auto" ${!currentPref ? 'selected' : ''}>${profileFlag} ${vidEscapeHtml(d.autoProfile)}</option>`;
+        Object.keys(VID_LANG_MAP).forEach(code => {
+            const item = VID_LANG_MAP[code];
+            optionsHtml += `<option value="${code}" ${currentPref === code ? 'selected' : ''}>${item.flag} ${item.name}</option>`;
         });
 
         popup.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <span style="font-size:0.78rem;font-weight:800;color:#00a884;"><i class="fa-solid fa-microphone mr-1"></i> ${escapeHtml(d.micTitle)}</span>
+                <span style="font-size:0.78rem;font-weight:800;color:#00a884;"><i class="fa-solid fa-microphone mr-1"></i> ${vidEscapeHtml(d.micTitle)}</span>
                 <button type="button" id="hf-vr-mic-close" style="background:none;border:none;color:#8696a0;font-size:1rem;cursor:pointer;">✕</button>
             </div>
             <select id="hf-vr-mic-select" style="width:100%;background:#202c33;color:#e9edef;border:1px solid #2a3942;border-radius:10px;padding:8px;font-size:0.82rem;margin-bottom:10px;outline:none;">
                 ${optionsHtml}
             </select>
             <button type="button" id="hf-vr-mic-start-btn" style="width:100%;background:#00a884;color:#111b21;border:none;border-radius:10px;padding:9px;font-size:0.82rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-                <i class="fa-solid fa-microphone"></i> ${escapeHtml(d.voiceToText)}
+                <i class="fa-solid fa-microphone"></i> ${vidEscapeHtml(d.voiceToText)}
             </button>
         `;
 
         popup.querySelector('#hf-vr-mic-close').onclick = () => popup.classList.remove('active');
         popup.querySelector('#hf-vr-mic-select').onchange = (e) => {
             const val = e.target.value;
-            VR.manualMicLang = (val === 'auto') ? null : val;
+            const rId = getVideoRoomId();
+            if (rId) {
+                const key = getVideoChannelStorageKey(rId, 'mic');
+                if (!val || val === 'auto') localStorage.removeItem(key);
+                else localStorage.setItem(key, val);
+                window.syncMyVideoChannelLang(rId, 'mic', (!val || val === 'auto') ? null : val);
+            }
             updateMicPill();
         };
         popup.querySelector('#hf-vr-mic-start-btn').onclick = (e) => {
@@ -510,7 +637,7 @@
     }
 
     // ==========================================
-    // 2. БЕГУЩАЯ СТРОКА ВИДЕОКОМНАТЫ
+    // 2. БЕГУЩАЯ СТРОКА ВИДЕОКОМНАТЫ (ОЧЕРЕДЬ)
     // ==========================================
     function getMarqueeNodes() {
         return {
@@ -569,7 +696,7 @@
         VR.marquee.rafId = requestAnimationFrame(marqueeLoop);
     }
 
-    function pushMarquee(html) {
+    function pushVideoMarquee(html) {
         if (!html) return;
         startMarqueeEngine();
         VR.queue.push(html);
@@ -580,27 +707,30 @@
     }
 
     window.resetVideoRoomState = function () {
-        VR.manualAvatarLang = null;
-        VR.manualMicLang = null;
+        if (VR.micActive) window.stopVideoRoomMic(true);
         VR.queue = [];
         VR.seenKeys.clear();
         VR.marquee.currentHtml = '';
         VR.marquee.passCount = 0;
         closeAllVideoPopups();
 
-        if (VR.activeDbPath && VR.activeListener && typeof firebase !== 'undefined') {
-            firebase.database().ref(VR.activeDbPath).off('child_added', VR.activeListener);
+        if (VR.activeMsgRoom && VR.activeMsgListener && typeof firebase !== 'undefined') {
+            firebase.database().ref('video_rooms/' + VR.activeMsgRoom).off('child_added', VR.activeMsgListener);
         }
-        VR.activeDbPath = null;
-        VR.activeListener = null;
+        if (VR.activeLangRoom && VR.activeLangListener && typeof firebase !== 'undefined') {
+            firebase.database().ref('video_active_langs/' + VR.activeLangRoom).off('value', VR.activeLangListener);
+        }
+        VR.activeMsgRoom = null;
+        VR.activeMsgListener = null;
+        VR.activeLangRoom = null;
+        VR.activeLangListener = null;
 
         const { textEl } = getMarqueeNodes();
-        if (textEl) textEl.innerHTML = getUiDict().waiting;
-        updateMyAvatarFlagUI();
+        if (textEl) textEl.innerHTML = getVideoUiDict().waiting;
     };
 
     // ==========================================
-    // 3. ОТПРАВКА И ПРИЁМ (ТЕКСТ ОТПРАВИТЕЛЯ СТРОГО ПОД ЕГО ФЛАГ)
+    // 3. ОТПРАВКА (КАНАЛ avatar / mic — ЗЕРКАЛЬНЫЙ ПАКЕТ, КАК В language.js)
     // ==========================================
     window.sendVideoRoomPayload = async function (rawText, sourceType = 'keyboard') {
         if (!isVideoMode()) return;
@@ -608,37 +738,64 @@
         if (!cleanText) return;
 
         window.syncVideoRoomListener();
-        const dbPath = getDbPath();
-        if (!dbPath) return;
+        const roomId = getVideoRoomId();
+        if (!roomId) return;
 
-        const partner = getPartner();
+        window.initVideoLiveLangSync(roomId);
+
         const isVoice = (sourceType === 'voice');
+        const channel = isVoice ? 'mic' : 'avatar';
 
-        const manualLang = isVoice ? VR.manualMicLang : VR.manualAvatarLang;
-        const myLang = manualLang || resolveProfileLang(window.myProfileInfo);
-        const myFlag = (manualLang && LANG_MAP[manualLang])
-            ? LANG_MAP[manualLang].flag
-            : resolveProfileFlag(window.myProfileInfo);
+        const manualLang = getMyManualVideoLang(roomId, channel);
+        const myActiveLang = manualLang || getVideoNativeLang(window.myProfileInfo);
+        const myFlag = (manualLang && VID_LANG_MAP[manualLang])
+            ? VID_LANG_MAP[manualLang].flag
+            : getVideoNativeFlag(window.myProfileInfo);
+        const myFlagCode = (manualLang && VID_LANG_MAP[manualLang])
+            ? VID_LANG_MAP[manualLang].flagCode
+            : ((window.myProfileInfo && window.myProfileInfo.flagCode) || 'un');
 
-        const targetLang = resolveProfileLang(partner);
+        const safeId = (window.myProfileInfo && window.myProfileInfo.id) ? String(window.myProfileInfo.id) : 'guest';
+        const safeName = (window.myUsername || (window.myProfileInfo && window.myProfileInfo.name) || 'User').split(' ')[0];
+        const safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
 
-        // Текст отправителя приводим к языку его активного флага
-        const senderDisplayText = await translateText(cleanText, myLang);
-        const translatedText = (targetLang && targetLang !== myLang)
-            ? await translateText(senderDisplayText, targetLang)
-            : senderDisplayText;
+        // Текст отправителя приводим к языку его активного флага (как в language.js)
+        const myBaseText = isVoice
+            ? cleanText
+            : await vidTranslateText(cleanText, myActiveLang);
 
-        const me = window.myProfileInfo || {};
-        firebase.database().ref(dbPath).push({
-            userId: String(me.id || 'guest'),
-            name: window.myUsername || me.name || 'User',
-            photo: me.photo || 'https://ui-avatars.com/api/?name=U',
+        // Живой флаг собеседника СТРОГО в том же канале (avatar или mic)
+        const targetUser = getVideoTargetUser();
+        const targetInfo = await getTargetLiveVideoChannel(roomId, targetUser, channel);
+
+        let textToShip = myBaseText;
+        if (targetInfo.lang && targetInfo.lang !== myActiveLang) {
+            textToShip = await vidTranslateText(myBaseText, targetInfo.lang);
+        }
+
+        // Готовая зеркальная бегущая дорожка — одна на двоих
+        const mirrorMarquee = buildVideoMirrorMarquee(
+            safePhoto, myFlag, safeName, myBaseText,
+            targetInfo.photo, targetInfo.flag, targetInfo.name, textToShip,
+            sourceType
+        );
+
+        firebase.database().ref('video_rooms/' + roomId).push({
+            userId: safeId,
+            name: safeName,
+            photo: safePhoto,
             flag: myFlag,
-            langCode: myLang,
-            targetLang: targetLang,
-            originalText: senderDisplayText || cleanText,
-            text: translatedText || senderDisplayText || cleanText,
+            flagCode: myFlagCode,
+            langCode: myActiveLang,
+            targetLang: targetInfo.lang,
+            targetFlag: targetInfo.flag,
+            targetName: targetInfo.name,
+            targetPhoto: targetInfo.photo,
+            originalText: myBaseText,
+            text: textToShip || myBaseText,
             sourceType: sourceType,
+            inputChannel: channel,
+            mirrorMarquee: mirrorMarquee,
             sessionId: window.mySessionId || 'sess',
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             isVideoRoomMsg: true
@@ -647,7 +804,7 @@
 
     window.sendVideoRoomMsg = async function () {
         if (!isVideoMode()) return;
-        const input = getTab1Input();
+        const input = getVideoInput();
         if (!input) return;
         const raw = input.value.trim();
         if (!raw) return;
@@ -656,7 +813,10 @@
         await window.sendVideoRoomPayload(raw, 'keyboard');
     };
 
-    async function handleIncomingVideoMsg(snapshot) {
+    // ==========================================
+    // 4. ПРИЁМ: ТУПОЕ ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ (БЕЗ ПОВТОРНЫХ ПЕРЕВОДОВ)
+    // ==========================================
+    function handleIncomingVideoMsg(snapshot) {
         if (!isVideoMode()) return;
         const data = snapshot.val();
         if (!data || !data.isVideoRoomMsg) return;
@@ -669,64 +829,19 @@
             if ((serverNow - data.timestamp) > 60000) return;
         }
 
-        const myId = window.myProfileInfo ? String(window.myProfileInfo.id) : '';
-        const isMe = (data.sessionId && data.sessionId === window.mySessionId) || (myId && String(data.userId) === myId);
-        const partner = getPartner();
+        const marqueeHtml = data.mirrorMarquee || buildVideoMirrorMarquee(
+            data.photo || 'https://ui-avatars.com/api/?name=U',
+            data.flag || '🌐',
+            (data.name || 'User').split(' ')[0],
+            data.originalText || data.text || '',
+            data.targetPhoto || 'https://ui-avatars.com/api/?name=U',
+            data.targetFlag || '🌐',
+            (data.targetName || 'User').split(' ')[0],
+            data.text || data.originalText || '',
+            data.sourceType || 'keyboard'
+        );
 
-        const senderText = String(data.originalText || data.text || '').trim();
-        let receiverText = String(data.text || senderText).trim();
-
-        let senderPhoto, senderFlag, senderName;
-        let receiverPhoto, receiverFlag, receiverName;
-
-        if (isMe) {
-            senderPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
-            senderFlag = isRealFlag(data.flag) ? data.flag : resolveProfileFlag(window.myProfileInfo);
-            senderName = (window.myUsername || 'Me').split(' ')[0];
-
-            receiverPhoto = (partner && partner.photo) || 'https://ui-avatars.com/api/?name=U';
-            receiverFlag = resolveProfileFlag(partner);
-            receiverName = partner ? (partner.name || 'Partner').split(' ')[0] : 'Partner';
-        } else {
-            senderPhoto = data.photo || (partner && partner.photo) || 'https://ui-avatars.com/api/?name=U';
-            senderFlag = isRealFlag(data.flag) ? data.flag : resolveProfileFlag(partner);
-            senderName = (data.name || (partner && partner.name) || 'Partner').split(' ')[0];
-
-            receiverPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
-            receiverName = (window.myUsername || 'Me').split(' ')[0];
-
-            const myReadLang = VR.manualAvatarLang || resolveProfileLang(window.myProfileInfo);
-            receiverFlag = (VR.manualAvatarLang && LANG_MAP[VR.manualAvatarLang])
-                ? LANG_MAP[VR.manualAvatarLang].flag
-                : resolveProfileFlag(window.myProfileInfo);
-
-            const sentTarget = fixLang(data.targetLang);
-            const sourceLang = fixLang(data.langCode);
-            if (sourceLang && sourceLang === myReadLang) {
-                receiverText = senderText;
-            } else if (sentTarget && sentTarget === myReadLang && data.text) {
-                receiverText = data.text;
-            } else {
-                receiverText = await translateText(senderText, myReadLang);
-            }
-        }
-
-        const icon = data.sourceType === 'voice'
-            ? '<i class="fa-solid fa-microphone text-yellow-400 mx-2 text-[0.65rem]"></i>'
-            : '<i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.65rem]"></i>';
-
-        const html =
-            `<span class="inline-flex items-center">` +
-                `<img src="${escapeHtml(senderPhoto)}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">` +
-                `<span class="text-white font-bold mr-1">${escapeHtml(senderName)}:</span>` +
-                `<span class="text-[#e9edef] mr-1">${escapeHtml(senderFlag)} ${escapeHtml(senderText)}</span>` +
-                `${icon}` +
-                `<img src="${escapeHtml(receiverPhoto)}" class="w-5 h-5 rounded-full border border-yellow-400 mr-1 object-cover">` +
-                `<span class="text-white font-bold mr-1">${escapeHtml(receiverName)}:</span>` +
-                `<span class="text-yellow-400 font-bold">${escapeHtml(receiverFlag)} ${escapeHtml(receiverText)}</span>` +
-            `</span>`;
-
-        pushMarquee(html);
+        pushVideoMarquee(marqueeHtml);
     }
 
     window.syncVideoRoomListener = function () {
@@ -739,29 +854,32 @@
             });
         }
 
-        const desiredPath = getDbPath();
-        if (!desiredPath) return;
-        if (VR.activeDbPath === desiredPath && VR.activeListener) return;
+        const roomId = getVideoRoomId();
+        if (!roomId) return;
 
-        if (VR.activeDbPath && VR.activeListener) {
-            firebase.database().ref(VR.activeDbPath).off('child_added', VR.activeListener);
+        window.initVideoLiveLangSync(roomId);
+
+        if (VR.activeMsgRoom === roomId && VR.activeMsgListener) return;
+
+        if (VR.activeMsgRoom && VR.activeMsgListener) {
+            firebase.database().ref('video_rooms/' + VR.activeMsgRoom).off('child_added', VR.activeMsgListener);
         }
 
         VR.seenKeys.clear();
-        VR.activeDbPath = desiredPath;
+        VR.activeMsgRoom = roomId;
         VR.listenerStartedAt = Date.now() + (VR.serverOffset || 0);
-        VR.activeListener = firebase.database()
-            .ref(desiredPath)
+        VR.activeMsgListener = firebase.database()
+            .ref('video_rooms/' + roomId)
             .limitToLast(10)
             .on('child_added', handleIncomingVideoMsg);
     };
 
     // ==========================================
-    // 4. МИКРОФОН ВИДЕОКОМНАТЫ
+    // 5. МИКРОФОН ВИДЕОКОМНАТЫ (КАНАЛ mic + ПАУЗА AGORA)
     // ==========================================
     function ensureMicPill() {
         injectStyles();
-        const d = getUiDict();
+        const d = getVideoUiDict();
         let pill = document.getElementById('hf-vr-mic-pill');
         if (!pill) {
             pill = document.createElement('div');
@@ -769,7 +887,7 @@
             pill.innerHTML = `
                 <span class="dot"></span>
                 <span id="hf-vr-mic-label"></span>
-                <button type="button" class="stop-btn" id="hf-vr-stop-btn" onclick="event.stopPropagation(); window.stopVideoRoomMic(false)">${escapeHtml(d.stop)}</button>
+                <button type="button" class="stop-btn" id="hf-vr-stop-btn" onclick="event.stopPropagation(); window.stopVideoRoomMic(false)">${vidEscapeHtml(d.stop)}</button>
             `;
         } else {
             const stopBtn = pill.querySelector('#hf-vr-stop-btn');
@@ -791,7 +909,7 @@
             if (pill.parentNode !== slot) slot.appendChild(pill);
             return pill;
         }
-        const host = getVideoHostContainer();
+        const host = getVideoHost();
         if (pill.parentNode !== host) host.appendChild(pill);
         return pill;
     }
@@ -799,7 +917,7 @@
     function updateMicPill(preview = '') {
         const pill = ensureMicPill();
         const label = document.getElementById('hf-vr-mic-label');
-        const micBtn = getTab1MicBtn();
+        const micBtn = getVideoMicBtn();
 
         if (!VR.micActive) {
             pill.classList.remove('active');
@@ -807,10 +925,12 @@
             return;
         }
 
-        const d = getUiDict();
-        const flag = (VR.manualMicLang && LANG_MAP[VR.manualMicLang])
-            ? LANG_MAP[VR.manualMicLang].flag
-            : resolveProfileFlag(window.myProfileInfo);
+        const d = getVideoUiDict();
+        const roomId = getVideoRoomId();
+        const manualMic = getMyManualVideoLang(roomId, 'mic');
+        const flag = (manualMic && VID_LANG_MAP[manualMic])
+            ? VID_LANG_MAP[manualMic].flag
+            : getVideoNativeFlag(window.myProfileInfo);
 
         if (label) {
             label.textContent = preview ? `${flag} ${preview}` : `${flag} ${d.on}`;
@@ -842,8 +962,9 @@
 
         try {
             const rec = new SpeechRec();
-            const activeLang = VR.manualMicLang || resolveProfileLang(window.myProfileInfo);
-            rec.lang = (LANG_MAP[activeLang] && LANG_MAP[activeLang].speech) || 'en-US';
+            const roomId = getVideoRoomId();
+            const activeLang = getMyManualVideoLang(roomId, 'mic') || getVideoNativeLang(window.myProfileInfo);
+            rec.lang = (VID_LANG_MAP[activeLang] && VID_LANG_MAP[activeLang].speech) || 'en-US';
             rec.continuous = false;
             rec.interimResults = true;
             rec.maxAlternatives = 1;
@@ -949,64 +1070,57 @@
     };
 
     // ==========================================
-    // 5. ПРИВЯЗКА КНОПОК ТОЛЬКО В ВИДЕОКОМНАТЕ
+    // 6. ПЕРЕХВАТ СОБЫТИЙ СТРОГО ВНУТРИ ВИДЕОКОМНАТЫ
     // ==========================================
-    function bindVideoControls() {
-        const sendBtn = getTab1SendBtn();
-        if (sendBtn && !sendBtn.dataset.hfVrBound) {
-            sendBtn.dataset.hfVrBound = '1';
-            sendBtn.addEventListener('click', (e) => {
+    function bindVideoRoomDelegation() {
+        const host = document.getElementById('voice-translator');
+        if (host && !host.dataset.hfVrDelegated) {
+            host.dataset.hfVrDelegated = '1';
+            host.addEventListener('click', (e) => {
                 if (!isVideoMode()) return;
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                window.sendVideoRoomMsg();
+
+                if (e.target.closest('#voice-me-photo, #voice-me-flag')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openVideoAvatarLangPanel();
+                    return;
+                }
+
+                if (e.target.closest('button[onclick*="toggleUniversalMic"]')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (VR.micActive) window.stopVideoRoomMic(false);
+                    else openVideoMicMenu();
+                    return;
+                }
+
+                if (e.target.closest('button[onclick*="sendFirebaseMsg"]')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.sendVideoRoomMsg();
+                }
             }, true);
         }
 
-        const micBtn = getTab1MicBtn();
-        if (micBtn && !micBtn.dataset.hfVrBound) {
-            micBtn.dataset.hfVrBound = '1';
-            micBtn.addEventListener('click', (e) => {
-                if (!isVideoMode()) return;
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                if (VR.micActive) window.stopVideoRoomMic(false);
-                else openVideoMicMenu();
-            }, true);
-        }
-
-        const mePhoto = document.getElementById('voice-me-photo');
-        const meTarget = mePhoto ? mePhoto.parentElement : null;
-        if (meTarget && !meTarget.dataset.hfVrBound) {
-            meTarget.dataset.hfVrBound = '1';
-            meTarget.addEventListener('click', (e) => {
-                if (!isVideoMode()) return;
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                openVideoAvatarLangPanel();
-            }, true);
-        }
-
-        // Реагируем на смену языка из верхнего меню настроек экосистемы
         const ecoSelect = document.getElementById('app-lang-select');
-        if (ecoSelect && !ecoSelect.dataset.hfVrBound) {
-            ecoSelect.dataset.hfVrBound = '1';
+        if (ecoSelect && !ecoSelect.dataset.hfVrEcoBound) {
+            ecoSelect.dataset.hfVrEcoBound = '1';
             ecoSelect.addEventListener('change', () => {
                 setTimeout(() => {
                     if (!isVideoMode()) return;
                     updateMicPill();
                     const { textEl } = getMarqueeNodes();
                     if (textEl && (!VR.marquee.currentHtml || VR.marquee.currentHtml.indexOf('img src=') === -1)) {
-                        textEl.innerHTML = getUiDict().waiting;
+                        textEl.innerHTML = getVideoUiDict().waiting;
                     }
-                }, 50);
+                }, 60);
             });
         }
     }
 
     function init() {
         startMarqueeEngine();
-        bindVideoControls();
+        bindVideoRoomDelegation();
 
         document.addEventListener('click', () => {
             if (isVideoMode()) closeAllVideoPopups();
@@ -1015,8 +1129,8 @@
         setInterval(() => {
             if (isVideoMode()) {
                 window.syncVideoRoomListener();
-                bindVideoControls();
-                updateMyAvatarFlagUI();
+                bindVideoRoomDelegation();
+                updateVideoRoomFlagsUI();
             }
         }, 1000);
 
