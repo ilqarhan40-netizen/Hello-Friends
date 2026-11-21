@@ -577,6 +577,10 @@ window.endWebRTCCall = async function() {
     if (typeof window.stopVideoRoomMic === 'function') {
         try { await window.stopVideoRoomMic(true); } catch (e) {}
     }
+        if (typeof window.resetVideoRoomState === 'function') {
+        window.resetVideoRoomState();
+        }
+    
     if (typeof window.stopVoiceAI === 'function') {
         try { window.stopVoiceAI(); } catch (e) {}
     }
@@ -1019,21 +1023,6 @@ window.makeCallFromContact = function(userId, type = 'voice') {
     window.startInAppCall(type);
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        if (window.sendFirebaseMsg) {
-            const originalSend = window.sendFirebaseMsg;
-            window.sendFirebaseMsg = function() {
-                const inputId = window.currentMicInputTarget || 'chat-input';
-                const inputEl = document.getElementById(inputId);
-                if (inputEl && inputEl.value.trim() !== "") {
-                    window.playSafeSound(window.sndMsg);
-                }
-                return originalSend();
-            };
-        }
-    }, 2000);
-});
 
 // ==========================================
 // 3. СТАБИЛЬНЫЕ РУБИЛЬНИКИ КАМЕРЫ И МИКРОФОНА
