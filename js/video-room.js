@@ -1,8 +1,8 @@
 // ==========================================
-// ФАЙЛ: js/video-room.js (CLEAN v3)
-// ВКЛАДКА 1 (ВИДЕО + АУДИО):
-// ПРЯМАЯ ПРИВЯЗКА К #voice-chat-input + ВИДИМОЕ МЕНЮ МИКРОФОНА
-// БЕСКОНЕЧНАЯ БЕГУЩАЯ СТРОКА + 13 ЯЗЫКОВ + БЕСКОНЕЧНЫЙ МИКРОФОН
+// ФАЙЛ: js/video-room.js (CLEAN v7)
+// ВКЛАДКА 1 (ВИДЕОКОМНАТА + ЧИСТАЯ АУДИОКОМНАТА):
+// БЕСКОНЕЧНЫЙ ТЕКСТ ГОЛОСОМ + БЕСКОНЕЧНЫЙ ИИ-ГОЛОС + ЗАЩИТА ОТ ЭХА
+// АВТО СТРОГО ОТ ПРОФИЛЯ + БЕСКОНЕЧНАЯ БЕГУЩАЯ СТРОКА
 // ==========================================
 
 (function () {
@@ -11,6 +11,10 @@
     window.videoRoomQueue = [];
     window.videoRoomActiveDbPath = null;
     window.videoRoomActiveListener = null;
+    window._vrActiveMetaPath = null;
+    window._vrActiveMetaListener = null;
+    window.videoRoomPartnerMeta = null;
+    window._vrLastMetaSig = '';
     window.videoRoomListenerStartedAt = 0;
     window.videoRoomServerOffset = 0;
     window.videoRoomSeenKeys = new Set();
@@ -20,6 +24,9 @@
     window.videoRoomMicMode = 'text'; // 'text' | 'ai-audio'
     window.videoRoomMicRestartTimer = null;
     window.videoRoomMicWatchdog = null;
+    window._vrPopupCloseWatcher = null;
+    window._isPausedForAITTS = false;
+
     window.videoRoomManualLang = null;
     window.videoRoomMicLangOverride = null;
     window.isVoiceMarqueeEnabled = true;
@@ -27,21 +34,21 @@
     let lastMicTranscript = '';
     let lastMicTranscriptAt = 0;
 
-    // --- 1. СПРАВОЧНИК 13 ЯЗЫКОВ ---
+    // 13 языков приложения
     window.VIDEO_LANG_MAP = {
-        en: { flagCode: 'gb', flag: '🇬🇧', speech: 'en-US', label: 'EN' },
-        ru: { flagCode: 'ru', flag: '🇷🇺', speech: 'ru-RU', label: 'RU' },
-        az: { flagCode: 'az', flag: '🇦🇿', speech: 'az-AZ', label: 'AZ' },
-        tr: { flagCode: 'tr', flag: '🇹🇷', speech: 'tr-TR', label: 'TR' },
-        de: { flagCode: 'de', flag: '🇩🇪', speech: 'de-DE', label: 'DE' },
-        kk: { flagCode: 'kz', flag: '🇰🇿', speech: 'kk-KZ', label: 'KK' },
-        ar: { flagCode: 'ae', flag: '🇦🇪', speech: 'ar-AE', label: 'AR' },
-        it: { flagCode: 'it', flag: '🇮🇹', speech: 'it-IT', label: 'IT' },
-        es: { flagCode: 'es', flag: '🇪🇸', speech: 'es-ES', label: 'ES' },
-        fr: { flagCode: 'fr', flag: '🇫🇷', speech: 'fr-FR', label: 'FR' },
-        pt: { flagCode: 'pt', flag: '🇵🇹', speech: 'pt-PT', label: 'PT' },
-        ja: { flagCode: 'jp', flag: '🇯🇵', speech: 'ja-JP', label: 'JA' },
-        zh: { flagCode: 'cn', flag: '🇨🇳', speech: 'zh-CN', label: 'ZH' }
+        en: { flagCode: 'gb', flag: '🇬🇧', speech: 'en-US' },
+        ru: { flagCode: 'ru', flag: '🇷🇺', speech: 'ru-RU' },
+        az: { flagCode: 'az', flag: '🇦🇿', speech: 'az-AZ' },
+        tr: { flagCode: 'tr', flag: '🇹🇷', speech: 'tr-TR' },
+        de: { flagCode: 'de', flag: '🇩🇪', speech: 'de-DE' },
+        kk: { flagCode: 'kz', flag: '🇰🇿', speech: 'kk-KZ' },
+        ar: { flagCode: 'ae', flag: '🇦🇪', speech: 'ar-AE' },
+        it: { flagCode: 'it', flag: '🇮🇹', speech: 'it-IT' },
+        es: { flagCode: 'es', flag: '🇪🇸', speech: 'es-ES' },
+        fr: { flagCode: 'fr', flag: '🇫🇷', speech: 'fr-FR' },
+        pt: { flagCode: 'pt', flag: '🇵🇹', speech: 'pt-PT' },
+        ja: { flagCode: 'jp', flag: '🇯🇵', speech: 'ja-JP' },
+        zh: { flagCode: 'cn', flag: '🇨🇳', speech: 'zh-CN' }
     };
 
     function escapeHtml(str) {
@@ -50,6 +57,11 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
+    }
+
+    function isRealFlag(flag) {
+        const f = String(flag || '').trim();
+        return Boolean(f && f !== '🌐' && f !== '🏳️' && f !== 'un');
     }
 
     function getTab1InputBar() {
@@ -111,23 +123,30 @@
         return '';
     };
 
-    // Приоритет языка: 1) Панель вручную -> 2) Флаг -> 3) Телефон -> 4) langCode -> en
+    // АВТООПРЕДЕЛЕНИЕ СТРОГО ОТ ПРОФИЛЯ
     window.videoRoomResolveLang = function (userObj, manualPref = null) {
         const manualTl = window.videoRoomFixLang(manualPref);
         if (manualTl) return manualTl;
 
         if (userObj) {
-            const byFlagCode = window.videoRoomFixLang(userObj.flagCode);
-            if (byFlagCode) return byFlagCode;
-
             const byFlagEmoji = window.videoRoomLangFromFlagEmoji(userObj.flag);
             if (byFlagEmoji) return byFlagEmoji;
+
+            const byFlagCode = window.videoRoomFixLang(userObj.flagCode);
+            if (byFlagCode) return byFlagCode;
 
             const byPhone = window.videoRoomLangFromPhone(userObj.phone || userObj.phoneNumber || userObj.tel);
             if (byPhone) return byPhone;
 
             const byProfileCode = window.videoRoomFixLang(userObj.langCode || userObj.lang);
             if (byProfileCode) return byProfileCode;
+        }
+
+        const isMeObj = Boolean(userObj && window.myProfileInfo && String(userObj.id) === String(window.myProfileInfo.id));
+        if (isMeObj) {
+            const meFlagEl = document.getElementById('voice-me-flag');
+            const byDomFlag = meFlagEl ? window.videoRoomLangFromFlagEmoji(meFlagEl.textContent) : '';
+            if (byDomFlag) return byDomFlag;
         }
 
         if (typeof window.getSmartLang === 'function' && userObj) {
@@ -151,6 +170,8 @@
 
     window.setVideoRoomLang = function (langCode) {
         window.videoRoomManualLang = (!langCode || langCode === 'auto') ? null : window.videoRoomFixLang(langCode);
+        const path = window.getVideoRoomDbPath();
+        if (path) publishMyProfileMeta(path);
     };
 
     window.saveVideoMicLang = function (langCode) {
@@ -211,28 +232,90 @@
         }
     };
 
-    // Поиск активного собеседника (с резервным поиском по имени на экране)
-    window.getVideoRoomPartner = function () {
-        if (window.voiceFriend && window.voiceFriend.id) return window.voiceFriend;
-        if (window.currentTargetUser && window.currentTargetUser.id) return window.currentTargetUser;
-        if (window.currentCallerId && Array.isArray(window.participants)) {
-            const found = window.participants.find(p => String(p.id) === String(window.currentCallerId));
-            if (found) return found;
-        }
-        if (window.currentCallerFallback && window.currentCallerFallback.id) return window.currentCallerFallback;
+    function applyPartnerFooterUI(partner) {
+        if (!partner || !partner.id) return;
+        const pEl = document.getElementById('voice-friend-photo');
+        const fEl = document.getElementById('voice-friend-flag');
+        const nEl = document.getElementById('voice-friend-name');
 
-        const nameEl = document.getElementById('voice-friend-name');
-        const shownName = nameEl ? nameEl.textContent.trim().toLowerCase() : '';
-        if (shownName && Array.isArray(window.participants)) {
-            const myId = window.myProfileInfo ? String(window.myProfileInfo.id) : '';
-            const byName = window.participants.find(p =>
-                String(p.id) !== myId &&
-                p.name &&
-                p.name.trim().toLowerCase().split(' ')[0] === shownName
-            );
-            if (byName) return byName;
+        if (pEl && partner.photo) pEl.src = partner.photo;
+        if (fEl && isRealFlag(partner.flag)) fEl.innerText = partner.flag;
+        if (nEl && partner.name) {
+            nEl.removeAttribute('data-i18n');
+            nEl.innerText = String(partner.name).split(' ')[0];
         }
-        return null;
+    }
+
+    function publishMyProfileMeta(roomPath) {
+        if (!roomPath || !window.myProfileInfo || !window.myProfileInfo.id || typeof firebase === 'undefined') return;
+        const me = window.myProfileInfo;
+        const manualPanel = window.videoRoomGetManualPanelLang();
+        const myLang = window.videoRoomResolveLang(me, manualPanel);
+        const domFlagEl = document.getElementById('voice-me-flag');
+        const domFlag = domFlagEl ? domFlagEl.textContent.trim() : '';
+
+        let myFlag = '';
+        if (manualPanel && window.VIDEO_LANG_MAP[manualPanel]) {
+            myFlag = window.VIDEO_LANG_MAP[manualPanel].flag;
+        } else if (isRealFlag(me.flag)) {
+            myFlag = me.flag;
+        } else if (isRealFlag(domFlag)) {
+            myFlag = domFlag;
+        }
+
+        const sig = `${roomPath}|${me.id}|${myFlag}|${myLang}`;
+        if (window._vrLastMetaSig === sig) return;
+        window._vrLastMetaSig = sig;
+
+        firebase.database().ref(`${roomPath}_meta/${String(me.id)}`).set({
+            id: String(me.id),
+            name: window.myUsername || me.name || 'User',
+            photo: me.photo || '',
+            flag: myFlag,
+            flagCode: me.flagCode || '',
+            langCode: myLang,
+            phone: me.phone || me.phoneNumber || '',
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        }).catch(() => {});
+    }
+
+    window.getVideoRoomPartner = function () {
+        let base = null;
+        if (window.voiceFriend && window.voiceFriend.id) base = window.voiceFriend;
+        else if (window.currentTargetUser && window.currentTargetUser.id) base = window.currentTargetUser;
+        else if (window.currentCallerId && Array.isArray(window.participants)) {
+            base = window.participants.find(p => String(p.id) === String(window.currentCallerId)) || null;
+        }
+        if (!base && window.currentCallerFallback && window.currentCallerFallback.id) {
+            base = window.currentCallerFallback;
+        }
+        if (!base) return null;
+
+        const pid = String(base.id);
+        const fromList = Array.isArray(window.participants)
+            ? window.participants.find(p => String(p.id) === pid)
+            : null;
+        const liveMeta = (window.videoRoomPartnerMeta && String(window.videoRoomPartnerMeta.id) === pid)
+            ? window.videoRoomPartnerMeta
+            : null;
+
+        const merged = Object.assign({}, fromList || {}, base);
+        if (liveMeta) {
+            if (liveMeta.name) merged.name = liveMeta.name;
+            if (liveMeta.photo) merged.photo = liveMeta.photo;
+            if (isRealFlag(liveMeta.flag)) merged.flag = liveMeta.flag;
+            if (liveMeta.flagCode) merged.flagCode = liveMeta.flagCode;
+            if (liveMeta.langCode) merged.langCode = liveMeta.langCode;
+            if (liveMeta.phone) merged.phone = liveMeta.phone;
+        } else if (fromList) {
+            if (!isRealFlag(merged.flag) && isRealFlag(fromList.flag)) merged.flag = fromList.flag;
+            if (!merged.flagCode && fromList.flagCode) merged.flagCode = fromList.flagCode;
+            if (!merged.langCode && fromList.langCode) merged.langCode = fromList.langCode;
+            if (!merged.phone && (fromList.phone || fromList.phoneNumber)) {
+                merged.phone = fromList.phone || fromList.phoneNumber;
+            }
+        }
+        return merged;
     };
 
     window.isDirectVideoCallActive = function () {
@@ -240,7 +323,7 @@
     };
 
     // ==========================================
-    // 2. БЕСКОНЕЧНАЯ ПЛАВНАЯ БЕГУЩАЯ СТРОКА (НЕ ОСТАНАВЛИВАЕТСЯ НИКОГДА)
+    // 2. БЕСКОНЕЧНАЯ ПЛАВНАЯ БЕГУЩАЯ СТРОКА
     // ==========================================
     const marqueeState = {
         rafId: null,
@@ -253,9 +336,9 @@
     };
 
     function injectVideoRoomStyles() {
-        if (document.getElementById('hf-video-room-v3-styles')) return;
+        if (document.getElementById('hf-video-room-v7-styles')) return;
         const style = document.createElement('style');
-        style.id = 'hf-video-room-v3-styles';
+        style.id = 'hf-video-room-v7-styles';
         style.textContent = `
             #voice-marquee-container-anim {
                 position: relative;
@@ -272,28 +355,36 @@
                 padding-left: 0 !important;
                 will-change: transform;
             }
+            #hf-video-mic-slot {
+                width: 100%;
+                flex: 1 1 auto;
+                min-height: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                pointer-events: none;
+                padding: 4px 12px;
+                z-index: 30;
+            }
             #hf-video-mic-pill {
-                position: absolute;
-                bottom: 62px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 99999;
+                position: relative;
                 display: none;
                 align-items: center;
                 gap: 8px;
+                pointer-events: auto;
                 background: rgba(17, 27, 33, 0.96);
                 border: 1.5px solid #ef4444;
                 color: #ffffff;
-                padding: 7px 12px;
+                padding: 7px 14px;
                 border-radius: 999px;
                 box-shadow: 0 8px 26px rgba(239, 68, 68, 0.4);
-                font-size: 0.74rem;
+                font-size: 0.76rem;
                 font-weight: 700;
-                max-width: 92%;
+                max-width: 94%;
                 white-space: nowrap;
             }
             #hf-video-mic-pill.active {
-                display: flex;
+                display: inline-flex;
             }
             #hf-video-mic-pill .hf-mic-dot {
                 width: 9px;
@@ -306,15 +397,15 @@
             #hf-video-mic-pill #hf-video-mic-pill-label {
                 overflow: hidden;
                 text-overflow: ellipsis;
-                max-width: 170px;
+                max-width: 185px;
             }
             #hf-video-mic-pill .hf-mic-stop-btn {
                 background: #ef4444;
                 color: #ffffff;
                 border: none;
                 border-radius: 999px;
-                padding: 3px 10px;
-                font-size: 0.7rem;
+                padding: 3px 11px;
+                font-size: 0.72rem;
                 font-weight: 800;
                 cursor: pointer;
                 flex-shrink: 0;
@@ -467,18 +558,23 @@
         const safeName = window.myUsername || (window.myProfileInfo && window.myProfileInfo.name) || 'User';
         const safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
 
-        const myMeta = window.VIDEO_LANG_MAP[myTl];
-        const activeFlag = (manualLang && myMeta)
-            ? myMeta.flag
-            : ((window.myProfileInfo && window.myProfileInfo.flag) || (myMeta ? myMeta.flag : '🌐'));
-        const activeFlagCode = (manualLang && myMeta)
-            ? myMeta.flagCode
-            : ((window.myProfileInfo && window.myProfileInfo.flagCode) || (myMeta ? myMeta.flagCode : 'un'));
+        const domFlagEl = document.getElementById('voice-me-flag');
+        const domFlag = domFlagEl ? domFlagEl.textContent.trim() : '';
+        const manualMeta = manualLang ? window.VIDEO_LANG_MAP[manualLang] : null;
+
+        const activeFlag = manualMeta
+            ? manualMeta.flag
+            : (isRealFlag(window.myProfileInfo && window.myProfileInfo.flag)
+                ? window.myProfileInfo.flag
+                : (isRealFlag(domFlag) ? domFlag : ''));
+        const activeFlagCode = manualMeta
+            ? manualMeta.flagCode
+            : ((window.myProfileInfo && window.myProfileInfo.flagCode) || '');
 
         let translatedText = cleanText;
         let detectedLang = myTl;
 
-        if (targetTl && targetTl !== myTl) {
+        if (targetTl) {
             const res = await window.videoRoomTranslate(cleanText, targetTl);
             translatedText = res.text || cleanText;
             if (res.detectedLang) detectedLang = res.detectedLang;
@@ -493,6 +589,7 @@
                 sourceType: sourceType,
                 isAIAudio: Boolean(isAIAudio),
                 langCode: detectedLang || myTl,
+                profileLang: window.videoRoomResolveLang(window.myProfileInfo, null),
                 targetLang: targetTl,
                 sessionId: window.mySessionId || 'sess',
                 timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -524,7 +621,7 @@
     };
 
     // ==========================================
-    // 4. БЕСКОНЕЧНЫЙ НИЖНИЙ МИКРОФОН ПЕРЕВОДА (TEXT + AI-AUDIO)
+    // 4. БЕСКОНЕЧНЫЕ МИКРОФОНЫ (TEXT + AI-AUDIO) + АНТИ-ЭХО
     // ==========================================
     function ensureVideoMicPopupInsideTab1() {
         const bar = getTab1InputBar();
@@ -541,7 +638,6 @@
 
     function ensureMicIndicatorPill() {
         injectVideoRoomStyles();
-        const bar = getTab1InputBar();
         let pill = document.getElementById('hf-video-mic-pill');
         if (!pill) {
             pill = document.createElement('div');
@@ -549,16 +645,41 @@
             pill.innerHTML = `
                 <span class="hf-mic-dot"></span>
                 <span id="hf-video-mic-pill-label">Listening...</span>
-                <button type="button" class="hf-mic-stop-btn" onclick="event.stopPropagation(); window.stopVideoRoomMic()">STOP</button>
+                <button type="button" class="hf-mic-stop-btn" onclick="event.stopPropagation(); window.stopVideoRoomMic(false)">STOP</button>
             `;
         }
-        const host = bar || document.body;
-        if (pill.parentNode !== host) {
-            host.appendChild(pill);
+
+        const remoteVid = document.getElementById('direct-remote-video');
+        const friendPhoto = document.getElementById('voice-friend-photo');
+        const videoRow = (remoteVid && remoteVid.parentElement) ? remoteVid.parentElement.parentElement : null;
+
+        let avatarsFooter = friendPhoto ? friendPhoto.closest('.mt-auto') : null;
+        if (!avatarsFooter && friendPhoto && videoRow && videoRow.parentNode) {
+            let cur = friendPhoto;
+            while (cur && cur.parentNode && cur.parentNode !== videoRow.parentNode) {
+                cur = cur.parentNode;
+            }
+            if (cur && cur.parentNode === videoRow.parentNode) {
+                avatarsFooter = cur;
+            }
         }
-        if (!bar) {
-            pill.style.position = 'fixed';
+
+        if (videoRow && avatarsFooter && videoRow.parentNode === avatarsFooter.parentNode) {
+            const tabContainer = videoRow.parentNode;
+            let slot = document.getElementById('hf-video-mic-slot');
+            if (!slot) {
+                slot = document.createElement('div');
+                slot.id = 'hf-video-mic-slot';
+            }
+            if (slot.parentNode !== tabContainer) {
+                tabContainer.insertBefore(slot, avatarsFooter);
+            }
+            if (pill.parentNode !== slot) slot.appendChild(pill);
+            return pill;
         }
+
+        const bar = getTab1InputBar() || document.body;
+        if (pill.parentNode !== bar) bar.appendChild(pill);
         return pill;
     }
 
@@ -574,25 +695,73 @@
         }
 
         const micTl = window.videoRoomGetMicLang();
-        const meta = window.VIDEO_LANG_MAP[micTl];
-        const flag = meta ? meta.flag : '🌐';
+        const isManual = window.videoRoomIsMicManual();
+        const manualMeta = isManual ? window.VIDEO_LANG_MAP[micTl] : null;
+        const flag = manualMeta
+            ? manualMeta.flag
+            : (isRealFlag(window.myProfileInfo && window.myProfileInfo.flag)
+                ? window.myProfileInfo.flag
+                : ((window.VIDEO_LANG_MAP[micTl] && window.VIDEO_LANG_MAP[micTl].flag) || ''));
         const modeLabel = (window.videoRoomMicMode === 'ai-audio') ? 'AI' : 'Text';
 
         if (label) {
-            label.textContent = livePreview ? `${flag} ${livePreview}` : `${flag} ${modeLabel} • ON`;
+            if (window._isPausedForAITTS) {
+                label.textContent = `${flag} 🔊 AI...`.trim();
+            } else {
+                label.textContent = livePreview
+                    ? `${flag} ${livePreview}`.trim()
+                    : `${flag} ${modeLabel} • ON`.trim();
+            }
         }
         pill.classList.add('active');
         if (micBtn) micBtn.classList.add('hf-tab1-mic-live');
     }
 
-    function launchRecognitionCycle() {
+    function scheduleRecognitionRestart(delayMs = 180) {
+        if (!window.videoRoomMicActive || window._isPausedForAITTS) return;
+        clearTimeout(window.videoRoomMicRestartTimer);
+        window.videoRoomMicRestartTimer = setTimeout(() => {
+            window.videoRoomMicRestartTimer = null;
+            launchRecognitionCycle();
+        }, delayMs);
+    }
+
+    // Защита от эха: короткая пауза на время озвучки перевода, затем мгновенное продолжение бесконечного цикла
+    window.onAIVoiceStart = function () {
         if (!window.videoRoomMicActive) return;
+        window._isPausedForAITTS = true;
+        clearTimeout(window.videoRoomMicRestartTimer);
+        window.videoRoomMicRestartTimer = null;
+
+        if (window.videoRoomRecognition) {
+            try { window.videoRoomRecognition.onend = null; } catch (e) {}
+            try { window.videoRoomRecognition.abort(); } catch (e) {}
+            window.videoRoomRecognition = null;
+        }
+        updateMicIndicatorPill();
+    };
+
+    window.onAIVoiceEnd = function () {
+        const wasPaused = window._isPausedForAITTS;
+        window._isPausedForAITTS = false;
+        if (!window.videoRoomMicActive) return;
+
+        updateMicIndicatorPill();
+        if (wasPaused && !window.videoRoomRecognition) {
+            scheduleRecognitionRestart(260);
+        }
+    };
+
+    function launchRecognitionCycle() {
+        window.videoRoomMicRestartTimer = null;
+        if (!window.videoRoomMicActive || window._isPausedForAITTS) return;
 
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRec) return;
 
         if (window.videoRoomRecognition) {
             try { window.videoRoomRecognition.onend = null; } catch (e) {}
+            try { window.videoRoomRecognition.onerror = null; } catch (e) {}
             try { window.videoRoomRecognition.abort(); } catch (e) {}
             window.videoRoomRecognition = null;
         }
@@ -608,6 +777,7 @@
             rec.maxAlternatives = 1;
 
             rec.onresult = (event) => {
+                if (window._isPausedForAITTS) return;
                 if (!event.results || !event.results.length) return;
                 let finalText = '';
                 let interimText = '';
@@ -644,18 +814,21 @@
                 const err = event && event.error;
                 if (err === 'not-allowed' || err === 'service-not-allowed') {
                     if (window.showToast) window.showToast('Микрофон', 'Разрешите доступ к микрофону в браузере', '', '');
-                    window.stopVideoRoomMic();
-                } else if (err === 'audio-capture') {
-                    if (window.showToast) window.showToast('Микрофон занят', 'Повторный захват микрофона...', '', '');
+                    window.stopVideoRoomMic(false);
+                    return;
+                }
+                // Все временные ошибки (no-speech, network, audio-capture, aborted) — мягко перезапускаем цикл
+                if (window.videoRoomMicActive && !window._isPausedForAITTS) {
+                    window.videoRoomRecognition = null;
+                    scheduleRecognitionRestart(err === 'audio-capture' ? 450 : 220);
                 }
             };
 
             rec.onend = () => {
                 window.videoRoomRecognition = null;
-                if (window.videoRoomMicActive) {
+                if (window.videoRoomMicActive && !window._isPausedForAITTS) {
                     updateMicIndicatorPill('');
-                    clearTimeout(window.videoRoomMicRestartTimer);
-                    window.videoRoomMicRestartTimer = setTimeout(launchRecognitionCycle, 180);
+                    scheduleRecognitionRestart(160);
                 }
             };
 
@@ -663,9 +836,8 @@
             rec.start();
         } catch (e) {
             window.videoRoomRecognition = null;
-            if (window.videoRoomMicActive) {
-                clearTimeout(window.videoRoomMicRestartTimer);
-                window.videoRoomMicRestartTimer = setTimeout(launchRecognitionCycle, 450);
+            if (window.videoRoomMicActive && !window._isPausedForAITTS) {
+                scheduleRecognitionRestart(420);
             }
         }
     }
@@ -677,6 +849,7 @@
             return;
         }
 
+        clearInterval(window._vrPopupCloseWatcher);
         window.videoRoomMicMode = (mode === 'ai-audio') ? 'ai-audio' : 'text';
 
         if (window.videoRoomMicActive) {
@@ -685,29 +858,33 @@
         }
 
         window.videoRoomMicActive = true;
+        window._isPausedForAITTS = false;
         window.syncVideoRoomListener();
         updateMicIndicatorPill();
 
-        // Освобождаем аппаратный микрофон Agora, чтобы мобильный браузер отдал звук распознаванию
+        const wasAlreadyPaused = Boolean(window._agoraPausedForTranslation);
         if (typeof window.pauseAgoraMicForTranslation === 'function') {
             await window.pauseAgoraMicForTranslation();
-            await new Promise(r => setTimeout(r, 220));
+            await new Promise(r => setTimeout(r, wasAlreadyPaused ? 120 : 380));
         }
 
         if (!window.videoRoomMicActive) return;
 
         launchRecognitionCycle();
 
+        // Страховочный watchdog: держит бесконечный микрофон живым при любых паузах на мобильных
         clearInterval(window.videoRoomMicWatchdog);
         window.videoRoomMicWatchdog = setInterval(() => {
-            if (window.videoRoomMicActive && !window.videoRoomRecognition && !window.videoRoomMicRestartTimer) {
+            if (window.videoRoomMicActive && !window._isPausedForAITTS && !window.videoRoomRecognition && !window.videoRoomMicRestartTimer) {
                 launchRecognitionCycle();
             }
-        }, 3500);
+        }, 2500);
     };
 
     window.stopVideoRoomMic = async function (skipResumeAgora = false) {
         window.videoRoomMicActive = false;
+        window._isPausedForAITTS = false;
+        clearInterval(window._vrPopupCloseWatcher);
 
         if (window.videoRoomMicRestartTimer) {
             clearTimeout(window.videoRoomMicRestartTimer);
@@ -726,14 +903,16 @@
 
         updateMicIndicatorPill();
 
-        if (!skipResumeAgora && typeof window.resumeAgoraMicAfterTranslation === 'function') {
+        if (skipResumeAgora) {
+            window._agoraPausedForTranslation = false;
+        } else if (typeof window.resumeAgoraMicAfterTranslation === 'function') {
             await window.resumeAgoraMicAfterTranslation();
         }
     };
 
     window.toggleVideoRoomMic = function (mode = 'text') {
         if (window.videoRoomMicActive) {
-            window.stopVideoRoomMic();
+            window.stopVideoRoomMic(false);
         } else {
             window.startVideoRoomMic(mode);
         }
@@ -763,6 +942,22 @@
         const isMe = (data.sessionId && data.sessionId === window.mySessionId) || (myId && String(data.userId) === myId);
         const partner = window.getVideoRoomPartner();
 
+        if (!isMe && data.userId) {
+            const incomingLang = window.videoRoomFixLang(data.profileLang || data.flagCode || window.videoRoomLangFromFlagEmoji(data.flag));
+            if (incomingLang || isRealFlag(data.flag)) {
+                const updatedMeta = Object.assign({}, window.videoRoomPartnerMeta || {}, {
+                    id: String(data.userId),
+                    name: data.name || (partner && partner.name) || 'User',
+                    photo: data.photo || (partner && partner.photo) || '',
+                    langCode: incomingLang || (window.videoRoomPartnerMeta && window.videoRoomPartnerMeta.langCode) || '',
+                    flag: isRealFlag(data.flag) ? data.flag : ((window.videoRoomPartnerMeta && window.videoRoomPartnerMeta.flag) || ''),
+                    flagCode: data.flagCode || ''
+                });
+                window.videoRoomPartnerMeta = updatedMeta;
+                applyPartnerFooterUI(updatedMeta);
+            }
+        }
+
         const senderText = String(data.originalText || data.text || '').trim();
         let receiverText = String(data.text || senderText).trim();
 
@@ -772,17 +967,15 @@
 
         if (isMe) {
             senderPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
-            senderFlag = data.flag || (window.myProfileInfo && window.myProfileInfo.flag) || '🌐';
+            senderFlag = isRealFlag(data.flag) ? data.flag : ((window.myProfileInfo && isRealFlag(window.myProfileInfo.flag)) ? window.myProfileInfo.flag : '');
             senderName = (window.myUsername || 'Me').split(' ')[0];
 
-            const targetTl = data.targetLang || window.videoRoomResolveLang(partner, null);
-            const targetMeta = window.VIDEO_LANG_MAP[targetTl];
             receiverPhoto = partner ? (partner.photo || 'https://ui-avatars.com/api/?name=U') : 'https://ui-avatars.com/api/?name=U';
-            receiverFlag = (partner && partner.flag) || (targetMeta ? targetMeta.flag : '🌐');
+            receiverFlag = (partner && isRealFlag(partner.flag)) ? partner.flag : '';
             receiverName = partner ? (partner.name || 'User').split(' ')[0] : 'Partner';
         } else {
             senderPhoto = data.photo || (partner && partner.photo) || 'https://ui-avatars.com/api/?name=U';
-            senderFlag = data.flag || (partner && partner.flag) || '🌐';
+            senderFlag = isRealFlag(data.flag) ? data.flag : ((partner && isRealFlag(partner.flag)) ? partner.flag : '');
             senderName = (data.name || (partner && partner.name) || 'User').split(' ')[0];
 
             receiverPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
@@ -790,11 +983,15 @@
 
             const manualPanel = window.videoRoomGetManualPanelLang();
             myReadTl = window.videoRoomResolveLang(window.myProfileInfo, manualPanel);
-            const myReadMeta = window.VIDEO_LANG_MAP[myReadTl];
+            const manualMeta = manualPanel ? window.VIDEO_LANG_MAP[manualPanel] : null;
+            const domFlagEl = document.getElementById('voice-me-flag');
+            const domFlag = domFlagEl ? domFlagEl.textContent.trim() : '';
 
-            receiverFlag = (manualPanel && myReadMeta)
-                ? myReadMeta.flag
-                : ((window.myProfileInfo && window.myProfileInfo.flag) || (myReadMeta ? myReadMeta.flag : '🌐'));
+            receiverFlag = manualMeta
+                ? manualMeta.flag
+                : (isRealFlag(window.myProfileInfo && window.myProfileInfo.flag)
+                    ? window.myProfileInfo.flag
+                    : (isRealFlag(domFlag) ? domFlag : ''));
 
             const sourceTl = window.videoRoomFixLang(data.langCode);
             const sentTargetTl = window.videoRoomFixLang(data.targetLang);
@@ -815,15 +1012,18 @@
                 : '<i class="fa-solid fa-microphone text-yellow-400 mx-2 text-[0.65rem]"></i>')
             : '<i class="fa-solid fa-arrow-right text-[#00a884] mx-2 text-[0.65rem]"></i>';
 
+        const senderFlagPart = senderFlag ? `${escapeHtml(senderFlag)} ` : '';
+        const receiverFlagPart = receiverFlag ? `${escapeHtml(receiverFlag)} ` : '';
+
         const html =
             `<span class="inline-flex items-center">` +
                 `<img src="${escapeHtml(senderPhoto)}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">` +
                 `<span class="text-white font-bold mr-1">${escapeHtml(senderName)}:</span>` +
-                `<span class="text-[#e9edef] mr-1">${escapeHtml(senderFlag)} ${escapeHtml(senderText)}</span>` +
+                `<span class="text-[#e9edef] mr-1">${senderFlagPart}${escapeHtml(senderText)}</span>` +
                 `${modeIcon}` +
                 `<img src="${escapeHtml(receiverPhoto)}" class="w-5 h-5 rounded-full border border-yellow-400 mr-1 object-cover">` +
                 `<span class="text-white font-bold mr-1">${escapeHtml(receiverName)}:</span>` +
-                `<span class="text-yellow-400 font-bold">${escapeHtml(receiverFlag)} ${escapeHtml(receiverText)}</span>` +
+                `<span class="text-yellow-400 font-bold">${receiverFlagPart}${escapeHtml(receiverText)}</span>` +
             `</span>`;
 
         window.pushToVideoMarquee(html, data.sourceType || 'keyboard');
@@ -845,6 +1045,29 @@
 
         const desiredPath = window.getVideoRoomDbPath();
         if (!desiredPath) return;
+
+        publishMyProfileMeta(desiredPath);
+
+        const livePartner = window.getVideoRoomPartner();
+        if (livePartner && livePartner.id) {
+            applyPartnerFooterUI(livePartner);
+
+            const metaPath = `${desiredPath}_meta/${String(livePartner.id)}`;
+            if (window._vrActiveMetaPath !== metaPath) {
+                if (window._vrActiveMetaPath && window._vrActiveMetaListener) {
+                    firebase.database().ref(window._vrActiveMetaPath).off('value', window._vrActiveMetaListener);
+                }
+                window.videoRoomPartnerMeta = null;
+                window._vrActiveMetaPath = metaPath;
+                window._vrActiveMetaListener = firebase.database().ref(metaPath).on('value', (snap) => {
+                    const meta = snap.val();
+                    if (!meta || !meta.id) return;
+                    window.videoRoomPartnerMeta = meta;
+                    applyPartnerFooterUI(meta);
+                });
+            }
+        }
+
         if (window.videoRoomActiveDbPath === desiredPath && window.videoRoomActiveListener) return;
 
         if (window.videoRoomActiveDbPath && window.videoRoomActiveListener) {
@@ -861,7 +1084,7 @@
     };
 
     // ==========================================
-    // 6. ПРЯМАЯ ПРИВЯЗКА К КНОПКАМ ВКЛАДКИ 1 (БЕЗ ЗАВИСИМОСТИ ОТ currentIndex)
+    // 6. ПРЯМАЯ ПРИВЯЗКА К КНОПКАМ ВКЛАДКИ 1
     // ==========================================
     function bindTab1DirectControls() {
         const sendBtn = getTab1SendButton();
@@ -878,15 +1101,36 @@
         if (micBtn && !micBtn.dataset.hfTab1Bound) {
             micBtn.dataset.hfTab1Bound = '1';
             micBtn.addEventListener('click', (e) => {
-                // Если микрофон уже слушает — повторное нажатие сразу выключает его
                 if (window.videoRoomMicActive) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
-                    window.stopVideoRoomMic();
+                    window.stopVideoRoomMic(false);
                     return;
                 }
-                // Переносим меню #video-mic-popup прямо в панель вкладки 1, чтобы оно точно было видно
                 ensureVideoMicPopupInsideTab1();
+
+                if (typeof window.pauseAgoraMicForTranslation === 'function') {
+                    window.pauseAgoraMicForTranslation();
+                }
+
+                clearInterval(window._vrPopupCloseWatcher);
+                const openedAt = Date.now();
+                window._vrPopupCloseWatcher = setInterval(() => {
+                    if (window.videoRoomMicActive) {
+                        clearInterval(window._vrPopupCloseWatcher);
+                        return;
+                    }
+                    if (Date.now() - openedAt < 450) return;
+                    const popup = document.getElementById('video-mic-popup');
+                    const cs = popup ? getComputedStyle(popup) : null;
+                    const isHidden = !popup || !cs || cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0 || cs.pointerEvents === 'none';
+                    if (isHidden) {
+                        clearInterval(window._vrPopupCloseWatcher);
+                        if (typeof window.resumeAgoraMicAfterTranslation === 'function') {
+                            window.resumeAgoraMicAfterTranslation();
+                        }
+                    }
+                }, 350);
             }, true);
         }
 
@@ -898,13 +1142,15 @@
         startInfiniteMarqueeEngine();
         bindTab1DirectControls();
 
-        // Подхватываем слушатель комнаты и проверяем перенос меню микрофона
+        if (typeof window.applyCallRoomModeUI === 'function') {
+            window.applyCallRoomModeUI(window.currentActiveCallType === 'video');
+        }
+
         setInterval(() => {
             window.syncVideoRoomListener();
             bindTab1DirectControls();
         }, 1000);
 
-        // Enter прямо в поле #voice-chat-input
         document.addEventListener('keydown', (e) => {
             if (!e.key || e.key !== 'Enter' || !document.activeElement) return;
             const activeId = document.activeElement.id;
@@ -915,7 +1161,6 @@
             }
         }, true);
 
-        // Резервный перехват sendFirebaseMsg по currentMicInputTarget
         const hookSend = setInterval(() => {
             if (typeof window.sendFirebaseMsg === 'function' && !window._tab1UnifiedSendHooked) {
                 const origSend = window.sendFirebaseMsg;
