@@ -1,8 +1,11 @@
 // ==========================================
-// ФАЙЛ: js/video-room.js (ISOLATED VIDEO WORLD v8)
-// ОТДЕЛЬНЫЙ МИР ВИДЕОКОМНАТЫ:
-// АВТО СТРОГО ОТ ПРОФИЛЯ + СВОЯ ПАНЕЛЬ АВАТАРА + СВОЙ МИКРОФОН
-// БЕЗ ПЕРЕХВАТА ЧАТА И БЕЗ ПЕРЕСЕЧЕНИЯ С АУДИОКОМНАТОЙ
+// ФАЙЛ: js/video-room.js (ISOLATED VIDEO WORLD v10)
+// Сверено с index.html и js/language.js:
+// 1. Меню строго внутри #voice-translator (в рамках #phone-body на планшете)
+// 2. Авто строго от флага профиля
+// 3. Связь с экосистемой: window.i18n, window.appLang, window.changeAppLanguage
+// 4. Клик вне меню закрывает окна, флаг аватара не сбрасывается базой users
+// 5. Текст отправителя соответствует его активному флагу
 // ==========================================
 
 (function () {
@@ -24,9 +27,25 @@
         zh: { name: '中文', flagCode: 'cn', flag: '🇨🇳', speech: 'zh-CN' }
     };
 
+    const UI_FALLBACK = {
+        en: { langTitle: 'Chat Language', autoProfile: 'Auto (Profile)', micTitle: 'Microphone', voiceToText: 'Voice Text', waiting: 'Waiting for voice input...', on: 'ON', stop: 'STOP' },
+        ru: { langTitle: 'Язык Чата', autoProfile: 'Авто (Профиль)', micTitle: 'Микрофон', voiceToText: 'Текст голосом', waiting: 'Ожидание голоса...', on: 'ВКЛ', stop: 'СТОП' },
+        az: { langTitle: 'Çat Dili', autoProfile: 'Avto (Profil)', micTitle: 'Mikrofon', voiceToText: 'Səsli Mətn', waiting: 'Səs gözlənilir...', on: 'AÇIQ', stop: 'DAYAN' },
+        tr: { langTitle: 'Sohbet Dili', autoProfile: 'Oto (Profil)', micTitle: 'Mikrofon', voiceToText: 'Sesli Metin', waiting: 'Ses girişi bekleniyor...', on: 'AÇIK', stop: 'DUR' },
+        de: { langTitle: 'Chat-Sprache', autoProfile: 'Auto (Profil)', micTitle: 'Mikrofon', voiceToText: 'Sprachtext', waiting: 'Warten auf Spracheingabe...', on: 'AN', stop: 'STOPP' },
+        kk: { langTitle: 'Чат тілі', autoProfile: 'Авто (Профиль)', micTitle: 'Микрофон', voiceToText: 'Дауыстық мәтін', waiting: 'Дауыс күтілуде...', on: 'ҚОСУЛЫ', stop: 'ТОҚТА' },
+        ar: { langTitle: 'لغة الدردشة', autoProfile: 'تلقائي (الملف)', micTitle: 'الميكروفون', voiceToText: 'نص صوتي', waiting: 'في انتظار إدخال الصوت...', on: 'تشغيل', stop: 'إيقاف' },
+        it: { langTitle: 'Lingua Chat', autoProfile: 'Auto (Profilo)', micTitle: 'Microfono', voiceToText: 'Testo Vocale', waiting: 'In attesa di input vocale...', on: 'ON', stop: 'STOP' },
+        es: { langTitle: 'Idioma del Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Micrófono', voiceToText: 'Texto a Voz', waiting: 'Esperando entrada de voz...', on: 'ON', stop: 'PARAR' },
+        fr: { langTitle: 'Langue du Chat', autoProfile: 'Auto (Profil)', micTitle: 'Microphone', voiceToText: 'Texte vocal', waiting: "En attente d'entrée vocale...", on: 'ON', stop: 'STOP' },
+        pt: { langTitle: 'Idioma do Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Microfone', voiceToText: 'Texto de Voz', waiting: 'Aguardando entrada de voz...', on: 'ON', stop: 'PARAR' },
+        ja: { langTitle: 'チャット言語', autoProfile: '自動 (プロフィール)', micTitle: 'マイク', voiceToText: '音声テキスト', waiting: '音声入力を待っています...', on: 'ON', stop: '停止' },
+        zh: { langTitle: '聊天语言', autoProfile: '自动 (个人资料)', micTitle: '麦克风', voiceToText: '语音文本', waiting: '等待语音输入...', on: '开', stop: '停止' }
+    };
+
     const VR = {
-        manualAvatarLang: null, // null = Авто строго от профиля
-        manualMicLang: null,    // null = Авто строго от профиля
+        manualAvatarLang: null, // null = Авто строго от флага профиля
+        manualMicLang: null,    // null = Авто строго от флага профиля
         queue: [],
         seenKeys: new Set(),
         activeDbPath: null,
@@ -112,7 +131,7 @@
         return '';
     }
 
-    // СТРОГО ОТ ПРОФИЛЯ (без localStorage и без языка браузера)
+    // СТРОГО ОТ ФЛАГА ПРОФИЛЯ
     function resolveProfileLang(userObj) {
         if (!userObj) return 'en';
         const byFlag = langFromFlagEmoji(userObj.flag);
@@ -130,6 +149,44 @@
         if (userObj && isRealFlag(userObj.flag)) return String(userObj.flag).trim();
         const lang = resolveProfileLang(userObj);
         return (LANG_MAP[lang] && LANG_MAP[lang].flag) ? LANG_MAP[lang].flag : '🇬🇧';
+    }
+
+    // Язык подписей меню: при принудительном языке экосистемы — от экосистемы; в Auto — от флага профиля
+    function getUiLang() {
+        const savedEco = localStorage.getItem('hf_app_lang');
+        if (savedEco && savedEco !== 'auto') {
+            const ecoCode = fixLang(savedEco);
+            if (ecoCode && UI_FALLBACK[ecoCode]) return ecoCode;
+        }
+        if (VR.manualAvatarLang && UI_FALLBACK[VR.manualAvatarLang]) {
+            return VR.manualAvatarLang;
+        }
+        const prof = resolveProfileLang(window.myProfileInfo);
+        if (prof && UI_FALLBACK[prof]) return prof;
+        const appEco = fixLang(window.appLang);
+        return (appEco && UI_FALLBACK[appEco]) ? appEco : 'en';
+    }
+
+    function getUiDict() {
+        const lang = getUiLang();
+        const fb = UI_FALLBACK[lang] || UI_FALLBACK.en;
+        const globalDict = (window.i18n && (window.i18n[lang] || window.i18n.en)) || {};
+        return {
+            langTitle: globalDict.chat_lang || fb.langTitle,
+            autoProfile: fb.autoProfile,
+            micTitle: fb.micTitle,
+            voiceToText: globalDict.voice_text || fb.voiceToText,
+            waiting: globalDict.waiting_voice || fb.waiting,
+            on: fb.on,
+            stop: fb.stop
+        };
+    }
+
+    // Точный контейнер экрана видеокомнаты внутри рамки #phone-body (фикс планшета)
+    function getVideoHostContainer() {
+        return document.getElementById('voice-translator')
+            || document.getElementById('phone-body')
+            || document.body;
     }
 
     function getPartner() {
@@ -170,7 +227,7 @@
     }
 
     function getTab1Input() {
-        return document.getElementById('voice-chat-input') || document.getElementById('video-chat-input');
+        return document.getElementById('voice-chat-input');
     }
 
     function getTab1Bar() {
@@ -189,12 +246,12 @@
     }
 
     // ==========================================
-    // 1. СТИЛИ И ИЗОЛИРОВАННЫЕ ПАНЕЛИ ВИДЕОКОМНАТЫ
+    // 1. СТИЛИ И ПАНЕЛИ ВНУТРИ #voice-translator (#phone-body)
     // ==========================================
     function injectStyles() {
-        if (document.getElementById('hf-vr-v8-styles')) return;
+        if (document.getElementById('hf-vr-v10-styles')) return;
         const style = document.createElement('style');
-        style.id = 'hf-vr-v8-styles';
+        style.id = 'hf-vr-v10-styles';
         style.textContent = `
             #voice-marquee-container-anim {
                 position: relative;
@@ -255,28 +312,30 @@
                 border-color: #ef4444 !important;
             }
             #hf-vr-avatar-modal, #hf-vr-mic-popup {
-                position: fixed;
-                z-index: 100050;
+                position: absolute;
+                z-index: 9990;
                 display: none;
                 background: #111b21;
                 border: 1.5px solid #00a884;
                 border-radius: 16px;
-                box-shadow: 0 12px 34px rgba(0,0,0,0.75);
+                box-shadow: 0 12px 34px rgba(0,0,0,0.8);
                 color: #e9edef;
                 padding: 12px;
+                max-width: calc(100% - 20px);
+                box-sizing: border-box;
             }
             #hf-vr-avatar-modal.active, #hf-vr-mic-popup.active { display: block; }
             #hf-vr-avatar-modal {
-                bottom: 95px;
-                right: 12px;
-                width: 240px;
-                max-height: 62vh;
+                bottom: 124px;
+                right: 10px;
+                width: 245px;
+                max-height: calc(100% - 140px);
                 overflow-y: auto;
             }
             #hf-vr-mic-popup {
-                bottom: 68px;
-                right: 12px;
-                width: 250px;
+                bottom: 64px;
+                right: 10px;
+                width: 230px;
             }
             .hf-vr-lang-grid {
                 display: grid;
@@ -316,10 +375,23 @@
     function updateMyAvatarFlagUI() {
         const flagEl = document.getElementById('voice-me-flag');
         if (!flagEl) return;
-        if (VR.manualAvatarLang && LANG_MAP[VR.manualAvatarLang]) {
-            flagEl.textContent = LANG_MAP[VR.manualAvatarLang].flag;
+        const desired = (VR.manualAvatarLang && LANG_MAP[VR.manualAvatarLang])
+            ? LANG_MAP[VR.manualAvatarLang].flag
+            : resolveProfileFlag(window.myProfileInfo);
+        if (flagEl.textContent !== desired) {
+            flagEl.textContent = desired;
+        }
+    }
+
+    function syncEcosystemLanguage(chosenCode) {
+        const target = chosenCode || 'auto';
+        if (typeof window.changeAppLanguage === 'function') {
+            try { window.changeAppLanguage(target); } catch (e) {}
         } else {
-            flagEl.textContent = resolveProfileFlag(window.myProfileInfo);
+            localStorage.setItem('hf_app_lang', target);
+            if (typeof window.applyTranslations === 'function') {
+                try { window.applyTranslations(); } catch (e) {}
+            }
         }
     }
 
@@ -330,26 +402,33 @@
         if (m) m.classList.remove('active');
     }
 
-    // СВОЯ ПАНЕЛЬ ЯЗЫКОВ С АВАТАРА (ТОЛЬКО ДЛЯ ВИДЕОКОМНАТЫ)
+    // ПАНЕЛЬ ЯЗЫКОВ С АВАТАРА (ВНУТРИ #voice-translator + СВЯЗЬ С ЭКОСИСТЕМОЙ)
     function openVideoAvatarLangPanel() {
         injectStyles();
+        const existing = document.getElementById('hf-vr-avatar-modal');
+        const wasOpen = existing && existing.classList.contains('active');
         closeAllVideoPopups();
+        if (wasOpen) return;
 
-        let modal = document.getElementById('hf-vr-avatar-modal');
+        const host = getVideoHostContainer();
+        let modal = existing;
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'hf-vr-avatar-modal';
-            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => e.stopPropagation());
         }
+        if (modal.parentNode !== host) host.appendChild(modal);
 
+        const d = getUiDict();
         const profileFlag = resolveProfileFlag(window.myProfileInfo);
+
         let html = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-size:0.78rem;font-weight:800;color:#00a884;">📹 Язык видеокомнаты</span>
+                <span style="font-size:0.78rem;font-weight:800;color:#00a884;">🌐 ${escapeHtml(d.langTitle)}</span>
                 <button type="button" id="hf-vr-avatar-close" style="background:none;border:none;color:#8696a0;font-size:1rem;cursor:pointer;">✕</button>
             </div>
             <button type="button" data-lang="auto" class="hf-vr-lang-btn ${!VR.manualAvatarLang ? 'selected' : ''}" style="width:100%;justify-content:center;">
-                ${profileFlag} Авто (Профиль)
+                ${profileFlag} ${escapeHtml(d.autoProfile)}
             </button>
             <div class="hf-vr-lang-grid">
         `;
@@ -367,6 +446,8 @@
                 const chosen = btn.getAttribute('data-lang');
                 VR.manualAvatarLang = (chosen === 'auto') ? null : chosen;
                 updateMyAvatarFlagUI();
+                syncEcosystemLanguage(chosen);
+                updateMicPill();
                 modal.classList.remove('active');
             };
         });
@@ -374,20 +455,27 @@
         modal.classList.add('active');
     }
 
-    // СВОЁ МЕНЮ МИКРОФОНА (ТОЛЬКО ДЛЯ ВИДЕОКОМНАТЫ)
+    // МЕНЮ МИКРОФОНА (ВНУТРИ #voice-translator + СВЯЗЬ С ЭКОСИСТЕМОЙ)
     function openVideoMicMenu() {
         injectStyles();
+        const existing = document.getElementById('hf-vr-mic-popup');
+        const wasOpen = existing && existing.classList.contains('active');
         closeAllVideoPopups();
+        if (wasOpen) return;
 
-        let popup = document.getElementById('hf-vr-mic-popup');
+        const host = getVideoHostContainer();
+        let popup = existing;
         if (!popup) {
             popup = document.createElement('div');
             popup.id = 'hf-vr-mic-popup';
-            document.body.appendChild(popup);
+            popup.addEventListener('click', (e) => e.stopPropagation());
         }
+        if (popup.parentNode !== host) host.appendChild(popup);
 
+        const d = getUiDict();
         const profileFlag = resolveProfileFlag(window.myProfileInfo);
-        let optionsHtml = `<option value="auto" ${!VR.manualMicLang ? 'selected' : ''}>${profileFlag} Авто (Профиль)</option>`;
+
+        let optionsHtml = `<option value="auto" ${!VR.manualMicLang ? 'selected' : ''}>${profileFlag} ${escapeHtml(d.autoProfile)}</option>`;
         Object.keys(LANG_MAP).forEach(code => {
             const item = LANG_MAP[code];
             optionsHtml += `<option value="${code}" ${VR.manualMicLang === code ? 'selected' : ''}>${item.flag} ${item.name}</option>`;
@@ -395,14 +483,14 @@
 
         popup.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <span style="font-size:0.78rem;font-weight:800;color:#00a884;">🎙️ Микрофон видеокомнаты</span>
+                <span style="font-size:0.78rem;font-weight:800;color:#00a884;"><i class="fa-solid fa-microphone mr-1"></i> ${escapeHtml(d.micTitle)}</span>
                 <button type="button" id="hf-vr-mic-close" style="background:none;border:none;color:#8696a0;font-size:1rem;cursor:pointer;">✕</button>
             </div>
-            <select id="hf-vr-mic-select" style="width:100%;background:#202c33;color:#e9edef;border:1px solid #2a3942;border-radius:10px;padding:8px;font-size:0.82rem;margin-bottom:10px;">
+            <select id="hf-vr-mic-select" style="width:100%;background:#202c33;color:#e9edef;border:1px solid #2a3942;border-radius:10px;padding:8px;font-size:0.82rem;margin-bottom:10px;outline:none;">
                 ${optionsHtml}
             </select>
-            <button type="button" id="hf-vr-mic-start-btn" style="width:100%;background:#00a884;color:#111b21;border:none;border-radius:10px;padding:9px;font-size:0.82rem;font-weight:800;cursor:pointer;">
-                🎙️ Текст голосом
+            <button type="button" id="hf-vr-mic-start-btn" style="width:100%;background:#00a884;color:#111b21;border:none;border-radius:10px;padding:9px;font-size:0.82rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <i class="fa-solid fa-microphone"></i> ${escapeHtml(d.voiceToText)}
             </button>
         `;
 
@@ -415,7 +503,7 @@
         popup.querySelector('#hf-vr-mic-start-btn').onclick = (e) => {
             e.stopPropagation();
             popup.classList.remove('active');
-            window.startVideoRoomMic('text');
+            window.startVideoRoomMic();
         };
 
         popup.classList.add('active');
@@ -491,7 +579,6 @@
         }
     }
 
-    // Полный сброс видеокомнаты (чтобы ничего не текло в аудиокомнату)
     window.resetVideoRoomState = function () {
         VR.manualAvatarLang = null;
         VR.manualMicLang = null;
@@ -508,12 +595,12 @@
         VR.activeListener = null;
 
         const { textEl } = getMarqueeNodes();
-        if (textEl) textEl.innerHTML = 'Waiting for voice input...';
+        if (textEl) textEl.innerHTML = getUiDict().waiting;
         updateMyAvatarFlagUI();
     };
 
     // ==========================================
-    // 3. ОТПРАВКА И ПРИЁМ (ТУПОЕ КОПИРОВАНИЕ В БЕГУЩУЮ СТРОКУ)
+    // 3. ОТПРАВКА И ПРИЁМ (ТЕКСТ ОТПРАВИТЕЛЯ СТРОГО ПОД ЕГО ФЛАГ)
     // ==========================================
     window.sendVideoRoomPayload = async function (rawText, sourceType = 'keyboard') {
         if (!isVideoMode()) return;
@@ -527,7 +614,6 @@
         const partner = getPartner();
         const isVoice = (sourceType === 'voice');
 
-        // Умная логика ТОЛЬКО если вручную выбран язык; иначе строго профиль
         const manualLang = isVoice ? VR.manualMicLang : VR.manualAvatarLang;
         const myLang = manualLang || resolveProfileLang(window.myProfileInfo);
         const myFlag = (manualLang && LANG_MAP[manualLang])
@@ -535,9 +621,12 @@
             : resolveProfileFlag(window.myProfileInfo);
 
         const targetLang = resolveProfileLang(partner);
+
+        // Текст отправителя приводим к языку его активного флага
+        const senderDisplayText = await translateText(cleanText, myLang);
         const translatedText = (targetLang && targetLang !== myLang)
-            ? await translateText(cleanText, targetLang)
-            : cleanText;
+            ? await translateText(senderDisplayText, targetLang)
+            : senderDisplayText;
 
         const me = window.myProfileInfo || {};
         firebase.database().ref(dbPath).push({
@@ -547,8 +636,8 @@
             flag: myFlag,
             langCode: myLang,
             targetLang: targetLang,
-            originalText: cleanText,
-            text: translatedText || cleanText,
+            originalText: senderDisplayText || cleanText,
+            text: translatedText || senderDisplayText || cleanText,
             sourceType: sourceType,
             sessionId: window.mySessionId || 'sess',
             timestamp: firebase.database.ServerValue.TIMESTAMP,
@@ -606,7 +695,6 @@
             receiverPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
             receiverName = (window.myUsername || 'Me').split(' ')[0];
 
-            // Если я выбрал ручной язык на аватаре — перевожу себе на него, иначе строго на язык моего профиля
             const myReadLang = VR.manualAvatarLang || resolveProfileLang(window.myProfileInfo);
             receiverFlag = (VR.manualAvatarLang && LANG_MAP[VR.manualAvatarLang])
                 ? LANG_MAP[VR.manualAvatarLang].flag
@@ -669,20 +757,25 @@
     };
 
     // ==========================================
-    // 4. МИКРОФОН ВИДЕОКОМНАТЫ (ТЕКСТ ГОЛОСОМ)
+    // 4. МИКРОФОН ВИДЕОКОМНАТЫ
     // ==========================================
     function ensureMicPill() {
         injectStyles();
+        const d = getUiDict();
         let pill = document.getElementById('hf-vr-mic-pill');
         if (!pill) {
             pill = document.createElement('div');
             pill.id = 'hf-vr-mic-pill';
             pill.innerHTML = `
                 <span class="dot"></span>
-                <span id="hf-vr-mic-label">Listening...</span>
-                <button type="button" class="stop-btn" onclick="event.stopPropagation(); window.stopVideoRoomMic(false)">STOP</button>
+                <span id="hf-vr-mic-label"></span>
+                <button type="button" class="stop-btn" id="hf-vr-stop-btn" onclick="event.stopPropagation(); window.stopVideoRoomMic(false)">${escapeHtml(d.stop)}</button>
             `;
+        } else {
+            const stopBtn = pill.querySelector('#hf-vr-stop-btn');
+            if (stopBtn) stopBtn.textContent = d.stop;
         }
+
         const remoteVid = document.getElementById('direct-remote-video');
         const friendPhoto = document.getElementById('voice-friend-photo');
         const videoRow = (remoteVid && remoteVid.parentElement) ? remoteVid.parentElement.parentElement : null;
@@ -698,8 +791,8 @@
             if (pill.parentNode !== slot) slot.appendChild(pill);
             return pill;
         }
-        const bar = getTab1Bar() || document.body;
-        if (pill.parentNode !== bar) bar.appendChild(pill);
+        const host = getVideoHostContainer();
+        if (pill.parentNode !== host) host.appendChild(pill);
         return pill;
     }
 
@@ -714,12 +807,13 @@
             return;
         }
 
+        const d = getUiDict();
         const flag = (VR.manualMicLang && LANG_MAP[VR.manualMicLang])
             ? LANG_MAP[VR.manualMicLang].flag
             : resolveProfileFlag(window.myProfileInfo);
 
         if (label) {
-            label.textContent = preview ? `${flag} ${preview}` : `${flag} Text • ON`;
+            label.textContent = preview ? `${flag} ${preview}` : `${flag} ${d.on}`;
         }
         pill.classList.add('active');
         if (micBtn) micBtn.classList.add('hf-vr-mic-live');
@@ -807,7 +901,7 @@
     window.startVideoRoomMic = async function () {
         if (!isVideoMode()) return;
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRec) return alert('Браузер не поддерживает распознавание речи.');
+        if (!SpeechRec) return;
 
         if (VR.micActive) {
             updateMicPill();
@@ -855,7 +949,7 @@
     };
 
     // ==========================================
-    // 5. ПРИВЯЗКА КНОПОК ТОЛЬКО В ВИДЕОКОМНАТЕ (БЕЗ ТРОГАНИЯ ЧАТА)
+    // 5. ПРИВЯЗКА КНОПОК ТОЛЬКО В ВИДЕОКОМНАТЕ
     // ==========================================
     function bindVideoControls() {
         const sendBtn = getTab1SendBtn();
@@ -881,9 +975,8 @@
             }, true);
         }
 
-        // Клик по своему аватару/флагу внизу вкладки 1 -> своя панель языков видеокомнаты
         const mePhoto = document.getElementById('voice-me-photo');
-        const meTarget = mePhoto ? (mePhoto.closest('button') || mePhoto.parentElement) : null;
+        const meTarget = mePhoto ? mePhoto.parentElement : null;
         if (meTarget && !meTarget.dataset.hfVrBound) {
             meTarget.dataset.hfVrBound = '1';
             meTarget.addEventListener('click', (e) => {
@@ -893,23 +986,43 @@
                 openVideoAvatarLangPanel();
             }, true);
         }
+
+        // Реагируем на смену языка из верхнего меню настроек экосистемы
+        const ecoSelect = document.getElementById('app-lang-select');
+        if (ecoSelect && !ecoSelect.dataset.hfVrBound) {
+            ecoSelect.dataset.hfVrBound = '1';
+            ecoSelect.addEventListener('change', () => {
+                setTimeout(() => {
+                    if (!isVideoMode()) return;
+                    updateMicPill();
+                    const { textEl } = getMarqueeNodes();
+                    if (textEl && (!VR.marquee.currentHtml || VR.marquee.currentHtml.indexOf('img src=') === -1)) {
+                        textEl.innerHTML = getUiDict().waiting;
+                    }
+                }, 50);
+            });
+        }
     }
 
     function init() {
         startMarqueeEngine();
         bindVideoControls();
 
+        document.addEventListener('click', () => {
+            if (isVideoMode()) closeAllVideoPopups();
+        });
+
         setInterval(() => {
             if (isVideoMode()) {
                 window.syncVideoRoomListener();
                 bindVideoControls();
+                updateMyAvatarFlagUI();
             }
         }, 1000);
 
         document.addEventListener('keydown', (e) => {
             if (!isVideoMode() || e.key !== 'Enter' || !document.activeElement) return;
-            const id = document.activeElement.id;
-            if (id === 'voice-chat-input' || id === 'video-chat-input') {
+            if (document.activeElement.id === 'voice-chat-input') {
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 window.sendVideoRoomMsg();
