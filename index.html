@@ -1792,39 +1792,7 @@ Object.keys(avatarTranslations).forEach(lang => {
     if (window.i18n[lang]) Object.assign(window.i18n[lang], avatarTranslations[lang]);
 });
          
-// --- УМНАЯ ЛОГИКА ЯЗЫКА (РАБОТАЕТ С ГЛОБАЛЬНЫМ СЛОВАРЕМ) ---
-window.applyTranslations = function() { 
-    let savedLang = localStorage.getItem('hf_app_lang') || 'auto';
-    let activeLang = savedLang;
-
-    if (savedLang === 'auto') {
-        if (window.myProfileInfo && window.myProfileInfo.phone) {
-            activeLang = window.getSmartLang(window.myProfileInfo.phone, window.myProfileInfo.flagCode);
-        } else if (window.myProfileInfo && window.myProfileInfo.flagCode && window.myProfileInfo.flagCode !== 'un') {
-            activeLang = window.getSmartLang(null, window.myProfileInfo.flagCode);
-        } else {
-            let sysLang = navigator.language.slice(0, 2);
-            activeLang = window.i18n[sysLang] ? sysLang : 'en';
-        }
-    }
-    
-    window.appLang = activeLang;
-    const dict = window.i18n[window.appLang] || window.i18n['en']; 
-    
-    document.querySelectorAll('[data-i18n]').forEach(el => { 
-        const key = el.getAttribute('data-i18n'); 
-        if(dict[key]) el.innerText = dict[key]; 
-    }); 
-    
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        if(dict[key]) el.placeholder = dict[key];
-    });
-
-    const langSelect = document.getElementById('app-lang-select'); 
-    if(langSelect) langSelect.value = savedLang; 
-};
-            // --- ПЕРЕВОДЫ ДЛЯ МЕНЮ СКРЕПКИ ---
+// --- ПЕРЕВОДЫ ДЛЯ МЕНЮ СКРЕПКИ ---
 const attachTranslations = {
     en: { attach_video: "Video", attach_audio: "Audio", attach_location: "Location", attach_camera: "Camera" },
     ru: { attach_video: "Видео", attach_audio: "Аудио", attach_location: "Локация", attach_camera: "Камера" },
@@ -1841,52 +1809,58 @@ const attachTranslations = {
     zh: { attach_video: "视频", attach_audio: "音频", attach_location: "位置", attach_camera: "相机" }
 };
 Object.keys(attachTranslations).forEach(lang => {
-    if (window.i18n[lang]) Object.assign(window.i18n[lang], attachTranslations[lang]);
+    if (window.i18n && window.i18n[lang]) Object.assign(window.i18n[lang], attachTranslations[lang]);
 });
-            
 
-        // --- УМНАЯ ЛОГИКА ЯЗЫКА (БЕЗ ЖЕСТКОГО ENGLISH) ---
-            window.applyTranslations = function() { 
-                let savedLang = localStorage.getItem('hf_app_lang') || 'auto';
-                let activeLang = savedLang;
+// --- УМНАЯ ЛОГИКА ЯЗЫКА ---
+window.applyTranslations = function() {
+    const dictAll = window.i18n || {};
+    let savedLang = localStorage.getItem('hf_app_lang') || 'auto';
+    let activeLang = savedLang;
 
-                // Если стоит Auto — система сама вычисляет язык по телефону или флагу
-                if (savedLang === 'auto') {
-                    if (window.myProfileInfo && window.myProfileInfo.phone) {
-                        activeLang = window.getSmartLang(window.myProfileInfo.phone, window.myProfileInfo.flagCode);
-                    } else if (window.myProfileInfo && window.myProfileInfo.flagCode && window.myProfileInfo.flagCode !== 'un') {
-                        activeLang = window.getSmartLang(null, window.myProfileInfo.flagCode);
-                    } else {
-                        // Резерв на крайний случай - язык системы устройства
-                        let sysLang = navigator.language.slice(0, 2);
-                        activeLang = i18n[sysLang] ? sysLang : 'en';
-                    }
-                }
-                
-                window.appLang = activeLang;
-                const dict = i18n[window.appLang] || i18n['en']; 
-                
-                document.querySelectorAll('[data-i18n]').forEach(el => { 
-                    const key = el.getAttribute('data-i18n'); 
-                    if(dict[key]) el.innerText = dict[key]; 
-                }); 
-                
-                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                    const key = el.getAttribute('data-i18n-placeholder');
-                    if(dict[key]) el.placeholder = dict[key];
-                });
+    if (savedLang === 'auto') {
+        const prof = window.myProfileInfo || null;
+        const phone = prof && prof.phone ? prof.phone : null;
+        const flag = prof && (prof.flagCode || prof.flag) ? (prof.flagCode || prof.flag) : null;
 
-                const langSelect = document.getElementById('app-lang-select'); 
-                if(langSelect) langSelect.value = savedLang; 
-            };
-            
-            window.changeAppLanguage = function(langCode) { 
-                localStorage.setItem('hf_app_lang', langCode); 
-                window.applyTranslations(); 
-                window.closeDropdown(); 
-            };
+        if (phone && typeof window.getSmartLang === 'function') {
+            activeLang = window.getSmartLang(phone, flag);
+        } else if (flag && flag !== 'un' && typeof window.getSmartLang === 'function') {
+            activeLang = window.getSmartLang(null, flag);
+        } else if (window.appLang && dictAll[window.appLang]) {
+            activeLang = window.appLang;
+        } else {
+            let sysLang = (navigator.language || 'en').slice(0, 2);
+            activeLang = dictAll[sysLang] ? sysLang : 'en';
+        }
+    }
 
-            window.applyTranslations();
+    window.appLang = dictAll[activeLang] ? activeLang : 'en';
+    const dict = dictAll[window.appLang] || dictAll['en'] || {};
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.innerText = dict[key];
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key]) el.placeholder = dict[key];
+    });
+
+    const langSelect = document.getElementById('app-lang-select');
+    if (langSelect) langSelect.value = savedLang;
+};
+
+window.changeAppLanguage = function(langCode) {
+    localStorage.setItem('hf_app_lang', langCode);
+    window.applyTranslations();
+    if (window.closeDropdown) window.closeDropdown();
+};
+
+window.applyTranslations();
+
+
             window.switchTab = function(index) { 
                 const navLinks = Array.from(document.querySelectorAll('.nav-item')); 
                 const pages = document.querySelectorAll('.page-content'); 
