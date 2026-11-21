@@ -1,5 +1,7 @@
 // ==========================================
-// MODULE: CALLS, VIDEO & AGORA ENGINE (CLEAN v2)
+// MODULE: CALLS, VIDEO & AGORA ENGINE (CLEAN v5)
+// Видеофреймы и камеры — строго только в видеозвонке
+// Всплывающая кнопка "Ответить с ИИ-переводчиком" при разных флагах (13 языков)
 // ==========================================
 
 if (typeof AgoraRTC === 'undefined') {
@@ -14,10 +16,9 @@ window.localVideoTrack = null;
 window.remoteAgoraUser = null;
 window._isStartingAgora = false;
 
-// Ключи Agora (временный токен для канала "hello")
+// Ключи Agora (свежий токен для канала "hello")
 window.CALLS_AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
 window.CALLS_AGORA_TEMP_TOKEN = "007eJxTYCjw4uJsVtTb/o3raWJR6N/bf2826+StWJioHDC7WrSBtVqBwdLQOM3QONEsycLQwCTF2CTJwNjM0jQxOSXZIMXcMsl84UmG7IZARoa5xySZmBgYwRDEZ2XISM3JyWdgYIILsTAYGhgYAgDm9R/x";
-
 window.CALLS_AGORA_CHANNEL = "hello";
 
 window.currentCallerId = null;
@@ -31,6 +32,7 @@ window.activeOutgoingCallTargetId = null;
 window.activeOutgoingCallRef = null;
 window.activeOutgoingCallType = 'voice';
 window.callWasAnswered = false;
+window._pendingStartAIForCall = false;
 
 window.isMyMicMuted = false;
 window.isMyCamMuted = true;
@@ -39,6 +41,8 @@ window.isRemoteCamMuted = false;
 window._isTogglingAudio = false;
 window._isTogglingCam = false;
 window._agoraPausedForTranslation = false;
+window._prevMyMicMuted = false;
+window._prevRemoteMicMuted = false;
 
 // --- 0. ЗВУКОВОЙ ДВИЖОК ---
 window.sndMsg = new Audio('message.mp3.wav');
@@ -70,7 +74,193 @@ window.stopAllRings = function() {
     if ("vibrate" in navigator) { try { navigator.vibrate(0); } catch (e) {} }
 };
 
+// --- ОПРЕДЕЛЕНИЕ ЯЗЫКА ПРОФИЛЯ И ВСПЛЫВАЮЩАЯ КНОПКА "ОТВЕТИТЬ С ИИ-ПЕРЕВОДЧИКОМ" ---
+window._CALLS_AI_BTN_TEXT = {
+    ru: 'Ответить с ИИ-переводчиком',
+    en: 'Answer with AI Translator',
+    az: 'AI tərcüməçi ilə cavab ver',
+    tr: 'AI Çevirmen ile Yanıtla',
+    de: 'Mit KI-Übersetzer annehmen',
+    kk: 'AI аудармашымен жауап беру',
+    ar: 'الرد بمترجم الذكاء الاصطناعي',
+    it: 'Rispondi con traduttore IA',
+    es: 'Responder con traductor IA',
+    fr: 'Répondre avec traducteur IA',
+    pt: 'Atender com tradutor IA',
+    ja: 'AI翻訳で応答する',
+    zh: '使用 AI 翻译接听'
+};
+
+window.resolveCallProfileLang = function(userObj) {
+    if (!userObj) return '';
+    if (typeof window.videoRoomResolveLang === 'function') {
+        const res = window.videoRoomResolveLang(userObj, null);
+        if (res) return res;
+    }
+    const emojiMap = {
+        '🇬🇧': 'en', '🇺🇸': 'en', '🇷🇺': 'ru', '🇦🇿': 'az',
+        '🇹🇷': 'tr', '🇩🇪': 'de', '🇰🇿': 'kk', '🇦🇪': 'ar',
+        '🇸🇦': 'ar', '🇮🇹': 'it', '🇪🇸': 'es', '🇫🇷': 'fr',
+        '🇵🇹': 'pt', '🇧🇷': 'pt', '🇯🇵': 'ja', '🇨🇳': 'zh'
+    };
+    const flagStr = String(userObj.flag || '').trim();
+    if (emojiMap[flagStr]) return emojiMap[flagStr];
+
+    const fix = { us: 'en', gb: 'en', uk: 'en', kz: 'kk', cn: 'zh', jp: 'ja', ae: 'ar', sa: 'ar', eg: 'ar', br: 'pt', mx: 'es' };
+    const norm = (v) => {
+        if (!v) return '';
+        const s = String(v).trim().toLowerCase();
+        if (!s || s === 'auto' || s === 'un') return '';
+        const b = s.split(/[-_]/)[0].substring(0, 2);
+        return fix[b] || b;
+    };
+
+    const byFlagCode = norm(userObj.flagCode);
+    if (byFlagCode) return byFlagCode;
+
+    const digits = String(userObj.phone || userObj.phoneNumber || userObj.tel || '').replace(/\D/g, '');
+    if (digits) {
+        const prefixes = [
+            ['994', 'az'], ['971', 'ar'], ['966', 'ar'], ['351', 'pt'],
+            ['77', 'kk'], ['76', 'kk'], ['90', 'tr'], ['49', 'de'],
+            ['44', 'en'], ['39', 'it'], ['34', 'es'], ['33', 'fr'],
+            ['81', 'ja'], ['86', 'zh'], ['55', 'pt'], ['20', 'ar'],
+            ['7', 'ru'], ['1', 'en']
+        ];
+        for (const [p, l] of prefixes) {
+            if (digits.startsWith(p)) return l;
+        }
+    }
+
+    const byCode = norm(userObj.langCode || userObj.lang);
+    if (byCode) return byCode;
+
+    return '';
+};
+
+window.injectIncomingAIButtonStyles = function() {
+    if (document.getElementById('hf-incoming-ai-btn-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'hf-incoming-ai-btn-styles';
+    style.textContent = `
+        #hf-incoming-ai-float {
+            position: fixed;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100001;
+            display: none;
+            width: min(90%, 340px);
+            pointer-events: auto;
+        }
+        #hf-incoming-ai-float.active {
+            display: block;
+            animation: hfAiFadePulse 3.6s ease-in-out infinite;
+        }
+        #hf-incoming-ai-float button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 13px 18px;
+            border-radius: 999px;
+            border: 1.5px solid #00e5b0;
+            background: linear-gradient(135deg, rgba(17, 27, 33, 0.96), rgba(0, 120, 96, 0.94));
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 30px rgba(0, 168, 132, 0.45);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+        }
+        #hf-incoming-ai-float button:active {
+            transform: scale(0.97);
+        }
+        @keyframes hfAiFadePulse {
+            0%   { opacity: 1;    transform: translateX(-50%) scale(1); }
+            50%  { opacity: 0.35; transform: translateX(-50%) scale(0.98); }
+            100% { opacity: 1;    transform: translateX(-50%) scale(1); }
+        }
+    `;
+    document.head.appendChild(style);
+};
+
+window.showIncomingAIBtn = function(callerObj) {
+    window.injectIncomingAIButtonStyles();
+
+    const myLang = window.resolveCallProfileLang(window.myProfileInfo);
+    const callerLang = window.resolveCallProfileLang(callerObj);
+
+    // Показываем кнопку ТОЛЬКО при разных флагах/языках профилей
+    if (!myLang || !callerLang || myLang === callerLang) {
+        window.hideIncomingAIBtn();
+        return;
+    }
+
+    let wrap = document.getElementById('hf-incoming-ai-float');
+    if (!wrap) {
+        wrap = document.createElement('div');
+        wrap.id = 'hf-incoming-ai-float';
+        document.body.appendChild(wrap);
+    }
+
+    const uiLang = myLang || 'en';
+    const label = window._CALLS_AI_BTN_TEXT[uiLang] || window._CALLS_AI_BTN_TEXT.en;
+    const callerFlag = (callerObj && callerObj.flag && callerObj.flag !== '🌐') ? `${callerObj.flag} ` : '';
+
+    wrap.innerHTML = `
+        <button type="button" onclick="event.stopPropagation(); window.acceptCallWithAI()">
+            <i class="fa-solid fa-robot text-[#00e5b0] text-lg"></i>
+            <span>${callerFlag}${label}</span>
+        </button>
+    `;
+    wrap.classList.add('active');
+};
+
+window.hideIncomingAIBtn = function() {
+    const wrap = document.getElementById('hf-incoming-ai-float');
+    if (wrap) wrap.classList.remove('active');
+};
+
+// --- ЖЁСТКОЕ РАЗДЕЛЕНИЕ ИНТЕРФЕЙСА: АУДИО (БЕЗ ФРЕЙМОВ И КАМЕР) / ВИДЕО ---
+window.applyCallRoomModeUI = function(isVideoMode) {
+    const showVideo = Boolean(isVideoMode);
+
+    // 1. Блок с двумя видеофреймами — показываем ТОЛЬКО в видеозвонке
+    const remoteVid = document.getElementById('direct-remote-video');
+    const videoRow = (remoteVid && remoteVid.parentElement) ? remoteVid.parentElement.parentElement : null;
+    if (videoRow) {
+        if (showVideo) {
+            videoRow.classList.remove('hidden');
+            videoRow.style.display = 'flex';
+        } else {
+            videoRow.classList.add('hidden');
+            videoRow.style.display = 'none';
+        }
+    }
+
+    // 2. Обе иконки камер рядом с аватарками — показываем ТОЛЬКО в видеозвонке
+    document.querySelectorAll('#icon-my-cam, #icon-remote-cam').forEach(icon => {
+        const btn = icon.closest('button') || icon.parentElement;
+        if (!btn) return;
+        if (showVideo) {
+            btn.classList.remove('hidden');
+            btn.style.display = '';
+        } else {
+            btn.classList.add('hidden');
+            btn.style.display = 'none';
+        }
+    });
+
+    if (!showVideo && typeof window.hideDirectVideoElements === 'function') {
+        window.hideDirectVideoElements();
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
+    window.applyCallRoomModeUI(window.currentActiveCallType === 'video');
+
     document.body.addEventListener('click', function unlockAudio() {
         const allSounds = [window.sndMsg, window.sndCash, window.sndEmail, window.sndMissed, window.sndRing, window.sndCallOut];
         allSounds.forEach(snd => { snd.play().then(() => snd.pause()).catch(() => {}); });
@@ -188,25 +378,50 @@ window.hideDirectVideoElements = function() {
     window.setLocalVideoVisible(false);
 };
 
-// Мягкая передача микрофона между Agora и нижним микрофоном перевода
+// Автоматическая пауза обоих микрофонов звонка для нижнего микрофона/ИИ-переводчика и возврат обратно
 window.pauseAgoraMicForTranslation = async function() {
-    if (!window.localAudioTrack) return;
+    if (!window.agoraClient && !window.localAudioTrack) return;
+    if (window._agoraPausedForTranslation) return;
+
     window._agoraPausedForTranslation = true;
-    try {
-        await window.localAudioTrack.setEnabled(false);
-    } catch (e) {
-        try { await window.localAudioTrack.setMuted(true); } catch (err) {}
+    window._prevMyMicMuted = Boolean(window.isMyMicMuted);
+    window._prevRemoteMicMuted = Boolean(window.isRemoteMicMuted);
+
+    if (window.localAudioTrack) {
+        try {
+            await window.localAudioTrack.setEnabled(false);
+        } catch (e) {
+            try { await window.localAudioTrack.setMuted(true); } catch (err) {}
+        }
     }
+    if (window.remoteAgoraUser && window.remoteAgoraUser.audioTrack) {
+        try { window.remoteAgoraUser.audioTrack.setVolume(0); } catch (e) {}
+    }
+
+    window.updateMicToggleUI(true);
+    window.updateRemoteMicToggleUI(true);
 };
 
 window.resumeAgoraMicAfterTranslation = async function() {
+    if (!window._agoraPausedForTranslation) return;
     window._agoraPausedForTranslation = false;
-    if (!window.localAudioTrack || window.isMyMicMuted) return;
-    try {
-        await window.localAudioTrack.setEnabled(true);
-    } catch (e) {
-        try { await window.localAudioTrack.setMuted(false); } catch (err) {}
+
+    const restoreMyMuted = Boolean(window._prevMyMicMuted);
+    const restoreRemoteMuted = Boolean(window._prevRemoteMicMuted);
+
+    if (window.localAudioTrack) {
+        try {
+            await window.localAudioTrack.setEnabled(!restoreMyMuted);
+        } catch (e) {
+            try { await window.localAudioTrack.setMuted(restoreMyMuted); } catch (err) {}
+        }
     }
+    if (window.remoteAgoraUser && window.remoteAgoraUser.audioTrack) {
+        try { window.remoteAgoraUser.audioTrack.setVolume(restoreRemoteMuted ? 0 : 100); } catch (e) {}
+    }
+
+    window.updateMicToggleUI(restoreMyMuted);
+    window.updateRemoteMicToggleUI(restoreRemoteMuted);
 };
 
 // --- 1. ФУНКЦИИ AGORA (ВИДЕО И АУДИО) ---
@@ -219,9 +434,12 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
     const allowVideo = Boolean(isVideo);
     window.currentActiveCallType = allowVideo ? 'video' : 'voice';
+    window.applyCallRoomModeUI(allowVideo);
 
     window._isStartingAgora = true;
     window._agoraPausedForTranslation = false;
+    window._prevMyMicMuted = false;
+    window._prevRemoteMicMuted = false;
     window.remoteAgoraUser = null;
 
     window.updateMicToggleUI(false);
@@ -254,7 +472,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             window.remoteAgoraUser = user;
 
             if (mediaType === "video") {
-                if (!allowVideo && window.currentIndex === 1) return;
+                if (!allowVideo && window.currentActiveCallType !== 'video') return;
                 if (!window.isRemoteCamMuted && user.videoTrack) {
                     window.setRemoteVideoVisible(true, user.videoTrack);
                 }
@@ -269,7 +487,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
             if (mediaType === "audio" && user.audioTrack) {
                 user.audioTrack.play();
-                if (window.isRemoteMicMuted) {
+                if (window.isRemoteMicMuted || window._agoraPausedForTranslation || window._pendingStartAIForCall) {
                     try { user.audioTrack.setVolume(0); } catch (e) {}
                 }
             }
@@ -333,8 +551,14 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             await window.agoraClient.publish(tracksToPublish);
         }
 
-        // Если нижний микрофон перевода уже включён — сразу отдаём ему аппаратный канал
-        if (window.videoRoomMicActive) {
+        // Если звонок принят через всплывающую кнопку "Ответить с ИИ-переводчиком" — сразу запускаем бесконечный ИИ-голос на обоих телефонах
+        if (window._pendingStartAIForCall) {
+            window._pendingStartAIForCall = false;
+            await window.pauseAgoraMicForTranslation();
+            if (typeof window.startVideoRoomMic === 'function') {
+                setTimeout(() => window.startVideoRoomMic('ai-audio'), 250);
+            }
+        } else if (window.videoRoomMicActive) {
             await window.pauseAgoraMicForTranslation();
         }
 
@@ -347,6 +571,9 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 };
 
 window.endWebRTCCall = async function() {
+    window.hideIncomingAIBtn();
+    window._pendingStartAIForCall = false;
+
     if (typeof window.stopVideoRoomMic === 'function') {
         try { await window.stopVideoRoomMic(true); } catch (e) {}
     }
@@ -369,6 +596,13 @@ window.endWebRTCCall = async function() {
 
     window.remoteAgoraUser = null;
     window._agoraPausedForTranslation = false;
+    window._prevMyMicMuted = false;
+    window._prevRemoteMicMuted = false;
+    window.videoRoomPartnerMeta = null;
+    window._vrLastMetaSig = '';
+
+    const tab1Input = document.getElementById('voice-chat-input');
+    if (tab1Input) tab1Input.value = '';
 
     document.querySelectorAll('[id^="remote-video-"]').forEach(v => {
         v.srcObject = null;
@@ -376,7 +610,7 @@ window.endWebRTCCall = async function() {
         v.style.display = 'none';
     });
 
-    window.hideDirectVideoElements();
+    window.applyCallRoomModeUI(false);
 
     const myVideo = document.getElementById('my-live-video');
     if (myVideo) {
@@ -434,9 +668,12 @@ window.startInAppCall = function(callType = 'voice') {
     window.activeOutgoingCallTargetId = target.id;
     window.activeOutgoingCallType = normalizedType;
     window.callWasAnswered = false;
+    window._pendingStartAIForCall = false;
+    window.videoRoomPartnerMeta = null;
+    window._vrLastMetaSig = '';
 
+    window.applyCallRoomModeUI(normalizedType === 'video');
     if (normalizedType !== 'video') {
-        window.hideDirectVideoElements();
         window.updateCamToggleUI(true);
     }
 
@@ -450,6 +687,10 @@ window.startInAppCall = function(callType = 'voice') {
         callerId: window.myProfileInfo.id,
         callerName: window.myUsername,
         callerPhoto: window.myProfileInfo.photo,
+        callerFlag: window.myProfileInfo.flag || '',
+        callerFlagCode: window.myProfileInfo.flagCode || '',
+        callerLang: window.myProfileInfo.langCode || window.myProfileInfo.lang || '',
+        callerPhone: window.myProfileInfo.phone || window.myProfileInfo.phoneNumber || '',
         timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 
@@ -466,9 +707,12 @@ window.startInAppCall = function(callType = 'voice') {
     const photoEl = document.getElementById('voice-friend-photo');
     const flagEl = document.getElementById('voice-friend-flag');
     const nameEl = document.getElementById('voice-friend-name');
-    if (photoEl) photoEl.src = target.photo;
-    if (flagEl) flagEl.innerText = target.flag || '🌐';
-    if (nameEl) nameEl.innerText = (target.name || 'User').split(' ')[0];
+    if (photoEl && target.photo) photoEl.src = target.photo;
+    if (flagEl && target.flag) flagEl.innerText = target.flag;
+    if (nameEl) {
+        nameEl.removeAttribute('data-i18n');
+        nameEl.innerText = (target.name || 'User').split(' ')[0];
+    }
 
     window.voiceFriend = target;
     if (typeof window.syncVideoRoomListener === 'function') window.syncVideoRoomListener();
@@ -518,16 +762,22 @@ window.startInAppCall = function(callType = 'voice') {
     }, 30000);
 };
 
-window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey, callType) {
+window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey, callType, callerMeta = {}) {
     window.currentIncomingSignalKey = signalKey;
     window.currentCallerId = callerId;
     window.callWasAnswered = false;
+
+    const fromList = (window.participants || []).find(p => String(p.id) === String(callerId)) || {};
     window.currentCallerFallback = {
         id: callerId,
-        name: callerName || 'User',
-        photo: callerPhoto || 'https://ui-avatars.com/api/?name=U',
-        flag: '🌐'
+        name: callerName || fromList.name || 'User',
+        photo: callerPhoto || fromList.photo || 'https://ui-avatars.com/api/?name=U',
+        flag: callerMeta.flag || fromList.flag || '',
+        flagCode: callerMeta.flagCode || fromList.flagCode || '',
+        langCode: callerMeta.langCode || fromList.langCode || '',
+        phone: callerMeta.phone || fromList.phone || fromList.phoneNumber || ''
     };
+
     window.currentIncomingCallType = (callType === 'video') ? 'video' : 'voice';
     window.currentActiveCallType = window.currentIncomingCallType;
 
@@ -542,28 +792,45 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey,
     const modal = document.getElementById('incoming-call-modal');
     if (modal) modal.classList.add('active');
 
+    // Для входящего аудиозвонка с другим флагом показываем пульсирующую кнопку "Ответить с ИИ-переводчиком"
+    if (window.currentIncomingCallType === 'voice') {
+        window.showIncomingAIBtn(window.currentCallerFallback);
+    } else {
+        window.hideIncomingAIBtn();
+    }
+
     window.stopAllRings();
     window.playSafeSound(window.sndRing, [1000, 500, 1000, 500, 1000, 500, 1000]);
 };
 
-window.acceptCall = function() {
+window.acceptCallWithAI = function() {
+    window.acceptCall(true);
+};
+
+window.acceptCall = function(withAI = false) {
+    const startWithAI = Boolean(withAI === true);
+    window.hideIncomingAIBtn();
     window.stopAllRings();
     window.callWasAnswered = true;
+    window._pendingStartAIForCall = startWithAI;
+    window.videoRoomPartnerMeta = null;
+    window._vrLastMetaSig = '';
 
     const modal = document.getElementById('incoming-call-modal');
     if (modal) modal.classList.remove('active');
 
     const incomingIsVideo = (window.currentIncomingCallType === 'video');
     window.currentActiveCallType = incomingIsVideo ? 'video' : 'voice';
+    window.applyCallRoomModeUI(incomingIsVideo);
 
     if (!incomingIsVideo) {
-        window.hideDirectVideoElements();
         window.updateCamToggleUI(true);
     }
 
     if (window.currentCallerId) {
         firebase.database().ref('signals/' + window.currentCallerId).push({
             type: 'answered',
+            useAI: startWithAI,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         });
     }
@@ -571,18 +838,28 @@ window.acceptCall = function() {
         firebase.database().ref('signals/' + window.myProfileInfo.id + '/' + window.currentIncomingSignalKey).remove();
     }
 
-    const target =
-        (window.participants || []).find(p => String(p.id) === String(window.currentCallerId)) ||
-        window.currentCallerFallback;
+    const fromList = (window.participants || []).find(p => String(p.id) === String(window.currentCallerId)) || {};
+    const fallback = window.currentCallerFallback || {};
+    const target = Object.assign({}, fromList, fallback);
 
-    if (target) {
+    if ((!target.flag || target.flag === '🌐') && fromList.flag) target.flag = fromList.flag;
+    if (!target.flagCode && fromList.flagCode) target.flagCode = fromList.flagCode;
+    if (!target.langCode && fromList.langCode) target.langCode = fromList.langCode;
+    if (!target.phone && (fromList.phone || fromList.phoneNumber)) {
+        target.phone = fromList.phone || fromList.phoneNumber;
+    }
+
+    if (target && target.id) {
         window.currentTargetUser = { ...target };
         const pEl = document.getElementById('voice-friend-photo');
         const fEl = document.getElementById('voice-friend-flag');
         const nEl = document.getElementById('voice-friend-name');
-        if (pEl) pEl.src = target.photo;
-        if (fEl) fEl.innerText = target.flag || '🌐';
-        if (nEl) nEl.innerText = (target.name || 'User').split(' ')[0];
+        if (pEl && target.photo) pEl.src = target.photo;
+        if (fEl && target.flag) fEl.innerText = target.flag;
+        if (nEl) {
+            nEl.removeAttribute('data-i18n');
+            nEl.innerText = (target.name || 'User').split(' ')[0];
+        }
 
         window.voiceFriend = target;
         if (window.switchChatRoom) window.switchChatRoom(target.id);
@@ -594,6 +871,7 @@ window.acceptCall = function() {
 };
 
 window.declineCall = function() {
+    window.hideIncomingAIBtn();
     window.stopAllRings();
     const modal = document.getElementById('incoming-call-modal');
     if (modal) modal.classList.remove('active');
@@ -612,6 +890,7 @@ window.declineCall = function() {
 };
 
 window.hangUpCall = function() {
+    window.hideIncomingAIBtn();
     window.stopAllRings();
 
     const unansweredTargetId = (!window.callWasAnswered && window.activeOutgoingCallTargetId)
@@ -673,7 +952,12 @@ window.initSignalListener = function() {
 
         if (sig.type === 'call') {
             if (age < 30000) {
-                window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType);
+                window.showIncomingCall(sig.callerId, sig.callerName, sig.callerPhoto, snap.key, sig.callType, {
+                    flag: sig.callerFlag || '',
+                    flagCode: sig.callerFlagCode || '',
+                    langCode: sig.callerLang || '',
+                    phone: sig.callerPhone || ''
+                });
             } else {
                 firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             }
@@ -682,6 +966,7 @@ window.initSignalListener = function() {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             if (age > 15000) return;
 
+            window.hideIncomingAIBtn();
             window.activeOutgoingCallTargetId = null;
             window.activeOutgoingCallRef = null;
             window.stopAllRings();
@@ -697,6 +982,7 @@ window.initSignalListener = function() {
             if (age > 15000) return;
 
             window.callWasAnswered = true;
+            window._pendingStartAIForCall = Boolean(sig.useAI);
             window.activeOutgoingCallTargetId = null;
             window.activeOutgoingCallRef = null;
             window.stopAllRings();
@@ -709,6 +995,7 @@ window.initSignalListener = function() {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             if (age > 15000) return;
 
+            window.hideIncomingAIBtn();
             window.stopAllRings();
             const incomingModal = document.getElementById('incoming-call-modal');
             if (incomingModal) incomingModal.classList.remove('active');
@@ -749,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 3. СТАБИЛЬНЫЕ РУБИЛЬНИКИ КАМЕРЫ И МИКРОФОНА (СВОИ + СОБЕСЕДНИКА)
+// 3. СТАБИЛЬНЫЕ РУБИЛЬНИКИ КАМЕРЫ И МИКРОФОНА
 // ==========================================
 
 window.toggleMyAudio = async function() {
@@ -758,9 +1045,19 @@ window.toggleMyAudio = async function() {
 
     const nextMuted = !window.isMyMicMuted;
     try {
-        // Если вручную включаем голос в звонке — сначала мягко останавливаем нижний микрофон перевода
-        if (!nextMuted && window.videoRoomMicActive && typeof window.stopVideoRoomMic === 'function') {
-            await window.stopVideoRoomMic(true);
+        // Если пользователь вручную включает живой микрофон звонка — выключаем ИИ/перевод
+        if (!nextMuted) {
+            if (window.videoRoomMicActive && typeof window.stopVideoRoomMic === 'function') {
+                await window.stopVideoRoomMic(true);
+            }
+            if (window._agoraPausedForTranslation) {
+                window._agoraPausedForTranslation = false;
+                const restoreRemote = Boolean(window._prevRemoteMicMuted);
+                if (window.remoteAgoraUser && window.remoteAgoraUser.audioTrack) {
+                    try { window.remoteAgoraUser.audioTrack.setVolume(restoreRemote ? 0 : 100); } catch (e) {}
+                }
+                window.updateRemoteMicToggleUI(restoreRemote);
+            }
         }
 
         if (window.localAudioTrack) {
@@ -782,9 +1079,8 @@ window.toggleMyAudio = async function() {
 window.toggleMyCamera = async function() {
     if (window._isTogglingCam) return;
 
-    // В чистом аудиозвонке камера заблокирована
-    if (window.currentIndex === 1 && window.currentActiveCallType !== 'video') {
-        window.setLocalVideoVisible(false);
+    if (window.currentActiveCallType !== 'video') {
+        window.applyCallRoomModeUI(false);
         window.updateCamToggleUI(true);
         return;
     }
@@ -793,7 +1089,6 @@ window.toggleMyCamera = async function() {
     const nextMuted = !window.isMyCamMuted;
 
     try {
-        // Если трека камеры ещё нет, а мы её включаем
         if (!nextMuted && !window.localVideoTrack && window.agoraClient && typeof AgoraRTC !== 'undefined') {
             window.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
             await window.agoraClient.publish([window.localVideoTrack]);
@@ -812,7 +1107,6 @@ window.toggleMyCamera = async function() {
             if (nextMuted) {
                 window.setLocalVideoVisible(false);
             } else {
-                // После setEnabled(true) в Agora 4.x обновляем MediaStreamTrack в <video>
                 window.setLocalVideoVisible(true, window.localVideoTrack);
             }
         } else {
@@ -827,7 +1121,6 @@ window.toggleMyCamera = async function() {
     }
 };
 
-// Левые кнопки управления собеседником (локально заглушить звук / скрыть видео)
 window.toggleRemoteAudio = function() {
     const nextMuted = !window.isRemoteMicMuted;
     window.updateRemoteMicToggleUI(nextMuted);
@@ -839,6 +1132,7 @@ window.toggleRemoteAudio = function() {
 };
 
 window.toggleRemoteCamera = function() {
+    if (window.currentActiveCallType !== 'video') return;
     const nextMuted = !window.isRemoteCamMuted;
     window.updateRemoteCamToggleUI(nextMuted);
     if (nextMuted) {
@@ -891,7 +1185,7 @@ window.sendMissedAudioNotice = function(targetUserId) {
         fromId: String(window.myProfileInfo.id),
         fromName: window.myUsername || window.myProfileInfo.name || 'User',
         fromPhoto: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
-        fromFlag: window.myProfileInfo.flag || '🌐',
+        fromFlag: window.myProfileInfo.flag || '',
         timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 };
@@ -910,7 +1204,7 @@ window.showMissedAudioBanner = function(dbKey, data) {
     }
 
     const name = window._escapeCallsHtml((data.fromName || 'User').split(' ')[0]);
-    const flag = window._escapeCallsHtml(data.fromFlag || '🌐');
+    const flag = window._escapeCallsHtml(data.fromFlag || '');
     const photo = window._escapeCallsHtml(data.fromPhoto || 'https://ui-avatars.com/api/?name=U');
 
     window._activeMissedAudioData = { dbKey: dbKey || null, ...data };
@@ -951,7 +1245,7 @@ window.callbackMissedAudio = function() {
         id: info.fromId,
         name: info.fromName || 'User',
         photo: info.fromPhoto || 'https://ui-avatars.com/api/?name=U',
-        flag: info.fromFlag || '🌐'
+        flag: info.fromFlag || ''
     };
     window.currentTargetUser = { ...target };
     if (typeof window.switchChatRoom === 'function') window.switchChatRoom(target.id);
@@ -965,7 +1259,7 @@ window.sendMissedVideoNotice = function(targetUserId) {
         fromId: String(window.myProfileInfo.id),
         fromName: window.myUsername || window.myProfileInfo.name || 'User',
         fromPhoto: window.myProfileInfo.photo || 'https://ui-avatars.com/api/?name=U',
-        fromFlag: window.myProfileInfo.flag || '🌐',
+        fromFlag: window.myProfileInfo.flag || '',
         timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 };
@@ -984,7 +1278,7 @@ window.showMissedVideoBanner = function(dbKey, data) {
     }
 
     const name = window._escapeCallsHtml((data.fromName || 'User').split(' ')[0]);
-    const flag = window._escapeCallsHtml(data.fromFlag || '🌐');
+    const flag = window._escapeCallsHtml(data.fromFlag || '');
     const photo = window._escapeCallsHtml(data.fromPhoto || 'https://ui-avatars.com/api/?name=U');
 
     window._activeMissedVideoData = { dbKey: dbKey || null, ...data };
@@ -1025,7 +1319,7 @@ window.callbackMissedVideo = function() {
         id: info.fromId,
         name: info.fromName || 'User',
         photo: info.fromPhoto || 'https://ui-avatars.com/api/?name=U',
-        flag: info.fromFlag || '🌐'
+        flag: info.fromFlag || ''
     };
     window.currentTargetUser = { ...target };
     if (typeof window.switchChatRoom === 'function') window.switchChatRoom(target.id);
