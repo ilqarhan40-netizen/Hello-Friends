@@ -202,7 +202,9 @@ window.showIncomingAIBtn = function(callerObj) {
     if (!wrap) {
         wrap = document.createElement('div');
         wrap.id = 'hf-incoming-ai-float';
-        document.body.appendChild(wrap);
+        (document.getElementById('incoming-call-modal') || document.body).appendChild(wrap);
+        wrap.style.cssText = 'position:static!important;transform:none!important;margin-top:28px!important;';
+        
     }
 
     const uiLang = myLang || 'en';
