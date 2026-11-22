@@ -44,6 +44,7 @@
     <script src="js/video-room.js?v=2026"></script>
     <script src="js/notifications.js?v=2027"></script>
     <script src="js/microphones.js?v=2"></script>
+    <script src="js/audio-room.js?v=1"></script>
     
     
     
@@ -433,20 +434,21 @@ if (window.OneSignalDeferred) {
     
     <div class="mobile-screen" id="phone-body">
         
-        <div id="incoming-call-modal" class="fixed inset-0 bg-black/95 z-[99999] hidden flex-col items-center justify-center backdrop-blur-lg transition-opacity duration-300">
-            <h2 class="text-[#00a884] font-bold text-xl mb-10 tracking-widest uppercase animate-pulse">Incoming Call</h2>
+                <div id="incoming-call-modal" class="fixed inset-0 bg-black/95 z-[99999] hidden flex-col items-center justify-center backdrop-blur-lg transition-opacity duration-300">
+            <h2 id="incoming-call-type" class="text-[#00a884] font-bold text-xl mb-10 tracking-widest uppercase animate-pulse text-center px-4">📞 Audio Call</h2>
             <div class="relative w-32 h-32 mb-4">
                 <div class="absolute inset-0 rounded-full border-4 border-[#00a884] animate-ping opacity-50"></div>
                 <img id="incoming-call-photo" src="" class="w-full h-full rounded-full object-cover relative z-10 border-4 border-[#111b21] shadow-[0_0_30px_rgba(0,168,132,0.6)]">
             </div>
             <h3 id="incoming-call-name" class="text-white font-bold text-3xl mb-2">User</h3>
-            <span class="text-[#8696a0] text-sm mb-16">Hello Friends Secure Voice</span>
+            <span class="text-[#8696a0] text-sm mb-16">Hello Friends</span>
             
             <div class="flex gap-12 w-full max-w-[300px] justify-center">
                 <button onclick="window.declineCall()" class="w-16 h-16 rounded-full bg-[#ef4444] text-white flex justify-center items-center text-2xl shadow-[0_0_20px_rgba(239,68,68,0.5)] hover:scale-110 transition"><i class="fa-solid fa-phone-slash"></i></button>
-                <button onclick="window.acceptCall()" class="w-16 h-16 rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-2xl shadow-[0_0_20px_rgba(0,168,132,0.5)] hover:scale-110 transition animate-bounce"><i class="fa-solid fa-phone"></i></button>
+                <button onclick="window.acceptCall()" class="w-16 h-16 rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-2xl shadow-[0_0_20px_rgba(0,168,132,0.5)] hover:scale-110 transition animate-bounce"><i id="incoming-call-accept-icon" class="fa-solid fa-phone"></i></button>
             </div>
-        </div>
+                </div>
+        
 
        <div id="toast-notification" class="absolute left-1/2 transform -translate-x-1/2 bg-[#202c33] border border-[#00a884] text-white p-3 rounded-2xl shadow-2xl z-[10005] flex flex-col gap-2 w-[92%] opacity-0 pointer-events-none" style="top: -150px; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
             <div class="flex items-center gap-3">
