@@ -18,7 +18,7 @@ window._isStartingAgora = false;
 
 // Ключи Agora (свежий токен для канала "hello")
 window.CALLS_AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
-window.CALLS_AGORA_TEMP_TOKEN = "007eJxTYCjw4uJsVtTb/o3raWJR6N/bf2826+StWJioHDC7WrSBtVqBwdLQOM3QONEsycLQwCTF2CTJwNjM0jQxOSXZIMXcMsl84UmG7IZARoa5xySZmBgYwRDEZ2XISM3JyWdgYIILsTAYGhgYAgDm9R/x";
+window.CALLS_AGORA_TEMP_TOKEN = "007eJxTYJgc9OqTtnir/+m91g3xd7Z9Yfm4yPZE3MQnC3v2aPzwFJqmwGBpaJxmaJxolmRhaGCSYmySZGBsZmmamJySbJBibplk/mseU3ZDICNDRNgFBiYGRjAE8VkZMlJzcvIZoIIgIRYGQwMDQwAYWCMT";
 window.CALLS_AGORA_CHANNEL = "hello";
 
 window.currentCallerId = null;
