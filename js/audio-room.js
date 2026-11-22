@@ -1,11 +1,10 @@
 // ==========================================
-// ФАЙЛ: js/audio-room.js (ISOLATED AUDIO WORLD v1)
-// Полностью изолированная аудиокомната (работает строго при currentActiveCallType !== 'video'):
-// - Свои ветки БД: audio_rooms / audio_active_langs
-// - Свои ключи: hf_aud_avatar_lang_ / hf_aud_mic_lang_
-// - Два раздельных канала (avatar / mic) + зеркальная бегущая строка
-// - Плашка переключения "Напрямую / ИИ-переводчик" + автоозвучка с защитой от эха
-// - Меню строго внутри #voice-translator + 13 языков экосистемы
+// ФАЙЛ: js/audio-room.js (ISOLATED AUDIO WORLD v2 — FAST AI ENGINE)
+// - Мгновенный цикл: сказал -> ушло (0.85с пауза) -> плашка очистилась
+// - Жёсткие рамки плашки + всегда видимая кнопка СТОП/DAYAN
+// - Бегущая строка "поездом" (новый перевод сразу за старым)
+// - Встроенная очередь ИИ-озвучки без наложений + умный анти-эхо фильтр
+// - Полная изоляция от video-room.js и 13 языков экосистемы
 // ==========================================
 
 (function () {
@@ -37,14 +36,19 @@
         ar: { langTitle: 'لغة الدردشة', autoProfile: 'تلقائي (الملف)', micTitle: 'ميكروفون الصوت', aiVoice: 'مترجم الذكاء الاصطناعي', voiceToText: 'نص صوتي', directMode: 'مباشر', aiMode: 'مترجم AI', waiting: 'في انتظار إدخال الصوت...', on: 'تشغيل', aiOn: 'صوت AI', stop: 'إيقاف', selectContact: 'اختر جهة اتصال أولاً' },
         it: { langTitle: 'Lingua Chat', autoProfile: 'Auto (Profilo)', micTitle: 'Microfono Audio', aiVoice: 'Traduttore IA (Voce)', voiceToText: 'Testo Vocale', directMode: 'Diretto', aiMode: 'Traduttore IA', waiting: 'In attesa di input vocale...', on: 'MIC ON', aiOn: 'IA VOCE ON', stop: 'STOP', selectContact: 'Seleziona prima un contatto' },
         es: { langTitle: 'Idioma del Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Micrófono Audio', aiVoice: 'Traductor IA (Voz)', voiceToText: 'Texto a Voz', directMode: 'Directo', aiMode: 'Traductor IA', waiting: 'Esperando entrada de voz...', on: 'MIC ON', aiOn: 'VOZ IA ON', stop: 'PARAR', selectContact: 'Selecciona un contacto primero' },
-        fr: { langTitle: 'Langue du Chat', autoProfile: 'Auto (Profil)', micTitle: 'Micro Audio', aiVoice: 'Traducteur IA (Voix)', voiceToText: 'Texte vocal', directMode: 'Direct', aiMode: 'Traducteur IA', waiting: "En attente d'entrée vocale...", on: 'MIC ON', aiOn: 'VOIX IA ON', stop: 'STOP', selectContact: 'Sélectionnez un contact' },
+        fr: { langTitle: 'Langue du Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Micro Audio', aiVoice: 'Traductor IA (Voix)', voiceToText: 'Texte vocal', directMode: 'Direct', aiMode: 'Traducteur IA', waiting: "En attente d'entrée vocale...", on: 'MIC ON', aiOn: 'VOIX IA ON', stop: 'STOP', selectContact: 'Sélectionnez un contact' },
         pt: { langTitle: 'Idioma do Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Microfone Áudio', aiVoice: 'Tradutor IA (Voz)', voiceToText: 'Texto de Voz', directMode: 'Direto', aiMode: 'Tradutor IA', waiting: 'Aguardando entrada de voz...', on: 'MIC ON', aiOn: 'VOZ IA ON', stop: 'PARAR', selectContact: 'Selecione um contato primeiro' },
         ja: { langTitle: 'チャット言語', autoProfile: '自動 (プロフィール)', micTitle: '音声マイク', aiVoice: 'AI翻訳 (音声)', voiceToText: '音声テキスト', directMode: '直接通話', aiMode: 'AI翻訳', waiting: '音声入力を待っています...', on: 'マイクON', aiOn: 'AI音声ON', stop: '停止', selectContact: '先に連絡先を選択してください' },
         zh: { langTitle: '聊天语言', autoProfile: '自动 (个人资料)', micTitle: '语音麦克风', aiVoice: 'AI 翻译 (语音)', voiceToText: '语音文本', directMode: '直接通话', aiMode: 'AI 翻译', waiting: '等待语音输入...', on: '麦克风开', aiOn: 'AI语音开', stop: '停止', selectContact: '请先选择联系人' }
     };
 
+    const SILENCE_FLUSH_MS = 850;      // Короткая пауза — сразу отправляем фразу и очищаем плашку
+    const MAX_CHUNK_WORDS = 14;        // Авто-отправка длинной непрерывной речи кусками
+    const MAX_CHUNK_CHARS = 95;
+    const ECHO_COOLDOWN_MS = 650;      // Тишина после голоса робота, чтобы эхо не попало в мик
+    const MARQUEE_GAP_PX = 44;         // Отступ между фразами в "поезде" бегущей строки
+
     const AR = {
-        queue: [],
         seenKeys: new Set(),
         activeMsgRoom: null,
         activeMsgListener: null,
@@ -59,14 +63,23 @@
         isSpeakingAI: false,
         micRestartTimer: null,
         micWatchdog: null,
-        lastTranscript: '',
-        lastTranscriptAt: 0,
+        silenceTimer: null,
+        pendingInterim: '',
+        lastSentNorm: '',
+        lastSentAt: 0,
+        ttsQueue: [],
+        ttsSpeaking: false,
+        ttsSafetyTimer: null,
+        ttsCooldownTimer: null,
+        ttsUnlocked: false,
+        recentSpoken: [],
+        translateCache: new Map(),
         marquee: {
             rafId: null,
             lastTs: 0,
             offsetX: 0,
-            speed: 65,
-            currentHtml: '',
+            speed: 78,
+            hasRealContent: false,
             passCount: 0,
             initialized: false
         }
@@ -94,6 +107,14 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
+    }
+
+    function normalizeForCompare(str) {
+        return String(str || '')
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
     }
 
     function audNormLang(code) {
@@ -227,15 +248,31 @@
         const clean = String(text || '').trim();
         const tl = audNormLang(targetLang);
         if (!clean || !tl) return clean;
+
+        const cacheKey = `${tl}|${clean.toLowerCase()}`;
+        if (AR.translateCache.has(cacheKey)) {
+            return AR.translateCache.get(cacheKey);
+        }
+
+        const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), 3500) : null;
+
         try {
             const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(clean)}`;
-            const res = await fetch(url);
+            const res = await fetch(url, ctrl ? { signal: ctrl.signal } : undefined);
             const data = await res.json();
             if (data && Array.isArray(data[0])) {
-                const joined = data[0].map(s => (s && s[0]) ? s[0] : '').join('');
-                if (joined) return joined;
+                const joined = data[0].map(s => (s && s[0]) ? s[0] : '').join('').trim();
+                if (joined) {
+                    if (AR.translateCache.size > 120) AR.translateCache.clear();
+                    AR.translateCache.set(cacheKey, joined);
+                    return joined;
+                }
             }
-        } catch (e) {}
+        } catch (e) {
+        } finally {
+            if (timeoutId) clearTimeout(timeoutId);
+        }
         return clean;
     }
 
@@ -341,7 +378,7 @@
         }
 
         return (
-            `<span class="inline-flex items-center">` +
+            `<span class="hf-ar-mq-item" data-ar-msg="1">` +
                 `<img src="${audEscapeHtml(senderPhoto)}" class="w-5 h-5 rounded-full border border-[#2a3942] mr-1 object-cover shadow-sm">` +
                 `<span class="text-white font-bold mr-1">${audEscapeHtml(senderName)}:</span>` +
                 `<span class="text-[#e9edef] mr-1">${audEscapeHtml(senderFlag)} ${audEscapeHtml(originalText)}</span>` +
@@ -379,7 +416,7 @@
     }
 
     // ==========================================
-    // 1. СТИЛИ, ПЛАШКА РЕЖИМА И МЕНЮ ВНУТРИ #voice-translator
+    // 1. СТИЛИ, ПЛАШКА РЕЖИМА (СТРОГО В РАМКАХ) И МЕНЮ
     // ==========================================
     function getAudioHost() {
         return document.getElementById('voice-translator')
@@ -398,9 +435,12 @@
     }
 
     function injectStyles() {
-        if (document.getElementById('hf-ar-v1-styles')) return;
+        if (document.getElementById('hf-ar-v2-styles')) return;
+        const oldStyle = document.getElementById('hf-ar-v1-styles');
+        if (oldStyle) oldStyle.remove();
+
         const style = document.createElement('style');
-        style.id = 'hf-ar-v1-styles';
+        style.id = 'hf-ar-v2-styles';
         style.textContent = `
             #voice-marquee-container-anim {
                 position: relative;
@@ -417,6 +457,14 @@
                 padding-left: 0 !important;
                 will-change: transform;
             }
+            .hf-ar-mq-item {
+                display: inline-flex;
+                align-items: center;
+                flex-shrink: 0;
+            }
+            .hf-ar-mq-item + .hf-ar-mq-item {
+                margin-left: ${MARQUEE_GAP_PX}px;
+            }
             #hf-ar-control-slot {
                 width: 100%;
                 flex: 1 1 auto;
@@ -427,6 +475,8 @@
                 justify-content: center;
                 gap: 10px;
                 padding: 8px 12px;
+                box-sizing: border-box;
+                overflow: hidden;
                 z-index: 30;
             }
             #hf-ar-mode-bar {
@@ -439,6 +489,7 @@
                 padding: 4px;
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
                 max-width: 96%;
+                box-sizing: border-box;
             }
             .hf-ar-mode-btn {
                 border: none;
@@ -472,13 +523,14 @@
                 background: rgba(17, 27, 33, 0.96);
                 border: 1.5px solid #ef4444;
                 color: #fff;
-                padding: 7px 14px;
+                padding: 7px 12px;
                 border-radius: 999px;
                 box-shadow: 0 8px 26px rgba(239, 68, 68, 0.4);
-                font-size: 0.76rem;
+                font-size: 0.78rem;
                 font-weight: 700;
                 max-width: 94%;
-                white-space: nowrap;
+                box-sizing: border-box;
+                overflow: hidden;
             }
             #hf-ar-mic-pill.active { display: inline-flex; }
             #hf-ar-mic-pill.ai-mode {
@@ -491,7 +543,15 @@
                 animation: hfArPulse 1s infinite;
             }
             #hf-ar-mic-pill.ai-mode .dot { background: #00e5b0; }
+            #hf-ar-mic-label {
+                flex: 1 1 auto;
+                min-width: 0;
+                overflow: hidden;
+                white-space: nowrap;
+                display: block;
+            }
             #hf-ar-mic-pill .stop-btn {
+                flex-shrink: 0;
                 background: #ef4444; color: #fff; border: none;
                 border-radius: 999px; padding: 3px 11px;
                 font-size: 0.72rem; font-weight: 800; cursor: pointer;
@@ -597,10 +657,12 @@
 
             slot.querySelector('#hf-ar-btn-direct').addEventListener('click', (e) => {
                 e.stopPropagation();
+                unlockTTSOnGesture();
                 window.switchAudioToDirect();
             });
             slot.querySelector('#hf-ar-btn-ai').addEventListener('click', (e) => {
                 e.stopPropagation();
+                unlockTTSOnGesture();
                 window.switchAudioToAI();
             });
             slot.querySelector('#hf-ar-stop-btn').addEventListener('click', (e) => {
@@ -647,8 +709,10 @@
         const btnAi = document.getElementById('hf-ar-btn-ai');
         if (!btnDirect || !btnAi) return;
 
+        // Birbaşa горит только когда микрофон перевода выключен (реально идёт прямой звонок)
+        const isDirect = !AR.micActive;
         const isAiActive = AR.micActive && AR.micMode === 'ai-audio';
-        btnDirect.classList.toggle('active-direct', !isAiActive);
+        btnDirect.classList.toggle('active-direct', isDirect);
         btnAi.classList.toggle('active-ai', isAiActive);
     }
 
@@ -769,10 +833,11 @@
                 else localStorage.setItem(key, val);
                 window.syncMyAudioChannelLang(rId, 'mic', (!val || val === 'auto') ? null : val);
             }
-            updateMicPill();
+            updateMicPill('');
         };
         popup.querySelector('#hf-ar-mic-ai-btn').onclick = (e) => {
             e.stopPropagation();
+            unlockTTSOnGesture();
             popup.classList.remove('active');
             window.startAudioRoomMic('ai-audio');
         };
@@ -786,7 +851,7 @@
     }
 
     // ==========================================
-    // 2. БЕГУЩАЯ СТРОКА АУДИОКОМНАТЫ (БЕЗ КОНФЛИКТА С ВИДЕОКОМНАТОЙ)
+    // 2. БЕГУЩАЯ СТРОКА "ПОЕЗДОМ" (НОВЫЙ ТЕКСТ СРАЗУ ЗА СТАРЫМ)
     // ==========================================
     function getMarqueeNodes() {
         return {
@@ -799,22 +864,6 @@
         if (window.HF_VIDEO_ROOM && window.HF_VIDEO_ROOM.marquee && window.HF_VIDEO_ROOM.marquee.rafId) {
             cancelAnimationFrame(window.HF_VIDEO_ROOM.marquee.rafId);
             window.HF_VIDEO_ROOM.marquee.rafId = null;
-        }
-    }
-
-    function loadNextMarquee(resetRight = true) {
-        const { container, textEl } = getMarqueeNodes();
-        if (!container || !textEl) return;
-
-        if (AR.queue.length > 0) {
-            const next = AR.queue.shift();
-            AR.marquee.currentHtml = next;
-            AR.marquee.passCount = 0;
-            textEl.innerHTML = next;
-        }
-        if (resetRight) {
-            AR.marquee.offsetX = (container.clientWidth || 300) + 16;
-            textEl.style.transform = `translate3d(${AR.marquee.offsetX}px, 0, 0)`;
         }
     }
 
@@ -836,16 +885,26 @@
 
         if (!AR.marquee.initialized) {
             AR.marquee.initialized = true;
-            AR.marquee.currentHtml = textEl.innerHTML;
             AR.marquee.offsetX = cw;
         }
 
         AR.marquee.offsetX -= AR.marquee.speed * dt;
-        if (AR.marquee.offsetX < -(tw + 24)) {
+
+        // Если в поезде больше 1 фразы и самая старая уже полностью ушла влево — удаляем её без скачка
+        const items = textEl.querySelectorAll('.hf-ar-mq-item');
+        if (items.length > 1) {
+            const first = items[0];
+            const removeWidth = first.offsetWidth + MARQUEE_GAP_PX;
+            if (AR.marquee.offsetX + removeWidth < -10) {
+                first.remove();
+                AR.marquee.offsetX += removeWidth;
+                AR.marquee.passCount = 0;
+            }
+        } else if (AR.marquee.offsetX < -(tw + 24)) {
             AR.marquee.passCount += 1;
-            if (AR.queue.length > 0) loadNextMarquee(true);
-            else AR.marquee.offsetX = cw + 16;
+            AR.marquee.offsetX = cw + 16;
         }
+
         textEl.style.transform = `translate3d(${AR.marquee.offsetX}px, 0, 0)`;
     }
 
@@ -861,18 +920,242 @@
     function pushAudioMarquee(html) {
         if (!html || !isAudioMode()) return;
         startMarqueeEngine();
-        AR.queue.push(html);
-        const isPlaceholder = !AR.marquee.currentHtml || AR.marquee.currentHtml.indexOf('img src=') === -1;
-        if (isPlaceholder || AR.marquee.passCount >= 1) {
-            loadNextMarquee(true);
+
+        const { container, textEl } = getMarqueeNodes();
+        if (!container || !textEl) return;
+        const cw = container.clientWidth || 300;
+
+        // Если на экране заглушка или старая одиночная фраза уже докрутилась хотя бы 1 раз — сразу показываем новую
+        const existingItems = textEl.querySelectorAll('.hf-ar-mq-item');
+        if (!AR.marquee.hasRealContent || existingItems.length === 0 || (existingItems.length === 1 && AR.marquee.passCount >= 1)) {
+            textEl.innerHTML = html;
+            AR.marquee.hasRealContent = true;
+            AR.marquee.passCount = 0;
+            AR.marquee.initialized = true;
+            AR.marquee.offsetX = cw + 12;
+            textEl.style.transform = `translate3d(${AR.marquee.offsetX}px, 0, 0)`;
+            return;
+        }
+
+        // Ограничиваем длину поезда (максимум 4 фразы), чтобы не копился хвост
+        if (existingItems.length >= 4) {
+            const oldest = existingItems[0];
+            const shift = oldest.offsetWidth + MARQUEE_GAP_PX;
+            oldest.remove();
+            AR.marquee.offsetX += shift;
+        }
+
+        // Вставляем новую фразу сразу следом за текущей
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const newNode = temp.firstElementChild;
+        if (newNode) {
+            textEl.appendChild(newNode);
         }
     }
 
+    // ==========================================
+    // 3. ВСТРОЕННАЯ БЫСТРАЯ ОЧЕРЕДЬ ОЗВУЧКИ + АНТИ-ЭХО
+    // ==========================================
+    function unlockTTSOnGesture() {
+        if (AR.ttsUnlocked || typeof window.speechSynthesis === 'undefined') return;
+        try {
+            window.speechSynthesis.getVoices();
+            const silent = new SpeechSynthesisUtterance('');
+            silent.volume = 0;
+            window.speechSynthesis.speak(silent);
+            AR.ttsUnlocked = true;
+        } catch (e) {}
+    }
+
+    function stopAudioTTSQueue() {
+        AR.ttsQueue = [];
+        AR.ttsSpeaking = false;
+        clearTimeout(AR.ttsSafetyTimer);
+        clearTimeout(AR.ttsCooldownTimer);
+        AR.ttsSafetyTimer = null;
+        AR.ttsCooldownTimer = null;
+        try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+        if (typeof window.stopVoiceAI === 'function') {
+            try { window.stopVoiceAI(); } catch (e) {}
+        }
+    }
+
+    function pickBestVoice(speechLocale) {
+        if (!window.speechSynthesis) return null;
+        const voices = window.speechSynthesis.getVoices() || [];
+        if (!voices.length) return null;
+        const full = String(speechLocale || 'en-US').toLowerCase();
+        const short = full.split('-')[0];
+        return voices.find(v => (v.lang || '').toLowerCase() === full)
+            || voices.find(v => (v.lang || '').toLowerCase().startsWith(short))
+            || null;
+    }
+
+    function pauseMicForAI() {
+        AR.isSpeakingAI = true;
+        clearTimeout(AR.micRestartTimer);
+        clearTimeout(AR.silenceTimer);
+        clearTimeout(AR.ttsCooldownTimer);
+        AR.micRestartTimer = null;
+        AR.silenceTimer = null;
+        AR.ttsCooldownTimer = null;
+        AR.pendingInterim = '';
+
+        if (AR.recognition) {
+            try {
+                AR.recognition.onresult = null;
+                AR.recognition.onend = null;
+                AR.recognition.onerror = null;
+                AR.recognition.abort();
+            } catch (e) {}
+            AR.recognition = null;
+        }
+        if (AR.micActive) updateMicPill('');
+    }
+
+    function resumeMicAfterAI() {
+        clearTimeout(AR.ttsCooldownTimer);
+        AR.ttsCooldownTimer = setTimeout(() => {
+            AR.ttsCooldownTimer = null;
+            if (AR.ttsSpeaking || AR.ttsQueue.length > 0) return;
+            AR.isSpeakingAI = false;
+            if (AR.micActive && isAudioMode()) {
+                launchRecognition();
+            }
+        }, ECHO_COOLDOWN_MS);
+    }
+
+    function recordSpokenText(text) {
+        const norm = normalizeForCompare(text);
+        if (!norm) return;
+        const now = Date.now();
+        AR.recentSpoken = AR.recentSpoken.filter(item => (now - item.ts) < 7500);
+        AR.recentSpoken.push({ norm, words: norm.split(' ').filter(w => w.length >= 2), ts: now });
+    }
+
+    function isLikelyEcho(candidateText) {
+        const candNorm = normalizeForCompare(candidateText);
+        if (!candNorm) return true;
+
+        const now = Date.now();
+        AR.recentSpoken = AR.recentSpoken.filter(item => (now - item.ts) < 7500);
+        if (!AR.recentSpoken.length) return false;
+
+        const candWords = candNorm.split(' ').filter(w => w.length >= 2);
+        for (const item of AR.recentSpoken) {
+            if (candNorm === item.norm) return true;
+            if (candNorm.length >= 4 && (item.norm.includes(candNorm) || candNorm.includes(item.norm))) {
+                return true;
+            }
+            if (candWords.length >= 2 && item.words.length >= 2) {
+                const spokenSet = new Set(item.words);
+                let hits = 0;
+                for (const w of candWords) {
+                    if (spokenSet.has(w)) hits++;
+                }
+                if ((hits / candWords.length) >= 0.55) return true;
+            }
+        }
+        return false;
+    }
+
+    function processAudioTTSQueue() {
+        if (AR.ttsSpeaking || !AR.ttsQueue.length || !isAudioMode()) return;
+
+        const item = AR.ttsQueue.shift();
+        if (!item || !item.text) {
+            processAudioTTSQueue();
+            return;
+        }
+
+        // Заранее ставим распознавание на паузу ДО выхода звука из динамика
+        pauseMicForAI();
+        recordSpokenText(item.text);
+
+        if (typeof window.speechSynthesis === 'undefined') {
+            if (typeof window.playAIVoice === 'function') {
+                window.playAIVoice(encodeURIComponent(item.text), item.lang);
+            } else {
+                resumeMicAfterAI();
+            }
+            return;
+        }
+
+        const normLang = audNormLang(item.lang) || getAudioNativeLang(window.myProfileInfo);
+        const speechLocale = (AUD_LANG_MAP[normLang] && AUD_LANG_MAP[normLang].speech) || 'en-US';
+
+        const utt = new SpeechSynthesisUtterance(item.text);
+        utt.lang = speechLocale;
+        utt.rate = 1.08;
+        utt.pitch = 1.0;
+        utt.volume = 1.0;
+
+        const voice = pickBestVoice(speechLocale);
+        if (voice) utt.voice = voice;
+
+        AR.ttsSpeaking = true;
+        let finished = false;
+
+        const done = () => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(AR.ttsSafetyTimer);
+            AR.ttsSafetyTimer = null;
+            AR.ttsSpeaking = false;
+
+            if (AR.ttsQueue.length > 0 && isAudioMode()) {
+                setTimeout(processAudioTTSQueue, 40);
+            } else {
+                resumeMicAfterAI();
+            }
+        };
+
+        utt.onend = done;
+        utt.onerror = done;
+
+        // Страховка, если Android Chrome «забыл» прислать событие onend
+        const maxDuration = Math.min(18000, Math.max(4000, item.text.length * 140));
+        AR.ttsSafetyTimer = setTimeout(() => {
+            try { window.speechSynthesis.cancel(); } catch (e) {}
+            done();
+        }, maxDuration);
+
+        try {
+            window.speechSynthesis.speak(utt);
+        } catch (e) {
+            done();
+        }
+    }
+
+    function enqueueAudioTTS(text, lang) {
+        const clean = String(text || '').trim();
+        if (!clean || !isAudioMode()) return;
+
+        // Держим максимум 2 фразы в очереди, чтобы голос не отставал от живой речи
+        if (AR.ttsQueue.length >= 2) {
+            AR.ttsQueue.shift();
+        }
+        AR.ttsQueue.push({ text: clean, lang });
+        processAudioTTSQueue();
+    }
+
+    // Совместимость с внешним voice.js
+    window.onAIVoiceStart = function () {
+        pauseMicForAI();
+    };
+    window.onAIVoiceEnd = function () {
+        if (!AR.ttsSpeaking && AR.ttsQueue.length === 0) {
+            resumeMicAfterAI();
+        }
+    };
+
     window.resetAudioRoomState = function () {
+        stopAudioTTSQueue();
         if (AR.micActive) window.stopAudioRoomMic(true);
-        AR.queue = [];
         AR.seenKeys.clear();
-        AR.marquee.currentHtml = '';
+        AR.recentSpoken = [];
+        AR.marquee.hasRealContent = false;
         AR.marquee.passCount = 0;
         AR.isSpeakingAI = false;
         closeAllAudioPopups();
@@ -894,7 +1177,7 @@
     };
 
     // ==========================================
-    // 3. ОТПРАВКА (КАНАЛ avatar / mic — КЛАВИАТУРА, ГОЛОС-ТЕКСТ И ИИ-ГОЛОС)
+    // 4. ОТПРАВКА (КАНАЛ avatar / mic — КЛАВИАТУРА, ГОЛОС-ТЕКСТ И ИИ-ГОЛОС)
     // ==========================================
     window.sendAudioRoomPayload = async function (rawText, sourceType = 'keyboard') {
         if (!isAudioMode()) return;
@@ -929,12 +1212,12 @@
         const safeName = (window.myUsername || (window.myProfileInfo && window.myProfileInfo.name) || 'User').split(' ')[0];
         const safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
 
+        const targetUser = getAudioTargetUser();
+        const targetInfo = await getTargetLiveAudioChannel(roomId, targetUser, channel);
+
         const myBaseText = isVoice
             ? cleanText
             : await audTranslateText(cleanText, myActiveLang);
-
-        const targetUser = getAudioTargetUser();
-        const targetInfo = await getTargetLiveAudioChannel(roomId, targetUser, channel);
 
         let textToShip = myBaseText;
         if (targetInfo.lang && targetInfo.lang !== myActiveLang) {
@@ -981,7 +1264,7 @@
     };
 
     // ==========================================
-    // 4. ПРИЁМ: ЗЕРКАЛЬНАЯ СТРОКА + АВТООЗВУЧКА ИИ-ПЕРЕВОДЧИКА
+    // 5. ПРИЁМ: ПОЕЗД БЕГУЩЕЙ СТРОКИ + БЫСТРАЯ ОЗВУЧКА ИИ
     // ==========================================
     function handleIncomingAudioMsg(snapshot) {
         if (!isAudioMode()) return;
@@ -996,27 +1279,30 @@
             if ((serverNow - data.timestamp) > 60000) return;
         }
 
-        const marqueeHtml = data.mirrorMarquee || buildAudioMirrorMarquee(
-            data.photo || 'https://ui-avatars.com/api/?name=U',
-            data.flag || '🌐',
-            (data.name || 'User').split(' ')[0],
-            data.originalText || data.text || '',
-            data.targetPhoto || 'https://ui-avatars.com/api/?name=U',
-            data.targetFlag || '🌐',
-            (data.targetName || 'User').split(' ')[0],
-            data.text || data.originalText || '',
-            data.sourceType || 'keyboard'
-        );
+        // Гарантируем класс hf-ar-mq-item даже для сообщений от старого клиента
+        let marqueeHtml = data.mirrorMarquee || '';
+        if (!marqueeHtml || marqueeHtml.indexOf('hf-ar-mq-item') === -1) {
+            marqueeHtml = buildAudioMirrorMarquee(
+                data.photo || 'https://ui-avatars.com/api/?name=U',
+                data.flag || '🌐',
+                (data.name || 'User').split(' ')[0],
+                data.originalText || data.text || '',
+                data.targetPhoto || 'https://ui-avatars.com/api/?name=U',
+                data.targetFlag || '🌐',
+                (data.targetName || 'User').split(' ')[0],
+                data.text || data.originalText || '',
+                data.sourceType || 'keyboard'
+            );
+        }
 
         pushAudioMarquee(marqueeHtml);
 
-        // Озвучиваем у собеседника, если сообщение отправлено в режиме ИИ-переводчика
         const myId = (window.myProfileInfo && window.myProfileInfo.id) ? String(window.myProfileInfo.id) : '';
         if (data.sourceType === 'ai-audio' && myId && String(data.userId) !== myId && isAudioRoomVisibleOrInCall()) {
             const spokenText = (data.text || data.originalText || '').trim();
             const spokenLang = data.targetLang || getMyManualAudioLang(AR.activeMsgRoom, 'mic') || getAudioNativeLang(window.myProfileInfo);
-            if (spokenText && typeof window.playAIVoice === 'function') {
-                window.playAIVoice(encodeURIComponent(spokenText), spokenLang);
+            if (spokenText) {
+                enqueueAudioTTS(spokenText, spokenLang);
             }
         }
     }
@@ -1052,7 +1338,7 @@
     };
 
     // ==========================================
-    // 5. МИКРОФОН, ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМОВ И ЗАЩИТА ОТ ЭХА
+    // 6. МИКРОФОН: БЫСТРЫЙ ЦИКЛ "СКАЗАЛ -> УШЛО -> ПЛАШКА ЧИСТАЯ"
     // ==========================================
     function updateMicPill(preview = '') {
         ensureAudioControls();
@@ -1082,13 +1368,70 @@
         if (label) {
             const idleLabel = isAi ? d.aiOn : d.on;
             label.textContent = preview ? `${flag} ${preview}` : `${flag} ${idleLabel}`;
+            // Автопрокрутка к новым словам строго внутри рамок плашки
+            label.scrollLeft = label.scrollWidth;
         }
         pill.classList.add('active');
         if (micBtn) micBtn.classList.add('hf-ar-mic-live');
         updateModeBarUI();
     }
 
-    function scheduleRestart(delay = 180) {
+    function dispatchVoicePhrase(text) {
+        const clean = String(text || '').trim();
+        if (!clean) return;
+
+        const norm = normalizeForCompare(clean);
+        if (!norm) return;
+
+        // Защита от дублей и эха
+        const now = Date.now();
+        if (norm === AR.lastSentNorm && (now - AR.lastSentAt) < 2200) return;
+        if (isLikelyEcho(clean)) return;
+
+        AR.lastSentNorm = norm;
+        AR.lastSentAt = now;
+
+        const payloadType = (AR.micMode === 'ai-audio') ? 'ai-audio' : 'voice';
+        window.sendAudioRoomPayload(clean, payloadType);
+    }
+
+    function resetRecognitionFresh(delay = 80) {
+        clearTimeout(AR.silenceTimer);
+        AR.silenceTimer = null;
+        AR.pendingInterim = '';
+
+        if (AR.recognition) {
+            try {
+                AR.recognition.onresult = null;
+                AR.recognition.onend = null;
+                AR.recognition.onerror = null;
+                AR.recognition.abort();
+            } catch (e) {}
+            AR.recognition = null;
+        }
+        if (AR.micActive && !AR.isSpeakingAI && isAudioMode()) {
+            scheduleRestart(delay);
+        }
+    }
+
+    function flushPendingInterim() {
+        clearTimeout(AR.silenceTimer);
+        AR.silenceTimer = null;
+
+        const phrase = AR.pendingInterim.trim();
+        AR.pendingInterim = '';
+
+        // Мгновенно очищаем плашку
+        updateMicPill('');
+
+        if (!phrase || AR.isSpeakingAI) return;
+
+        dispatchVoicePhrase(phrase);
+        // Перезапускаем распознаватель с нуля, чтобы старый текст больше не копился
+        resetRecognitionFresh(80);
+    }
+
+    function scheduleRestart(delay = 80) {
         if (!AR.micActive || AR.isSpeakingAI || !isAudioMode()) return;
         clearTimeout(AR.micRestartTimer);
         AR.micRestartTimer = setTimeout(() => {
@@ -1105,9 +1448,16 @@
         if (!SpeechRec) return;
 
         if (AR.recognition) {
-            try { AR.recognition.onend = null; AR.recognition.onerror = null; AR.recognition.abort(); } catch (e) {}
+            try {
+                AR.recognition.onresult = null;
+                AR.recognition.onend = null;
+                AR.recognition.onerror = null;
+                AR.recognition.abort();
+            } catch (e) {}
             AR.recognition = null;
         }
+
+        AR.pendingInterim = '';
 
         try {
             const rec = new SpeechRec();
@@ -1120,6 +1470,7 @@
 
             rec.onresult = (event) => {
                 if (!event.results || !event.results.length || AR.isSpeakingAI) return;
+
                 let finalTxt = '';
                 let interimTxt = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -1127,18 +1478,32 @@
                     if (event.results[i].isFinal) finalTxt += ' ' + chunk;
                     else interimTxt += ' ' + chunk;
                 }
-                interimTxt = interimTxt.trim();
                 finalTxt = finalTxt.trim();
+                interimTxt = interimTxt.trim();
 
-                if (interimTxt) updateMicPill(interimTxt);
                 if (finalTxt) {
+                    clearTimeout(AR.silenceTimer);
+                    AR.silenceTimer = null;
+                    AR.pendingInterim = '';
                     updateMicPill('');
-                    const now = Date.now();
-                    if (finalTxt === AR.lastTranscript && (now - AR.lastTranscriptAt) < 1200) return;
-                    AR.lastTranscript = finalTxt;
-                    AR.lastTranscriptAt = now;
-                    const payloadType = (AR.micMode === 'ai-audio') ? 'ai-audio' : 'voice';
-                    window.sendAudioRoomPayload(finalTxt, payloadType);
+                    dispatchVoicePhrase(finalTxt);
+                    return;
+                }
+
+                if (interimTxt) {
+                    AR.pendingInterim = interimTxt;
+                    updateMicPill(interimTxt);
+
+                    // Если длинная непрерывная речь — отдаём куском сразу, не затягивая
+                    const wordsCount = interimTxt.split(/\s+/).length;
+                    if (wordsCount >= MAX_CHUNK_WORDS || interimTxt.length >= MAX_CHUNK_CHARS) {
+                        flushPendingInterim();
+                        return;
+                    }
+
+                    // Короткая пауза (0.85с) -> сразу отправляем и чистим плашку
+                    clearTimeout(AR.silenceTimer);
+                    AR.silenceTimer = setTimeout(flushPendingInterim, SILENCE_FLUSH_MS);
                 }
             };
 
@@ -1147,17 +1512,29 @@
                     window.stopAudioRoomMic(false);
                     return;
                 }
+                if (AR.pendingInterim.trim() && !AR.isSpeakingAI) {
+                    flushPendingInterim();
+                    return;
+                }
                 if (AR.micActive && !AR.isSpeakingAI) {
                     AR.recognition = null;
-                    scheduleRestart(300);
+                    scheduleRestart(220);
                 }
             };
 
             rec.onend = () => {
                 AR.recognition = null;
+                if (AR.pendingInterim.trim() && !AR.isSpeakingAI) {
+                    const tail = AR.pendingInterim.trim();
+                    AR.pendingInterim = '';
+                    clearTimeout(AR.silenceTimer);
+                    AR.silenceTimer = null;
+                    updateMicPill('');
+                    dispatchVoicePhrase(tail);
+                }
                 if (AR.micActive && !AR.isSpeakingAI) {
                     updateMicPill('');
-                    scheduleRestart(180);
+                    scheduleRestart(80);
                 }
             };
 
@@ -1165,53 +1542,35 @@
             rec.start();
         } catch (e) {
             AR.recognition = null;
-            if (AR.micActive && !AR.isSpeakingAI) scheduleRestart(400);
+            if (AR.micActive && !AR.isSpeakingAI) scheduleRestart(300);
         }
     }
-
-    // Защита от эха: ставим распознавание на паузу, пока говорит синтезатор из js/voice.js
-    window.onAIVoiceStart = function () {
-        AR.isSpeakingAI = true;
-        clearTimeout(AR.micRestartTimer);
-        AR.micRestartTimer = null;
-        if (AR.recognition) {
-            try { AR.recognition.onend = null; AR.recognition.onerror = null; AR.recognition.abort(); } catch (e) {}
-            AR.recognition = null;
-        }
-    };
-
-    window.onAIVoiceEnd = function () {
-        AR.isSpeakingAI = false;
-        if (AR.micActive && isAudioMode()) {
-            scheduleRestart(350);
-        }
-    };
 
     window.startAudioRoomMic = async function (mode = 'ai-audio') {
         if (!isAudioMode()) return;
         const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRec) return;
 
-        // Прогреваем список голосов синтезатора внутри клика пользователя (для Android Chrome)
-        try { if (window.speechSynthesis) window.speechSynthesis.getVoices(); } catch (e) {}
+        unlockTTSOnGesture();
 
         const normalizedMode = (mode === 'text' || mode === 'voice') ? 'text' : 'ai-audio';
         AR.micMode = normalizedMode;
 
         if (AR.micActive) {
-            updateMicPill();
+            updateMicPill('');
             return;
         }
 
         AR.micActive = true;
+        AR.isSpeakingAI = false;
         window.audioRoomMicActive = true;
         window.videoRoomMicActive = true;
         window.syncAudioRoomListener();
-        updateMicPill();
+        updateMicPill('');
 
         if (typeof window.pauseAgoraMicForTranslation === 'function') {
             await window.pauseAgoraMicForTranslation();
-            await new Promise(r => setTimeout(r, 320));
+            await new Promise(r => setTimeout(r, 260));
         }
 
         if (!AR.micActive) return;
@@ -1222,7 +1581,7 @@
             if (AR.micActive && !AR.isSpeakingAI && !AR.recognition && !AR.micRestartTimer) {
                 launchRecognition();
             }
-        }, 2500);
+        }, 2000);
     };
 
     window.stopAudioRoomMic = async function (skipResumeAgora = false) {
@@ -1230,16 +1589,24 @@
         window.audioRoomMicActive = false;
         window.videoRoomMicActive = false;
         clearTimeout(AR.micRestartTimer);
+        clearTimeout(AR.silenceTimer);
         clearInterval(AR.micWatchdog);
         AR.micRestartTimer = null;
+        AR.silenceTimer = null;
         AR.micWatchdog = null;
+        AR.pendingInterim = '';
 
         if (AR.recognition) {
-            try { AR.recognition.onend = null; AR.recognition.onerror = null; AR.recognition.stop(); } catch (e) {}
+            try {
+                AR.recognition.onresult = null;
+                AR.recognition.onend = null;
+                AR.recognition.onerror = null;
+                AR.recognition.stop();
+            } catch (e) {}
             AR.recognition = null;
         }
 
-        updateMicPill();
+        updateMicPill('');
 
         if (skipResumeAgora) {
             window._agoraPausedForTranslation = false;
@@ -1250,9 +1617,7 @@
 
     window.switchAudioToDirect = async function () {
         if (!isAudioMode()) return;
-        if (typeof window.stopVoiceAI === 'function') {
-            try { window.stopVoiceAI(); } catch (e) {}
-        }
+        stopAudioTTSQueue();
         AR.isSpeakingAI = false;
         await window.stopAudioRoomMic(false);
         updateModeBarUI();
@@ -1260,6 +1625,7 @@
 
     window.switchAudioToAI = async function () {
         if (!isAudioMode()) return;
+        unlockTTSOnGesture();
         await window.startAudioRoomMic('ai-audio');
         updateModeBarUI();
     };
@@ -1267,7 +1633,7 @@
     window.startVoiceRoomMic = window.startAudioRoomMic;
 
     // ==========================================
-    // 6. БЕЗОПАСНЫЙ МОСТ С calls.js (НЕ МЕШАЕТ video-room.js)
+    // 7. БЕЗОПАСНЫЙ МОСТ С calls.js (НЕ МЕШАЕТ video-room.js)
     // ==========================================
     function bindCallModuleBridge() {
         if (typeof window.startVideoRoomMic === 'function' && !window.startVideoRoomMic._hfAudioWrapped) {
@@ -1330,7 +1696,7 @@
     }
 
     // ==========================================
-    // 7. ПЕРЕХВАТ СОБЫТИЙ СТРОГО ВНУТРИ АУДИОКОМНАТЫ
+    // 8. ПЕРЕХВАТ СОБЫТИЙ СТРОГО ВНУТРИ АУДИОКОМНАТЫ
     // ==========================================
     function bindAudioRoomDelegation() {
         const host = document.getElementById('voice-translator');
@@ -1369,9 +1735,9 @@
                 setTimeout(() => {
                     if (!isAudioMode()) return;
                     ensureAudioControls();
-                    updateMicPill();
+                    updateMicPill(AR.pendingInterim);
                     const { textEl } = getMarqueeNodes();
-                    if (textEl && (!AR.marquee.currentHtml || AR.marquee.currentHtml.indexOf('img src=') === -1)) {
+                    if (textEl && !AR.marquee.hasRealContent) {
                         textEl.innerHTML = getAudioUiDict().waiting;
                     }
                 }, 60);
@@ -1384,6 +1750,9 @@
         bindAudioRoomDelegation();
         ensureAudioControls();
         updateModeBarUI();
+
+        // Прогреваем список голосов синтезатора сразу
+        try { if (window.speechSynthesis) window.speechSynthesis.getVoices(); } catch (e) {}
 
         document.addEventListener('click', () => {
             if (isAudioMode()) closeAllAudioPopups();
