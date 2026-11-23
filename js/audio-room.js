@@ -36,7 +36,7 @@
         ar: { langTitle: 'لغة الدردشة', autoProfile: 'تلقائي (الملف)', micTitle: 'ميكروفون الصوت', aiVoice: 'مترجم الذكاء الاصطناعي', voiceToText: 'نص صوتي', directMode: 'مباشر', aiMode: 'مترجم AI', waiting: 'في انتظار إدخال الصوت...', on: 'تشغيل', aiOn: 'صوت AI', stop: 'إيقاف', selectContact: 'اختر جهة اتصال أولاً' },
         it: { langTitle: 'Lingua Chat', autoProfile: 'Auto (Profilo)', micTitle: 'Microfono Audio', aiVoice: 'Traduttore IA (Voce)', voiceToText: 'Testo Vocale', directMode: 'Diretto', aiMode: 'Traduttore IA', waiting: 'In attesa di input vocale...', on: 'MIC ON', aiOn: 'IA VOCE ON', stop: 'STOP', selectContact: 'Seleziona prima un contatto' },
         es: { langTitle: 'Idioma del Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Micrófono Audio', aiVoice: 'Traductor IA (Voz)', voiceToText: 'Texto a Voz', directMode: 'Directo', aiMode: 'Traductor IA', waiting: 'Esperando entrada de voz...', on: 'MIC ON', aiOn: 'VOZ IA ON', stop: 'PARAR', selectContact: 'Selecciona un contacto primero' },
-        fr: { langTitle: 'Langue du Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Micro Audio', aiVoice: 'Traductor IA (Voix)', voiceToText: 'Texte vocal', directMode: 'Direct', aiMode: 'Traducteur IA', waiting: "En attente d'entrée vocale...", on: 'MIC ON', aiOn: 'VOIX IA ON', stop: 'STOP', selectContact: 'Sélectionnez un contact' },
+        fr: { langTitle: 'Langue du Chat', autoProfile: 'Auto (Profil)', micTitle: 'Micro Audio', aiVoice: 'Traducteur IA (Voix)', voiceToText: 'Texte vocal', directMode: 'Direct', aiMode: 'Traducteur IA', waiting: "En attente d'entrée vocale...", on: 'MIC ON', aiOn: 'VOIX IA ON', stop: 'STOP', selectContact: 'Sélectionnez un contact' },
         pt: { langTitle: 'Idioma do Chat', autoProfile: 'Auto (Perfil)', micTitle: 'Microfone Áudio', aiVoice: 'Tradutor IA (Voz)', voiceToText: 'Texto de Voz', directMode: 'Direto', aiMode: 'Tradutor IA', waiting: 'Aguardando entrada de voz...', on: 'MIC ON', aiOn: 'VOZ IA ON', stop: 'PARAR', selectContact: 'Selecione um contato primeiro' },
         ja: { langTitle: 'チャット言語', autoProfile: '自動 (プロフィール)', micTitle: '音声マイク', aiVoice: 'AI翻訳 (音声)', voiceToText: '音声テキスト', directMode: '直接通話', aiMode: 'AI翻訳', waiting: '音声入力を待っています...', on: 'マイクON', aiOn: 'AI音声ON', stop: '停止', selectContact: '先に連絡先を選択してください' },
         zh: { langTitle: '聊天语言', autoProfile: '自动 (个人资料)', micTitle: '语音麦克风', aiVoice: 'AI 翻译 (语音)', voiceToText: '语音文本', directMode: '直接通话', aiMode: 'AI 翻译', waiting: '等待语音输入...', on: '麦克风开', aiOn: 'AI语音开', stop: '停止', selectContact: '请先选择联系人' }
@@ -95,7 +95,6 @@
             localStorage.removeItem(k);
         }
     });
-
 
     function isAudioMode() {
         return window.currentActiveCallType !== 'video';
@@ -251,21 +250,23 @@
         return audNormLang(localStorage.getItem(getAudioChannelStorageKey(roomId, channel)));
     }
 
-    async function audTranslateText(text, targetLang) {
+    async function audTranslateText(text, targetLang, sourceLang = 'auto') {
         const clean = String(text || '').trim();
         const tl = audNormLang(targetLang);
+        const sl = (sourceLang && sourceLang !== 'auto') ? (audNormLang(sourceLang) || 'auto') : 'auto';
         if (!clean || !tl) return clean;
+        if (sl !== 'auto' && sl === tl) return clean;
 
-        const cacheKey = `${tl}|${clean.toLowerCase()}`;
+        const cacheKey = `${sl}|${tl}|${clean.toLowerCase()}`;
         if (AR.translateCache.has(cacheKey)) {
             return AR.translateCache.get(cacheKey);
         }
 
         const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-        const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), 3500) : null;
+        const timeoutId = ctrl ? setTimeout(() => ctrl.abort(), 4500) : null;
 
         try {
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(clean)}`;
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sl)}&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(clean)}`;
             const res = await fetch(url, ctrl ? { signal: ctrl.signal } : undefined);
             const data = await res.json();
             if (data && Array.isArray(data[0])) {
@@ -295,26 +296,32 @@
             ? audNormLang(forcedLang)
             : getMyManualAudioLang(roomId, channel);
 
+        const effLang = (activeLang && AUD_LANG_MAP[activeLang])
+            ? activeLang
+            : getAudioNativeLang(window.myProfileInfo);
+        const effFlag = (activeLang && AUD_LANG_MAP[activeLang])
+            ? AUD_LANG_MAP[activeLang].flag
+            : getAudioNativeFlag(window.myProfileInfo);
+        const effFlagCode = (activeLang && AUD_LANG_MAP[activeLang])
+            ? AUD_LANG_MAP[activeLang].flagCode
+            : ((window.myProfileInfo && window.myProfileInfo.flagCode) || (AUD_LANG_MAP[effLang] && AUD_LANG_MAP[effLang].flagCode) || 'un');
+
         const userRef = firebase.database().ref(`audio_active_langs/${roomId}/${myId}`);
         const chRef = userRef.child(channel);
 
         if (!window.audioLiveLangs[roomId]) window.audioLiveLangs[roomId] = {};
         if (!window.audioLiveLangs[roomId][myId]) window.audioLiveLangs[roomId][myId] = {};
 
-        if (activeLang && AUD_LANG_MAP[activeLang]) {
-            const payload = {
-                langCode: activeLang,
-                flagCode: AUD_LANG_MAP[activeLang].flagCode,
-                flag: AUD_LANG_MAP[activeLang].flag,
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            };
-            window.audioLiveLangs[roomId][myId][channel] = payload;
-            chRef.set(payload).catch(() => {});
-            try { userRef.onDisconnect().remove(); } catch (e) {}
-        } else {
-            delete window.audioLiveLangs[roomId][myId][channel];
-            chRef.remove().catch(() => {});
-        }
+        const payload = {
+            langCode: effLang,
+            flagCode: effFlagCode,
+            flag: effFlag,
+            isAuto: !activeLang,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        window.audioLiveLangs[roomId][myId][channel] = payload;
+        chRef.set(payload).catch(() => {});
+        try { userRef.onDisconnect().remove(); } catch (e) {}
     };
 
     window.initAudioLiveLangSync = function (roomId) {
@@ -333,10 +340,9 @@
                 window.audioLiveLangsLoaded[rId] = true;
                 updateAudioRoomFlagsUI();
             });
+            window.syncMyAudioChannelLang(rId, 'avatar');
+            window.syncMyAudioChannelLang(rId, 'mic');
         }
-
-        window.syncMyAudioChannelLang(rId, 'avatar');
-        window.syncMyAudioChannelLang(rId, 'mic');
     };
 
     async function getTargetLiveAudioChannel(roomId, targetUser, channel) {
@@ -396,7 +402,6 @@
             `</span>`
         );
     }
-
         // ================= МИР 1: МИКРОФОН (отдельный блок) =================
     const AR_MIC_WORLD = {
         lastRoomId: null,
@@ -459,7 +464,7 @@
                 if (k.startsWith('hf_aud_mic_lang_')) localStorage.removeItem(k);
             });
             const sel = document.getElementById('hf-ar-mic-select');
-            if (sel && sel.value !== '') sel.value = '';
+            if (sel && sel.value !== 'auto') sel.value = 'auto';
             if (rId && typeof window.syncMyAudioChannelLang === 'function') {
                 window.syncMyAudioChannelLang(rId, 'mic', '');
             }
@@ -499,7 +504,7 @@
                 this.initSyncedRoom = roomId;
                 if (!getMyManualAudioLang(roomId, 'mic')) {
                     const sel = document.getElementById('hf-ar-mic-select');
-                    if (sel && sel.value !== '') sel.value = '';
+                    if (sel && sel.value !== 'auto') sel.value = 'auto';
                     if (typeof window.syncMyAudioChannelLang === 'function') {
                         window.syncMyAudioChannelLang(roomId, 'mic', '');
                     }
@@ -658,7 +663,6 @@
         AR_MIC_WORLD.tick(roomId);
         AR_AVATAR_WORLD.tick(roomId);
     }
-
 
     // ==========================================
     // 1. СТИЛИ, ПЛАШКА РЕЖИМА (СТРОГО В РАМКАХ) И МЕНЮ
@@ -1014,6 +1018,7 @@
                     else localStorage.setItem(key, chosen);
                     window.syncMyAudioChannelLang(rId, 'avatar', chosen === 'auto' ? null : chosen);
                 }
+                AR_AVATAR_WORLD.applyMyFlag(rId);
                 updateAudioRoomFlagsUI();
                 modal.classList.remove('active');
             };
@@ -1079,8 +1084,9 @@
                 window.syncMyAudioChannelLang(rId, 'mic', (!val || val === 'auto') ? null : val);
             }
             updateMicPill('');
-            AR_MIC_WORLD.tick(getAudioRoomId());
-            
+            AR_MIC_WORLD.applyMyFlag(rId);
+            AR_MIC_WORLD.tick(rId);
+            if (AR.micActive && !AR.isSpeakingAI) resetRecognitionFresh(80);
         };
         popup.querySelector('#hf-ar-mic-ai-btn').onclick = (e) => {
             e.stopPropagation();
@@ -1200,7 +1206,6 @@
             textEl.appendChild(newNode);
         }
     }
-
     // ==========================================
     // 3. ВСТРОЕННАЯ БЫСТРАЯ ОЧЕРЕДЬ ОЗВУЧКИ + АНТИ-ЭХО
     // ==========================================
@@ -1379,7 +1384,7 @@
         const clean = String(text || '').trim();
         if (!clean || !isAudioMode()) return;
         if (AR_MIC_WORLD.isDuplicate(clean, 'tts')) return;
-        
+
         // Держим максимум 2 фразы в очереди, чтобы голос не отставал от живой речи
         if (AR.ttsQueue.length >= 2) {
             AR.ttsQueue.shift();
@@ -1432,7 +1437,7 @@
         const cleanText = String(rawText || '').trim();
         if (!cleanText) return;
         if ((sourceType === 'voice' || sourceType === 'ai-audio') && AR_MIC_WORLD.isDuplicate(cleanText, 'send')) return;
-        
+
         window.syncAudioRoomListener();
         const roomId = getAudioRoomId();
         if (!roomId) {
@@ -1447,6 +1452,7 @@
 
         const isVoice = (sourceType === 'voice' || sourceType === 'ai-audio');
         const channel = isVoice ? 'mic' : 'avatar';
+        window.syncMyAudioChannelLang(roomId, channel);
 
         const manualLang = getMyManualAudioLang(roomId, channel);
         const myActiveLang = manualLang || getAudioNativeLang(window.myProfileInfo);
@@ -1470,7 +1476,7 @@
 
         let textToShip = myBaseText;
         if (targetInfo.lang && targetInfo.lang !== myActiveLang) {
-            textToShip = await audTranslateText(myBaseText, targetInfo.lang);
+            textToShip = await audTranslateText(myBaseText, targetInfo.lang, myActiveLang);
         }
 
         const mirrorMarquee = buildAudioMirrorMarquee(
@@ -1751,9 +1757,9 @@
                         return;
                     }
 
-                    // Короткая пауза (0.85с) -> сразу отправляем и чистим плашку
+                    // Короткая пауза (1.4с для az, чтобы не резать глагол в конце, и 0.85с для остальных)
                     clearTimeout(AR.silenceTimer);
-                    AR.silenceTimer = setTimeout(flushPendingInterim, SILENCE_FLUSH_MS);
+                    AR.silenceTimer = setTimeout(flushPendingInterim, activeLang === 'az' ? 1400 : SILENCE_FLUSH_MS);
                 }
             };
 
@@ -1805,6 +1811,10 @@
 
         const normalizedMode = (mode === 'text' || mode === 'voice') ? 'text' : 'ai-audio';
         AR.micMode = normalizedMode;
+
+        const activeRoomId = getAudioRoomId();
+        if (activeRoomId) window.syncMyAudioChannelLang(activeRoomId, 'mic');
+        AR_MIC_WORLD.applyMyFlag(activeRoomId);
 
         if (AR.micActive) {
             updateMicPill('');
@@ -1965,8 +1975,7 @@
                 if (e.target.closest('button[onclick*="toggleUniversalMic"]')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (AR.micActive) window.stopAudioRoomMic(false);
-                    else openAudioMicMenu();
+                    openAudioMicMenu();
                     return;
                 }
 
@@ -2045,3 +2054,5 @@
         updateModeBarUI();
     });
 })();
+
+            
