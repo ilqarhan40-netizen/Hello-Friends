@@ -397,30 +397,268 @@
         );
     }
 
+        // ================= МИР 1: МИКРОФОН (отдельный блок) =================
+    const AR_MIC_WORLD = {
+        lastRoomId: null,
+        flagRoomId: null,
+        initSyncedRoom: null,
+        hadCall: false,
+        wasVisible: false,
+        prevMy: undefined,
+        prevActive: false,
+        prevFriendSig: undefined,
+        recentBuckets: { send: [], tts: [] },
+
+        // Защита от повторов / копирования фраз подряд (отправка и озвучка)
+        isDuplicate(text, bucket) {
+            const norm = String(text || '')
+                .toLowerCase()
+                .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (!norm) return true;
+            const now = Date.now();
+            const win = norm.length > 10 ? 6500 : 2500;
+            const list = (this.recentBuckets[bucket] || []).filter(x => (now - x.ts) < 7000);
+            const dup = list.some(x =>
+                (x.norm === norm && (now - x.ts) < win) ||
+                (norm.length >= 8 && (now - x.ts) < 3500 && x.norm.includes(norm))
+            );
+            if (dup) {
+                this.recentBuckets[bucket] = list;
+                return true;
+            }
+            list.push({ norm, ts: now });
+            this.recentBuckets[bucket] = list;
+            return false;
+        },
+
+        applyMyFlag(roomId) {
+            const el = document.getElementById('voice-me-flag');
+            if (!el) return;
+            const lang = getMyManualAudioLang(roomId, 'mic') || '';
+            const flag = (lang && AUD_LANG_MAP[lang])
+                ? AUD_LANG_MAP[lang].flag
+                : getAudioNativeFlag(window.myProfileInfo);
+            if (el.textContent !== flag) el.textContent = flag;
+        },
+
+        applyFriendFlag(roomId) {
+            const el = document.getElementById('voice-friend-flag');
+            const target = getAudioTargetUser();
+            if (!el || !target) return;
+            const live = ((roomId && window.audioLiveLangs[roomId]) || {})[String(target.id)]?.mic;
+            const flag = (live && audIsRealFlag(live.flag))
+                ? live.flag
+                : getAudioNativeFlag(target);
+            if (el.textContent !== flag) el.textContent = flag;
+        },
+
+        resetSession(rId) {
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('hf_aud_mic_lang_')) localStorage.removeItem(k);
+            });
+            const sel = document.getElementById('hf-ar-mic-select');
+            if (sel && sel.value !== '') sel.value = '';
+            if (rId && typeof window.syncMyAudioChannelLang === 'function') {
+                window.syncMyAudioChannelLang(rId, 'mic', '');
+            }
+            this.prevMy = '';
+            this.recentBuckets = { send: [], tts: [] };
+            this.applyMyFlag(rId);
+        },
+
+        tick(roomId) {
+            const inCall = Boolean(window.agoraClient);
+            const visible = isAudioRoomVisibleOrInCall();
+            if (roomId) this.lastRoomId = roomId;
+
+            if (inCall) {
+                this.hadCall = true;
+            } else if (this.hadCall) {
+                this.hadCall = false;
+                this.resetSession(roomId || this.lastRoomId);
+            }
+
+            if (visible) {
+                this.wasVisible = true;
+            } else if (this.wasVisible) {
+                this.wasVisible = false;
+                this.resetSession(roomId || this.lastRoomId);
+            }
+
+            if (this.flagRoomId !== roomId) {
+                if (this.flagRoomId && roomId) this.resetSession(this.flagRoomId);
+                this.flagRoomId = roomId;
+                this.prevMy = undefined;
+                this.prevActive = false;
+                this.prevFriendSig = undefined;
+            }
+
+            if (roomId && this.initSyncedRoom !== roomId) {
+                this.initSyncedRoom = roomId;
+                if (!getMyManualAudioLang(roomId, 'mic')) {
+                    const sel = document.getElementById('hf-ar-mic-select');
+                    if (sel && sel.value !== '') sel.value = '';
+                    if (typeof window.syncMyAudioChannelLang === 'function') {
+                        window.syncMyAudioChannelLang(roomId, 'mic', '');
+                    }
+                }
+            }
+
+            const cur = getMyManualAudioLang(roomId, 'mic') || '';
+            const active = Boolean(AR.micActive || window.audioRoomMicActive);
+            const meEl = document.getElementById('voice-me-flag');
+
+            if (this.prevMy === undefined) {
+                this.prevMy = cur;
+                this.prevActive = active;
+                if (cur || active || (meEl && !meEl.textContent.trim())) {
+                    this.applyMyFlag(roomId);
+                }
+            } else {
+                if (cur !== this.prevMy) {
+                    this.prevMy = cur;
+                    this.applyMyFlag(roomId);
+                } else if (active && !this.prevActive) {
+                    this.applyMyFlag(roomId);
+                }
+                this.prevActive = active;
+            }
+
+            const target = getAudioTargetUser();
+            if (target) {
+                const live = ((roomId && window.audioLiveLangs[roomId]) || {})[String(target.id)]?.mic;
+                const sig = live ? `${live.flag || ''}|${live.updatedAt || 0}` : '';
+                const fEl = document.getElementById('voice-friend-flag');
+                if (this.prevFriendSig === undefined) {
+                    this.prevFriendSig = sig;
+                    if ((live && audIsRealFlag(live.flag)) || (fEl && !fEl.textContent.trim())) {
+                        this.applyFriendFlag(roomId);
+                    }
+                } else if (sig !== this.prevFriendSig) {
+                    this.prevFriendSig = sig;
+                    this.applyFriendFlag(roomId);
+                }
+            }
+        }
+    };
+
+    // ================= МИР 2: АВАТАР / КЛАВИАТУРА (отдельный блок) =================
+    const AR_AVATAR_WORLD = {
+        lastRoomId: null,
+        flagRoomId: null,
+        initSyncedRoom: null,
+        hadCall: false,
+        wasVisible: false,
+        prevMy: undefined,
+        prevFriendSig: undefined,
+
+        applyMyFlag(roomId) {
+            const el = document.getElementById('voice-me-flag');
+            if (!el) return;
+            const lang = getMyManualAudioLang(roomId, 'avatar') || '';
+            const flag = (lang && AUD_LANG_MAP[lang])
+                ? AUD_LANG_MAP[lang].flag
+                : getAudioNativeFlag(window.myProfileInfo);
+            if (el.textContent !== flag) el.textContent = flag;
+        },
+
+        applyFriendFlag(roomId) {
+            const el = document.getElementById('voice-friend-flag');
+            const target = getAudioTargetUser();
+            if (!el || !target) return;
+            const live = ((roomId && window.audioLiveLangs[roomId]) || {})[String(target.id)]?.avatar;
+            const flag = (live && audIsRealFlag(live.flag))
+                ? live.flag
+                : getAudioNativeFlag(target);
+            if (el.textContent !== flag) el.textContent = flag;
+        },
+
+        resetSession(rId) {
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('hf_aud_avatar_lang_')) localStorage.removeItem(k);
+            });
+            if (rId && typeof window.syncMyAudioChannelLang === 'function') {
+                window.syncMyAudioChannelLang(rId, 'avatar', '');
+            }
+            this.prevMy = '';
+            this.applyMyFlag(rId);
+        },
+
+        tick(roomId) {
+            const inCall = Boolean(window.agoraClient);
+            const visible = isAudioRoomVisibleOrInCall();
+            if (roomId) this.lastRoomId = roomId;
+
+            if (inCall) {
+                this.hadCall = true;
+            } else if (this.hadCall) {
+                this.hadCall = false;
+                this.resetSession(roomId || this.lastRoomId);
+            }
+
+            if (visible) {
+                this.wasVisible = true;
+            } else if (this.wasVisible) {
+                this.wasVisible = false;
+                this.resetSession(roomId || this.lastRoomId);
+            }
+
+            if (this.flagRoomId !== roomId) {
+                if (this.flagRoomId && roomId) this.resetSession(this.flagRoomId);
+                this.flagRoomId = roomId;
+                this.prevMy = undefined;
+                this.prevFriendSig = undefined;
+            }
+
+            if (roomId && this.initSyncedRoom !== roomId) {
+                this.initSyncedRoom = roomId;
+                if (!getMyManualAudioLang(roomId, 'avatar')) {
+                    if (typeof window.syncMyAudioChannelLang === 'function') {
+                        window.syncMyAudioChannelLang(roomId, 'avatar', '');
+                    }
+                }
+            }
+
+            const cur = getMyManualAudioLang(roomId, 'avatar') || '';
+            const meEl = document.getElementById('voice-me-flag');
+
+            if (this.prevMy === undefined) {
+                this.prevMy = cur;
+                if (cur || (meEl && !meEl.textContent.trim())) {
+                    this.applyMyFlag(roomId);
+                }
+            } else if (cur !== this.prevMy) {
+                this.prevMy = cur;
+                this.applyMyFlag(roomId);
+            }
+
+            const target = getAudioTargetUser();
+            if (target) {
+                const live = ((roomId && window.audioLiveLangs[roomId]) || {})[String(target.id)]?.avatar;
+                const sig = live ? `${live.flag || ''}|${live.updatedAt || 0}` : '';
+                const fEl = document.getElementById('voice-friend-flag');
+                if (this.prevFriendSig === undefined) {
+                    this.prevFriendSig = sig;
+                    if ((live && audIsRealFlag(live.flag)) || (fEl && !fEl.textContent.trim())) {
+                        this.applyFriendFlag(roomId);
+                    }
+                } else if (sig !== this.prevFriendSig) {
+                    this.prevFriendSig = sig;
+                    this.applyFriendFlag(roomId);
+                }
+            }
+        }
+    };
+
     function updateAudioRoomFlagsUI() {
         if (!isAudioMode()) return;
         const roomId = getAudioRoomId();
-
-        const meFlagEl = document.getElementById('voice-me-flag');
-        if (meFlagEl) {
-            const myManual = getMyManualAudioLang(roomId, 'avatar');
-            const desiredMe = (myManual && AUD_LANG_MAP[myManual])
-                ? AUD_LANG_MAP[myManual].flag
-                : getAudioNativeFlag(window.myProfileInfo);
-            if (meFlagEl.textContent !== desiredMe) meFlagEl.textContent = desiredMe;
-        }
-
-        const friendFlagEl = document.getElementById('voice-friend-flag');
-        const target = getAudioTargetUser();
-        if (friendFlagEl && target) {
-            const roomMap = (roomId && window.audioLiveLangs[roomId]) || {};
-            const liveAvatar = roomMap[String(target.id)] && roomMap[String(target.id)].avatar;
-            const desiredFriend = (liveAvatar && audIsRealFlag(liveAvatar.flag))
-                ? liveAvatar.flag
-                : getAudioNativeFlag(target);
-            if (friendFlagEl.textContent !== desiredFriend) friendFlagEl.textContent = desiredFriend;
-        }
+        AR_MIC_WORLD.tick(roomId);
+        AR_AVATAR_WORLD.tick(roomId);
     }
+
 
     // ==========================================
     // 1. СТИЛИ, ПЛАШКА РЕЖИМА (СТРОГО В РАМКАХ) И МЕНЮ
