@@ -1,7 +1,8 @@
 // ==========================================
-// MODULE: CALLS, VIDEO & AGORA ENGINE (CLEAN v5)
-// Видеофреймы и камеры — строго только в видеозвонке
-// Всплывающая кнопка "Ответить с ИИ-переводчиком" при разных флагах (13 языков)
+// MODULE: CALLS, VIDEO & AGORA ENGINE (CLEAN v6)
+// - Зеркальный вход в комнату: оба заходят только после принятия вызова
+// - Экран исходящего вызова: фото/имя собеседника, тип звонка, только красный отбой
+// - Кнопка "Ответить с ИИ-переводчиком" строго под кнопками на входящем аудиозвонке (13 языков)
 // ==========================================
 
 if (typeof AgoraRTC === 'undefined') {
@@ -33,6 +34,8 @@ window.activeOutgoingCallRef = null;
 window.activeOutgoingCallType = 'voice';
 window.callWasAnswered = false;
 window._pendingStartAIForCall = false;
+window._pendingPauseForTranslation = false;
+window._isOutgoingCallModal = false;
 
 window.isMyMicMuted = false;
 window.isMyCamMuted = true;
@@ -74,7 +77,7 @@ window.stopAllRings = function() {
     if ("vibrate" in navigator) { try { navigator.vibrate(0); } catch (e) {} }
 };
 
-// --- ОПРЕДЕЛЕНИЕ ЯЗЫКА ПРОФИЛЯ И ВСПЛЫВАЮЩАЯ КНОПКА "ОТВЕТИТЬ С ИИ-ПЕРЕВОДЧИКОМ" ---
+// --- СЛОВАРИ ЗВОНКОВ НА 13 ЯЗЫКОВ ---
 window._CALLS_AI_BTN_TEXT = {
     ru: 'Ответить с ИИ-переводчиком',
     en: 'Answer with AI Translator',
@@ -89,6 +92,38 @@ window._CALLS_AI_BTN_TEXT = {
     pt: 'Atender com tradutor IA',
     ja: 'AI翻訳で応答する',
     zh: '使用 AI 翻译接听'
+};
+
+window._CALLS_INCOMING_LABELS = {
+    en: { audio: '📞 Audio Call', video: '📹 Video Call' },
+    ru: { audio: '📞 Аудиозвонок', video: '📹 Видеозвонок' },
+    az: { audio: '📞 Audio Zəng', video: '📹 Video Zəng' },
+    kk: { audio: '📞 Аудио қоңырау', video: '📹 Бейнеқоңырау' },
+    tr: { audio: '📞 Sesli Arama', video: '📹 Görüntülü Arama' },
+    de: { audio: '📞 Audioanruf', video: '📹 Videoanruf' },
+    ar: { audio: '📞 مكالمة صوتية', video: '📹 مكالمة فيديو' },
+    it: { audio: '📞 Chiamata Audio', video: '📹 Videochiamata' },
+    es: { audio: '📞 Llamada de Audio', video: '📹 Videollamada' },
+    fr: { audio: '📞 Appel Audio', video: '📹 Appel Vidéo' },
+    pt: { audio: '📞 Chamada de Áudio', video: '📹 Chamada de Vídeo' },
+    ja: { audio: '📞 音声通話', video: '📹 ビデオ通話' },
+    zh: { audio: '📞 语音通话', video: '📹 视频通话' }
+};
+
+window._CALLS_CALLING_LABELS = {
+    en: 'Calling...',
+    ru: 'Вызов...',
+    az: 'Zəng edilir...',
+    kk: 'Қоңырау шалынуда...',
+    tr: 'Aranıyor...',
+    de: 'Wird angerufen...',
+    ar: 'جارٍ الاتصال...',
+    it: 'Chiamata in corso...',
+    es: 'Llamando...',
+    fr: 'Appel en cours...',
+    pt: 'Chamando...',
+    ja: '発信中...',
+    zh: '正在呼叫...'
 };
 
 window.resolveCallProfileLang = function(userObj) {
@@ -138,24 +173,46 @@ window.resolveCallProfileLang = function(userObj) {
     return '';
 };
 
+window.getCallsUiLang = function() {
+    const fix = { kz: 'kk', cn: 'zh', jp: 'ja', ae: 'ar', sa: 'ar', eg: 'ar', gb: 'en', us: 'en', uk: 'en', br: 'pt', mx: 'es' };
+    const norm = (v) => {
+        if (!v) return '';
+        const s = String(v).trim().toLowerCase();
+        if (!s || s === 'auto' || s === 'un') return '';
+        const b = s.split(/[-_]/)[0].substring(0, 2);
+        return fix[b] || b;
+    };
+    const eco = norm(window.appLang) || norm(localStorage.getItem('hf_app_lang'));
+    if (eco && window._CALLS_INCOMING_LABELS[eco]) return eco;
+    const prof = norm(window.resolveCallProfileLang(window.myProfileInfo));
+    if (prof && window._CALLS_INCOMING_LABELS[prof]) return prof;
+    const nav = norm(navigator.language);
+    if (nav && window._CALLS_INCOMING_LABELS[nav]) return nav;
+    return 'en';
+};
+
+// --- КНОПКА "ОТВЕТИТЬ С ИИ-ПЕРЕВОДЧИКОМ" СТРОГО ПОД КНОПКАМИ ОТБОЙ / ОТВЕТИТЬ ---
 window.injectIncomingAIButtonStyles = function() {
-    if (document.getElementById('hf-incoming-ai-btn-styles')) return;
+    if (document.getElementById('hf-incoming-ai-btn-styles-v2')) return;
+    const old = document.getElementById('hf-incoming-ai-btn-styles');
+    if (old) old.remove();
+
     const style = document.createElement('style');
-    style.id = 'hf-incoming-ai-btn-styles';
+    style.id = 'hf-incoming-ai-btn-styles-v2';
     style.textContent = `
         #hf-incoming-ai-float {
-            position: fixed;
-            top: 22px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: static !important;
+            left: auto !important;
+            top: auto !important;
+            margin-top: 28px !important;
             z-index: 100001;
             display: none;
-            width: min(90%, 340px);
+            width: min(88%, 320px);
             pointer-events: auto;
         }
         #hf-incoming-ai-float.active {
             display: block;
-            animation: hfAiFadePulse 3.6s ease-in-out infinite;
+            animation: hfAiFadePulseV2 3.2s ease-in-out infinite;
         }
         #hf-incoming-ai-float button {
             width: 100%;
@@ -177,10 +234,10 @@ window.injectIncomingAIButtonStyles = function() {
         #hf-incoming-ai-float button:active {
             transform: scale(0.97);
         }
-        @keyframes hfAiFadePulse {
-            0%   { opacity: 1;    transform: translateX(-50%) scale(1); }
-            50%  { opacity: 0.35; transform: translateX(-50%) scale(0.98); }
-            100% { opacity: 1;    transform: translateX(-50%) scale(1); }
+        @keyframes hfAiFadePulseV2 {
+            0%   { opacity: 1;    transform: scale(1); }
+            50%  { opacity: 0.55; transform: scale(0.98); }
+            100% { opacity: 1;    transform: scale(1); }
         }
     `;
     document.head.appendChild(style);
@@ -188,6 +245,12 @@ window.injectIncomingAIButtonStyles = function() {
 
 window.showIncomingAIBtn = function(callerObj) {
     window.injectIncomingAIButtonStyles();
+
+    // На экране исходящего звонка кнопку ИИ не показываем
+    if (window._isOutgoingCallModal) {
+        window.hideIncomingAIBtn();
+        return;
+    }
 
     const myLang = window.resolveCallProfileLang(window.myProfileInfo);
     const callerLang = window.resolveCallProfileLang(callerObj);
@@ -198,16 +261,17 @@ window.showIncomingAIBtn = function(callerObj) {
         return;
     }
 
+    const modal = document.getElementById('incoming-call-modal') || document.body;
     let wrap = document.getElementById('hf-incoming-ai-float');
     if (!wrap) {
         wrap = document.createElement('div');
         wrap.id = 'hf-incoming-ai-float';
-        (document.getElementById('incoming-call-modal') || document.body).appendChild(wrap);
-        wrap.style.cssText = 'position:static!important;transform:none!important;margin-top:28px!important;';
-        
+    }
+    if (wrap.parentNode !== modal) {
+        modal.appendChild(wrap);
     }
 
-    const uiLang = myLang || 'en';
+    const uiLang = window.getCallsUiLang();
     const label = window._CALLS_AI_BTN_TEXT[uiLang] || window._CALLS_AI_BTN_TEXT.en;
     const callerFlag = (callerObj && callerObj.flag && callerObj.flag !== '🌐') ? `${callerObj.flag} ` : '';
 
@@ -225,11 +289,94 @@ window.hideIncomingAIBtn = function() {
     if (wrap) wrap.classList.remove('active');
 };
 
+// --- ОБЩЕЕ УПРАВЛЕНИЕ ЭКРАНОМ ВХОДЯЩЕГО / ИСХОДЯЩЕГО ВЫЗОВА ---
+window.showOutgoingCallModal = function(target, callType) {
+    window._isOutgoingCallModal = true;
+    window.hideIncomingAIBtn();
+
+    const modal = document.getElementById('incoming-call-modal');
+    if (!modal) return;
+
+    const nameEl = document.getElementById('incoming-call-name');
+    const photoEl = document.getElementById('incoming-call-photo');
+    const typeLabel = document.getElementById('incoming-call-type');
+    const subtitleEl = modal.querySelector('#incoming-call-name + span');
+    const acceptBtn = modal.querySelector('button[onclick*="acceptCall"]');
+
+    const uiLang = window.getCallsUiLang();
+    const labels = window._CALLS_INCOMING_LABELS[uiLang] || window._CALLS_INCOMING_LABELS.en;
+    const callingTxt = window._CALLS_CALLING_LABELS[uiLang] || window._CALLS_CALLING_LABELS.en;
+    const isVideo = (callType === 'video');
+
+    if (typeLabel) typeLabel.innerText = isVideo ? labels.video : labels.audio;
+    if (photoEl) photoEl.src = (target && target.photo) ? target.photo : 'https://ui-avatars.com/api/?name=U';
+    if (nameEl) nameEl.innerText = (target && target.name) ? target.name : 'User';
+    if (subtitleEl) subtitleEl.innerText = callingTxt;
+
+    // У звонящего показываем только красную кнопку отбоя
+    if (acceptBtn) acceptBtn.style.display = 'none';
+
+    modal.classList.add('active');
+};
+
+window.hideCallModal = function() {
+    window._isOutgoingCallModal = false;
+    window.hideIncomingAIBtn();
+
+    const modal = document.getElementById('incoming-call-modal');
+    if (!modal) return;
+
+    const subtitleEl = modal.querySelector('#incoming-call-name + span');
+    const acceptBtn = modal.querySelector('button[onclick*="acceptCall"]');
+    if (subtitleEl) subtitleEl.innerText = 'Hello Friends';
+    if (acceptBtn) acceptBtn.style.display = '';
+
+    modal.classList.remove('active');
+};
+
+window.cancelOutgoingCall = function() {
+    const targetId = window.activeOutgoingCallTargetId || (window.voiceFriend && window.voiceFriend.id) || null;
+    const outgoingType = window.activeOutgoingCallType || 'voice';
+    const outgoingRef = window.activeOutgoingCallRef;
+
+    window.hideCallModal();
+    window.stopAllRings();
+
+    if (window.callTimeout) {
+        clearTimeout(window.callTimeout);
+        window.callTimeout = null;
+    }
+    if (outgoingRef) {
+        try { outgoingRef.remove(); } catch (e) {}
+    }
+
+    if (targetId && window.myProfileInfo) {
+        firebase.database().ref('signals/' + targetId).push({
+            type: 'missed',
+            callType: outgoingType,
+            callerName: window.myUsername,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        if (outgoingType === 'video') {
+            window.sendMissedVideoNotice(targetId);
+        } else {
+            window.sendMissedAudioNotice(targetId);
+        }
+    }
+
+    window.activeOutgoingCallTargetId = null;
+    window.activeOutgoingCallRef = null;
+    window.currentCallerId = null;
+    window.voiceFriend = null;
+    window.callWasAnswered = false;
+    window._pendingStartAIForCall = false;
+    window._pendingPauseForTranslation = false;
+};
+
 // --- ЖЁСТКОЕ РАЗДЕЛЕНИЕ ИНТЕРФЕЙСА: АУДИО (БЕЗ ФРЕЙМОВ И КАМЕР) / ВИДЕО ---
 window.applyCallRoomModeUI = function(isVideoMode) {
     const showVideo = Boolean(isVideoMode);
 
-    // 1. Блок с двумя видеофреймами — показываем ТОЛЬКО в видеозвонке
     const remoteVid = document.getElementById('direct-remote-video');
     const videoRow = (remoteVid && remoteVid.parentElement) ? remoteVid.parentElement.parentElement : null;
     if (videoRow) {
@@ -242,7 +389,6 @@ window.applyCallRoomModeUI = function(isVideoMode) {
         }
     }
 
-    // 2. Обе иконки камер рядом с аватарками — показываем ТОЛЬКО в видеозвонке
     document.querySelectorAll('#icon-my-cam, #icon-remote-cam').forEach(icon => {
         const btn = icon.closest('button') || icon.parentElement;
         if (!btn) return;
@@ -382,9 +528,21 @@ window.hideDirectVideoElements = function() {
 
 // Автоматическая пауза обоих микрофонов звонка для нижнего микрофона/ИИ-переводчика и возврат обратно
 window.pauseAgoraMicForTranslation = async function() {
-    if (!window.agoraClient && !window.localAudioTrack) return;
-    if (window._agoraPausedForTranslation) return;
+    if (window._agoraPausedForTranslation) {
+        window.updateMicToggleUI(true);
+        window.updateRemoteMicToggleUI(true);
+        return;
+    }
 
+    // Если Agora ещё подключается — запоминаем, чтобы сразу поставить на паузу после старта
+    if (!window.agoraClient && !window.localAudioTrack) {
+        window._pendingPauseForTranslation = true;
+        window.updateMicToggleUI(true);
+        window.updateRemoteMicToggleUI(true);
+        return;
+    }
+
+    window._pendingPauseForTranslation = false;
     window._agoraPausedForTranslation = true;
     window._prevMyMicMuted = Boolean(window.isMyMicMuted);
     window._prevRemoteMicMuted = Boolean(window.isRemoteMicMuted);
@@ -405,7 +563,12 @@ window.pauseAgoraMicForTranslation = async function() {
 };
 
 window.resumeAgoraMicAfterTranslation = async function() {
-    if (!window._agoraPausedForTranslation) return;
+    window._pendingPauseForTranslation = false;
+    if (!window._agoraPausedForTranslation) {
+        window.updateMicToggleUI(false);
+        window.updateRemoteMicToggleUI(false);
+        return;
+    }
     window._agoraPausedForTranslation = false;
 
     const restoreMyMuted = Boolean(window._prevMyMicMuted);
@@ -489,7 +652,7 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 
             if (mediaType === "audio" && user.audioTrack) {
                 user.audioTrack.play();
-                if (window.isRemoteMicMuted || window._agoraPausedForTranslation || window._pendingStartAIForCall) {
+                if (window.isRemoteMicMuted || window._agoraPausedForTranslation || window._pendingStartAIForCall || window._pendingPauseForTranslation) {
                     try { user.audioTrack.setVolume(0); } catch (e) {}
                 }
             }
@@ -553,14 +716,16 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             await window.agoraClient.publish(tracksToPublish);
         }
 
-        // Если звонок принят через всплывающую кнопку "Ответить с ИИ-переводчиком" — сразу запускаем бесконечный ИИ-голос на обоих телефонах
+        // Если звонок принят через кнопку "Ответить с ИИ-переводчиком" — сразу запускаем ИИ-голос на обоих устройствах
         if (window._pendingStartAIForCall) {
             window._pendingStartAIForCall = false;
             await window.pauseAgoraMicForTranslation();
-            if (typeof window.startVideoRoomMic === 'function') {
-                setTimeout(() => window.startVideoRoomMic('ai-audio'), 250);
+            if (typeof window.startAudioRoomMic === 'function' && !allowVideo) {
+                setTimeout(() => window.startAudioRoomMic('ai-audio'), 200);
+            } else if (typeof window.startVideoRoomMic === 'function') {
+                setTimeout(() => window.startVideoRoomMic('ai-audio'), 200);
             }
-        } else if (window.videoRoomMicActive) {
+        } else if (window._pendingPauseForTranslation || window.videoRoomMicActive || window.audioRoomMicActive) {
             await window.pauseAgoraMicForTranslation();
         }
 
@@ -573,16 +738,19 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
 };
 
 window.endWebRTCCall = async function() {
-    window.hideIncomingAIBtn();
+    window.hideCallModal();
     window._pendingStartAIForCall = false;
+    window._pendingPauseForTranslation = false;
 
+    if (typeof window.stopAudioRoomMic === 'function') {
+        try { await window.stopAudioRoomMic(true); } catch (e) {}
+    }
     if (typeof window.stopVideoRoomMic === 'function') {
         try { await window.stopVideoRoomMic(true); } catch (e) {}
     }
-        if (typeof window.resetVideoRoomState === 'function') {
+    if (typeof window.resetVideoRoomState === 'function') {
         window.resetVideoRoomState();
-        }
-    
+    }
     if (typeof window.stopVoiceAI === 'function') {
         try { window.stopVoiceAI(); } catch (e) {}
     }
@@ -665,7 +833,7 @@ window.startInAppCall = function(callType = 'voice') {
         window.closePhoneChoiceModal();
         return;
     }
-    const target = window.currentTargetUser;
+    const target = { ...window.currentTargetUser };
     const normalizedType = (callType === 'video') ? 'video' : 'voice';
     window.closePhoneChoiceModal();
 
@@ -675,13 +843,10 @@ window.startInAppCall = function(callType = 'voice') {
     window.activeOutgoingCallType = normalizedType;
     window.callWasAnswered = false;
     window._pendingStartAIForCall = false;
+    window._pendingPauseForTranslation = false;
     window.videoRoomPartnerMeta = null;
     window._vrLastMetaSig = '';
-
-    window.applyCallRoomModeUI(normalizedType === 'video');
-    if (normalizedType !== 'video') {
-        window.updateCamToggleUI(true);
-    }
+    window.voiceFriend = target;
 
     firebase.database().ref('calls/' + window.myProfileInfo.id + '_' + target.id).remove();
 
@@ -710,21 +875,8 @@ window.startInAppCall = function(callType = 'voice') {
         );
     }
 
-    const photoEl = document.getElementById('voice-friend-photo');
-    const flagEl = document.getElementById('voice-friend-flag');
-    const nameEl = document.getElementById('voice-friend-name');
-    if (photoEl && target.photo) photoEl.src = target.photo;
-    if (flagEl && target.flag) flagEl.innerText = target.flag;
-    if (nameEl) {
-        nameEl.removeAttribute('data-i18n');
-        nameEl.innerText = (target.name || 'User').split(' ')[0];
-    }
-
-    window.voiceFriend = target;
-    if (typeof window.syncVideoRoomListener === 'function') window.syncVideoRoomListener();
-    if (window.switchTab) window.switchTab(1);
-
-    if (window.showToast) window.showToast("Calling...", `Звоним ${(target.name || 'User').split(' ')[0]}...`, target.photo, "");
+    // Остаёмся на внешней вкладке и показываем экран исходящего вызова с аватаром собеседника и кнопкой отбоя
+    window.showOutgoingCallModal(target, normalizedType);
 
     window.stopAllRings();
     setTimeout(() => { window.playSafeSound(window.sndCallOut); }, 100);
@@ -732,6 +884,8 @@ window.startInAppCall = function(callType = 'voice') {
     if (window.callTimeout) clearTimeout(window.callTimeout);
     window.callTimeout = setTimeout(() => {
         if (window.callWasAnswered) return;
+
+        window.hideCallModal();
 
         firebase.database().ref('signals/' + target.id).push({
             type: 'missed',
@@ -768,41 +922,8 @@ window.startInAppCall = function(callType = 'voice') {
     }, 30000);
 };
 
-window._CALLS_INCOMING_LABELS = {
-    en: { audio: '📞 Audio Call', video: '📹 Video Call' },
-    ru: { audio: '📞 Аудиозвонок', video: '📹 Видеозвонок' },
-    az: { audio: '📞 Audio Zəng', video: '📹 Video Zəng' },
-    kk: { audio: '📞 Аудио қоңырау', video: '📹 Бейнеқоңырау' },
-    tr: { audio: '📞 Sesli Arama', video: '📹 Görüntülü Arama' },
-    de: { audio: '📞 Audioanruf', video: '📹 Videoanruf' },
-    ar: { audio: '📞 مكالمة صوتية', video: '📹 مكالمة فيديو' },
-    it: { audio: '📞 Chiamata Audio', video: '📹 Videochiamata' },
-    es: { audio: '📞 Llamada de Audio', video: '📹 Videollamada' },
-    fr: { audio: '📞 Appel Audio', video: '📹 Appel Vidéo' },
-    pt: { audio: '📞 Chamada de Áudio', video: '📹 Chamada de Vídeo' },
-    ja: { audio: '📞 音声通話', video: '📹 ビデオ通話' },
-    zh: { audio: '📞 语音通话', video: '📹 视频通话' }
-};
-
-window.getCallsUiLang = function() {
-    const fix = { kz: 'kk', cn: 'zh', jp: 'ja', ae: 'ar', sa: 'ar', eg: 'ar', gb: 'en', us: 'en', uk: 'en', br: 'pt', mx: 'es' };
-    const norm = (v) => {
-        if (!v) return '';
-        const s = String(v).trim().toLowerCase();
-        if (!s || s === 'auto' || s === 'un') return '';
-        const b = s.split(/[-_]/)[0].substring(0, 2);
-        return fix[b] || b;
-    };
-    const eco = norm(window.appLang) || norm(localStorage.getItem('hf_app_lang'));
-    if (eco && window._CALLS_INCOMING_LABELS[eco]) return eco;
-    const prof = norm(window.resolveCallProfileLang(window.myProfileInfo));
-    if (prof && window._CALLS_INCOMING_LABELS[prof]) return prof;
-    const nav = norm(navigator.language);
-    if (nav && window._CALLS_INCOMING_LABELS[nav]) return nav;
-    return 'en';
-};
-
 window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey, callType, callerMeta = {}) {
+    window._isOutgoingCallModal = false;
     window.currentIncomingSignalKey = signalKey;
     window.currentCallerId = callerId;
     window.callWasAnswered = false;
@@ -821,10 +942,13 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey,
     window.currentIncomingCallType = (callType === 'video') ? 'video' : 'voice';
     window.currentActiveCallType = window.currentIncomingCallType;
 
+    const modal = document.getElementById('incoming-call-modal');
     const nameEl = document.getElementById('incoming-call-name');
     const photoEl = document.getElementById('incoming-call-photo');
     const typeLabel = document.getElementById('incoming-call-type');
     const acceptIcon = document.getElementById('incoming-call-accept-icon');
+    const subtitleEl = modal ? modal.querySelector('#incoming-call-name + span') : null;
+    const acceptBtn = modal ? modal.querySelector('button[onclick*="acceptCall"]') : null;
 
     const uiLang = window.getCallsUiLang();
     const labels = window._CALLS_INCOMING_LABELS[uiLang] || window._CALLS_INCOMING_LABELS.en;
@@ -833,14 +957,15 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey,
     if (nameEl) nameEl.innerText = callerName || 'User';
     if (photoEl) photoEl.src = callerPhoto || 'https://ui-avatars.com/api/?name=U';
     if (typeLabel) typeLabel.innerText = isVideo ? labels.video : labels.audio;
+    if (subtitleEl) subtitleEl.innerText = 'Hello Friends';
+    if (acceptBtn) acceptBtn.style.display = '';
     if (acceptIcon) {
         acceptIcon.className = isVideo ? 'fa-solid fa-video' : 'fa-solid fa-phone';
     }
 
-    const modal = document.getElementById('incoming-call-modal');
     if (modal) modal.classList.add('active');
 
-    // Для входящего аудиозвонка с другим флагом показываем пульсирующую кнопку "Ответить с ИИ-переводчиком"
+    // Для входящего аудиозвонка с другим флагом показываем кнопку ИИ строго под Отбой / Ответить
     if (!isVideo) {
         window.showIncomingAIBtn(window.currentCallerFallback);
     } else {
@@ -850,7 +975,6 @@ window.showIncomingCall = function(callerId, callerName, callerPhoto, signalKey,
     window.stopAllRings();
     window.playSafeSound(window.sndRing, [1000, 500, 1000, 500, 1000, 500, 1000]);
 };
-    
 
 window.acceptCallWithAI = function() {
     window.acceptCall(true);
@@ -858,15 +982,12 @@ window.acceptCallWithAI = function() {
 
 window.acceptCall = function(withAI = false) {
     const startWithAI = Boolean(withAI === true);
-    window.hideIncomingAIBtn();
+    window.hideCallModal();
     window.stopAllRings();
     window.callWasAnswered = true;
     window._pendingStartAIForCall = startWithAI;
     window.videoRoomPartnerMeta = null;
     window._vrLastMetaSig = '';
-
-    const modal = document.getElementById('incoming-call-modal');
-    if (modal) modal.classList.remove('active');
 
     const incomingIsVideo = (window.currentIncomingCallType === 'video');
     window.currentActiveCallType = incomingIsVideo ? 'video' : 'voice';
@@ -920,10 +1041,14 @@ window.acceptCall = function(withAI = false) {
 };
 
 window.declineCall = function() {
-    window.hideIncomingAIBtn();
+    // Если красную кнопку нажал сам звонящий — отменяем исходящий вызов и остаёмся на внешней вкладке
+    if (window._isOutgoingCallModal) {
+        window.cancelOutgoingCall();
+        return;
+    }
+
+    window.hideCallModal();
     window.stopAllRings();
-    const modal = document.getElementById('incoming-call-modal');
-    if (modal) modal.classList.remove('active');
 
     if (window.currentCallerId) {
         firebase.database().ref('signals/' + window.currentCallerId).push({
@@ -939,7 +1064,13 @@ window.declineCall = function() {
 };
 
 window.hangUpCall = function() {
-    window.hideIncomingAIBtn();
+    const wasOutgoingOnly = Boolean(window._isOutgoingCallModal && !window.callWasAnswered);
+    if (wasOutgoingOnly) {
+        window.cancelOutgoingCall();
+        return;
+    }
+
+    window.hideCallModal();
     window.stopAllRings();
 
     const unansweredTargetId = (!window.callWasAnswered && window.activeOutgoingCallTargetId)
@@ -1015,39 +1146,60 @@ window.initSignalListener = function() {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             if (age > 15000) return;
 
-            window.hideIncomingAIBtn();
+            const wasInRoom = !window._isOutgoingCallModal && (window.currentIndex === 1 || Boolean(window.agoraClient));
+            window.hideCallModal();
             window.activeOutgoingCallTargetId = null;
             window.activeOutgoingCallRef = null;
             window.stopAllRings();
-            const incomingModal = document.getElementById('incoming-call-modal');
-            if (incomingModal) incomingModal.classList.remove('active');
             window.playSafeSound(window.sndMissed, [200, 100, 200]);
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
             window.endWebRTCCall();
-            if (window.switchTab) window.switchTab(0);
+            if (wasInRoom && window.switchTab) window.switchTab(0);
         }
         else if (sig.type === 'answered') {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             if (age > 15000) return;
 
+            // Закрываем экран исходящего вызова и зеркально заходим в комнату одновременно с собеседником
+            window.hideCallModal();
             window.callWasAnswered = true;
             window._pendingStartAIForCall = Boolean(sig.useAI);
             window.activeOutgoingCallTargetId = null;
             window.activeOutgoingCallRef = null;
             window.stopAllRings();
             if (window.callTimeout) { clearTimeout(window.callTimeout); window.callTimeout = null; }
-            if (window.voiceFriend) window.currentTargetUser = window.voiceFriend;
-            const targetId = window.currentTargetUser ? window.currentTargetUser.id : 'remote';
-            window.startWebRTC(true, targetId, window.myLastOutgoingCallType === 'video');
+
+            const isVideo = (window.myLastOutgoingCallType === 'video');
+            window.currentActiveCallType = isVideo ? 'video' : 'voice';
+            window.applyCallRoomModeUI(isVideo);
+            if (!isVideo) window.updateCamToggleUI(true);
+
+            const target = window.voiceFriend || window.currentTargetUser;
+            if (target) {
+                window.currentTargetUser = { ...target };
+                const photoEl = document.getElementById('voice-friend-photo');
+                const flagEl = document.getElementById('voice-friend-flag');
+                const nameEl = document.getElementById('voice-friend-name');
+                if (photoEl && target.photo) photoEl.src = target.photo;
+                if (flagEl && target.flag) flagEl.innerText = target.flag;
+                if (nameEl) {
+                    nameEl.removeAttribute('data-i18n');
+                    nameEl.innerText = (target.name || 'User').split(' ')[0];
+                }
+            }
+
+            if (window.switchTab) window.switchTab(1);
+            if (typeof window.syncVideoRoomListener === 'function') window.syncVideoRoomListener();
+
+            const targetId = target ? target.id : 'remote';
+            window.startWebRTC(true, targetId, isVideo);
         }
         else if (sig.type === 'missed') {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
             if (age > 15000) return;
 
-            window.hideIncomingAIBtn();
+            window.hideCallModal();
             window.stopAllRings();
-            const incomingModal = document.getElementById('incoming-call-modal');
-            if (incomingModal) incomingModal.classList.remove('active');
         }
     });
 };
@@ -1079,8 +1231,10 @@ window.toggleMyAudio = async function() {
 
     const nextMuted = !window.isMyMicMuted;
     try {
-        // Если пользователь вручную включает живой микрофон звонка — выключаем ИИ/перевод
         if (!nextMuted) {
+            if (window.audioRoomMicActive && typeof window.stopAudioRoomMic === 'function') {
+                await window.stopAudioRoomMic(true);
+            }
             if (window.videoRoomMicActive && typeof window.stopVideoRoomMic === 'function') {
                 await window.stopVideoRoomMic(true);
             }
