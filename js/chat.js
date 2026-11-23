@@ -944,19 +944,157 @@ window.startUniversalMic = async function(mode) {
             sessionId: window.mySessionId || 'sess',
             timestamp: firebase.database.ServerValue.TIMESTAMP,
             photo: safePhoto, flag: activeFlag, flagCode: activeFlagCode,
-            langCode: spokenLangCode,
-            inputChannel: 'mic',
-            mirrorFan: mirrorPacket.mirrorFan,
-            mirrorMarquee: mirrorPacket.mirrorMarquee,
-            isConfMsg: false
-        };
+            
+// ==========================================
+// 5. ПАНЕЛЬ ЯЗЫКОВ (АВАТАР) И МИКРОФОН (СТРОГО РАЗДЕЛЬНО)
+// ==========================================
+window.openPersonalLangModal = function() {
+    if (window.closeDropdown) window.closeDropdown();
+    if (window.currentIndex === 2) {
+        if (typeof window.openConfLangModal === 'function') return window.openConfLangModal();
+        return;
+    }
+    if (window.currentRoomId && window.currentRoomId !== 'global' && window.currentRoomId !== 'private_ai_bot' && !window.currentRoomId.startsWith('private_me_')) {
+        if (typeof window.openPrivateLangModal === 'function') return window.openPrivateLangModal();
+        return;
+    }
 
-        if (mode === 'text') { firebase.database().ref(targetDbRoom).push(msgPayload); }
-        else if (mode === 'ai-audio') { msgPayload.isAIAudio = true; firebase.database().ref(targetDbRoom).push(msgPayload); }
-    };
-    try { rec.start(); } catch (e) {}
+    const listContainer = document.getElementById('personal-lang-list');
+    if (!listContainer) return;
+
+    let currentPref = localStorage.getItem('hf_global_avatar_lang') || 'auto';
+    const langs = [
+        {code:'auto', name:'🤖 Auto (Profile)', flag:'🌐'}, {code:'en', name:'English', flag:'🇬🇧'},
+        {code:'kk', name:'Қазақша', flag:'🇰🇿'}, {code:'pt', name:'Português', flag:'🇵🇹'},
+        {code:'ru', name:'Русский', flag:'🇷🇺'}, {code:'az', name:'Azərbaycanca', flag:'🇦🇿'},
+        {code:'de', name:'Deutsch', flag:'🇩🇪'}, {code:'tr', name:'Türkçe', flag:'🇹🇷'},
+        {code:'ar', name:'العربية', flag:'🇦🇪'}, {code:'it', name:'Italiano', flag:'🇮🇹'},
+        {code:'es', name:'Español', flag:'🇪🇸'}, {code:'fr', name:'Français', flag:'🇫🇷'},
+        {code:'ja', name:'日本語', flag:'🇯🇵'}, {code:'zh', name:'中文', flag:'🇨🇳'}
+    ];
+
+    let html = `<div class="text-[0.7rem] text-[#00a884] mb-3 text-center uppercase tracking-widest border-b border-[#2a3942] pb-2">Settings strictly for:<br><b class="text-white text-sm">🌍 Global Chat (Keyboard)</b></div>`;
+    langs.forEach(l => {
+        let isActive = (currentPref === l.code) ? 'border-[#00a884] bg-[#202c33]' : 'border-[#2a3942] bg-[#111b21]';
+        html += `<div onclick="window.saveGlobalAvatarLang('${l.code}')" class="flex items-center p-3 rounded-xl border ${isActive} cursor-pointer mb-2 hover:border-[#00a884] transition shadow-sm"><span class="text-white font-bold text-[0.9rem] flex gap-3 items-center"><span class="text-xl">${l.flag}</span>${l.name}</span></div>`;
+    });
+    listContainer.innerHTML = html;
+    document.getElementById('personal-lang-modal').classList.add('active');
 };
 
+window.saveGlobalAvatarLang = function(langCode) {
+    if (langCode === 'auto') {
+        localStorage.removeItem('hf_global_avatar_lang');
+    } else {
+        localStorage.setItem('hf_global_avatar_lang', langCode);
+    }
+    window.syncMyGlobalChannelLang('avatar');
+    document.getElementById('personal-lang-modal')?.classList.remove('active');
+    if (window.showToast) window.showToast("Keyboard Language", "Saved strictly for Global Chat.", "", "");
+};
+
+window.closePersonalLangModal = function() {
+    document.getElementById('personal-lang-modal')?.classList.remove('active');
+};
+
+window.saveRoomMicLang = function(val) {
+    if (window.currentIndex === 2) {
+        if (typeof window.saveConfMicLang === 'function') return window.saveConfMicLang(val);
+        return;
+    }
+    if (window.currentRoomId && window.currentRoomId !== 'global' && window.currentRoomId !== 'private_ai_bot' && !window.currentRoomId.startsWith('private_me_')) {
+        if (typeof window.savePrivateMicLang === 'function') return window.savePrivateMicLang(val);
+        return;
+    }
+
+    if (val === 'auto' || !val) {
+        localStorage.removeItem('hf_global_mic_lang');
+    } else {
+        localStorage.setItem('hf_global_mic_lang', val);
+    }
+    window.syncMyGlobalChannelLang('mic');
+    if (window.showToast) window.showToast("Mic Language", "Saved strictly for Global Chat", "", "");
+};
+
+window.updateChatMicMenuButtons = function() {
+    const r = window.currentRoomId || 'global';
+    const isPrivate = (window.currentIndex === 0) && r !== 'global' && r !== 'video_room_global' && r !== 'private_ai_bot' && !r.startsWith('private_me_');
+    document.querySelectorAll('button[onclick*="ai-audio"]').forEach(btn => {
+        const attr = btn.getAttribute('onclick') || '';
+        if (attr.includes('startUniversalMic')) {
+            btn.style.display = isPrivate ? '' : 'none';
+        }
+    });
+};
+
+window.syncMicLangUI = function() {
+    window.updateChatMicMenuButtons();
+    if (window.currentIndex === 2 && typeof window.syncConfMicLangUI === 'function') return window.syncConfMicLangUI();
+    if (window.currentRoomId && window.currentRoomId !== 'global' && window.currentRoomId !== 'private_ai_bot' && !window.currentRoomId.startsWith('private_me_')) {
+        if (typeof window.syncPrivateMicLangUI === 'function') return window.syncPrivateMicLangUI();
+        return;
+    }
+    let sel = document.getElementById('plus-mic-lang');
+    if (sel) sel.value = localStorage.getItem('hf_global_mic_lang') || 'auto';
+};
+
+window.autoSetMicLang = function() { window.syncMicLangUI(); };
+
+// === БЕЗЛИМИТНЫЙ МИКРОФОН ГЛОБАЛЬНОГО ЧАТА (ТОЛЬКО ТЕКСТ, ИЗОЛИРОВАННЫЙ МИР) ===
+(function () {
+    const GM = {
+        active: false,
+        roomId: 'global',
+        rec: null,
+        restartTimer: null,
+        watchdog: null,
+        committed: '',
+        interim: '',
+        lastChunkNorm: '',
+        lastChunkAt: 0,
+        recBase: 'en',
+        isManual: false
+    };
+    window.HF_GLOBAL_MIC = GM;
+
+    const SPEECH_LOCALE = {
+        en: 'en-US', ru: 'ru-RU', az: 'az-AZ', tr: 'tr-TR', de: 'de-DE', kk: 'kk-KZ',
+        ar: 'ar-AE', it: 'it-IT', es: 'es-ES', fr: 'fr-FR', pt: 'pt-PT', ja: 'ja-JP', zh: 'zh-CN'
+    };
+
+    function gmNorm(s) {
+        return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function gmAppend(chunk) {
+        const clean = String(chunk || '').trim();
+        if (!clean) return;
+        const norm = gmNorm(clean);
+        const now = Date.now();
+        if (!norm) return;
+        if (norm === GM.lastChunkNorm && (now - GM.lastChunkAt) < 1800) return;
+        const curNorm = gmNorm(GM.committed);
+        if (norm.length >= 6 && curNorm.endsWith(norm)) return;
+        GM.committed = GM.committed ? (GM.committed + ' ' + clean) : clean;
+        GM.lastChunkNorm = norm;
+        GM.lastChunkAt = now;
+    }
+
+    function ensureGlobalMicPill() {
+        if (!document.getElementById('hf-gmic-styles')) {
+            const st = document.createElement('style');
+            st.id = 'hf-gmic-styles';
+            st.textContent = `
+                #hf-gmic-pill {
+                    display: none;
+                    align-items: center;
+                    gap: 8px;
+                    width: calc(100% - 16px);
+                    margin: 0 auto 6px auto;
+                    padding: 7px 10px;
+                    background: #111b21;
+                    border: 1.5px solid
+            
 // ==========================================
 // 6. ЭМОДЗИ И PUSH-УВЕДОМЛЕНИЯ
 // ==========================================
