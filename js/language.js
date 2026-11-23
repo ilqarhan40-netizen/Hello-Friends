@@ -1,6 +1,7 @@
 // ==========================================
 // ПРИВАТНЫЙ ЧАТ — ПОЛНОСТЬЮ ИЗОЛИРОВАННЫЙ МИР (js/language.js)
-// Два раздельных канала (avatar / mic) + тупое зеркальное копирование
+// Два раздельных канала (avatar / mic) + зеркальное копирование
+// + 1-в-1 движок безлимитного микрофона из js/video-room.js
 // ==========================================
 
 const PRIV_LANG_MAP = {
@@ -13,6 +14,11 @@ const PRIV_SPEECH_LOCALE = {
     en: 'en-US', ru: 'ru-RU', az: 'az-AZ', tr: 'tr-TR', de: 'de-DE', kk: 'kk-KZ',
     ar: 'ar-AE', it: 'it-IT', es: 'es-ES', fr: 'fr-FR', pt: 'pt-PT', ja: 'ja-JP', zh: 'zh-CN'
 };
+
+// Сброс всех сохранённых языков приватного микрофона на Auto при старте сессии
+Object.keys(localStorage).forEach(k => {
+    if (k.startsWith('hf_priv_mic_lang_')) localStorage.removeItem(k);
+});
 
 function privNormLang(code) {
     if (!code || code === 'auto' || code === 'un') return null;
@@ -27,6 +33,12 @@ function getPrivateRoomId() {
         return null;
     }
     return r;
+}
+
+function isPrivChatTabVisible() {
+    if (typeof window.isChatTabVisibleNow === 'function') return window.isChatTabVisibleNow();
+    if (window.currentIndex === 1 || window.currentIndex === 2 || window.currentIndex === 3 || window.currentIndex === 4 || window.currentIndex === 5) return false;
+    return true;
 }
 
 function getPrivateTargetUser() {
@@ -142,9 +154,14 @@ window.initPrivateLiveLangSync = function(roomId) {
     const rId = roomId || getPrivateRoomId();
     if (!rId || typeof firebase === 'undefined' || !window.myProfileInfo || !window.myProfileInfo.id) return;
 
-    if (window.activePrivateLangRoom && window.activePrivateLangRoom !== rId && window.activePrivateLangListener) {
-        firebase.database().ref('private_active_langs/' + window.activePrivateLangRoom).off('value', window.activePrivateLangListener);
-        window.activePrivateLangListener = null;
+    if (window.activePrivateLangRoom && window.activePrivateLangRoom !== rId) {
+        const prevRoom = window.activePrivateLangRoom;
+        localStorage.removeItem('hf_priv_mic_lang_' + prevRoom);
+        window.syncMyPrivateChannelLang(prevRoom, 'mic', null);
+        if (window.activePrivateLangListener) {
+            firebase.database().ref('private_active_langs/' + prevRoom).off('value', window.activePrivateLangListener);
+            window.activePrivateLangListener = null;
+        }
     }
 
     if (window.activePrivateLangRoom !== rId || !window.activePrivateLangListener) {
@@ -169,7 +186,6 @@ async function getTargetLivePrivateChannel(roomId, targetUser, channel) {
         };
     }
 
-    // Страховка: если живая таблица комнаты ещё не подгрузилась, забираем разово из базы
     if (roomId && !window.privateLiveLangsLoaded[roomId] && typeof firebase !== 'undefined') {
         try {
             const snap = await firebase.database().ref('private_active_langs/' + roomId).once('value');
@@ -253,7 +269,6 @@ window.savePrivateAvatarLang = function(langCode, roomId) {
         localStorage.setItem('hf_priv_avatar_lang_' + rId, langCode);
     }
 
-    // Обновляем в базе СТРОГО канал клавиатуры (микрофон не трогаем)
     window.syncMyPrivateChannelLang(rId, 'avatar');
 
     document.getElementById('personal-lang-modal')?.classList.remove('active');
@@ -270,8 +285,8 @@ window.savePrivateMicLang = function(val) {
         localStorage.setItem('hf_priv_mic_lang_' + roomId, val);
     }
 
-    // Обновляем в базе СТРОГО канал микрофона (клавиатуру не трогаем)
     window.syncMyPrivateChannelLang(roomId, 'mic');
+    if (typeof window.onPrivateMicLangChanged === 'function') window.onPrivateMicLangChanged();
 
     if (window.showToast) window.showToast("Mic Language", "Saved strictly for this Private Chat", "", "");
 };
@@ -298,7 +313,6 @@ window.sendPrivateMsg = async function() {
     if (!rawText) return;
     inputField.value = '';
 
-    // КАНАЛ КЛАВИАТУРЫ: читает СТРОГО hf_priv_avatar_lang_<roomId>
     const manualLang = privNormLang(localStorage.getItem('hf_priv_avatar_lang_' + roomId));
     const myActiveLang = manualLang || getMyPrivateNativeLang();
 
@@ -318,7 +332,6 @@ window.sendPrivateMsg = async function() {
         ? await privTranslateText(rawText, myActiveLang)
         : rawText;
 
-    // Берём актуальный живой флаг собеседника СТРОГО в канале 'avatar'
     const targetUser = getPrivateTargetUser();
     const targetInfo = await getTargetLivePrivateChannel(roomId, targetUser, 'avatar');
     let textToShip = myBaseText;
@@ -327,7 +340,6 @@ window.sendPrivateMsg = async function() {
         textToShip = await privTranslateText(myBaseText, targetInfo.lang);
     }
 
-    // Готовая зеркальная бегущая дорожка (одна на двоих)
     const mirrorMarquee = buildPrivateMirrorMarquee(
         activeFlag, safeName, myBaseText,
         targetInfo.flag, targetInfo.name, textToShip
@@ -364,23 +376,21 @@ window.sendPrivateMsg = async function() {
 };
 
 // ==========================================
-// 3. ГОЛОСОВОЙ ВВОД ПРИВАТА (БЕЗЛИМИТНЫЙ АВТО-МИКРОФОН, СМЕНА ЯЗЫКА НА ЛЕТУ)
+// 3. ГОЛОСОВОЙ ВВОД ПРИВАТА (1-в-1 ДВИЖОК ИЗ js/video-room.js, СМЕНА ЯЗЫКА НА ЛЕТУ + СБРОС НА AUTO)
 // ==========================================
 (function () {
     const PM = {
         active: false,
         mode: 'text', // 'text' | 'ai-audio'
         roomId: null,
-        rec: null,
+        recognition: null,
         restartTimer: null,
         silenceTimer: null,
         watchdog: null,
-        committed: '',
-        interim: '',
-        lastChunkNorm: '',
-        lastChunkAt: 0,
+        pendingInterim: '',
         lastSentNorm: '',
         lastSentAt: 0,
+        recentSend: [],
         recBase: 'en',
         isManual: false
     };
@@ -390,103 +400,128 @@ window.sendPrivateMsg = async function() {
         return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
     }
 
-    function pmAppend(chunk) {
-        const clean = String(chunk || '').trim();
-        if (!clean) return;
-        const norm = pmNorm(clean);
+    function isPrivDup(text) {
+        const norm = pmNorm(text);
+        if (!norm) return true;
         const now = Date.now();
-        if (!norm) return;
-        if (norm === PM.lastChunkNorm && (now - PM.lastChunkAt) < 1800) return;
-        const curNorm = pmNorm(PM.committed);
-        if (norm.length >= 6 && curNorm.endsWith(norm)) return;
-        PM.committed = PM.committed ? (PM.committed + ' ' + clean) : clean;
-        PM.lastChunkNorm = norm;
-        PM.lastChunkAt = now;
+        const win = norm.length > 10 ? 6500 : 2500;
+        const list = PM.recentSend.filter(x => (now - x.ts) < 7000);
+        const dup = list.some(x =>
+            (x.norm === norm && (now - x.ts) < win) ||
+            (norm.length >= 8 && (now - x.ts) < 3500 && x.norm.includes(norm))
+        );
+        if (dup) { PM.recentSend = list; return true; }
+        list.push({ norm, ts: now });
+        PM.recentSend = list;
+        return false;
+    }
+
+    function readPrivateMicLang(roomId) {
+        const rId = roomId || PM.roomId || getPrivateRoomId();
+        const manual = rId ? privNormLang(localStorage.getItem('hf_priv_mic_lang_' + rId)) : null;
+        PM.isManual = Boolean(manual);
+        PM.recBase = PM.isManual ? manual : getMyPrivateNativeLang();
+    }
+
+    function resetPrivateMicToAuto(roomId) {
+        const rId = roomId || PM.roomId || getPrivateRoomId();
+        Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('hf_priv_mic_lang_')) localStorage.removeItem(k);
+        });
+        if (rId) window.syncMyPrivateChannelLang(rId, 'mic', null);
+        const sel = document.getElementById('plus-mic-lang');
+        if (sel && getPrivateRoomId()) sel.value = 'auto';
+        readPrivateMicLang(rId);
     }
 
     function ensurePrivateMicPill() {
-        const oldSt = document.getElementById('hf-pmic-styles');
-        if (oldSt) oldSt.remove();
-        const st = document.createElement('style');
-        st.id = 'hf-pmic-styles';
-        st.textContent = `
-            #hf-pmic-pill {
-                display: none;
-                align-items: center;
-                gap: 8px;
-                width: calc(100% - 16px);
-                margin: 0 auto 6px auto;
-                padding: 7px 10px;
-                background: #111b21;
-                border: 1.5px solid #ef4444;
-                border-radius: 999px;
-                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
-                flex-shrink: 0;
-                box-sizing: border-box;
-                z-index: 60;
-            }
-            #hf-pmic-pill.active { display: flex; }
-            #hf-pmic-pill.ai-mode {
-                border-color: #00e5b0;
-                box-shadow: 0 6px 20px rgba(0, 229, 176, 0.35);
-            }
-            #hf-pmic-dot {
-                width: 9px; height: 9px; border-radius: 50%;
-                background: #ef4444; flex-shrink: 0;
-                animation: hfPmPulse 1s infinite;
-            }
-            #hf-pmic-pill.ai-mode #hf-pmic-dot { background: #00e5b0; }
-            #hf-pmic-badge {
-                display: none;
-                font-size: 0.68rem; font-weight: 800;
-                padding: 2px 6px; border-radius: 999px;
-                background: rgba(0, 229, 176, 0.16); color: #00e5b0;
-                flex-shrink: 0;
-            }
-            #hf-pmic-pill.ai-mode #hf-pmic-badge { display: inline-block; }
-            #hf-pmic-text {
-                flex: 1 1 auto; min-width: 0; overflow: hidden;
-                white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
-            }
-            #hf-pmic-stop {
-                flex-shrink: 0; background: #ef4444; color: #fff; border: none;
-                border-radius: 999px; padding: 4px 12px; font-size: 0.72rem;
-                font-weight: 800; cursor: pointer;
-            }
-            @keyframes hfPmPulse {
-                0% { transform: scale(0.85); opacity: 0.6; }
-                50% { transform: scale(1.25); opacity: 1; }
-                100% { transform: scale(0.85); opacity: 0.6; }
-            }
-        `;
-        document.head.appendChild(st);
+        if (!document.getElementById('hf-pmic-styles')) {
+            const st = document.createElement('style');
+            st.id = 'hf-pmic-styles';
+            st.textContent = `
+                #hf-pmic-pill {
+                    display: none;
+                    align-items: center;
+                    gap: 8px;
+                    width: calc(100% - 16px);
+                    margin: 0 auto 6px auto;
+                    padding: 7px 10px;
+                    background: #111b21;
+                    border: 1.5px solid #ef4444;
+                    border-radius: 999px;
+                    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+                    flex-shrink: 0;
+                    box-sizing: border-box;
+                    z-index: 60;
+                }
+                #hf-pmic-pill.active { display: flex; }
+                #hf-pmic-pill.ai-mode {
+                    border-color: #00e5b0;
+                    box-shadow: 0 6px 20px rgba(0, 229, 176, 0.35);
+                }
+                #hf-pmic-dot {
+                    width: 9px; height: 9px; border-radius: 50%;
+                    background: #ef4444; flex-shrink: 0;
+                    animation: hfPmPulse 1s infinite;
+                }
+                #hf-pmic-pill.ai-mode #hf-pmic-dot { background: #00e5b0; }
+                #hf-pmic-badge {
+                    display: none;
+                    font-size: 0.68rem; font-weight: 800;
+                    padding: 2px 6px; border-radius: 999px;
+                    background: rgba(0, 229, 176, 0.16); color: #00e5b0;
+                    flex-shrink: 0;
+                }
+                #hf-pmic-pill.ai-mode #hf-pmic-badge { display: inline-block; }
+                #hf-pmic-text {
+                    flex: 1 1 auto; min-width: 0; overflow: hidden;
+                    white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
+                }
+                #hf-pmic-stop {
+                    flex-shrink: 0; background: #ef4444; color: #fff; border: none;
+                    border-radius: 999px; padding: 4px 12px; font-size: 0.72rem;
+                    font-weight: 800; cursor: pointer;
+                }
+                @keyframes hfPmPulse {
+                    0% { transform: scale(0.85); opacity: 0.6; }
+                    50% { transform: scale(1.25); opacity: 1; }
+                    100% { transform: scale(0.85); opacity: 0.6; }
+                }
+            `;
+            document.head.appendChild(st);
+        }
 
         let pill = document.getElementById('hf-pmic-pill');
-        if (pill) pill.remove();
-        pill = document.createElement('div');
-        pill.id = 'hf-pmic-pill';
-        pill.innerHTML = `
-            <span id="hf-pmic-dot"></span>
-            <span id="hf-pmic-badge">🤖 AI</span>
-            <span id="hf-pmic-flag" class="text-sm shrink-0">🌐</span>
-            <span id="hf-pmic-text"></span>
-            <button type="button" id="hf-pmic-stop">STOP</button>
-        `;
-        pill.querySelector('#hf-pmic-stop').onclick = (e) => {
-            e.stopPropagation();
-            window.stopPrivateUnlimitedMic(false);
-        };
+        if (!pill) {
+            pill = document.createElement('div');
+            pill.id = 'hf-pmic-pill';
+            pill.innerHTML = `
+                <span id="hf-pmic-dot"></span>
+                <span id="hf-pmic-badge">🤖 AI</span>
+                <span id="hf-pmic-flag" class="text-sm shrink-0 cursor-pointer">🌐</span>
+                <span id="hf-pmic-text"></span>
+                <button type="button" id="hf-pmic-stop">STOP</button>
+            `;
+            pill.querySelector('#hf-pmic-flag').onclick = (e) => {
+                e.stopPropagation();
+                if (typeof window.toggleUniversalMic === 'function') window.toggleUniversalMic();
+            };
+            pill.querySelector('#hf-pmic-stop').onclick = (e) => {
+                e.stopPropagation();
+                window.stopPrivateUnlimitedMic(false);
+            };
+        }
 
         const inp = document.getElementById('chat-input');
         const area = inp ? inp.closest('.chat-input-area') : null;
-        if (area && area.parentNode) {
+        if (area && area.parentNode && pill.parentNode !== area.parentNode) {
             area.parentNode.insertBefore(pill, area);
         }
         return pill;
     }
 
-    function updatePrivatePillUI() {
-        let pill = document.getElementById('hf-pmic-pill') || ensurePrivateMicPill();
+    function updatePrivatePillUI(preview = '') {
+        const pill = ensurePrivateMicPill();
         if (!pill) return;
         if (!PM.active) {
             pill.classList.remove('active', 'ai-mode');
@@ -499,22 +534,25 @@ window.sendPrivateMsg = async function() {
             ? PRIV_LANG_MAP[PM.recBase][1]
             : ((window.myProfileInfo && window.myProfileInfo.flag) || '🌐');
         if (flagEl) flagEl.textContent = activeFlag;
-        const fullPreview = [PM.committed, PM.interim].filter(Boolean).join(' ').trim();
         if (txtEl) {
-            txtEl.textContent = fullPreview || 'Говорите...';
+            txtEl.textContent = preview || (PM.mode === 'ai-audio' ? 'AI VOICE ON' : 'MIC ON');
             txtEl.scrollLeft = txtEl.scrollWidth;
         }
         pill.classList.add('active');
     }
 
-    async function dispatchPrivatePhrase(text) {
+    async function dispatchPrivateVoicePhrase(text) {
         const recognized = String(text || '').trim();
         const roomId = PM.roomId || getPrivateRoomId();
         if (!recognized || !roomId) return;
 
         const norm = pmNorm(recognized);
+        if (!norm) return;
+
         const now = Date.now();
-        if (!norm || (norm === PM.lastSentNorm && (now - PM.lastSentAt) < 2200)) return;
+        if (norm === PM.lastSentNorm && (now - PM.lastSentAt) < 2200) return;
+        if (isPrivDup(recognized)) return;
+
         PM.lastSentNorm = norm;
         PM.lastSentAt = now;
 
@@ -578,50 +616,75 @@ window.sendPrivateMsg = async function() {
         }
     }
 
-    function flushPrivateAuto() {
-        clearTimeout(PM.silenceTimer);
-        PM.silenceTimer = null;
-        if (PM.interim.trim()) {
-            pmAppend(PM.interim.trim());
-            PM.interim = '';
-        }
-        const phrase = PM.committed.trim();
-        PM.committed = '';
-        PM.lastChunkNorm = '';
-        updatePrivatePillUI();
-        if (phrase) dispatchPrivatePhrase(phrase);
-    }
-
-    function schedulePrivateSilenceFlush() {
-        clearTimeout(PM.silenceTimer);
-        const delay = (PM.recBase === 'az') ? 2000 : 1600;
-        PM.silenceTimer = setTimeout(() => {
-            flushPrivateAuto();
+    function schedulePrivateRestart(delay = 80) {
+        if (!PM.active) return;
+        clearTimeout(PM.restartTimer);
+        PM.restartTimer = setTimeout(() => {
+            PM.restartTimer = null;
+            launchPrivateRecognition();
         }, delay);
     }
 
-    function launchPrivateRec() {
+    function resetPrivateRecognitionFresh(delay = 100) {
+        clearTimeout(PM.silenceTimer);
+        PM.silenceTimer = null;
+        PM.pendingInterim = '';
+
+        if (PM.recognition) {
+            try {
+                PM.recognition.onresult = null;
+                PM.recognition.onend = null;
+                PM.recognition.onerror = null;
+                PM.recognition.abort();
+            } catch (e) {}
+            PM.recognition = null;
+        }
+        if (PM.active) schedulePrivateRestart(delay);
+    }
+
+    function flushPrivateInterim() {
+        clearTimeout(PM.silenceTimer);
+        PM.silenceTimer = null;
+
+        const phrase = PM.pendingInterim.trim();
+        PM.pendingInterim = '';
+        updatePrivatePillUI('');
+
+        if (!phrase) return;
+        dispatchPrivateVoicePhrase(phrase);
+        resetPrivateRecognitionFresh(80);
+    }
+
+    function launchPrivateRecognition() {
         PM.restartTimer = null;
         if (!PM.active) return;
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) return;
 
-        if (PM.rec) {
-            try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
-            PM.rec = null;
+        if (PM.recognition) {
+            try {
+                PM.recognition.onresult = null;
+                PM.recognition.onend = null;
+                PM.recognition.onerror = null;
+                PM.recognition.abort();
+            } catch (e) {}
+            PM.recognition = null;
         }
 
-        PM.interim = '';
+        PM.pendingInterim = '';
+        readPrivateMicLang(PM.roomId);
+
         try {
-            const rec = new SpeechRecognition();
-            rec.lang = PRIV_SPEECH_LOCALE[PM.recBase] || PM.recBase;
+            const rec = new SpeechRec();
+            rec.lang = PRIV_SPEECH_LOCALE[PM.recBase] || 'en-US';
             rec.continuous = false;
             rec.interimResults = true;
             rec.maxAlternatives = 1;
 
             rec.onresult = (event) => {
-                if (!PM.active || !event.results) return;
+                if (!event.results || !event.results.length || !PM.active) return;
+
                 let finalTxt = '';
                 let interimTxt = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -629,64 +692,79 @@ window.sendPrivateMsg = async function() {
                     if (event.results[i].isFinal) finalTxt += ' ' + chunk;
                     else interimTxt += ' ' + chunk;
                 }
-                if (finalTxt.trim()) {
-                    PM.interim = '';
-                    pmAppend(finalTxt.trim());
-                } else if (interimTxt.trim()) {
-                    PM.interim = interimTxt.trim();
+                finalTxt = finalTxt.trim();
+                interimTxt = interimTxt.trim();
+
+                if (finalTxt) {
+                    clearTimeout(PM.silenceTimer);
+                    PM.silenceTimer = null;
+                    PM.pendingInterim = '';
+                    updatePrivatePillUI('');
+                    dispatchPrivateVoicePhrase(finalTxt);
+                    return;
                 }
-                updatePrivatePillUI();
-                schedulePrivateSilenceFlush();
+
+                if (interimTxt) {
+                    PM.pendingInterim = interimTxt;
+                    updatePrivatePillUI(interimTxt);
+
+                    clearTimeout(PM.silenceTimer);
+                    PM.silenceTimer = setTimeout(flushPrivateInterim, PM.recBase === 'az' ? 1400 : 1000);
+                }
             };
 
             rec.onerror = (ev) => {
                 if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
-                    if (window.showToast) window.showToast("Mic Error", ev.error, "", "");
                     window.stopPrivateUnlimitedMic(true);
                     return;
                 }
-                if (PM.interim.trim()) {
-                    pmAppend(PM.interim.trim());
-                    PM.interim = '';
-                    updatePrivatePillUI();
-                    schedulePrivateSilenceFlush();
+                if (PM.pendingInterim.trim()) {
+                    flushPrivateInterim();
+                    return;
                 }
-                PM.rec = null;
                 if (PM.active) {
-                    clearTimeout(PM.restartTimer);
-                    PM.restartTimer = setTimeout(launchPrivateRec, 220);
+                    PM.recognition = null;
+                    schedulePrivateRestart(220);
                 }
             };
 
             rec.onend = () => {
-                PM.rec = null;
-                if (PM.interim.trim()) {
-                    pmAppend(PM.interim.trim());
-                    PM.interim = '';
-                    updatePrivatePillUI();
-                    schedulePrivateSilenceFlush();
+                PM.recognition = null;
+                if (PM.pendingInterim.trim()) {
+                    const tail = PM.pendingInterim.trim();
+                    PM.pendingInterim = '';
+                    clearTimeout(PM.silenceTimer);
+                    PM.silenceTimer = null;
+                    updatePrivatePillUI('');
+                    dispatchPrivateVoicePhrase(tail);
                 }
                 if (PM.active) {
-                    clearTimeout(PM.restartTimer);
-                    PM.restartTimer = setTimeout(launchPrivateRec, 80);
+                    updatePrivatePillUI('');
+                    schedulePrivateRestart(80);
                 }
             };
 
-            PM.rec = rec;
+            PM.recognition = rec;
             rec.start();
         } catch (e) {
-            PM.rec = null;
-            if (PM.active) {
-                clearTimeout(PM.restartTimer);
-                PM.restartTimer = setTimeout(launchPrivateRec, 300);
-            }
+            PM.recognition = null;
+            if (PM.active) schedulePrivateRestart(300);
         }
     }
 
+    window.onPrivateMicLangChanged = function () {
+        const roomId = getPrivateRoomId();
+        if (!roomId) return;
+        readPrivateMicLang(roomId);
+        if (!PM.active || roomId !== PM.roomId) return;
+        updatePrivatePillUI('');
+        if (window.closeAllMenus) window.closeAllMenus();
+        resetPrivateRecognitionFresh(150);
+    };
+
     window.stopPrivateUnlimitedMic = function (discard = true) {
-        if (!discard) {
-            flushPrivateAuto();
-        }
+        const tail = (!discard && PM.pendingInterim) ? PM.pendingInterim.trim() : '';
+        const prevRoom = PM.roomId;
         PM.active = false;
         clearTimeout(PM.restartTimer);
         clearTimeout(PM.silenceTimer);
@@ -694,32 +772,23 @@ window.sendPrivateMsg = async function() {
         PM.restartTimer = null;
         PM.silenceTimer = null;
         PM.watchdog = null;
-        if (PM.rec) {
-            try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
-            PM.rec = null;
-        }
-        PM.committed = '';
-        PM.interim = '';
-        updatePrivatePillUI();
-    };
+        PM.pendingInterim = '';
 
-    // Смена языка на лету без выключения микрофона
-    const origSavePrivateMicLang = window.savePrivateMicLang;
-    window.savePrivateMicLang = function (val) {
-        if (typeof origSavePrivateMicLang === 'function') origSavePrivateMicLang(val);
-        const roomId = getPrivateRoomId();
-        if (PM.active && roomId && roomId === PM.roomId) {
-            const manualMicLang = privNormLang(localStorage.getItem('hf_priv_mic_lang_' + roomId));
-            PM.isManual = Boolean(manualMicLang);
-            PM.recBase = PM.isManual ? manualMicLang : getMyPrivateNativeLang();
-            updatePrivatePillUI();
-            if (PM.rec) {
-                try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
-                PM.rec = null;
-            }
-            clearTimeout(PM.restartTimer);
-            PM.restartTimer = setTimeout(launchPrivateRec, 80);
+        if (PM.recognition) {
+            try {
+                PM.recognition.onresult = null;
+                PM.recognition.onend = null;
+                PM.recognition.onerror = null;
+                PM.recognition.stop();
+            } catch (e) {}
+            PM.recognition = null;
         }
+
+        if (tail) dispatchPrivateVoicePhrase(tail);
+        updatePrivatePillUI('');
+
+        // После окончания сессии возвращаем язык микрофона привата на Auto
+        resetPrivateMicToAuto(prevRoom);
     };
 
     window.startPrivateMic = async function (mode) {
@@ -729,35 +798,48 @@ window.sendPrivateMsg = async function() {
         if (window.closeAllMenus) window.closeAllMenus();
         if (typeof window.stopGlobalUnlimitedMic === 'function') window.stopGlobalUnlimitedMic(true);
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) return alert("Голосовой ввод не поддерживается браузером.");
 
-        const manualMicLang = privNormLang(localStorage.getItem('hf_priv_mic_lang_' + roomId));
-        PM.isManual = Boolean(manualMicLang);
-        PM.recBase = PM.isManual ? manualMicLang : getMyPrivateNativeLang();
-        PM.mode = (mode === 'ai-audio') ? 'ai-audio' : 'text';
-
-        if (!PM.active || PM.roomId !== roomId) {
-            PM.committed = '';
-            PM.interim = '';
-            PM.lastChunkNorm = '';
-        }
         PM.roomId = roomId;
+        PM.mode = (mode === 'ai-audio') ? 'ai-audio' : 'text';
+        readPrivateMicLang(roomId);
+
+        const wasActive = PM.active;
         PM.active = true;
-        ensurePrivateMicPill();
-        updatePrivatePillUI();
-        launchPrivateRec();
+        updatePrivatePillUI('');
+
+        if (wasActive) {
+            resetPrivateRecognitionFresh(120);
+        } else {
+            launchPrivateRecognition();
+        }
 
         clearInterval(PM.watchdog);
         PM.watchdog = setInterval(() => {
             if (!PM.active) return;
-            if (window.currentIndex !== 0 || getPrivateRoomId() !== PM.roomId) {
+            if (!isPrivChatTabVisible() || getPrivateRoomId() !== PM.roomId) {
                 window.stopPrivateUnlimitedMic(true);
                 return;
             }
-            if (!PM.rec && !PM.restartTimer) launchPrivateRec();
-        }, 700);
+            if (!PM.recognition && !PM.restartTimer) {
+                launchPrivateRecognition();
+            }
+        }, 2000);
     };
+
+    // Прямой перехват смены языка в #plus-mic-lang (переключает мгновенно на лету в Привате)
+    document.addEventListener('change', (e) => {
+        if (!e.target || e.target.id !== 'plus-mic-lang') return;
+        if (!isPrivChatTabVisible()) return;
+        const roomId = getPrivateRoomId();
+        if (!roomId) return;
+        const val = e.target.value;
+        if (!val || val === 'auto') localStorage.removeItem('hf_priv_mic_lang_' + roomId);
+        else localStorage.setItem('hf_priv_mic_lang_' + roomId, val);
+        window.syncMyPrivateChannelLang(roomId, 'mic');
+        window.onPrivateMicLangChanged();
+    }, true);
 })();
 
 // ==========================================
@@ -792,12 +874,11 @@ window.handlePrivateMessage = function(snapshot) {
             flag: data.flag || '🌐'
         });
 
-    // Берём готовые тексты напрямую из пакета сообщения (НИКАКИХ повторных переводов)
     const baseText = (data.originalText || data.text || '').trim();
     const translatedText = (data.text || baseText).trim();
     const hasDiff = Boolean(baseText && translatedText && baseText.toLowerCase() !== translatedText.toLowerCase());
 
-    const isAppActiveAndInChat = (document.visibilityState === 'visible' && window.currentIndex === 0);
+    const isAppActiveAndInChat = (document.visibilityState === 'visible' && isPrivChatTabVisible());
     const senderDisplayName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
 
     if (!isMe && !isHistory) {
@@ -895,7 +976,6 @@ window.handlePrivateMessage = function(snapshot) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // ГОТОВАЯ ЗЕРКАЛЬНАЯ БЕГУЩАЯ ДОРОЖКА (берётся напрямую из сообщения)
     if (!isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
         const mText = document.getElementById('chat-info-marquee');
         if (mText && window.isMarqueeEnabled !== false) {
