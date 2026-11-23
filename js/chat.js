@@ -875,7 +875,7 @@ window.updateChatMicMenuButtons = function() {
     const isPrivate = (window.currentIndex === 0) && r !== 'global' && r !== 'video_room_global' && r !== 'private_ai_bot' && !r.startsWith('private_me_');
     document.querySelectorAll('button[onclick*="ai-audio"]').forEach(btn => {
         const attr = btn.getAttribute('onclick') || '';
-        if (attr.includes('startUniversalMic') || attr.includes('ai-audio')) {
+        if (attr.includes('startUniversalMic')) {
             btn.style.display = isPrivate ? '' : 'none';
         }
     });
@@ -894,21 +894,18 @@ window.syncMicLangUI = function() {
 
 window.autoSetMicLang = function() { window.syncMicLangUI(); };
 
-// === БЕЗЛИМИТНЫЙ АВТО-МИКРОФОН ГЛОБАЛЬНОГО ЧАТА (ТОЛЬКО ТЕКСТ, СМЕНА ЯЗЫКА НА ЛЕТУ) ===
+// === БЕЗЛИМИТНЫЙ МИКРОФОН ГЛОБАЛЬНОГО ЧАТА (ТОЛЬКО ТЕКСТ, ИЗОЛИРОВАННЫЙ МИР) ===
 (function () {
     const GM = {
         active: false,
         roomId: 'global',
         rec: null,
         restartTimer: null,
-        silenceTimer: null,
         watchdog: null,
         committed: '',
         interim: '',
         lastChunkNorm: '',
         lastChunkAt: 0,
-        lastSentNorm: '',
-        lastSentAt: 0,
         recBase: 'en',
         isManual: false
     };
@@ -938,53 +935,305 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
     }
 
     function ensureGlobalMicPill() {
-        const oldSt = document.getElementById('hf-gmic-styles');
-        if (oldSt) oldSt.remove();
-        const st = document.createElement('style');
-        st.id = 'hf-gmic-styles';
-        st.textContent = `
-            #hf-gmic-pill {
-                display: none;
-                align-items: center;
-                gap: 8px;
-                width: calc(100% - 16px);
-                margin: 0 auto 6px auto;
-                padding: 7px 10px;
-                background: #111b21;
-                border: 1.5px solid #ef4444;
-                border-radius: 999px;
-                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
-                flex-shrink: 0;
-                box-sizing: border-box;
-                z-index: 60;
-            }
-            #hf-gmic-pill.active { display: flex; }
-            #hf-gmic-dot {
-                width: 9px; height: 9px; border-radius: 50%;
-                background: #ef4444; flex-shrink: 0;
-                animation: hfGmPulse 1s infinite;
-            }
-            #hf-gmic-text {
-                flex: 1 1 auto; min-width: 0; overflow: hidden;
-                white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
-            }
-            #hf-gmic-stop {
-                flex-shrink: 0; background: #ef4444; color: #fff; border: none;
-                border-radius: 999px; padding: 4px 12px; font-size: 0.72rem;
-                font-weight: 800; cursor: pointer;
-            }
-            @keyframes hfGmPulse {
-                0% { transform: scale(0.85); opacity: 0.6; }
-                50% { transform: scale(1.25); opacity: 1; }
-                100% { transform: scale(0.85); opacity: 0.6; }
-            }
-        `;
-        document.head.appendChild(st);
+        if (!document.getElementById('hf-gmic-styles')) {
+            const st = document.createElement('style');
+            st.id = 'hf-gmic-styles';
+            st.textContent = `
+                #hf-gmic-pill {
+                    display: none;
+                    align-items: center;
+                    gap: 8px;
+                    width: calc(100% - 16px);
+                    margin: 0 auto 6px auto;
+                    padding: 7px 10px;
+                    background: #111b21;
+                    border: 1.5px solid #ef4444;
+                    border-radius: 999px;
+                    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+                    flex-shrink: 0;
+                    box-sizing: border-box;
+                    z-index: 60;
+                }
+                #hf-gmic-pill.active { display: flex; }
+                #hf-gmic-dot {
+                    width: 9px; height: 9px; border-radius: 50%;
+                    background: #ef4444; flex-shrink: 0;
+                    animation: hfGmPulse 1s infinite;
+                }
+                #hf-gmic-text {
+                    flex: 1 1 auto; min-width: 0; overflow: hidden;
+                    white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
+                }
+                .hf-gmic-act {
+                    width: 30px; height: 30px; border-radius: 50%; border: none;
+                    display: flex; align-items: center; justify-content: center;
+                    flex-shrink: 0; cursor: pointer; font-size: 0.82rem;
+                }
+                @keyframes hfGmPulse {
+                    0% { transform: scale(0.85); opacity: 0.6; }
+                    50% { transform: scale(1.25); opacity: 1; }
+                    100% { transform: scale(0.85); opacity: 0.6; }
+                }
+            `;
+            document.head.appendChild(st);
+        }
 
         let pill = document.getElementById('hf-gmic-pill');
-        if (pill) pill.remove();
-        pill = document.createElement('div');
-        pill.id = 'hf-gmic-pill
+        if (!pill) {
+            pill = document.createElement('div');
+            pill.id = 'hf-gmic-pill';
+            pill.innerHTML = `
+                <span id="hf-gmic-dot"></span>
+                <span id="hf-gmic-flag" class="text-sm shrink-0">🌐</span>
+                <span id="hf-gmic-text"></span>
+                <button type="button" id="hf-gmic-cancel" class="hf-gmic-act bg-[#202c33] text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" id="hf-gmic-send" class="hf-gmic-act bg-[#00a884] text-[#111b21]"><i class="fa-solid fa-paper-plane"></i></button>
+            `;
+            pill.querySelector('#hf-gmic-cancel').onclick = (e) => {
+                e.stopPropagation();
+                window.stopGlobalUnlimitedMic(true);
+            };
+            pill.querySelector('#hf-gmic-send').onclick = (e) => {
+                e.stopPropagation();
+                window.sendGlobalUnlimitedMic();
+            };
+        }
+
+        const inp = document.getElementById('chat-input');
+        const area = inp ? inp.closest('.chat-input-area') : null;
+        if (area && area.parentNode && pill.parentNode !== area.parentNode) {
+            area.parentNode.insertBefore(pill, area);
+        }
+        return pill;
+    }
+
+    function updateGlobalPillUI() {
+        const pill = ensureGlobalMicPill();
+        if (!pill) return;
+        if (!GM.active) {
+            pill.classList.remove('active');
+            return;
+        }
+        const flagEl = document.getElementById('hf-gmic-flag');
+        const txtEl = document.getElementById('hf-gmic-text');
+        const activeFlag = (GM.isManual && window.GLOBAL_LANG_MAP && window.GLOBAL_LANG_MAP[GM.recBase])
+            ? window.GLOBAL_LANG_MAP[GM.recBase][1]
+            : ((window.myProfileInfo && window.myProfileInfo.flag) || '🌐');
+        if (flagEl) flagEl.textContent = activeFlag;
+        const fullPreview = [GM.committed, GM.interim].filter(Boolean).join(' ').trim();
+        if (txtEl) {
+            txtEl.textContent = fullPreview || 'Говорите...';
+            txtEl.scrollLeft = txtEl.scrollWidth;
+        }
+        pill.classList.add('active');
+    }
+
+    function launchGlobalRec() {
+        GM.restartTimer = null;
+        if (!GM.active) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        if (GM.rec) {
+            try { GM.rec.onresult = null; GM.rec.onend = null; GM.rec.onerror = null; GM.rec.abort(); } catch (e) {}
+            GM.rec = null;
+        }
+
+        GM.interim = '';
+        try {
+            const rec = new SpeechRecognition();
+            rec.lang = SPEECH_LOCALE[GM.recBase] || GM.recBase;
+            rec.continuous = false;
+            rec.interimResults = true;
+            rec.maxAlternatives = 1;
+
+            rec.onresult = (event) => {
+                if (!GM.active || !event.results) return;
+                let finalTxt = '';
+                let interimTxt = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const chunk = (event.results[i][0] && event.results[i][0].transcript) || '';
+                    if (event.results[i].isFinal) finalTxt += ' ' + chunk;
+                    else interimTxt += ' ' + chunk;
+                }
+                if (finalTxt.trim()) {
+                    GM.interim = '';
+                    gmAppend(finalTxt.trim());
+                } else {
+                    GM.interim = interimTxt.trim();
+                }
+                updateGlobalPillUI();
+            };
+
+            rec.onerror = (ev) => {
+                if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
+                    if (window.showToast) window.showToast("Mic Error", ev.error, "", "");
+                    window.stopGlobalUnlimitedMic(true);
+                    return;
+                }
+                if (GM.interim.trim()) {
+                    gmAppend(GM.interim.trim());
+                    GM.interim = '';
+                    updateGlobalPillUI();
+                }
+                GM.rec = null;
+                if (GM.active) {
+                    clearTimeout(GM.restartTimer);
+                    GM.restartTimer = setTimeout(launchGlobalRec, 220);
+                }
+            };
+
+            rec.onend = () => {
+                GM.rec = null;
+                if (GM.interim.trim()) {
+                    gmAppend(GM.interim.trim());
+                    GM.interim = '';
+                    updateGlobalPillUI();
+                }
+                if (GM.active) {
+                    clearTimeout(GM.restartTimer);
+                    GM.restartTimer = setTimeout(launchGlobalRec, 80);
+                }
+            };
+
+            GM.rec = rec;
+            rec.start();
+        } catch (e) {
+            GM.rec = null;
+            if (GM.active) {
+                clearTimeout(GM.restartTimer);
+                GM.restartTimer = setTimeout(launchGlobalRec, 300);
+            }
+        }
+    }
+
+    window.stopGlobalUnlimitedMic = function (discard = true) {
+        GM.active = false;
+        clearTimeout(GM.restartTimer);
+        clearInterval(GM.watchdog);
+        GM.restartTimer = null;
+        GM.watchdog = null;
+        if (GM.rec) {
+            try { GM.rec.onresult = null; GM.rec.onend = null; GM.rec.onerror = null; GM.rec.abort(); } catch (e) {}
+            GM.rec = null;
+        }
+        if (discard) {
+            GM.committed = '';
+            GM.interim = '';
+        }
+        updateGlobalPillUI();
+    };
+
+    window.sendGlobalUnlimitedMic = async function () {
+        if (GM.interim.trim()) {
+            gmAppend(GM.interim.trim());
+            GM.interim = '';
+        }
+        const finalMessage = GM.committed.trim();
+        const targetDbRoom = GM.roomId || window.currentRoomId || 'global';
+        const spokenLangCode = GM.recBase;
+        const isMicManual = GM.isManual;
+
+        window.stopGlobalUnlimitedMic(true);
+        if (!finalMessage) return;
+
+        window.speechRecognizedText = finalMessage;
+
+        const safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
+        const safeName = window.myUsername || 'User';
+        const safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+        let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+        let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+
+        if (isMicManual && window.GLOBAL_LANG_MAP[spokenLangCode]) {
+            activeFlagCode = window.GLOBAL_LANG_MAP[spokenLangCode][0];
+            activeFlag = window.GLOBAL_LANG_MAP[spokenLangCode][1];
+        }
+
+        let mirrorPacket = { mirrorFan: [], mirrorMarquee: '' };
+        if (targetDbRoom === 'global') {
+            if (window.showToast) window.showToast("Translating...", "Preparing mirror...", "", "");
+            mirrorPacket = await window.buildGlobalMirrorPacket(finalMessage, spokenLangCode, 'mic', safeId);
+        }
+
+        firebase.database().ref(targetDbRoom).push({
+            userId: safeId,
+            name: safeName,
+            text: finalMessage,
+            originalText: finalMessage,
+            sessionId: window.mySessionId || 'sess',
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: safePhoto,
+            flag: activeFlag,
+            flagCode: activeFlagCode,
+            langCode: spokenLangCode,
+            inputChannel: 'mic',
+            mirrorFan: mirrorPacket.mirrorFan,
+            mirrorMarquee: mirrorPacket.mirrorMarquee,
+            isConfMsg: false
+        });
+
+        const chatMsgs = document.getElementById('chat-messages');
+        if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100);
+    };
+
+    window.startUniversalMic = async function (mode) {
+        if (window.currentIndex === 1) return; // Аудио / Видео комнаты — в своих файлах
+        if (window.closeAllMenus) window.closeAllMenus();
+
+        if (window.currentIndex === 2) {
+            if (typeof window.startConfMic === 'function') return window.startConfMic(mode);
+            return;
+        }
+
+        const targetDbRoom = window.currentRoomId || 'global';
+        if (targetDbRoom !== 'global' && targetDbRoom !== 'private_ai_bot' && !targetDbRoom.startsWith('private_me_')) {
+            if (typeof window.startPrivateMic === 'function') return window.startPrivateMic(mode);
+            return;
+        }
+
+        if (typeof window.stopPrivateUnlimitedMic === 'function') window.stopPrivateUnlimitedMic(true);
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
+
+        // КАНАЛ МИКРОФОНА ГЛОБАЛЬНОЙ: читает СТРОГО hf_global_mic_lang, без двойного бабла (только текст)
+        const manualMicLang = window.normLangCode(localStorage.getItem('hf_global_mic_lang'));
+        GM.isManual = Boolean(manualMicLang);
+        GM.recBase = GM.isManual ? manualMicLang : (window.normLangCode(window.getSmartLang(window.myProfileInfo)) || 'en');
+        GM.roomId = targetDbRoom;
+
+        if (!GM.active) {
+            GM.committed = '';
+            GM.interim = '';
+            GM.lastChunkNorm = '';
+        }
+        GM.active = true;
+        updateGlobalPillUI();
+        launchGlobalRec();
+
+        clearInterval(GM.watchdog);
+        GM.watchdog = setInterval(() => {
+            if (!GM.active) return;
+            if (window.currentIndex !== 0 || (window.currentRoomId || 'global') !== GM.roomId) {
+                window.stopGlobalUnlimitedMic(true);
+                return;
+            }
+            if (!GM.rec && !GM.restartTimer) launchGlobalRec();
+        }, 700);
+    };
+
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.closest && e.target.closest('button[onclick*="toggleUniversalMic"]')) {
+            setTimeout(() => { if (typeof window.updateChatMicMenuButtons === 'function') window.updateChatMicMenuButtons(); }, 10);
+        }
+    }, true);
+
+    window.addEventListener('load', () => {
+        setTimeout(() => { if (typeof window.updateChatMicMenuButtons === 'function') window.updateChatMicMenuButtons(); }, 800);
+    });
+})();
 
 // ==========================================
 // 6. ЭМОДЗИ И PUSH-УВЕДОМЛЕНИЯ
