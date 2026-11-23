@@ -117,7 +117,9 @@ window.normLangCode = function(code) {
     return fix[c] || c;
 };
 
-// Живая карта переключённых языков всех участников: { [userId]: { avatar: {...}, mic: {...} } }
+// Сброс языка глобального микрофона на Auto при старте сессии
+localStorage.removeItem('hf_global_mic_lang');
+
 window.globalLiveLangs = {};
 window.globalLiveLangsLoaded = false;
 
@@ -171,12 +173,10 @@ window.initGlobalLiveLangSync = function() {
 
 window.addEventListener('load', () => { setTimeout(window.initGlobalLiveLangSync, 500); });
 
-// Сбор ОДНОГО готового зеркального пакета при отправке (переводится один раз на стороне отправителя)
 window.buildGlobalMirrorPacket = async function(origText, senderLang, channel, senderId) {
     const cleanText = (origText || '').trim();
     if (!cleanText) return { mirrorFan: [], mirrorMarquee: '' };
 
-    // Страховка: если живая таблица флагов ещё не успела подгрузиться, забираем её разово
     if (!window.globalLiveLangsLoaded && typeof firebase !== 'undefined') {
         try {
             const snap = await firebase.database().ref('global_active_langs').once('value');
@@ -375,7 +375,7 @@ window.switchChatRoom = function(targetId) {
 window.isGeminiWaiting = false;
 
 window.sendFirebaseMsg = async function() {
-    if (window.currentIndex === 1) return; // Аудио / Видео комнаты — в своих файлах
+    if (window.currentIndex === 1) return;
     if (window.currentIndex === 2) {
         if (typeof window.sendConfMsg === 'function') return window.sendConfMsg();
         return;
@@ -383,7 +383,6 @@ window.sendFirebaseMsg = async function() {
 
     const targetDbRoom = window.currentRoomId || 'global';
 
-    // Приватный чат -> делегируем в js/language.js
     if (targetDbRoom !== 'global' && targetDbRoom !== 'private_ai_bot' && !targetDbRoom.startsWith('private_me_')) {
         if (typeof window.sendPrivateMsg === 'function') return window.sendPrivateMsg();
         return;
@@ -400,7 +399,6 @@ window.sendFirebaseMsg = async function() {
     }
     inputField.value = '';
 
-    // КАНАЛ КЛАВИАТУРЫ/АВАТАРА: читает СТРОГО hf_global_avatar_lang (микрофон не трогает)
     let manualLang = window.normLangCode(localStorage.getItem('hf_global_avatar_lang'));
     let myActiveLang = manualLang || window.normLangCode(window.getSmartLang(window.myProfileInfo)) || 'en';
 
@@ -427,7 +425,6 @@ window.sendFirebaseMsg = async function() {
             }
         } catch (e) {}
 
-        // Один раз собираем готовый зеркальный пакет по каналу 'avatar'
         mirrorPacket = await window.buildGlobalMirrorPacket(myBaseText, myActiveLang, 'avatar', safeId);
     }
 
@@ -452,7 +449,6 @@ window.sendFirebaseMsg = async function() {
     const chatMsgs = document.getElementById('chat-messages');
     if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100);
 
-    // ИИ-бот
     if (targetDbRoom === 'private_ai_bot') {
         window.isGeminiWaiting = true;
         const GEMINI_API_KEY = "AIzaSyB51d72XWcV5AGgLVM1UOg61eCYir78PkY";
@@ -470,21 +466,17 @@ window.sendFirebaseMsg = async function() {
     }
 };
 
-// ПРИЁМ СООБЩЕНИЯ: ЧИСТОЕ ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ (ГЛОБАЛЬНЫЙ ЧАТ — ТОЛЬКО ТЕКСТ, БЕЗ ИИ-АУДИО БАБЛА)
 window.handleNewMessage = function(snapshot) {
     const data = snapshot.val();
     if (!data) return;
 
-    // 1. Аудио и Видео комнаты — в своих файлах
     if (data.isVoiceRoomMsg || data.isVideoRoomMsg) return;
 
-    // 2. Конференция — делегируем в файл конференции
     if (data.isConfMsg) {
         if (typeof window.handleConfMessage === 'function') return window.handleConfMessage(snapshot);
         return;
     }
 
-    // 3. Приватный чат — делегируем в js/language.js
     const roomKey = snapshot.ref.parent ? snapshot.ref.parent.key : window.currentRoomId;
     if (roomKey && roomKey !== 'global' && roomKey !== 'private_ai_bot' && !roomKey.startsWith('private_me_')) {
         if (typeof window.handlePrivateMessage === 'function') return window.handlePrivateMessage(snapshot);
@@ -508,10 +500,9 @@ window.handleNewMessage = function(snapshot) {
             ? { id: 'ai', name: 'AI Assistant', photo: 'https://ui-avatars.com/api/?name=AI&background=6b21a8&color=fff', flag: '🤖' }
             : (window.participants.find(part => String(part.id) === String(data.userId)) || { id: data.userId, photo: data.photo || 'https://ui-avatars.com/api/?name=U', langCode: data.langCode || 'en', flag: data.flag || '🌐' }));
 
-    let isAppActiveAndInChat = (document.visibilityState === 'visible' && window.currentIndex === 0);
+    let isAppActiveAndInChat = (document.visibilityState === 'visible' && (window.currentIndex === 0 || window.currentIndex === undefined));
     let senderDisplayName = isMe ? window.myUsername : (data.name || 'User').split(' ')[0];
 
-    // Извлекаем готовый зеркальный веер из сообщения
     const fanList = Array.isArray(data.mirrorFan)
         ? data.mirrorFan
         : (data.mirrorFan ? Object.values(data.mirrorFan) : []);
@@ -563,7 +554,6 @@ window.handleNewMessage = function(snapshot) {
         : avatarHtml + `<div class="chat-bubble-wrapper incoming items-start flex flex-col" data-id="${snapshot.key}"><div class="chat-sender-name">${senderDisplayName}</div><div class="${bubbleClasses}">${bubbleContent}</div></div>`;
     messageGroup.appendChild(msgWrapper);
 
-    // ГОТОВЫЙ ЗЕРКАЛЬНЫЙ ВЕЕР (1 в 1 у отправителя и у всех получателей)
     if (window.currentRoomId === 'global' && !isAI && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile && fanList.length > 0) {
         const transContainer = document.createElement('div');
         transContainer.className = `sender-translate-fan flex flex-col gap-2 mt-2 w-full ${isMe ? 'items-end pr-2' : 'items-start pl-10'}`;
@@ -581,7 +571,6 @@ window.handleNewMessage = function(snapshot) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // ГОТОВАЯ ЗЕРКАЛЬНАЯ БЕГУЩАЯ СТРОКА (берётся напрямую из сообщения)
     if (window.currentRoomId === 'global' && !isAI && !isHistory && !data.isTransfer && !data.mediaUrl && !data.isLocation && !data.isFile) {
         const mText = document.getElementById('chat-info-marquee');
         const marqueeContent = data.mirrorMarquee || baseText;
@@ -795,7 +784,7 @@ window.actionDeleteForever = function() {
 };
 
 // ==========================================
-// 5. ПАНЕЛЬ ЯЗЫКОВ (АВАТАР) И БЕЗЛИМИТНЫЙ АВТО-МИКРОФОН (СТРОГО РАЗДЕЛЬНО)
+// 5. ПАНЕЛЬ ЯЗЫКОВ (АВАТАР) И БЕЗЛИМИТНЫЙ МИКРОФОН (1-в-1 ДВИЖОК video-room.js)
 // ==========================================
 window.openPersonalLangModal = function() {
     if (window.closeDropdown) window.closeDropdown();
@@ -866,10 +855,19 @@ window.saveRoomMicLang = function(val) {
     if (window.showToast) window.showToast("Mic Language", "Saved strictly for Global Chat", "", "");
 };
 
-// ГАРАНТИРОВАННОЕ СКРЫТИЕ КНОПКИ "Voice Message (AI)" В ГЛОБАЛЬНОМ ЧАТЕ (ТОЛЬКО В ПРИВАТЕ)
+window.isChatTabVisibleNow = function() {
+    if (window.currentIndex === 1 || window.currentIndex === 2 || window.currentIndex === 3 || window.currentIndex === 4 || window.currentIndex === 5) return false;
+    const callEl = document.getElementById('voice-translator');
+    if (callEl && callEl.classList.contains('active')) return false;
+    const confEl = document.getElementById('conference');
+    if (confEl && confEl.classList.contains('active')) return false;
+    return true;
+};
+
+// Скрытие кнопки "Voice Message (AI)" в Глобальном чате (остаётся только в Привате)
 window.updateChatMicMenuButtons = function() {
     const r = window.currentRoomId || 'global';
-    const isPrivate = (window.currentIndex === 0 || window.currentIndex === undefined)
+    const isPrivate = window.isChatTabVisibleNow()
         && r !== 'global'
         && r !== 'video_room_global'
         && r !== 'private_ai_bot'
@@ -885,13 +883,11 @@ window.updateChatMicMenuButtons = function() {
         }
     };
 
-    // 1. Все элементы (button / div) с вызовом ai-audio внутри чат-меню
     document.querySelectorAll('[onclick*="ai-audio"], [onclick*="ai_audio"]').forEach(el => {
         if (el.closest('#voice-translator') || el.closest('#conference') || el.closest('#incoming-call-modal')) return;
         toggleEl(el);
     });
 
-    // 2. Прямая проверка внутри контейнера выпадающего меню #plus-mic-lang
     const sel = document.getElementById('plus-mic-lang');
     if (sel) {
         const menuBox = sel.closest('#universal-mic-menu, #plus-mic-menu, #mic-menu, .mic-menu, [id*="mic"]') || sel.parentElement?.parentElement;
@@ -922,21 +918,19 @@ window.syncMicLangUI = function() {
 
 window.autoSetMicLang = function() { window.syncMicLangUI(); };
 
-// === БЕЗЛИМИТНЫЙ АВТО-МИКРОФОН ГЛОБАЛЬНОГО ЧАТА (ТОЛЬКО ТЕКСТ, СМЕНА ЯЗЫКА НА ЛЕТУ) ===
+// === 1-в-1 ДВИЖОК МИКРОФОНА ИЗ js/video-room.js (ИЗОЛИРОВАН ПОД GLOBAL, ТОЛЬКО ТЕКСТ) ===
 (function () {
     const GM = {
         active: false,
         roomId: 'global',
-        rec: null,
+        recognition: null,
         restartTimer: null,
         silenceTimer: null,
         watchdog: null,
-        committed: '',
-        interim: '',
-        lastChunkNorm: '',
-        lastChunkAt: 0,
+        pendingInterim: '',
         lastSentNorm: '',
         lastSentAt: 0,
+        recentSend: [],
         recBase: 'en',
         isManual: false
     };
@@ -951,89 +945,113 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
         return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
     }
 
-    function gmAppend(chunk) {
-        const clean = String(chunk || '').trim();
-        if (!clean) return;
-        const norm = gmNorm(clean);
+    function isGlobalDup(text) {
+        const norm = gmNorm(text);
+        if (!norm) return true;
         const now = Date.now();
-        if (!norm) return;
-        if (norm === GM.lastChunkNorm && (now - GM.lastChunkAt) < 1800) return;
-        const curNorm = gmNorm(GM.committed);
-        if (norm.length >= 6 && curNorm.endsWith(norm)) return;
-        GM.committed = GM.committed ? (GM.committed + ' ' + clean) : clean;
-        GM.lastChunkNorm = norm;
-        GM.lastChunkAt = now;
+        const win = norm.length > 10 ? 6500 : 2500;
+        const list = GM.recentSend.filter(x => (now - x.ts) < 7000);
+        const dup = list.some(x =>
+            (x.norm === norm && (now - x.ts) < win) ||
+            (norm.length >= 8 && (now - x.ts) < 3500 && x.norm.includes(norm))
+        );
+        if (dup) { GM.recentSend = list; return true; }
+        list.push({ norm, ts: now });
+        GM.recentSend = list;
+        return false;
+    }
+
+    function readGlobalMicLang() {
+        const manual = window.normLangCode(localStorage.getItem('hf_global_mic_lang'));
+        GM.isManual = Boolean(manual);
+        GM.recBase = GM.isManual ? manual : (window.normLangCode(window.getSmartLang(window.myProfileInfo)) || 'en');
+    }
+
+    function resetGlobalMicToAuto() {
+        localStorage.removeItem('hf_global_mic_lang');
+        window.syncMyGlobalChannelLang('mic', null);
+        const sel = document.getElementById('plus-mic-lang');
+        const r = window.currentRoomId || 'global';
+        if (sel && (r === 'global' || r === 'private_ai_bot' || r.startsWith('private_me_'))) {
+            sel.value = 'auto';
+        }
+        readGlobalMicLang();
     }
 
     function ensureGlobalMicPill() {
-        const oldSt = document.getElementById('hf-gmic-styles');
-        if (oldSt) oldSt.remove();
-        const st = document.createElement('style');
-        st.id = 'hf-gmic-styles';
-        st.textContent = `
-            #hf-gmic-pill {
-                display: none;
-                align-items: center;
-                gap: 8px;
-                width: calc(100% - 16px);
-                margin: 0 auto 6px auto;
-                padding: 7px 10px;
-                background: #111b21;
-                border: 1.5px solid #ef4444;
-                border-radius: 999px;
-                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
-                flex-shrink: 0;
-                box-sizing: border-box;
-                z-index: 60;
-            }
-            #hf-gmic-pill.active { display: flex; }
-            #hf-gmic-dot {
-                width: 9px; height: 9px; border-radius: 50%;
-                background: #ef4444; flex-shrink: 0;
-                animation: hfGmPulse 1s infinite;
-            }
-            #hf-gmic-text {
-                flex: 1 1 auto; min-width: 0; overflow: hidden;
-                white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
-            }
-            #hf-gmic-stop {
-                flex-shrink: 0; background: #ef4444; color: #fff; border: none;
-                border-radius: 999px; padding: 4px 12px; font-size: 0.72rem;
-                font-weight: 800; cursor: pointer;
-            }
-            @keyframes hfGmPulse {
-                0% { transform: scale(0.85); opacity: 0.6; }
-                50% { transform: scale(1.25); opacity: 1; }
-                100% { transform: scale(0.85); opacity: 0.6; }
-            }
-        `;
-        document.head.appendChild(st);
+        if (!document.getElementById('hf-gmic-styles')) {
+            const st = document.createElement('style');
+            st.id = 'hf-gmic-styles';
+            st.textContent = `
+                #hf-gmic-pill {
+                    display: none;
+                    align-items: center;
+                    gap: 8px;
+                    width: calc(100% - 16px);
+                    margin: 0 auto 6px auto;
+                    padding: 7px 10px;
+                    background: #111b21;
+                    border: 1.5px solid #ef4444;
+                    border-radius: 999px;
+                    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+                    flex-shrink: 0;
+                    box-sizing: border-box;
+                    z-index: 60;
+                }
+                #hf-gmic-pill.active { display: flex; }
+                #hf-gmic-dot {
+                    width: 9px; height: 9px; border-radius: 50%;
+                    background: #ef4444; flex-shrink: 0;
+                    animation: hfGmPulse 1s infinite;
+                }
+                #hf-gmic-text {
+                    flex: 1 1 auto; min-width: 0; overflow: hidden;
+                    white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
+                }
+                #hf-gmic-stop {
+                    flex-shrink: 0; background: #ef4444; color: #fff; border: none;
+                    border-radius: 999px; padding: 4px 12px; font-size: 0.72rem;
+                    font-weight: 800; cursor: pointer;
+                }
+                @keyframes hfGmPulse {
+                    0% { transform: scale(0.85); opacity: 0.6; }
+                    50% { transform: scale(1.25); opacity: 1; }
+                    100% { transform: scale(0.85); opacity: 0.6; }
+                }
+            `;
+            document.head.appendChild(st);
+        }
 
         let pill = document.getElementById('hf-gmic-pill');
-        if (pill) pill.remove();
-        pill = document.createElement('div');
-        pill.id = 'hf-gmic-pill';
-        pill.innerHTML = `
-            <span id="hf-gmic-dot"></span>
-            <span id="hf-gmic-flag" class="text-sm shrink-0">🌐</span>
-            <span id="hf-gmic-text"></span>
-            <button type="button" id="hf-gmic-stop">STOP</button>
-        `;
-        pill.querySelector('#hf-gmic-stop').onclick = (e) => {
-            e.stopPropagation();
-            window.stopGlobalUnlimitedMic(false);
-        };
+        if (!pill) {
+            pill = document.createElement('div');
+            pill.id = 'hf-gmic-pill';
+            pill.innerHTML = `
+                <span id="hf-gmic-dot"></span>
+                <span id="hf-gmic-flag" class="text-sm shrink-0 cursor-pointer">🌐</span>
+                <span id="hf-gmic-text"></span>
+                <button type="button" id="hf-gmic-stop">STOP</button>
+            `;
+            pill.querySelector('#hf-gmic-flag').onclick = (e) => {
+                e.stopPropagation();
+                if (typeof window.toggleUniversalMic === 'function') window.toggleUniversalMic();
+            };
+            pill.querySelector('#hf-gmic-stop').onclick = (e) => {
+                e.stopPropagation();
+                window.stopGlobalUnlimitedMic(false);
+            };
+        }
 
         const inp = document.getElementById('chat-input');
         const area = inp ? inp.closest('.chat-input-area') : null;
-        if (area && area.parentNode) {
+        if (area && area.parentNode && pill.parentNode !== area.parentNode) {
             area.parentNode.insertBefore(pill, area);
         }
         return pill;
     }
 
-    function updateGlobalPillUI() {
-        let pill = document.getElementById('hf-gmic-pill') || ensureGlobalMicPill();
+    function updateGlobalPillUI(preview = '') {
+        const pill = ensureGlobalMicPill();
         if (!pill) return;
         if (!GM.active) {
             pill.classList.remove('active');
@@ -1045,20 +1063,23 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
             ? window.GLOBAL_LANG_MAP[GM.recBase][1]
             : ((window.myProfileInfo && window.myProfileInfo.flag) || '🌐');
         if (flagEl) flagEl.textContent = activeFlag;
-        const fullPreview = [GM.committed, GM.interim].filter(Boolean).join(' ').trim();
         if (txtEl) {
-            txtEl.textContent = fullPreview || 'Говорите...';
+            txtEl.textContent = preview || 'MIC ON';
             txtEl.scrollLeft = txtEl.scrollWidth;
         }
         pill.classList.add('active');
     }
 
-    async function dispatchGlobalPhrase(text) {
+    async function dispatchGlobalVoicePhrase(text) {
         const clean = String(text || '').trim();
         if (!clean) return;
         const norm = gmNorm(clean);
+        if (!norm) return;
+
         const now = Date.now();
-        if (!norm || (norm === GM.lastSentNorm && (now - GM.lastSentAt) < 2200)) return;
+        if (norm === GM.lastSentNorm && (now - GM.lastSentAt) < 2200) return;
+        if (isGlobalDup(clean)) return;
+
         GM.lastSentNorm = norm;
         GM.lastSentAt = now;
 
@@ -1104,50 +1125,75 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
         if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100);
     }
 
-    function flushGlobalAuto() {
-        clearTimeout(GM.silenceTimer);
-        GM.silenceTimer = null;
-        if (GM.interim.trim()) {
-            gmAppend(GM.interim.trim());
-            GM.interim = '';
-        }
-        const phrase = GM.committed.trim();
-        GM.committed = '';
-        GM.lastChunkNorm = '';
-        updateGlobalPillUI();
-        if (phrase) dispatchGlobalPhrase(phrase);
-    }
-
-    function scheduleGlobalSilenceFlush() {
-        clearTimeout(GM.silenceTimer);
-        const delay = (GM.recBase === 'az') ? 2000 : 1600;
-        GM.silenceTimer = setTimeout(() => {
-            flushGlobalAuto();
+    function scheduleGlobalRestart(delay = 80) {
+        if (!GM.active) return;
+        clearTimeout(GM.restartTimer);
+        GM.restartTimer = setTimeout(() => {
+            GM.restartTimer = null;
+            launchGlobalRecognition();
         }, delay);
     }
 
-    function launchGlobalRec() {
+    function resetGlobalRecognitionFresh(delay = 100) {
+        clearTimeout(GM.silenceTimer);
+        GM.silenceTimer = null;
+        GM.pendingInterim = '';
+
+        if (GM.recognition) {
+            try {
+                GM.recognition.onresult = null;
+                GM.recognition.onend = null;
+                GM.recognition.onerror = null;
+                GM.recognition.abort();
+            } catch (e) {}
+            GM.recognition = null;
+        }
+        if (GM.active) scheduleGlobalRestart(delay);
+    }
+
+    function flushGlobalInterim() {
+        clearTimeout(GM.silenceTimer);
+        GM.silenceTimer = null;
+
+        const phrase = GM.pendingInterim.trim();
+        GM.pendingInterim = '';
+        updateGlobalPillUI('');
+
+        if (!phrase) return;
+        dispatchGlobalVoicePhrase(phrase);
+        resetGlobalRecognitionFresh(80);
+    }
+
+    function launchGlobalRecognition() {
         GM.restartTimer = null;
         if (!GM.active) return;
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) return;
 
-        if (GM.rec) {
-            try { GM.rec.onresult = null; GM.rec.onend = null; GM.rec.onerror = null; GM.rec.abort(); } catch (e) {}
-            GM.rec = null;
+        if (GM.recognition) {
+            try {
+                GM.recognition.onresult = null;
+                GM.recognition.onend = null;
+                GM.recognition.onerror = null;
+                GM.recognition.abort();
+            } catch (e) {}
+            GM.recognition = null;
         }
 
-        GM.interim = '';
+        GM.pendingInterim = '';
+        readGlobalMicLang();
+
         try {
-            const rec = new SpeechRecognition();
-            rec.lang = SPEECH_LOCALE[GM.recBase] || GM.recBase;
+            const rec = new SpeechRec();
+            rec.lang = SPEECH_LOCALE[GM.recBase] || 'en-US';
             rec.continuous = false;
             rec.interimResults = true;
             rec.maxAlternatives = 1;
 
             rec.onresult = (event) => {
-                if (!GM.active || !event.results) return;
+                if (!event.results || !event.results.length || !GM.active) return;
+
                 let finalTxt = '';
                 let interimTxt = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -1155,79 +1201,76 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
                     if (event.results[i].isFinal) finalTxt += ' ' + chunk;
                     else interimTxt += ' ' + chunk;
                 }
-                if (finalTxt.trim()) {
-                    GM.interim = '';
-                    gmAppend(finalTxt.trim());
-                } else if (interimTxt.trim()) {
-                    GM.interim = interimTxt.trim();
+                finalTxt = finalTxt.trim();
+                interimTxt = interimTxt.trim();
+
+                if (finalTxt) {
+                    clearTimeout(GM.silenceTimer);
+                    GM.silenceTimer = null;
+                    GM.pendingInterim = '';
+                    updateGlobalPillUI('');
+                    dispatchGlobalVoicePhrase(finalTxt);
+                    return;
                 }
-                updateGlobalPillUI();
-                scheduleGlobalSilenceFlush();
+
+                if (interimTxt) {
+                    GM.pendingInterim = interimTxt;
+                    updateGlobalPillUI(interimTxt);
+
+                    clearTimeout(GM.silenceTimer);
+                    GM.silenceTimer = setTimeout(flushGlobalInterim, GM.recBase === 'az' ? 1400 : 1000);
+                }
             };
 
             rec.onerror = (ev) => {
                 if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
-                    if (window.showToast) window.showToast("Mic Error", ev.error, "", "");
                     window.stopGlobalUnlimitedMic(true);
                     return;
                 }
-                if (GM.interim.trim()) {
-                    gmAppend(GM.interim.trim());
-                    GM.interim = '';
-                    updateGlobalPillUI();
-                    scheduleGlobalSilenceFlush();
+                if (GM.pendingInterim.trim()) {
+                    flushGlobalInterim();
+                    return;
                 }
-                GM.rec = null;
                 if (GM.active) {
-                    clearTimeout(GM.restartTimer);
-                    GM.restartTimer = setTimeout(launchGlobalRec, 220);
+                    GM.recognition = null;
+                    scheduleGlobalRestart(220);
                 }
             };
 
             rec.onend = () => {
-                GM.rec = null;
-                if (GM.interim.trim()) {
-                    gmAppend(GM.interim.trim());
-                    GM.interim = '';
-                    updateGlobalPillUI();
-                    scheduleGlobalSilenceFlush();
+                GM.recognition = null;
+                if (GM.pendingInterim.trim()) {
+                    const tail = GM.pendingInterim.trim();
+                    GM.pendingInterim = '';
+                    clearTimeout(GM.silenceTimer);
+                    GM.silenceTimer = null;
+                    updateGlobalPillUI('');
+                    dispatchGlobalVoicePhrase(tail);
                 }
                 if (GM.active) {
-                    clearTimeout(GM.restartTimer);
-                    GM.restartTimer = setTimeout(launchGlobalRec, 80);
+                    updateGlobalPillUI('');
+                    scheduleGlobalRestart(80);
                 }
             };
 
-            GM.rec = rec;
+            GM.recognition = rec;
             rec.start();
         } catch (e) {
-            GM.rec = null;
-            if (GM.active) {
-                clearTimeout(GM.restartTimer);
-                GM.restartTimer = setTimeout(launchGlobalRec, 300);
-            }
+            GM.recognition = null;
+            if (GM.active) scheduleGlobalRestart(300);
         }
     }
 
     window.onGlobalMicLangChanged = function () {
+        readGlobalMicLang();
         if (!GM.active) return;
-        if (window.currentIndex !== 0 || (window.currentRoomId || 'global') !== GM.roomId) return;
-        const manualMicLang = window.normLangCode(localStorage.getItem('hf_global_mic_lang'));
-        GM.isManual = Boolean(manualMicLang);
-        GM.recBase = GM.isManual ? manualMicLang : (window.normLangCode(window.getSmartLang(window.myProfileInfo)) || 'en');
-        updateGlobalPillUI();
-        if (GM.rec) {
-            try { GM.rec.onresult = null; GM.rec.onend = null; GM.rec.onerror = null; GM.rec.abort(); } catch (e) {}
-            GM.rec = null;
-        }
-        clearTimeout(GM.restartTimer);
-        GM.restartTimer = setTimeout(launchGlobalRec, 80);
+        updateGlobalPillUI('');
+        if (window.closeAllMenus) window.closeAllMenus();
+        resetGlobalRecognitionFresh(150);
     };
 
     window.stopGlobalUnlimitedMic = function (discard = true) {
-        if (!discard) {
-            flushGlobalAuto();
-        }
+        const tail = (!discard && GM.pendingInterim) ? GM.pendingInterim.trim() : '';
         GM.active = false;
         clearTimeout(GM.restartTimer);
         clearTimeout(GM.silenceTimer);
@@ -1235,17 +1278,27 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
         GM.restartTimer = null;
         GM.silenceTimer = null;
         GM.watchdog = null;
-        if (GM.rec) {
-            try { GM.rec.onresult = null; GM.rec.onend = null; GM.rec.onerror = null; GM.rec.abort(); } catch (e) {}
-            GM.rec = null;
+        GM.pendingInterim = '';
+
+        if (GM.recognition) {
+            try {
+                GM.recognition.onresult = null;
+                GM.recognition.onend = null;
+                GM.recognition.onerror = null;
+                GM.recognition.stop();
+            } catch (e) {}
+            GM.recognition = null;
         }
-        GM.committed = '';
-        GM.interim = '';
-        updateGlobalPillUI();
+
+        if (tail) dispatchGlobalVoicePhrase(tail);
+        updateGlobalPillUI('');
+
+        // После окончания сессии возвращаем язык микрофона на Auto
+        resetGlobalMicToAuto();
     };
 
     window.startUniversalMic = async function (mode) {
-        if (window.currentIndex === 1) return; // Аудио / Видео комнаты — в своих файлах
+        if (window.currentIndex === 1) return;
         if (window.closeAllMenus) window.closeAllMenus();
 
         if (window.currentIndex === 2) {
@@ -1261,37 +1314,42 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
 
         if (typeof window.stopPrivateUnlimitedMic === 'function') window.stopPrivateUnlimitedMic(true);
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) return alert("Голосовой ввод не поддерживается браузером.");
 
-        // В ГЛОБАЛЬНОМ ЧАТЕ СТРОГО ТОЛЬКО ТЕКСТ (БЕЗ ИИ-АУДИО БАБЛА)
-        const manualMicLang = window.normLangCode(localStorage.getItem('hf_global_mic_lang'));
-        GM.isManual = Boolean(manualMicLang);
-        GM.recBase = GM.isManual ? manualMicLang : (window.normLangCode(window.getSmartLang(window.myProfileInfo)) || 'en');
+        readGlobalMicLang();
         GM.roomId = targetDbRoom;
-
-        if (!GM.active) {
-            GM.committed = '';
-            GM.interim = '';
-            GM.lastChunkNorm = '';
-        }
         GM.active = true;
-        ensureGlobalMicPill();
-        updateGlobalPillUI();
-        launchGlobalRec();
+        updateGlobalPillUI('');
+        launchGlobalRecognition();
 
         clearInterval(GM.watchdog);
         GM.watchdog = setInterval(() => {
             if (!GM.active) return;
-            if (window.currentIndex !== 0 || (window.currentRoomId || 'global') !== GM.roomId) {
+            if (!window.isChatTabVisibleNow() || (window.currentRoomId || 'global') !== GM.roomId) {
                 window.stopGlobalUnlimitedMic(true);
                 return;
             }
-            if (!GM.rec && !GM.restartTimer) launchGlobalRec();
-        }, 700);
+            if (!GM.recognition && !GM.restartTimer) {
+                launchGlobalRecognition();
+            }
+        }, 2000);
     };
 
-    // Перехват открытия меню микрофона, чтобы кнопка Voice Message (AI) мгновенно скрывалась в Global
+    // Прямой перехват смены языка в #plus-mic-lang (работает мгновенно даже при активном микрофоне)
+    document.addEventListener('change', (e) => {
+        if (!e.target || e.target.id !== 'plus-mic-lang') return;
+        if (!window.isChatTabVisibleNow()) return;
+        const r = window.currentRoomId || 'global';
+        if (r === 'global' || r === 'private_ai_bot' || r.startsWith('private_me_')) {
+            const val = e.target.value;
+            if (!val || val === 'auto') localStorage.removeItem('hf_global_mic_lang');
+            else localStorage.setItem('hf_global_mic_lang', val);
+            window.syncMyGlobalChannelLang('mic');
+            window.onGlobalMicLangChanged();
+        }
+    }, true);
+
     document.addEventListener('click', (e) => {
         if (e.target && e.target.closest && e.target.closest('button[onclick*="Mic"], [onclick*="toggleUniversalMic"]')) {
             window.updateChatMicMenuButtons();
