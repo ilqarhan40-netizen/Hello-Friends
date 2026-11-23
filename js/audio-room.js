@@ -1505,6 +1505,7 @@
         if (!input) return;
         const raw = input.value.trim();
         if (!raw) return;
+        AR_AVATAR_WORLD.applyMyFlag(getAudioRoomId());
         input.value = '';
         if (window.playSafeSound && window.sndMsg) window.playSafeSound(window.sndMsg);
         await window.sendAudioRoomPayload(raw, 'keyboard');
