@@ -89,6 +89,13 @@
     window.audioLiveLangs = {};
     window.audioLiveLangsLoaded = {};
     window.audioRoomMicActive = false;
+    // Сброс выбранных языков на Auto (Profile) при новой сессии / обновлении
+    Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('hf_aud_avatar_lang_') || k.startsWith('hf_aud_mic_lang_')) {
+            localStorage.removeItem(k);
+        }
+    });
+
 
     function isAudioMode() {
         return window.currentActiveCallType !== 'video';
