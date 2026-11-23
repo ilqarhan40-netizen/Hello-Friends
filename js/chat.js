@@ -366,10 +366,11 @@ window.switchChatRoom = function(targetId) {
 
     window.activeChatListener = firebase.database().ref(window.currentRoomId).on("child_added", window.handleNewMessage);
     if (typeof window.syncMicLangUI === 'function') window.syncMicLangUI();
+    if (typeof window.updateChatMicMenuButtons === 'function') window.updateChatMicMenuButtons();
 };
 
 // ==========================================
-// 3. ОТПРАВКА И ПРИЁМ СООБЩЕНИЙ (ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ)
+// 3. ОТПРАВКА И ПРИЁМ СООБЩЕНИЙ (ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ, БЕЗ ГОЛОСОВОГО ИИ-БАБЛА В GLOBAL)
 // ==========================================
 window.isGeminiWaiting = false;
 
@@ -469,7 +470,7 @@ window.sendFirebaseMsg = async function() {
     }
 };
 
-// ПРИЁМ СООБЩЕНИЯ: ЧИСТОЕ ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ (БЕЗ ПОВТОРНЫХ ПЕРЕВОДОВ)
+// ПРИЁМ СООБЩЕНИЯ: ЧИСТОЕ ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ (ГЛОБАЛЬНЫЙ ЧАТ — ТОЛЬКО ТЕКСТ, БЕЗ ИИ-АУДИО БАБЛА)
 window.handleNewMessage = function(snapshot) {
     const data = snapshot.val();
     if (!data) return;
@@ -519,7 +520,6 @@ window.handleNewMessage = function(snapshot) {
     if (!isMe && !isHistory && !isAI) {
         if (data.isTransfer) { window.sndCash.play().catch(e => {}); } else { window.sndMsg.play().catch(e => {}); }
         let textPreview = myFanEntry ? myFanEntry.text : data.text;
-        if (data.isAIAudio) textPreview = "🤖 AI Voice Message";
         if (data.mediaUrl) textPreview = data.mediaType === 'video' ? "📹 Video" : "🖼️ Photo";
         if (data.isLocation) textPreview = "📍 Shared Location";
         if (data.isTransfer) textPreview = "💸 Money Transfer Received!";
@@ -538,12 +538,7 @@ window.handleNewMessage = function(snapshot) {
     let bubbleContent = `<div class="text-[#e9edef]">${baseText}</div>`;
     let bubbleClasses = `chat-bubble`;
 
-    if (data.isAIAudio) {
-        let playLang = (!isMe && myFanEntry) ? myFanEntry.code : (data.langCode || 'en');
-        let textToPlay = (!isMe && myFanEntry) ? myFanEntry.text : baseText;
-        let safeEncodedText = encodeURIComponent(textToPlay || '').replace(/'/g, "%27");
-        bubbleContent = `<div class="ai-audio-player" onclick="window.playAIVoice('${safeEncodedText}', '${playLang.substring(0,2)}')"><i class="fa-solid fa-circle-play"></i><span>Play Voice</span></div><div style="font-size:0.85rem; margin-top:6px; opacity:0.95;"><div class="text-[#e9edef]">${baseText}</div></div>`;
-    } else if (data.mediaUrl) {
+    if (data.mediaUrl) {
         let fileName = data.text ? data.text.replace('📄 Документ: ', '').replace('🖼️ Photo', 'Файл').replace('📹 Video', 'Видео') : 'Файл';
         if (data.mediaType === 'video' || data.mediaUrl.startsWith('data:video/')) {
             bubbleContent = `<video src="${data.mediaUrl}" controls class="max-w-[200px] sm:max-w-[250px] rounded-lg mt-1 border border-[#2a3942]"></video>`;
@@ -800,7 +795,7 @@ window.actionDeleteForever = function() {
 };
 
 // ==========================================
-// 5. ПАНЕЛЬ ЯЗЫКОВ (АВАТАР) И БЕЗЛИМИТНЫЙ МИКРОФОН (СТРОГО РАЗДЕЛЬНО)
+// 5. ПАНЕЛЬ ЯЗЫКОВ (АВАТАР) И БЕЗЛИМИТНЫЙ АВТО-МИКРОФОН (СТРОГО РАЗДЕЛЬНО)
 // ==========================================
 window.openPersonalLangModal = function() {
     if (window.closeDropdown) window.closeDropdown();
@@ -867,18 +862,51 @@ window.saveRoomMicLang = function(val) {
         localStorage.setItem('hf_global_mic_lang', val);
     }
     window.syncMyGlobalChannelLang('mic');
+    if (typeof window.onGlobalMicLangChanged === 'function') window.onGlobalMicLangChanged();
     if (window.showToast) window.showToast("Mic Language", "Saved strictly for Global Chat", "", "");
 };
 
+// ГАРАНТИРОВАННОЕ СКРЫТИЕ КНОПКИ "Voice Message (AI)" В ГЛОБАЛЬНОМ ЧАТЕ (ТОЛЬКО В ПРИВАТЕ)
 window.updateChatMicMenuButtons = function() {
     const r = window.currentRoomId || 'global';
-    const isPrivate = (window.currentIndex === 0) && r !== 'global' && r !== 'video_room_global' && r !== 'private_ai_bot' && !r.startsWith('private_me_');
-    document.querySelectorAll('button[onclick*="ai-audio"]').forEach(btn => {
-        const attr = btn.getAttribute('onclick') || '';
-        if (attr.includes('startUniversalMic')) {
-            btn.style.display = isPrivate ? '' : 'none';
+    const isPrivate = (window.currentIndex === 0 || window.currentIndex === undefined)
+        && r !== 'global'
+        && r !== 'video_room_global'
+        && r !== 'private_ai_bot'
+        && !r.startsWith('private_me_');
+
+    const toggleEl = (el) => {
+        if (!el) return;
+        if (isPrivate) {
+            el.style.removeProperty('display');
+            el.classList.remove('hidden');
+        } else {
+            el.style.setProperty('display', 'none', 'important');
         }
+    };
+
+    // 1. Все элементы (button / div) с вызовом ai-audio внутри чат-меню
+    document.querySelectorAll('[onclick*="ai-audio"], [onclick*="ai_audio"]').forEach(el => {
+        if (el.closest('#voice-translator') || el.closest('#conference') || el.closest('#incoming-call-modal')) return;
+        toggleEl(el);
     });
+
+    // 2. Прямая проверка внутри контейнера выпадающего меню #plus-mic-lang
+    const sel = document.getElementById('plus-mic-lang');
+    if (sel) {
+        const menuBox = sel.closest('#universal-mic-menu, #plus-mic-menu, #mic-menu, .mic-menu, [id*="mic"]') || sel.parentElement?.parentElement;
+        if (menuBox) {
+            menuBox.querySelectorAll('button, [onclick]').forEach(el => {
+                if (el === sel || el.tagName === 'SELECT') return;
+                const attr = (el.getAttribute('onclick') || '').toLowerCase();
+                const txt = (el.textContent || '').toLowerCase();
+                const hasAiIcon = Boolean(el.querySelector('.fa-robot, .fa-headset, .fa-wand-magic-sparkles'));
+                if (attr.includes('ai-audio') || attr.includes('ai_audio') || (!attr.includes("'text'") && !attr.includes('"text"') && (hasAiIcon || txt.includes('(ai)') || txt.includes('ии')))) {
+                    toggleEl(el);
+                }
+            });
+        }
+    }
 };
 
 window.syncMicLangUI = function() {
@@ -894,18 +922,21 @@ window.syncMicLangUI = function() {
 
 window.autoSetMicLang = function() { window.syncMicLangUI(); };
 
-// === БЕЗЛИМИТНЫЙ МИКРОФОН ГЛОБАЛЬНОГО ЧАТА (ТОЛЬКО ТЕКСТ, ИЗОЛИРОВАННЫЙ МИР) ===
+// === БЕЗЛИМИТНЫЙ АВТО-МИКРОФОН ГЛОБАЛЬНОГО ЧАТА (ТОЛЬКО ТЕКСТ, СМЕНА ЯЗЫКА НА ЛЕТУ) ===
 (function () {
     const GM = {
         active: false,
         roomId: 'global',
         rec: null,
         restartTimer: null,
+        silenceTimer: null,
         watchdog: null,
         committed: '',
         interim: '',
         lastChunkNorm: '',
         lastChunkAt: 0,
+        lastSentNorm: '',
+        lastSentAt: 0,
         recBase: 'en',
         isManual: false
     };
@@ -935,80 +966,74 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
     }
 
     function ensureGlobalMicPill() {
-        if (!document.getElementById('hf-gmic-styles')) {
-            const st = document.createElement('style');
-            st.id = 'hf-gmic-styles';
-            st.textContent = `
-                #hf-gmic-pill {
-                    display: none;
-                    align-items: center;
-                    gap: 8px;
-                    width: calc(100% - 16px);
-                    margin: 0 auto 6px auto;
-                    padding: 7px 10px;
-                    background: #111b21;
-                    border: 1.5px solid #ef4444;
-                    border-radius: 999px;
-                    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
-                    flex-shrink: 0;
-                    box-sizing: border-box;
-                    z-index: 60;
-                }
-                #hf-gmic-pill.active { display: flex; }
-                #hf-gmic-dot {
-                    width: 9px; height: 9px; border-radius: 50%;
-                    background: #ef4444; flex-shrink: 0;
-                    animation: hfGmPulse 1s infinite;
-                }
-                #hf-gmic-text {
-                    flex: 1 1 auto; min-width: 0; overflow: hidden;
-                    white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
-                }
-                .hf-gmic-act {
-                    width: 30px; height: 30px; border-radius: 50%; border: none;
-                    display: flex; align-items: center; justify-content: center;
-                    flex-shrink: 0; cursor: pointer; font-size: 0.82rem;
-                }
-                @keyframes hfGmPulse {
-                    0% { transform: scale(0.85); opacity: 0.6; }
-                    50% { transform: scale(1.25); opacity: 1; }
-                    100% { transform: scale(0.85); opacity: 0.6; }
-                }
-            `;
-            document.head.appendChild(st);
-        }
+        const oldSt = document.getElementById('hf-gmic-styles');
+        if (oldSt) oldSt.remove();
+        const st = document.createElement('style');
+        st.id = 'hf-gmic-styles';
+        st.textContent = `
+            #hf-gmic-pill {
+                display: none;
+                align-items: center;
+                gap: 8px;
+                width: calc(100% - 16px);
+                margin: 0 auto 6px auto;
+                padding: 7px 10px;
+                background: #111b21;
+                border: 1.5px solid #ef4444;
+                border-radius: 999px;
+                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+                flex-shrink: 0;
+                box-sizing: border-box;
+                z-index: 60;
+            }
+            #hf-gmic-pill.active { display: flex; }
+            #hf-gmic-dot {
+                width: 9px; height: 9px; border-radius: 50%;
+                background: #ef4444; flex-shrink: 0;
+                animation: hfGmPulse 1s infinite;
+            }
+            #hf-gmic-text {
+                flex: 1 1 auto; min-width: 0; overflow: hidden;
+                white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
+            }
+            #hf-gmic-stop {
+                flex-shrink: 0; background: #ef4444; color: #fff; border: none;
+                border-radius: 999px; padding: 4px 12px; font-size: 0.72rem;
+                font-weight: 800; cursor: pointer;
+            }
+            @keyframes hfGmPulse {
+                0% { transform: scale(0.85); opacity: 0.6; }
+                50% { transform: scale(1.25); opacity: 1; }
+                100% { transform: scale(0.85); opacity: 0.6; }
+            }
+        `;
+        document.head.appendChild(st);
 
         let pill = document.getElementById('hf-gmic-pill');
-        if (!pill) {
-            pill = document.createElement('div');
-            pill.id = 'hf-gmic-pill';
-            pill.innerHTML = `
-                <span id="hf-gmic-dot"></span>
-                <span id="hf-gmic-flag" class="text-sm shrink-0">🌐</span>
-                <span id="hf-gmic-text"></span>
-                <button type="button" id="hf-gmic-cancel" class="hf-gmic-act bg-[#202c33] text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-                <button type="button" id="hf-gmic-send" class="hf-gmic-act bg-[#00a884] text-[#111b21]"><i class="fa-solid fa-paper-plane"></i></button>
-            `;
-            pill.querySelector('#hf-gmic-cancel').onclick = (e) => {
-                e.stopPropagation();
-                window.stopGlobalUnlimitedMic(true);
-            };
-            pill.querySelector('#hf-gmic-send').onclick = (e) => {
-                e.stopPropagation();
-                window.sendGlobalUnlimitedMic();
-            };
-        }
+        if (pill) pill.remove();
+        pill = document.createElement('div');
+        pill.id = 'hf-gmic-pill';
+        pill.innerHTML = `
+            <span id="hf-gmic-dot"></span>
+            <span id="hf-gmic-flag" class="text-sm shrink-0">🌐</span>
+            <span id="hf-gmic-text"></span>
+            <button type="button" id="hf-gmic-stop">STOP</button>
+        `;
+        pill.querySelector('#hf-gmic-stop').onclick = (e) => {
+            e.stopPropagation();
+            window.stopGlobalUnlimitedMic(false);
+        };
 
         const inp = document.getElementById('chat-input');
         const area = inp ? inp.closest('.chat-input-area') : null;
-        if (area && area.parentNode && pill.parentNode !== area.parentNode) {
+        if (area && area.parentNode) {
             area.parentNode.insertBefore(pill, area);
         }
         return pill;
     }
 
     function updateGlobalPillUI() {
-        const pill = ensureGlobalMicPill();
+        let pill = document.getElementById('hf-gmic-pill') || ensureGlobalMicPill();
         if (!pill) return;
         if (!GM.active) {
             pill.classList.remove('active');
@@ -1026,6 +1051,79 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
             txtEl.scrollLeft = txtEl.scrollWidth;
         }
         pill.classList.add('active');
+    }
+
+    async function dispatchGlobalPhrase(text) {
+        const clean = String(text || '').trim();
+        if (!clean) return;
+        const norm = gmNorm(clean);
+        const now = Date.now();
+        if (!norm || (norm === GM.lastSentNorm && (now - GM.lastSentAt) < 2200)) return;
+        GM.lastSentNorm = norm;
+        GM.lastSentAt = now;
+
+        const targetDbRoom = GM.roomId || window.currentRoomId || 'global';
+        const spokenLangCode = GM.recBase;
+        const isMicManual = GM.isManual;
+        window.speechRecognizedText = clean;
+
+        const safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
+        const safeName = window.myUsername || 'User';
+        const safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
+        let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+        let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+
+        if (isMicManual && window.GLOBAL_LANG_MAP[spokenLangCode]) {
+            activeFlagCode = window.GLOBAL_LANG_MAP[spokenLangCode][0];
+            activeFlag = window.GLOBAL_LANG_MAP[spokenLangCode][1];
+        }
+
+        let mirrorPacket = { mirrorFan: [], mirrorMarquee: '' };
+        if (targetDbRoom === 'global') {
+            mirrorPacket = await window.buildGlobalMirrorPacket(clean, spokenLangCode, 'mic', safeId);
+        }
+
+        firebase.database().ref(targetDbRoom).push({
+            userId: safeId,
+            name: safeName,
+            text: clean,
+            originalText: clean,
+            sessionId: window.mySessionId || 'sess',
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            photo: safePhoto,
+            flag: activeFlag,
+            flagCode: activeFlagCode,
+            langCode: spokenLangCode,
+            inputChannel: 'mic',
+            mirrorFan: mirrorPacket.mirrorFan,
+            mirrorMarquee: mirrorPacket.mirrorMarquee,
+            isConfMsg: false
+        });
+
+        const chatMsgs = document.getElementById('chat-messages');
+        if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100);
+    }
+
+    function flushGlobalAuto() {
+        clearTimeout(GM.silenceTimer);
+        GM.silenceTimer = null;
+        if (GM.interim.trim()) {
+            gmAppend(GM.interim.trim());
+            GM.interim = '';
+        }
+        const phrase = GM.committed.trim();
+        GM.committed = '';
+        GM.lastChunkNorm = '';
+        updateGlobalPillUI();
+        if (phrase) dispatchGlobalPhrase(phrase);
+    }
+
+    function scheduleGlobalSilenceFlush() {
+        clearTimeout(GM.silenceTimer);
+        const delay = (GM.recBase === 'az') ? 2000 : 1600;
+        GM.silenceTimer = setTimeout(() => {
+            flushGlobalAuto();
+        }, delay);
     }
 
     function launchGlobalRec() {
@@ -1060,10 +1158,11 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
                 if (finalTxt.trim()) {
                     GM.interim = '';
                     gmAppend(finalTxt.trim());
-                } else {
+                } else if (interimTxt.trim()) {
                     GM.interim = interimTxt.trim();
                 }
                 updateGlobalPillUI();
+                scheduleGlobalSilenceFlush();
             };
 
             rec.onerror = (ev) => {
@@ -1076,6 +1175,7 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
                     gmAppend(GM.interim.trim());
                     GM.interim = '';
                     updateGlobalPillUI();
+                    scheduleGlobalSilenceFlush();
                 }
                 GM.rec = null;
                 if (GM.active) {
@@ -1090,6 +1190,7 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
                     gmAppend(GM.interim.trim());
                     GM.interim = '';
                     updateGlobalPillUI();
+                    scheduleGlobalSilenceFlush();
                 }
                 if (GM.active) {
                     clearTimeout(GM.restartTimer);
@@ -1108,74 +1209,39 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
         }
     }
 
+    window.onGlobalMicLangChanged = function () {
+        if (!GM.active) return;
+        if (window.currentIndex !== 0 || (window.currentRoomId || 'global') !== GM.roomId) return;
+        const manualMicLang = window.normLangCode(localStorage.getItem('hf_global_mic_lang'));
+        GM.isManual = Boolean(manualMicLang);
+        GM.recBase = GM.isManual ? manualMicLang : (window.normLangCode(window.getSmartLang(window.myProfileInfo)) || 'en');
+        updateGlobalPillUI();
+        if (GM.rec) {
+            try { GM.rec.onresult = null; GM.rec.onend = null; GM.rec.onerror = null; GM.rec.abort(); } catch (e) {}
+            GM.rec = null;
+        }
+        clearTimeout(GM.restartTimer);
+        GM.restartTimer = setTimeout(launchGlobalRec, 80);
+    };
+
     window.stopGlobalUnlimitedMic = function (discard = true) {
+        if (!discard) {
+            flushGlobalAuto();
+        }
         GM.active = false;
         clearTimeout(GM.restartTimer);
+        clearTimeout(GM.silenceTimer);
         clearInterval(GM.watchdog);
         GM.restartTimer = null;
+        GM.silenceTimer = null;
         GM.watchdog = null;
         if (GM.rec) {
             try { GM.rec.onresult = null; GM.rec.onend = null; GM.rec.onerror = null; GM.rec.abort(); } catch (e) {}
             GM.rec = null;
         }
-        if (discard) {
-            GM.committed = '';
-            GM.interim = '';
-        }
+        GM.committed = '';
+        GM.interim = '';
         updateGlobalPillUI();
-    };
-
-    window.sendGlobalUnlimitedMic = async function () {
-        if (GM.interim.trim()) {
-            gmAppend(GM.interim.trim());
-            GM.interim = '';
-        }
-        const finalMessage = GM.committed.trim();
-        const targetDbRoom = GM.roomId || window.currentRoomId || 'global';
-        const spokenLangCode = GM.recBase;
-        const isMicManual = GM.isManual;
-
-        window.stopGlobalUnlimitedMic(true);
-        if (!finalMessage) return;
-
-        window.speechRecognizedText = finalMessage;
-
-        const safeId = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : 'guest';
-        const safeName = window.myUsername || 'User';
-        const safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : 'https://ui-avatars.com/api/?name=U';
-        let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
-        let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
-
-        if (isMicManual && window.GLOBAL_LANG_MAP[spokenLangCode]) {
-            activeFlagCode = window.GLOBAL_LANG_MAP[spokenLangCode][0];
-            activeFlag = window.GLOBAL_LANG_MAP[spokenLangCode][1];
-        }
-
-        let mirrorPacket = { mirrorFan: [], mirrorMarquee: '' };
-        if (targetDbRoom === 'global') {
-            if (window.showToast) window.showToast("Translating...", "Preparing mirror...", "", "");
-            mirrorPacket = await window.buildGlobalMirrorPacket(finalMessage, spokenLangCode, 'mic', safeId);
-        }
-
-        firebase.database().ref(targetDbRoom).push({
-            userId: safeId,
-            name: safeName,
-            text: finalMessage,
-            originalText: finalMessage,
-            sessionId: window.mySessionId || 'sess',
-            timestamp: firebase.database.ServerValue.TIMESTAMP,
-            photo: safePhoto,
-            flag: activeFlag,
-            flagCode: activeFlagCode,
-            langCode: spokenLangCode,
-            inputChannel: 'mic',
-            mirrorFan: mirrorPacket.mirrorFan,
-            mirrorMarquee: mirrorPacket.mirrorMarquee,
-            isConfMsg: false
-        });
-
-        const chatMsgs = document.getElementById('chat-messages');
-        if (chatMsgs) setTimeout(() => { chatMsgs.scrollTop = chatMsgs.scrollHeight; }, 100);
     };
 
     window.startUniversalMic = async function (mode) {
@@ -1198,7 +1264,7 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
 
-        // КАНАЛ МИКРОФОНА ГЛОБАЛЬНОЙ: читает СТРОГО hf_global_mic_lang, без двойного бабла (только текст)
+        // В ГЛОБАЛЬНОМ ЧАТЕ СТРОГО ТОЛЬКО ТЕКСТ (БЕЗ ИИ-АУДИО БАБЛА)
         const manualMicLang = window.normLangCode(localStorage.getItem('hf_global_mic_lang'));
         GM.isManual = Boolean(manualMicLang);
         GM.recBase = GM.isManual ? manualMicLang : (window.normLangCode(window.getSmartLang(window.myProfileInfo)) || 'en');
@@ -1210,6 +1276,7 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
             GM.lastChunkNorm = '';
         }
         GM.active = true;
+        ensureGlobalMicPill();
         updateGlobalPillUI();
         launchGlobalRec();
 
@@ -1224,14 +1291,27 @@ window.autoSetMicLang = function() { window.syncMicLangUI(); };
         }, 700);
     };
 
+    // Перехват открытия меню микрофона, чтобы кнопка Voice Message (AI) мгновенно скрывалась в Global
     document.addEventListener('click', (e) => {
-        if (e.target && e.target.closest && e.target.closest('button[onclick*="toggleUniversalMic"]')) {
-            setTimeout(() => { if (typeof window.updateChatMicMenuButtons === 'function') window.updateChatMicMenuButtons(); }, 10);
+        if (e.target && e.target.closest && e.target.closest('button[onclick*="Mic"], [onclick*="toggleUniversalMic"]')) {
+            window.updateChatMicMenuButtons();
+            setTimeout(() => { window.updateChatMicMenuButtons(); }, 20);
         }
     }, true);
 
     window.addEventListener('load', () => {
-        setTimeout(() => { if (typeof window.updateChatMicMenuButtons === 'function') window.updateChatMicMenuButtons(); }, 800);
+        if (typeof window.toggleUniversalMic === 'function' && !window.toggleUniversalMic._hfGlobalWrapped) {
+            const origToggle = window.toggleUniversalMic;
+            const wrapped = function () {
+                const res = origToggle.apply(this, arguments);
+                window.updateChatMicMenuButtons();
+                setTimeout(() => { window.updateChatMicMenuButtons(); }, 20);
+                return res;
+            };
+            wrapped._hfGlobalWrapped = true;
+            window.toggleUniversalMic = wrapped;
+        }
+        setTimeout(() => { window.updateChatMicMenuButtons(); }, 600);
     });
 })();
 
