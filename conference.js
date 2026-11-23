@@ -1,6 +1,5 @@
 // =======================================================
-// ИЗОЛИРОВАННЫЙ МИР КОНФЕРЕНЦИЙ (1 + 12 ФРЕЙМОВ, 13 ЯЗЫКОВ)
-// Умная маршрутизация по флагам + Веер + Voice / AI
+// КОНФЕРЕНЦИЯ (РОДНАЯ СЕТКА + УМНЫЙ ИИ-ГОЛОС + ВХОДЯЩИЕ КАМЕРЫ)
 // =======================================================
 
 (function () {
@@ -10,6 +9,12 @@
         en: ['gb', '🇬🇧'], kk: ['kz', '🇰🇿'], ru: ['ru', '🇷🇺'], az: ['az', '🇦🇿'],
         de: ['de', '🇩🇪'], tr: ['tr', '🇹🇷'], ar: ['ae', '🇦🇪'], it: ['it', '🇮🇹'],
         es: ['es', '🇪🇸'], fr: ['fr', '🇫🇷'], pt: ['pt', '🇵🇹'], ja: ['jp', '🇯🇵'], zh: ['cn', '🇨🇳']
+    };
+
+    const FLAG_EMOJI_TO_LANG = {
+        '🇬🇧': 'en', '🇺🇸': 'en', '🇰🇿': 'kk', '🇷🇺': 'ru', '🇦🇿': 'az',
+        '🇩🇪': 'de', '🇹🇷': 'tr', '🇦🇪': 'ar', '🇸🇦': 'ar', '🇮🇹': 'it',
+        '🇪🇸': 'es', '🇫🇷': 'fr', '🇵🇹': 'pt', '🇧🇷': 'pt', '🇯🇵': 'ja', '🇨🇳': 'zh'
     };
 
     const CONF_SPEECH_LOCALE = {
@@ -33,26 +38,27 @@
         { code: 'zh', name: '中文', flag: '🇨🇳' }
     ];
 
-    const MAX_GUEST_SLOTS = 12; // 1 главный + 12 слотов (6 слева, 6 справа)
+    const MAX_GUEST_SLOTS = 12;
 
     const state = {
         isActive: false,
-        mode: 'voice', // 'voice' (Напрямую) | 'ai' (ИИ-переводчик)
+        isJoining: false,
+        chatListenerBound: false,
+        mode: 'voice', // 'voice' | 'ai'
         camEnabled: true,
         aiMicRunning: false,
         aiMicPausedByTyping: false,
         echoGuardActive: false,
         recognition: null,
         client: null,
+        myAgoraUid: null,
         audioTrack: null,
         videoTrack: null,
         remoteAudioTracks: {},
         remoteVideoTracks: {},
-        slots: new Array(MAX_GUEST_SLOTS).fill(null), // uid или null
+        subscribingKeys: new Set(),
+        slots: new Array(MAX_GUEST_SLOTS).fill(null),
         activeUsersMap: {},
-        ttsQueue: [],
-        ttsSpeaking: false,
-        ttsFallbackTimer: null,
         processedKeys: new Set(),
         presenceRef: null,
         usersListenerRef: null,
@@ -63,27 +69,40 @@
     window._confState = state;
 
     // -------------------------------------------------------
-    // 1. ЯЗЫКОВЫЕ ХЕЛПЕРЫ (СТРОГО ИЗОЛИРОВАННЫЕ КЛЮЧИ КОНФЕРЕНЦИИ)
+    // 1. ОПРЕДЕЛЕНИЕ ФЛАГА И ЯЗЫКА
     // -------------------------------------------------------
     function confNormLang(code) {
         if (!code || code === 'auto' || code === 'un') return null;
-        const c = String(code).trim().split(/[-_]/)[0].substring(0, 2).toLowerCase();
+        const raw = String(code).trim();
+        if (FLAG_EMOJI_TO_LANG[raw]) return FLAG_EMOJI_TO_LANG[raw];
+        const c = raw.split(/[-_]/)[0].substring(0, 2).toLowerCase();
         const fix = { kz: 'kk', cn: 'zh', jp: 'ja', ae: 'ar', sa: 'ar', eg: 'ar', us: 'en', gb: 'en', uk: 'en', br: 'pt', mx: 'es' };
         return fix[c] || c;
     }
 
     function getConfNativeLang() {
-        if (window.myProfileInfo) {
+        const p = window.myProfileInfo;
+        if (p) {
+            const pf = p.flag ? String(p.flag).trim() : '';
+            if (pf && FLAG_EMOJI_TO_LANG[pf]) return FLAG_EMOJI_TO_LANG[pf];
+            if (p.flagCode) {
+                const byCode = confNormLang(p.flagCode);
+                if (byCode) return byCode;
+            }
             if (typeof window.getLangByFlag === 'function') {
-                const byFlag = confNormLang(window.getLangByFlag(window.myProfileInfo.flagCode, window.myProfileInfo.flag));
+                const byFlag = confNormLang(window.getLangByFlag(p.flagCode, p.flag));
                 if (byFlag) return byFlag;
             }
             if (typeof window.getSmartLang === 'function') {
-                const smart = confNormLang(window.getSmartLang(window.myProfileInfo));
+                const smart = confNormLang(window.getSmartLang(p));
                 if (smart) return smart;
             }
         }
-        return 'en';
+        if (typeof window.getLangPref === 'function') {
+            const pref = confNormLang(window.getLangPref(false, true));
+            if (pref) return pref;
+        }
+        return confNormLang(window.appLang) || 'ru';
     }
 
     function getConfAvatarLang() {
@@ -99,15 +118,19 @@
     }
 
     function getConfReadFlag() {
+        const explicit = getConfAvatarLang() || confNormLang(localStorage.getItem('hf_conf_read_lang'));
+        if (explicit && CONF_LANG_MAP[explicit]) return CONF_LANG_MAP[explicit][1];
+        if (window.myProfileInfo && window.myProfileInfo.flag) return String(window.myProfileInfo.flag).trim();
         const lang = getConfReadLang();
-        if (lang && CONF_LANG_MAP[lang]) return CONF_LANG_MAP[lang][1];
-        return (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
+        return (CONF_LANG_MAP[lang] ? CONF_LANG_MAP[lang][1] : '🌐');
     }
 
     function getConfReadFlagCode() {
+        const explicit = getConfAvatarLang() || confNormLang(localStorage.getItem('hf_conf_read_lang'));
+        if (explicit && CONF_LANG_MAP[explicit]) return CONF_LANG_MAP[explicit][0];
+        if (window.myProfileInfo && window.myProfileInfo.flagCode) return String(window.myProfileInfo.flagCode).trim().toLowerCase();
         const lang = getConfReadLang();
-        if (lang && CONF_LANG_MAP[lang]) return CONF_LANG_MAP[lang][0];
-        return (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
+        return (CONF_LANG_MAP[lang] ? CONF_LANG_MAP[lang][0] : 'un');
     }
 
     function getMyUid() {
@@ -115,7 +138,7 @@
     }
 
     // -------------------------------------------------------
-    // 2. СЛОВАРЬ ПРИГЛАШЕНИЙ НА 13 ЯЗЫКОВ
+    // 2. СЛОВАРЬ ПРИГЛАШЕНИЙ
     // -------------------------------------------------------
     window.confDict = {
         ru: { title: 'ПРИГЛАШЕНИЕ', desc: 'ждет вас в видеокомнату!', btn: 'Войти', no: 'Позже' },
@@ -134,7 +157,7 @@
     };
 
     window.getConfTranslation = function (key) {
-        const uiLang = confNormLang(window.appLang) || getConfNativeLang() || confNormLang(document.documentElement.lang) || 'en';
+        const uiLang = confNormLang(window.appLang) || getConfNativeLang() || 'en';
         if (typeof i18next !== 'undefined' && typeof i18next.t === 'function') {
             const globalText = i18next.t(`conference.${key}`);
             if (globalText && globalText !== `conference.${key}`) return globalText;
@@ -144,55 +167,20 @@
     };
 
     // -------------------------------------------------------
-    // 3. КОМПАКТНЫЕ СТИЛИ ДЛЯ 13 ФРЕЙМОВ И ВЕРХНЕЙ ПЛАШКИ
+    // 3. СТИЛИ ТОЛЬКО ДЛЯ ШАПКИ И ВИДЕО-КОНТЕЙНЕРА (СЕТКУ НЕ ТРОГАЕМ)
     // -------------------------------------------------------
-    function injectConfStyles() {
-        if (document.getElementById('hf-conf-isolated-styles')) return;
+    function injectConfHeaderStyles() {
+        const oldBroken = document.getElementById('hf-conf-isolated-styles');
+        if (oldBroken) oldBroken.remove();
+
+        if (document.getElementById('hf-conf-header-only-styles')) return;
         const style = document.createElement('style');
-        style.id = 'hf-conf-isolated-styles';
+        style.id = 'hf-conf-header-only-styles';
         style.textContent = `
-            #conference-grid.hf-conf-grid-13 {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 6px;
-                align-content: start;
-            }
-            #conference-grid.hf-conf-grid-13 .video-frame.main {
-                grid-column: 1 / -1;
-                height: 155px;
-                min-height: 155px;
-            }
-            #conference-grid.hf-conf-grid-13 .video-frame.conf-guest-slot {
-                height: 76px;
-                min-height: 76px;
-                border-radius: 12px;
-                overflow: hidden;
-                position: relative;
-                background: #0b141a;
-                border: 1px solid #202c33;
-            }
-            @media (min-width: 768px) {
-                #conference-grid.hf-conf-grid-13 {
-                    grid-template-columns: 1fr 1.6fr 1fr;
-                    grid-auto-flow: dense;
-                    gap: 8px;
-                }
-                #conference-grid.hf-conf-grid-13 .video-frame.main {
-                    grid-column: 2 / 3;
-                    grid-row: 1 / 7;
-                    height: 100%;
-                    min-height: 360px;
-                }
-                #conference-grid.hf-conf-grid-13 .video-frame.conf-slot-left {
-                    grid-column: 1 / 2;
-                    height: 68px;
-                    min-height: 68px;
-                }
-                #conference-grid.hf-conf-grid-13 .video-frame.conf-slot-right {
-                    grid-column: 3 / 4;
-                    height: 68px;
-                    min-height: 68px;
-                }
+            .conf-remote-video-box video {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
             }
             .conf-teleprompter-wrap {
                 flex: 1;
@@ -258,8 +246,7 @@
     }
 
     // -------------------------------------------------------
-    // 4. ВЕРХНЯЯ ПАНЕЛЬ: СТАТИЧНЫЙ МИКРОФОН + ПЕРЕКЛЮЧАТЕЛЬ VOICE / AI
-    // (Без надписи Conference и без • REC)
+    // 4. ВЕРХНЯЯ ПАНЕЛЬ (МИКРОФОН СЛЕВА + VOICE / AI СПРАВА)
     // -------------------------------------------------------
     function ensureConfHeaderBar() {
         const confPage = document.getElementById('conference');
@@ -338,7 +325,7 @@
             startContinuousConfAIMic();
         } else {
             stopContinuousConfAIMic();
-            clearConfTTSQueue();
+            if (typeof window.stopVoiceAI === 'function') window.stopVoiceAI();
             updateHeaderTeleprompter('Voice Direct • Live', false);
         }
     };
@@ -357,12 +344,28 @@
         }
     };
 
-    // Индивидуальная фильтрация звука по UID и флагу на стороне слушателя
+    function findUserByAgoraUid(agoraUid) {
+        const aStr = String(agoraUid);
+        const ids = Object.keys(state.activeUsersMap);
+        for (let i = 0; i < ids.length; i++) {
+            const u = state.activeUsersMap[ids[i]];
+            if (!u) continue;
+            if ((u.agoraUid !== undefined && String(u.agoraUid) === aStr) || String(u.id) === aStr) {
+                return u;
+            }
+        }
+        if (ids.length === 1) {
+            return state.activeUsersMap[ids[0]];
+        }
+        return null;
+    }
+
     function syncConfAudioRouting() {
         const myLang = getConfReadLang();
+        const myFlag = getConfReadFlag();
 
-        Object.keys(state.remoteAudioTracks).forEach(uid => {
-            const track = state.remoteAudioTracks[uid];
+        Object.keys(state.remoteAudioTracks).forEach(agoraUid => {
+            const track = state.remoteAudioTracks[agoraUid];
             if (!track) return;
 
             if (state.mode === 'voice') {
@@ -370,21 +373,44 @@
                 return;
             }
 
-            const userInfo = state.activeUsersMap[uid];
-            const userLang = userInfo ? (confNormLang(userInfo.langCode) || confNormLang(userInfo.flagCode)) : null;
+            const userInfo = findUserByAgoraUid(agoraUid);
+            const userLang = userInfo ? (confNormLang(userInfo.langCode) || confNormLang(userInfo.flag) || confNormLang(userInfo.flagCode)) : null;
+            const userFlag = userInfo ? String(userInfo.flag || '').trim() : '';
 
-            // Одинаковый флаг -> живой звук Agora; разный флаг -> локально глушим для ИИ-перевода
-            if (userLang && myLang && userLang === myLang) {
-                try { track.setVolume(100); } catch (e) {}
-            } else {
-                try { track.setVolume(0); } catch (e) {}
-            }
+            const isSameFlag = (userFlag && myFlag && userFlag === myFlag) || (userLang && myLang && userLang === myLang);
+            try { track.setVolume(isSameFlag ? 100 : 0); } catch (e) {}
         });
     }
 
     // -------------------------------------------------------
-    // 6. НЕПРЕРЫВНЫЙ AI-МИКРОФОН С БЕГУЩЕЙ СТРОКОЙ В ШАПКЕ
+    // 6. НЕПРЕРЫВНЫЙ AI-МИКРОФОН + ЗАЩИТА ОТ ЭХА ЧЕРЕЗ РОДНОЙ voice.js
     // -------------------------------------------------------
+    function hookNativeAIVoiceEchoGuard() {
+        if (window._confEchoGuardHooked) return;
+        window._confEchoGuardHooked = true;
+
+        const origStart = window.onAIVoiceStart;
+        const origEnd = window.onAIVoiceEnd;
+
+        window.onAIVoiceStart = function () {
+            if (typeof origStart === 'function') origStart.apply(this, arguments);
+            if (state.isActive && state.mode === 'ai' && state.aiMicRunning) {
+                state.echoGuardActive = true;
+                stopContinuousConfAIMic();
+            }
+        };
+
+        window.onAIVoiceEnd = function () {
+            if (typeof origEnd === 'function') origEnd.apply(this, arguments);
+            if (state.echoGuardActive) {
+                state.echoGuardActive = false;
+                if (state.isActive && state.mode === 'ai' && !state.aiMicPausedByTyping) {
+                    setTimeout(startContinuousConfAIMic, 250);
+                }
+            }
+        };
+    }
+
     function startContinuousConfAIMic() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -410,11 +436,8 @@
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalChunk += transcript;
-                } else {
-                    interim += transcript;
-                }
+                if (event.results[i].isFinal) finalChunk += transcript;
+                else interim += transcript;
             }
 
             if (interim.trim()) {
@@ -429,9 +452,10 @@
         };
 
         rec.onerror = (e) => {
-            if (e && e.error === 'not-allowed') {
+            const err = (e && e.error) ? e.error : '';
+            if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') {
                 state.aiMicRunning = false;
-                updateHeaderTeleprompter('Нет доступа к микрофону', false);
+                updateHeaderTeleprompter('Микрофон недоступен (' + err + ')', false);
             }
         };
 
@@ -443,9 +467,9 @@
                     if (state.isActive && state.mode === 'ai' && !state.aiMicPausedByTyping && !state.echoGuardActive) {
                         startContinuousConfAIMic();
                     }
-                }, 220);
-            } else if (state.mode === 'ai') {
-                updateHeaderTeleprompter(state.aiMicPausedByTyping ? 'Пауза (ввод текста)' : 'AI Mic Paused', false);
+                }, 250);
+            } else if (state.mode === 'ai' && state.aiMicPausedByTyping) {
+                updateHeaderTeleprompter('Пауза (ввод текста)', false);
             }
         };
 
@@ -465,96 +489,39 @@
     }
 
     // -------------------------------------------------------
-    // 7. ИЗОЛИРОВАННАЯ ОЧЕРЕДЬ ИИ-ОЗВУЧКИ (С ЗАЩИТОЙ ОТ ЭХА)
+    // 7. РОДНАЯ СЕТКА .video-grid (1 ГЛАВНОЕ + 12 СЛОТОВ)
     // -------------------------------------------------------
-    function clearConfTTSQueue() {
-        state.ttsQueue = [];
-        state.ttsSpeaking = false;
-        state.echoGuardActive = false;
-        clearTimeout(state.ttsFallbackTimer);
-        try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
-    }
+    function refreshMyFrameIdentity() {
+        const myReadLang = getConfReadLang();
+        const myReadFlag = getConfReadFlag();
+        const myFlagCode = getConfReadFlagCode();
 
-    function enqueueConfTTS(text, langCode) {
-        if (!window.speechSynthesis || !text || state.mode !== 'ai') return;
-        if (state.ttsQueue.length >= 4) state.ttsQueue.shift();
-        state.ttsQueue.push({ text: String(text).trim(), langCode });
-        if (!state.ttsSpeaking) processNextConfTTS();
-    }
+        const flagImg = document.getElementById('my-conf-flag-img');
+        if (flagImg) flagImg.src = `https://flagcdn.com/w40/${myFlagCode}.png`;
 
-    function processNextConfTTS() {
-        if (state.mode !== 'ai' || state.ttsQueue.length === 0) {
-            state.ttsSpeaking = false;
-            if (state.echoGuardActive) {
-                state.echoGuardActive = false;
-                if (state.isActive && state.mode === 'ai' && !state.aiMicPausedByTyping) {
-                    setTimeout(startContinuousConfAIMic, 250);
-                }
-            }
-            return;
-        }
+        const headerFlag = document.getElementById('conf-header-flag');
+        if (headerFlag) headerFlag.textContent = myReadFlag;
 
-        const item = state.ttsQueue.shift();
-        if (!item || !item.text) return processNextConfTTS();
+        const nameEl = document.getElementById('my-conf-username');
+        if (nameEl && window.myUsername) nameEl.textContent = window.myUsername;
 
-        state.ttsSpeaking = true;
-
-        // Локальная защита от эха на время озвучки перевода
-        if (state.aiMicRunning) {
-            state.echoGuardActive = true;
-            stopContinuousConfAIMic();
-        }
-
-        const norm = confNormLang(item.langCode) || 'en';
-        let targetBcp = CONF_SPEECH_LOCALE[norm] || 'en-US';
-        const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
-
-        // Если на телефоне нет азербайджанского пакета TTS — чистый откат на турецкий
-        if (norm === 'az' && voices.length > 0) {
-            const hasAz = voices.some(v => v.lang && v.lang.toLowerCase().startsWith('az'));
-            if (!hasAz) targetBcp = 'tr-TR';
-        }
-
-        const utter = new SpeechSynthesisUtterance(item.text);
-        utter.lang = targetBcp;
-        utter.rate = 1.03;
-
-        if (voices.length > 0) {
-            const prefix = targetBcp.split('-')[0].toLowerCase();
-            const match = voices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix));
-            if (match) utter.voice = match;
-        }
-
-        const onDone = () => {
-            clearTimeout(state.ttsFallbackTimer);
-            state.ttsSpeaking = false;
-            processNextConfTTS();
-        };
-
-        utter.onend = onDone;
-        utter.onerror = onDone;
-        state.ttsFallbackTimer = setTimeout(onDone, Math.max(3500, item.text.length * 115));
-
-        try {
-            window.speechSynthesis.speak(utter);
-        } catch (e) {
-            onDone();
+        const speakerMarquee = document.getElementById('speaker-marquee');
+        if (speakerMarquee) {
+            speakerMarquee.setAttribute('data-lang', myReadLang);
+            speakerMarquee.setAttribute('data-flag', myReadFlag);
         }
     }
 
-    // -------------------------------------------------------
-    // 8. СЕТКА 1 + 12 ДИНАМИЧЕСКИХ ФРЕЙМОВ (БЕЗ ПЕРЕРИСОВКИ КАМЕР)
-    // -------------------------------------------------------
     window.initConference = function () {
-        injectConfStyles();
+        injectConfHeaderStyles();
         ensureConfHeaderBar();
+        hookNativeAIVoiceEchoGuard();
 
         const confGrid = document.getElementById('conference-grid');
         if (!confGrid) return;
 
-        confGrid.classList.add('hf-conf-grid-13');
+        confGrid.classList.remove('hf-conf-grid-13');
 
-        // Рендерим каркас сетки только один раз, чтобы живые <video> потоки никогда не сбрасывались
         if (!confGrid.dataset.gridMounted) {
             confGrid.dataset.gridMounted = '1';
             const myReadLang = getConfReadLang();
@@ -564,7 +531,7 @@
             let html = `
                 <div class="video-frame main" id="my-video-container" onclick="window.openConfLangModal()">
                     <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted></video>
-                    <div class="video-overlay">${window.myUsername || 'Me'}</div>
+                    <div id="my-conf-username" class="video-overlay">${window.myUsername || 'Me'}</div>
                     <div class="flag-overlay" style="top:8px; right:8px;">
                         <img id="my-conf-flag-img" src="https://flagcdn.com/w40/${myFlagCode}.png" class="w-6 rounded-sm border border-[#2a3942]">
                     </div>
@@ -576,20 +543,19 @@
                 </div>
             `;
 
-            // 12 динамических слотов: 0..5 слева, 6..11 справа
             for (let i = 0; i < MAX_GUEST_SLOTS; i++) {
-                const sideClass = i < 6 ? 'conf-slot-left' : 'conf-slot-right';
                 html += `
-                    <div id="conf-slot-${i}" class="video-frame conf-guest-slot ${sideClass} opacity-60">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#0b141a] text-[#8696a0]">
-                            <i class="fa-solid fa-user-plus text-sm mb-1 opacity-40"></i>
-                            <span class="text-[0.65rem]">Слот ${i + 1}</span>
+                    <div id="conf-slot-${i}" class="video-frame relative overflow-hidden opacity-60">
+                        <div class="absolute inset-0 flex items-center justify-center bg-[#0b141a]">
+                            <i class="fa-solid fa-user text-2xl text-[#2a3942]"></i>
                         </div>
                     </div>
                 `;
             }
 
             confGrid.innerHTML = html;
+        } else {
+            refreshMyFrameIdentity();
         }
 
         bindConfControls();
@@ -601,24 +567,22 @@
         if (!slotEl) return;
 
         if (!user) {
-            slotEl.classList.add('opacity-60');
+            slotEl.className = 'video-frame relative overflow-hidden opacity-60';
             slotEl.removeAttribute('data-uid');
             slotEl.innerHTML = `
-                <div class="absolute inset-0 flex flex-col items-center justify-center bg-[#0b141a] text-[#8696a0]">
-                    <i class="fa-solid fa-user-plus text-sm mb-1 opacity-40"></i>
-                    <span class="text-[0.65rem]">Слот ${slotIndex + 1}</span>
+                <div class="absolute inset-0 flex items-center justify-center bg-[#0b141a]">
+                    <i class="fa-solid fa-user text-2xl text-[#2a3942]"></i>
                 </div>
             `;
             return;
         }
 
         const uid = String(user.id);
-        const uLang = confNormLang(user.langCode) || confNormLang(user.flagCode) || 'en';
-        const uFlag = user.flag || (CONF_LANG_MAP[uLang] ? CONF_LANG_MAP[uLang][1] : '🌐');
-        const uFlagCode = user.flagCode || (CONF_LANG_MAP[uLang] ? CONF_LANG_MAP[uLang][0] : 'un');
+        const uLang = confNormLang(user.langCode) || confNormLang(user.flag) || confNormLang(user.flagCode) || 'en';
+        const uFlag = String(user.flag || (CONF_LANG_MAP[uLang] ? CONF_LANG_MAP[uLang][1] : '🌐')).trim();
+        const uFlagCode = String(user.flagCode || (CONF_LANG_MAP[uLang] ? CONF_LANG_MAP[uLang][0] : 'un')).trim().toLowerCase();
         const firstName = (user.name || 'User').split(' ')[0];
 
-        // Если этот пользователь уже сидит в этом слоте — обновляем только флаг/язык, не трогая <video>
         if (slotEl.getAttribute('data-uid') === uid) {
             const flagImg = slotEl.querySelector('.conf-slot-flag-img');
             if (flagImg) flagImg.src = `https://flagcdn.com/w40/${uFlagCode}.png`;
@@ -627,19 +591,20 @@
                 marq.setAttribute('data-lang', uLang);
                 marq.setAttribute('data-flag', uFlag);
             }
+            tryAttachVideoForUser(user);
             return;
         }
 
-        slotEl.classList.remove('opacity-60');
+        slotEl.className = 'video-frame relative overflow-hidden';
         slotEl.setAttribute('data-uid', uid);
         slotEl.innerHTML = `
-            <video id="remote-video-${uid}" class="absolute inset-0 w-full h-full object-cover z-20 hidden" autoplay playsinline></video>
+            <div id="remote-video-${uid}" class="conf-remote-video-box absolute inset-0 w-full h-full z-20 hidden"></div>
             <div class="absolute inset-0 flex items-center justify-center bg-[#111b21] z-10">
-                ${user.photo ? `<img src="${user.photo}" class="w-9 h-9 rounded-full object-cover opacity-80">` : `<i class="fa-solid fa-user text-xl text-[#2a3942]"></i>`}
+                ${user.photo ? `<img src="${user.photo}" class="w-12 h-12 rounded-full object-cover opacity-80">` : `<i class="fa-solid fa-user text-2xl text-[#2a3942]"></i>`}
             </div>
-            <div class="video-overlay z-30 text-[0.68rem]">${firstName}</div>
-            <div class="flag-overlay z-30" style="top:6px; right:6px;">
-                <img src="https://flagcdn.com/w40/${uFlagCode}.png" class="conf-slot-flag-img w-5 rounded-sm border border-[#2a3942]">
+            <div class="video-overlay z-30">${firstName}</div>
+            <div class="flag-overlay z-30" style="top:8px; right:8px;">
+                <img src="https://flagcdn.com/w40/${uFlagCode}.png" class="conf-slot-flag-img w-6 rounded-sm border border-[#2a3942]">
             </div>
             <div class="translation-bar z-30">
                 <div id="conf-marquee-${uid}" class="conf-marquee-text conf-listener-marquee" data-lang="${uLang}" data-flag="${uFlag}" style="animation-duration: 28s;">
@@ -648,20 +613,51 @@
             </div>
         `;
 
-        // Если видеопоток Agora пришёл раньше DOM-слота — подключаем его сразу
-        if (state.remoteVideoTracks[uid]) {
-            attachRemoteVideoToDom(uid, state.remoteVideoTracks[uid]);
+        tryAttachVideoForUser(user);
+    }
+
+    function tryAttachVideoForUser(user) {
+        if (!user) return;
+        const uid = String(user.id);
+        const aUid = (user.agoraUid !== undefined && user.agoraUid !== '') ? String(user.agoraUid) : null;
+
+        let track = (aUid && state.remoteVideoTracks[aUid]) || state.remoteVideoTracks[uid];
+
+        if (!track && Object.keys(state.activeUsersMap).length === 1) {
+            const trackKeys = Object.keys(state.remoteVideoTracks);
+            if (trackKeys.length === 1) {
+                track = state.remoteVideoTracks[trackKeys[0]];
+            }
+        }
+
+        if (track) {
+            playRemoteVideoInContainer(uid, track);
         }
     }
 
-    function attachRemoteVideoToDom(uid, videoTrack) {
-        const videoEl = document.getElementById(`remote-video-${uid}`);
-        if (!videoEl || !videoTrack) return;
+    function playRemoteVideoInContainer(firebaseUid, videoTrack) {
+        const box = document.getElementById(`remote-video-${firebaseUid}`);
+        if (!box || !videoTrack) return;
+
+        const trackId = (typeof videoTrack.getTrackId === 'function') ? String(videoTrack.getTrackId()) : 'active';
+        if (box.dataset.trackId === trackId && box.querySelector('video')) {
+            box.classList.remove('hidden');
+            return;
+        }
+
         try {
-            videoEl.srcObject = new MediaStream([videoTrack.getMediaStreamTrack()]);
-            videoEl.classList.remove('hidden');
-            videoEl.play().catch(() => {});
+            box.innerHTML = '';
+            box.dataset.trackId = trackId;
+            box.classList.remove('hidden');
+            videoTrack.play(box);
         } catch (e) {}
+    }
+
+    function attachIncomingTrackByAgoraUid(agoraUid, videoTrack) {
+        const user = findUserByAgoraUid(agoraUid);
+        if (user) {
+            playRemoteVideoInContainer(String(user.id), videoTrack);
+        }
     }
 
     function syncActiveParticipants(usersMap) {
@@ -671,14 +667,11 @@
         Object.keys(usersMap || {}).forEach(uid => {
             const u = usersMap[uid];
             if (!u || String(uid) === myId || uid === 'ai') return;
-            // Игнорируем зависшие записи старше 6 часов
-            if (u.joinedAt && (Date.now() - u.joinedAt) > 21600000) return;
             validGuests[String(uid)] = u;
         });
 
         state.activeUsersMap = validGuests;
 
-        // 1. Освобождаем слоты тех, кто вышел
         for (let i = 0; i < MAX_GUEST_SLOTS; i++) {
             const occupantUid = state.slots[i];
             if (occupantUid && !validGuests[occupantUid]) {
@@ -687,14 +680,11 @@
             }
         }
 
-        // 2. Обновляем текущих или сажаем новых в первый свободный слот
         Object.keys(validGuests).forEach(uid => {
             let slotIdx = state.slots.indexOf(uid);
             if (slotIdx === -1) {
                 slotIdx = state.slots.indexOf(null);
-                if (slotIdx !== -1) {
-                    state.slots[slotIdx] = uid;
-                }
+                if (slotIdx !== -1) state.slots[slotIdx] = uid;
             }
             if (slotIdx !== -1) {
                 renderGuestSlot(slotIdx, validGuests[uid]);
@@ -705,15 +695,49 @@
     }
 
     // -------------------------------------------------------
-    // 9. ВХОД, КАМЕРА AGORA И ВЫХОД ИЗ КОНФЕРЕНЦИИ
+    // 8. ВХОД, КАМЕРА AGORA (СВОЯ + ВХОДЯЩИЕ) И ВЫХОД
     // -------------------------------------------------------
+    async function subscribeRemoteUser(user, mediaType) {
+        if (!state.client || !user) return;
+        const aUid = String(user.uid);
+        const lockKey = `${aUid}:${mediaType}`;
+
+        if (state.subscribingKeys.has(lockKey)) return;
+        if (mediaType === 'video' && state.remoteVideoTracks[aUid]) return;
+        if (mediaType === 'audio' && state.remoteAudioTracks[aUid]) return;
+
+        state.subscribingKeys.add(lockKey);
+        try {
+            await state.client.subscribe(user, mediaType);
+            if (mediaType === 'video' && user.videoTrack) {
+                state.remoteVideoTracks[aUid] = user.videoTrack;
+                attachIncomingTrackByAgoraUid(aUid, user.videoTrack);
+            }
+            if (mediaType === 'audio' && user.audioTrack) {
+                state.remoteAudioTracks[aUid] = user.audioTrack;
+                user.audioTrack.play();
+                syncConfAudioRouting();
+            }
+        } catch (e) {
+            console.warn('Conf subscribe info:', lockKey, e);
+        } finally {
+            state.subscribingKeys.delete(lockKey);
+        }
+    }
+
     window.enterConferenceRoom = async function () {
         window.initConference();
+        refreshMyFrameIdentity();
 
         const myId = getMyUid();
-        if (!myId) return;
+        if (!myId) {
+            setTimeout(window.enterConferenceRoom, 800);
+            return;
+        }
 
-        // Проверка лимита 1 + 12
+        if (state.isJoining) return;
+        if (state.isActive && state.client && state.client.connectionState === 'CONNECTED') return;
+
         const currentCount = Object.keys(state.activeUsersMap).length;
         if (!state.isActive && currentCount >= MAX_GUEST_SLOTS) {
             if (window.showToast) window.showToast('Конференция', 'Комната заполнена (13/13)', '', '');
@@ -721,44 +745,57 @@
         }
 
         state.isActive = true;
+        state.isJoining = true;
 
-        // Регистрируем своё присутствие в изолированной ветке Firebase
-        if (typeof firebase !== 'undefined' && firebase.database) {
-            state.presenceRef = firebase.database().ref(`conf_world/active_users/${myId}`);
-            const myLang = getConfReadLang();
-            const myData = {
-                id: myId,
-                name: window.myUsername || 'User',
-                photo: (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : '',
-                flag: getConfReadFlag(),
-                flagCode: getConfReadFlagCode(),
-                langCode: myLang,
-                joinedAt: firebase.database.ServerValue.TIMESTAMP
-            };
-            state.presenceRef.set(myData);
-            state.presenceRef.onDisconnect().remove();
+        try {
+            if (typeof firebase !== 'undefined' && firebase.database) {
+                state.presenceRef = firebase.database().ref(`conf_world/active_users/${myId}`);
+                const myLang = getConfReadLang();
+                const myData = {
+                    id: myId,
+                    name: window.myUsername || 'User',
+                    photo: (window.myProfileInfo && window.myProfileInfo.photo) ? window.myProfileInfo.photo : '',
+                    flag: getConfReadFlag(),
+                    flagCode: getConfReadFlagCode(),
+                    langCode: myLang,
+                    agoraUid: state.myAgoraUid || '',
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                state.presenceRef.set(myData);
+                state.presenceRef.onDisconnect().remove();
 
-            if (!state.usersListenerRef) {
-                state.usersListenerRef = firebase.database().ref('conf_world/active_users');
-                state.usersListenerRef.on('value', (snap) => {
-                    syncActiveParticipants(snap.val() || {});
-                });
+                if (!state.usersListenerRef) {
+                    state.usersListenerRef = firebase.database().ref('conf_world/active_users');
+                    state.usersListenerRef.on('value', (snap) => {
+                        syncActiveParticipants(snap.val() || {});
+                    });
+                }
+
+                // Подключаем слушатель сообщений без зависимости от часов телефона
+                if (!state.chatListenerBound) {
+                    state.chatListenerBound = true;
+                    state.chatListenerRef = firebase.database().ref('conf_world/messages');
+                    state.chatListenerRef.limitToLast(20).once('value', (snap) => {
+                        snap.forEach((child) => {
+                            if (child.key) state.processedKeys.add(child.key);
+                        });
+                        if (state.isActive && state.chatListenerRef) {
+                            state.chatListenerRef.limitToLast(20).on('child_added', handleConfMessage);
+                        }
+                    });
+                }
             }
 
-            if (!state.chatListenerRef) {
-                state.chatListenerRef = firebase.database().ref('conf_world/messages');
-                state.chatListenerRef.limitToLast(20).on('child_added', handleConfMessage);
-            }
+            await startConferenceWebRTC();
+        } finally {
+            state.isJoining = false;
         }
-
-        await startConferenceWebRTC();
     };
 
     window.startConferenceWebRTC = async function () {
         if (typeof AgoraRTC === 'undefined') return;
 
         try {
-            // Сначала поднимаем локальную камеру и микрофон (чтобы превью работало сразу)
             if (!state.audioTrack) {
                 state.audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
             }
@@ -776,69 +813,82 @@
             if (!state.client) {
                 state.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
-                state.client.on('user-published', async (user, mediaType) => {
-                    await state.client.subscribe(user, mediaType);
-                    const uid = String(user.uid);
-
-                    if (mediaType === 'video' && user.videoTrack) {
-                        state.remoteVideoTracks[uid] = user.videoTrack;
-                        attachRemoteVideoToDom(uid, user.videoTrack);
-                    }
-                    if (mediaType === 'audio' && user.audioTrack) {
-                        state.remoteAudioTracks[uid] = user.audioTrack;
-                        user.audioTrack.play();
-                        syncConfAudioRouting();
-                    }
+                state.client.on('user-published', (user, mediaType) => {
+                    subscribeRemoteUser(user, mediaType);
                 });
 
                 state.client.on('user-unpublished', (user, mediaType) => {
-                    const uid = String(user.uid);
+                    const aUid = String(user.uid);
                     if (mediaType === 'video') {
-                        delete state.remoteVideoTracks[uid];
-                        const gridVideo = document.getElementById(`remote-video-${uid}`);
-                        if (gridVideo) {
-                            gridVideo.srcObject = null;
-                            gridVideo.classList.add('hidden');
+                        delete state.remoteVideoTracks[aUid];
+                        const uInfo = findUserByAgoraUid(aUid);
+                        if (uInfo) {
+                            const box = document.getElementById(`remote-video-${uInfo.id}`);
+                            if (box) {
+                                box.innerHTML = '';
+                                delete box.dataset.trackId;
+                                box.classList.add('hidden');
+                            }
                         }
                     }
                     if (mediaType === 'audio') {
-                        delete state.remoteAudioTracks[uid];
+                        delete state.remoteAudioTracks[aUid];
                     }
                 });
 
                 state.client.on('user-left', (user) => {
-                    const uid = String(user.uid);
-                    delete state.remoteVideoTracks[uid];
-                    delete state.remoteAudioTracks[uid];
+                    const aUid = String(user.uid);
+                    const uInfo = findUserByAgoraUid(aUid);
+                    if (uInfo) {
+                        const box = document.getElementById(`remote-video-${uInfo.id}`);
+                        if (box) {
+                            box.innerHTML = '';
+                            delete box.dataset.trackId;
+                            box.classList.add('hidden');
+                        }
+                    }
+                    delete state.remoteVideoTracks[aUid];
+                    delete state.remoteAudioTracks[aUid];
                 });
             }
 
             if (state.client.connectionState === 'DISCONNECTED') {
-                const channelName = window.CONF_AGORA_CHANNEL || 'global_conference';
-                const token = (typeof AGORA_TEMP_TOKEN !== 'undefined') ? AGORA_TEMP_TOKEN : null;
-                const appId = (typeof AGORA_APP_ID !== 'undefined') ? AGORA_APP_ID : '';
+                const channelName = window.CONF_AGORA_CHANNEL || (typeof AGORA_CHANNEL !== 'undefined' ? AGORA_CHANNEL : 'global_conference');
+                const token = (typeof AGORA_TEMP_TOKEN !== 'undefined') ? AGORA_TEMP_TOKEN : (window.AGORA_TEMP_TOKEN || null);
+                const appId = (typeof AGORA_APP_ID !== 'undefined') ? AGORA_APP_ID : (window.AGORA_APP_ID || '');
+
                 if (appId) {
-                    await state.client.join(appId, channelName, token, getMyUid());
+                    const assignedUid = await state.client.join(appId, channelName, token, null);
+                    state.myAgoraUid = String(assignedUid);
+
+                    if (state.presenceRef) {
+                        state.presenceRef.update({ agoraUid: state.myAgoraUid }).catch(() => {});
+                    }
+
                     const tracks = [state.audioTrack, state.videoTrack].filter(Boolean);
                     if (tracks.length > 0) await state.client.publish(tracks);
+
+                    (state.client.remoteUsers || []).forEach((remUser) => {
+                        if (remUser.hasVideo) subscribeRemoteUser(remUser, 'video');
+                        if (remUser.hasAudio) subscribeRemoteUser(remUser, 'audio');
+                    });
                 }
             }
         } catch (e) {
-            console.warn('Conf WebRTC info:', e);
+            console.warn('Conf WebRTC error:', e);
+            if (window.showToast) {
+                window.showToast('Agora Conf', 'Проверьте токен/канал: ' + (e && e.code ? e.code : 'ошибка входа'), '', '');
+            }
         }
     };
 
     window.toggleConfCamera = async function () {
         if (!state.videoTrack) return;
         state.camEnabled = !state.camEnabled;
-        try {
-            await state.videoTrack.setEnabled(state.camEnabled);
-        } catch (e) {}
+        try { await state.videoTrack.setEnabled(state.camEnabled); } catch (e) {}
 
         const myVideo = document.getElementById('my-live-video');
-        if (myVideo) {
-            myVideo.style.opacity = state.camEnabled ? '1' : '0.15';
-        }
+        if (myVideo) myVideo.style.opacity = state.camEnabled ? '1' : '0.15';
         updateCamButtonUI();
     };
 
@@ -856,8 +906,14 @@
 
     window.leaveConferenceRoom = async function () {
         state.isActive = false;
+        state.isJoining = false;
+        state.chatListenerBound = false;
+        state.myAgoraUid = null;
+        state.subscribingKeys.clear();
+        state.processedKeys.clear();
+
         stopContinuousConfAIMic();
-        clearConfTTSQueue();
+        if (typeof window.stopVoiceAI === 'function') window.stopVoiceAI();
 
         if (state.presenceRef) {
             try { await state.presenceRef.remove(); } catch (e) {}
@@ -909,7 +965,7 @@
     };
 
     // -------------------------------------------------------
-    // 10. УМНЫЙ "ВЕЕР" ПЕРЕВОДА В БЕГУЩИЕ СТРОКИ + ОЗВУЧКА
+    // 9. УМНЫЙ ПЕРЕВОД + РОДНОЙ ИИ-ГОЛОС (window.playAIVoice)
     // -------------------------------------------------------
     async function translateConfTextCached(text, targetLang) {
         const tl = confNormLang(targetLang) || 'en';
@@ -947,8 +1003,8 @@
         if (!text || typeof firebase === 'undefined' || !firebase.database) return;
 
         const langCode = confNormLang(explicitLang) || getConfReadLang();
-        const flag = (CONF_LANG_MAP[langCode] ? CONF_LANG_MAP[langCode][1] : getConfReadFlag());
-        const flagCode = (CONF_LANG_MAP[langCode] ? CONF_LANG_MAP[langCode][0] : getConfReadFlagCode());
+        const flag = getConfReadFlag();
+        const flagCode = getConfReadFlagCode();
 
         firebase.database().ref('conf_world/messages').push({
             userId: getMyUid() || 'guest',
@@ -962,15 +1018,27 @@
         });
     }
 
+    function speakConfTranslation(translated, targetLang) {
+        if (state.mode !== 'ai' || !translated) return;
+        if (typeof window.playAIVoice === 'function') {
+            window.playAIVoice(encodeURIComponent(translated), targetLang);
+        } else if (window.speechSynthesis) {
+            try {
+                const u = new SpeechSynthesisUtterance(translated);
+                u.lang = CONF_SPEECH_LOCALE[targetLang] || targetLang || 'en-US';
+                window.speechSynthesis.speak(u);
+            } catch (e) {}
+        }
+    }
+
     function handleConfMessage(snapshot) {
         const data = snapshot.val();
         if (!data || !data.text) return;
-        if (data.timestamp && (Date.now() - data.timestamp) > 10000) return;
 
         if (snapshot.key) {
             if (state.processedKeys.has(snapshot.key)) return;
             state.processedKeys.add(snapshot.key);
-            if (state.processedKeys.size > 120) {
+            if (state.processedKeys.size > 150) {
                 const firstKey = state.processedKeys.values().next().value;
                 state.processedKeys.delete(firstKey);
             }
@@ -979,11 +1047,11 @@
         const myId = getMyUid();
         const isMe = (data.sessionId && data.sessionId === window.mySessionId) || (myId && String(data.userId) === myId);
         const senderName = isMe ? (window.myUsername || 'Me') : (data.name || 'User').split(' ')[0];
-        const senderLang = confNormLang(data.langCode) || confNormLang(data.flagCode) || 'en';
-        const senderFlag = data.flag || '🌐';
+        const senderLang = confNormLang(data.langCode) || confNormLang(data.flag) || confNormLang(data.flagCode) || 'en';
+        const senderFlag = String(data.flag || '🌐').trim();
         const originalText = String(data.text).trim();
 
-        // 1. В окне самого говорящего всегда бежит его оригинал
+        // 1. В окне самого отправителя бежит его оригинал
         const speakerMarqueeId = isMe ? 'speaker-marquee' : `conf-marquee-${data.userId}`;
         const speakerMarquee = document.getElementById(speakerMarqueeId);
         if (speakerMarquee) {
@@ -993,33 +1061,31 @@
             );
         }
 
-        // 2. В моём главном окне (если говорил другой участник)
+        // 2. Умная логика по флагам в моём главном окне
         const myReadLang = getConfReadLang();
         const myReadFlag = getConfReadFlag();
         const myMainMarquee = document.getElementById('speaker-marquee');
 
         if (!isMe && myMainMarquee) {
-            if (senderLang === myReadLang) {
-                // Флаги совпали -> показываем оригинал без перевода и без TTS
+            const isSameFlag = (senderFlag && myReadFlag && senderFlag === myReadFlag) || (senderLang === myReadLang);
+
+            if (isSameFlag) {
                 setMarqueeContent(
                     myMainMarquee,
                     `<span class="text-[#8696a0] text-[0.65rem] uppercase">${senderName}:</span> <span class="text-white font-bold ml-1.5">${senderFlag} ${originalText}</span>`
                 );
             } else {
-                // Флаги разные -> переводим на мой язык + озвучиваем ИИ (если включён режим AI)
                 translateConfTextCached(originalText, myReadLang).then(translated => {
                     setMarqueeContent(
                         myMainMarquee,
                         `<span class="text-[#8696a0] text-[0.65rem] uppercase">${senderName}:</span> <span class="text-yellow-400 font-bold ml-1.5">${myReadFlag} ${translated}</span>`
                     );
-                    if (state.mode === 'ai') {
-                        enqueueConfTTS(translated, myReadLang);
-                    }
+                    speakConfTranslation(translated, myReadLang);
                 });
             }
         }
 
-        // 3. "Веер" по остальным занятым фреймам участников (группировка по уникальным языкам)
+        // 3. Веер по остальным фреймам участников
         const listenerMarquees = Array.from(document.querySelectorAll('#conference .conf-listener-marquee'))
             .filter(el => el.id !== speakerMarqueeId && el.id !== 'speaker-marquee');
 
@@ -1054,7 +1120,7 @@
     }
 
     // -------------------------------------------------------
-    // 11. НИЖНЯЯ ПАНЕЛЬ ВВОДА И ИЗОЛИРОВАННЫЙ МИКРОФОН КОНФЕРЕНЦИИ
+    // 10. ЧАТ КОНФЕРЕНЦИИ И КНОПКИ УПРАВЛЕНИЯ
     // -------------------------------------------------------
     window.sendConfMsg = function () {
         const inputField = document.getElementById('conf-chat-input');
@@ -1065,7 +1131,6 @@
 
         pushConfMessage(rawText, getConfReadLang());
 
-        // После отправки текста возобновляем AI-микрофон, если включён режим AI
         if (state.mode === 'ai' && state.aiMicPausedByTyping) {
             state.aiMicPausedByTyping = false;
             setTimeout(startContinuousConfAIMic, 200);
@@ -1101,9 +1166,7 @@
         const sel = document.getElementById('conf-isolated-mic-select');
         if (sel) {
             sel.value = savedMic;
-            sel.onchange = () => {
-                window.saveConfMicLang(sel.value);
-            };
+            sel.onchange = () => window.saveConfMicLang(sel.value);
         }
 
         const dictBtn = document.getElementById('conf-single-dictate-btn');
@@ -1114,9 +1177,7 @@
             };
         }
 
-        document.addEventListener('click', () => {
-            popup.classList.remove('active');
-        });
+        document.addEventListener('click', () => popup.classList.remove('active'));
     }
 
     window.startConfSingleDictation = function () {
@@ -1145,7 +1206,6 @@
         const confPage = document.getElementById('conference');
         if (!confPage) return;
 
-        // 1. Кнопка камеры (#conf-cam-btn)
         const camBtn = document.getElementById('conf-cam-btn');
         if (camBtn && !camBtn.dataset.confCamBound) {
             camBtn.dataset.confCamBound = '1';
@@ -1157,7 +1217,6 @@
             };
         }
 
-        // 2. Красная кнопка выхода (.bg-red-500 в панели кнопок конференции)
         const redBtn = confPage.querySelector('button.bg-red-500');
         if (redBtn && !redBtn.dataset.confLeaveBound) {
             redBtn.dataset.confLeaveBound = '1';
@@ -1169,7 +1228,6 @@
             };
         }
 
-        // 3. Поле ввода (#conf-chat-input) — автопауза AI-микрофона при наборе текста
         const inputField = document.getElementById('conf-chat-input');
         if (inputField && !inputField.dataset.confInputBound) {
             inputField.dataset.confInputBound = '1';
@@ -1193,7 +1251,6 @@
                 }
             }, true);
 
-            // Перепривязываем кнопки микрофона и отправки в нижней строке конференции
             const inputArea = inputField.closest('.chat-input-area') || confPage;
             inputArea.querySelectorAll('button').forEach(btn => {
                 const attr = btn.getAttribute('onclick') || '';
@@ -1218,7 +1275,7 @@
     };
 
     // -------------------------------------------------------
-    // 12. ИЗОЛИРОВАННЫЙ ВЫБОР ЯЗЫКА КОНФЕРЕНЦИИ
+    // 11. ВЫБОР ЯЗЫКА КОНФЕРЕНЦИИ
     // -------------------------------------------------------
     window.openConfLangModal = function () {
         const listContainer = document.getElementById('personal-lang-list');
@@ -1238,27 +1295,13 @@
     };
 
     function applyConfLangChange() {
-        const myReadLang = getConfReadLang();
-        const myReadFlag = getConfReadFlag();
-        const myFlagCode = getConfReadFlagCode();
+        refreshMyFrameIdentity();
 
-        const speakerMarquee = document.getElementById('speaker-marquee');
-        if (speakerMarquee) {
-            speakerMarquee.setAttribute('data-lang', myReadLang);
-            speakerMarquee.setAttribute('data-flag', myReadFlag);
-        }
-        const myFlagImg = document.getElementById('my-conf-flag-img');
-        if (myFlagImg) myFlagImg.src = `https://flagcdn.com/w40/${myFlagCode}.png`;
-
-        const headerFlag = document.getElementById('conf-header-flag');
-        if (headerFlag) headerFlag.textContent = myReadFlag;
-
-        // Обновляем свой флаг и язык в активной комнате Firebase, чтобы у всех перестроился веер и звук
         if (state.isActive && state.presenceRef) {
             state.presenceRef.update({
-                flag: myReadFlag,
-                flagCode: myFlagCode,
-                langCode: myReadLang
+                flag: getConfReadFlag(),
+                flagCode: getConfReadFlagCode(),
+                langCode: getConfReadLang()
             }).catch(() => {});
         }
 
@@ -1302,7 +1345,7 @@
     };
 
     // -------------------------------------------------------
-    // 13. МОДАЛКА ПРИГЛАШЕНИЙ И ПРИЁМНИК УВЕДОМЛЕНИЙ (БЕЗ ИЗМЕНЕНИЙ ДЛЯ ЗВОНКОВ/ПОЧТЫ)
+    // 12. ПРИГЛАШЕНИЯ И УВЕДОМЛЕНИЯ
     // -------------------------------------------------------
     window.openGroupInviteModal = function () {
         const list = document.getElementById('group-invite-list');
@@ -1376,7 +1419,6 @@
             });
         });
 
-        // Ведущий сразу входит в активную комнату конференции
         window.enterConferenceRoom();
 
         if (window.showToast) window.showToast('Успех', 'Приглашения доставлены адресатам!', '', '');
@@ -1388,6 +1430,8 @@
             setTimeout(window.listenForDirectInvites, 1000);
             return;
         }
+
+        refreshMyFrameIdentity();
 
         const myId = getMyUid();
         firebase.database().ref('user_notifications/' + myId).on('child_added', (snapshot) => {
@@ -1492,8 +1536,25 @@
     };
 
     // -------------------------------------------------------
-    // 14. АВТОЗАПУСК ПРИ ПЕРЕХОДЕ НА ВКЛАДКУ КОНФЕРЕНЦИИ (БЕЗ ХОЛОСТОГО ВКЛЮЧЕНИЯ КАМЕРЫ)
+    // 13. ЗАПУСК ПРИ ОТКРЫТИИ ВКЛАДКИ КОНФЕРЕНЦИИ
     // -------------------------------------------------------
+    function watchConferenceVisibility() {
+        const confPage = document.getElementById('conference');
+        if (!confPage || confPage.dataset.visWatched) return;
+        confPage.dataset.visWatched = '1';
+
+        const checkAndJoin = () => {
+            const isVisible = confPage.offsetParent !== null && !confPage.classList.contains('hidden');
+            if (isVisible && !state.isActive) {
+                window.enterConferenceRoom();
+            }
+        };
+
+        const observer = new MutationObserver(checkAndJoin);
+        observer.observe(confPage, { attributes: true, attributeFilter: ['class', 'style'] });
+        checkAndJoin();
+    }
+
     function hookTabSwitch() {
         if (typeof window.switchTab === 'function' && !window._confTabHooked) {
             const origSwitchTab = window.switchTab;
@@ -1517,8 +1578,11 @@
     window.addEventListener('load', () => {
         hookTabSwitch();
         window.initConference();
+        watchConferenceVisibility();
         setTimeout(() => {
             hookTabSwitch();
+            watchConferenceVisibility();
+            refreshMyFrameIdentity();
             window.bindConfControls();
             window.listenForDirectInvites();
         }, 1200);
