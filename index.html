@@ -388,7 +388,8 @@ if (window.OneSignalDeferred) {
             db.ref('users/' + actualUid).once('value').then(snap => {
                 const data = snap.val() || {};
                 
-                if (!snap.exists() || !data.phone || !data.name || data.name === 'User' || !data.id) {
+                if (!snap.exists() || !data.flagCode || data.flagCode === 'un' || !data.name || data.name === 'User' || !data.id) {
+                    
                     const newUser = {
                         id: actualUid,
                         name: data.name || user.displayName || 'User',
