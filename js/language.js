@@ -364,7 +364,7 @@ window.sendPrivateMsg = async function() {
 };
 
 // ==========================================
-// 3. ГОЛОСОВОЙ ВВОД ПРИВАТА (БЕЗЛИМИТНЫЙ КАНАЛ mic — ОДИН ЦЕЛЬНЫЙ ТЕКСТ ИЛИ ДВОЙНОЙ БАБЛ)
+// 3. ГОЛОСОВОЙ ВВОД ПРИВАТА (БЕЗЛИМИТНЫЙ АВТО-МИКРОФОН, СМЕНА ЯЗЫКА НА ЛЕТУ)
 // ==========================================
 (function () {
     const PM = {
@@ -373,11 +373,14 @@ window.sendPrivateMsg = async function() {
         roomId: null,
         rec: null,
         restartTimer: null,
+        silenceTimer: null,
         watchdog: null,
         committed: '',
         interim: '',
         lastChunkNorm: '',
         lastChunkAt: 0,
+        lastSentNorm: '',
+        lastSentAt: 0,
         recBase: 'en',
         isManual: false
     };
@@ -402,94 +405,88 @@ window.sendPrivateMsg = async function() {
     }
 
     function ensurePrivateMicPill() {
-        if (!document.getElementById('hf-pmic-styles')) {
-            const st = document.createElement('style');
-            st.id = 'hf-pmic-styles';
-            st.textContent = `
-                #hf-pmic-pill {
-                    display: none;
-                    align-items: center;
-                    gap: 8px;
-                    width: calc(100% - 16px);
-                    margin: 0 auto 6px auto;
-                    padding: 7px 10px;
-                    background: #111b21;
-                    border: 1.5px solid #ef4444;
-                    border-radius: 999px;
-                    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
-                    flex-shrink: 0;
-                    box-sizing: border-box;
-                    z-index: 60;
-                }
-                #hf-pmic-pill.active { display: flex; }
-                #hf-pmic-pill.ai-mode {
-                    border-color: #00e5b0;
-                    box-shadow: 0 6px 20px rgba(0, 229, 176, 0.35);
-                }
-                #hf-pmic-dot {
-                    width: 9px; height: 9px; border-radius: 50%;
-                    background: #ef4444; flex-shrink: 0;
-                    animation: hfPmPulse 1s infinite;
-                }
-                #hf-pmic-pill.ai-mode #hf-pmic-dot { background: #00e5b0; }
-                #hf-pmic-badge {
-                    display: none;
-                    font-size: 0.68rem; font-weight: 800;
-                    padding: 2px 6px; border-radius: 999px;
-                    background: rgba(0, 229, 176, 0.16); color: #00e5b0;
-                    flex-shrink: 0;
-                }
-                #hf-pmic-pill.ai-mode #hf-pmic-badge { display: inline-block; }
-                #hf-pmic-text {
-                    flex: 1 1 auto; min-width: 0; overflow: hidden;
-                    white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
-                }
-                .hf-pmic-act {
-                    width: 30px; height: 30px; border-radius: 50%; border: none;
-                    display: flex; align-items: center; justify-content: center;
-                    flex-shrink: 0; cursor: pointer; font-size: 0.82rem;
-                }
-                @keyframes hfPmPulse {
-                    0% { transform: scale(0.85); opacity: 0.6; }
-                    50% { transform: scale(1.25); opacity: 1; }
-                    100% { transform: scale(0.85); opacity: 0.6; }
-                }
-            `;
-            document.head.appendChild(st);
-        }
+        const oldSt = document.getElementById('hf-pmic-styles');
+        if (oldSt) oldSt.remove();
+        const st = document.createElement('style');
+        st.id = 'hf-pmic-styles';
+        st.textContent = `
+            #hf-pmic-pill {
+                display: none;
+                align-items: center;
+                gap: 8px;
+                width: calc(100% - 16px);
+                margin: 0 auto 6px auto;
+                padding: 7px 10px;
+                background: #111b21;
+                border: 1.5px solid #ef4444;
+                border-radius: 999px;
+                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+                flex-shrink: 0;
+                box-sizing: border-box;
+                z-index: 60;
+            }
+            #hf-pmic-pill.active { display: flex; }
+            #hf-pmic-pill.ai-mode {
+                border-color: #00e5b0;
+                box-shadow: 0 6px 20px rgba(0, 229, 176, 0.35);
+            }
+            #hf-pmic-dot {
+                width: 9px; height: 9px; border-radius: 50%;
+                background: #ef4444; flex-shrink: 0;
+                animation: hfPmPulse 1s infinite;
+            }
+            #hf-pmic-pill.ai-mode #hf-pmic-dot { background: #00e5b0; }
+            #hf-pmic-badge {
+                display: none;
+                font-size: 0.68rem; font-weight: 800;
+                padding: 2px 6px; border-radius: 999px;
+                background: rgba(0, 229, 176, 0.16); color: #00e5b0;
+                flex-shrink: 0;
+            }
+            #hf-pmic-pill.ai-mode #hf-pmic-badge { display: inline-block; }
+            #hf-pmic-text {
+                flex: 1 1 auto; min-width: 0; overflow: hidden;
+                white-space: nowrap; color: #fff; font-size: 0.8rem; font-weight: 600;
+            }
+            #hf-pmic-stop {
+                flex-shrink: 0; background: #ef4444; color: #fff; border: none;
+                border-radius: 999px; padding: 4px 12px; font-size: 0.72rem;
+                font-weight: 800; cursor: pointer;
+            }
+            @keyframes hfPmPulse {
+                0% { transform: scale(0.85); opacity: 0.6; }
+                50% { transform: scale(1.25); opacity: 1; }
+                100% { transform: scale(0.85); opacity: 0.6; }
+            }
+        `;
+        document.head.appendChild(st);
 
         let pill = document.getElementById('hf-pmic-pill');
-        if (!pill) {
-            pill = document.createElement('div');
-            pill.id = 'hf-pmic-pill';
-            pill.innerHTML = `
-                <span id="hf-pmic-dot"></span>
-                <span id="hf-pmic-badge">🤖 AI</span>
-                <span id="hf-pmic-flag" class="text-sm shrink-0">🌐</span>
-                <span id="hf-pmic-text"></span>
-                <button type="button" id="hf-pmic-cancel" class="hf-pmic-act bg-[#202c33] text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-                <button type="button" id="hf-pmic-send" class="hf-pmic-act bg-[#00a884] text-[#111b21]"><i class="fa-solid fa-paper-plane"></i></button>
-            `;
-            pill.querySelector('#hf-pmic-cancel').onclick = (e) => {
-                e.stopPropagation();
-                window.stopPrivateUnlimitedMic(true);
-            };
-            pill.querySelector('#hf-pmic-send').onclick = (e) => {
-                e.stopPropagation();
-                window.sendPrivateUnlimitedMic();
-            };
-        }
+        if (pill) pill.remove();
+        pill = document.createElement('div');
+        pill.id = 'hf-pmic-pill';
+        pill.innerHTML = `
+            <span id="hf-pmic-dot"></span>
+            <span id="hf-pmic-badge">🤖 AI</span>
+            <span id="hf-pmic-flag" class="text-sm shrink-0">🌐</span>
+            <span id="hf-pmic-text"></span>
+            <button type="button" id="hf-pmic-stop">STOP</button>
+        `;
+        pill.querySelector('#hf-pmic-stop').onclick = (e) => {
+            e.stopPropagation();
+            window.stopPrivateUnlimitedMic(false);
+        };
 
         const inp = document.getElementById('chat-input');
         const area = inp ? inp.closest('.chat-input-area') : null;
-        if (area && area.parentNode && pill.parentNode !== area.parentNode) {
+        if (area && area.parentNode) {
             area.parentNode.insertBefore(pill, area);
         }
         return pill;
     }
 
     function updatePrivatePillUI() {
-        const pill = ensurePrivateMicPill();
+        let pill = document.getElementById('hf-pmic-pill') || ensurePrivateMicPill();
         if (!pill) return;
         if (!PM.active) {
             pill.classList.remove('active', 'ai-mode');
@@ -510,124 +507,26 @@ window.sendPrivateMsg = async function() {
         pill.classList.add('active');
     }
 
-    function launchPrivateRec() {
-        PM.restartTimer = null;
-        if (!PM.active) return;
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-
-        if (PM.rec) {
-            try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
-            PM.rec = null;
-        }
-
-        PM.interim = '';
-        try {
-            const rec = new SpeechRecognition();
-            rec.lang = PRIV_SPEECH_LOCALE[PM.recBase] || PM.recBase;
-            rec.continuous = false;
-            rec.interimResults = true;
-            rec.maxAlternatives = 1;
-
-            rec.onresult = (event) => {
-                if (!PM.active || !event.results) return;
-                let finalTxt = '';
-                let interimTxt = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const chunk = (event.results[i][0] && event.results[i][0].transcript) || '';
-                    if (event.results[i].isFinal) finalTxt += ' ' + chunk;
-                    else interimTxt += ' ' + chunk;
-                }
-                if (finalTxt.trim()) {
-                    PM.interim = '';
-                    pmAppend(finalTxt.trim());
-                } else {
-                    PM.interim = interimTxt.trim();
-                }
-                updatePrivatePillUI();
-            };
-
-            rec.onerror = (ev) => {
-                if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
-                    if (window.showToast) window.showToast("Mic Error", ev.error, "", "");
-                    window.stopPrivateUnlimitedMic(true);
-                    return;
-                }
-                if (PM.interim.trim()) {
-                    pmAppend(PM.interim.trim());
-                    PM.interim = '';
-                    updatePrivatePillUI();
-                }
-                PM.rec = null;
-                if (PM.active) {
-                    clearTimeout(PM.restartTimer);
-                    PM.restartTimer = setTimeout(launchPrivateRec, 220);
-                }
-            };
-
-            rec.onend = () => {
-                PM.rec = null;
-                if (PM.interim.trim()) {
-                    pmAppend(PM.interim.trim());
-                    PM.interim = '';
-                    updatePrivatePillUI();
-                }
-                if (PM.active) {
-                    clearTimeout(PM.restartTimer);
-                    PM.restartTimer = setTimeout(launchPrivateRec, 80);
-                }
-            };
-
-            PM.rec = rec;
-            rec.start();
-        } catch (e) {
-            PM.rec = null;
-            if (PM.active) {
-                clearTimeout(PM.restartTimer);
-                PM.restartTimer = setTimeout(launchPrivateRec, 300);
-            }
-        }
-    }
-
-    window.stopPrivateUnlimitedMic = function (discard = true) {
-        PM.active = false;
-        clearTimeout(PM.restartTimer);
-        clearInterval(PM.watchdog);
-        PM.restartTimer = null;
-        PM.watchdog = null;
-        if (PM.rec) {
-            try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
-            PM.rec = null;
-        }
-        if (discard) {
-            PM.committed = '';
-            PM.interim = '';
-        }
-        updatePrivatePillUI();
-    };
-
-    window.sendPrivateUnlimitedMic = async function () {
-        if (PM.interim.trim()) {
-            pmAppend(PM.interim.trim());
-            PM.interim = '';
-        }
-        const recognized = PM.committed.trim();
+    async function dispatchPrivatePhrase(text) {
+        const recognized = String(text || '').trim();
         const roomId = PM.roomId || getPrivateRoomId();
+        if (!recognized || !roomId) return;
+
+        const norm = pmNorm(recognized);
+        const now = Date.now();
+        if (!norm || (norm === PM.lastSentNorm && (now - PM.lastSentAt) < 2200)) return;
+        PM.lastSentNorm = norm;
+        PM.lastSentAt = now;
+
         const sendMode = PM.mode;
         const spokenLangCode = PM.recBase;
         const isMicManual = PM.isManual;
-
-        window.stopPrivateUnlimitedMic(true);
-        if (!recognized || !roomId) return;
-
         window.speechRecognizedText = recognized;
+
         const targetUser = getPrivateTargetUser();
         const targetInfo = await getTargetLivePrivateChannel(roomId, targetUser, 'mic');
 
-        if (window.showToast) window.showToast("Translating...", "Processing your voice...", "", "");
         let textToShip = recognized;
-
         if (targetInfo.lang && targetInfo.lang !== spokenLangCode) {
             textToShip = await privTranslateText(recognized, targetInfo.lang);
         }
@@ -677,6 +576,150 @@ window.sendPrivateMsg = async function() {
         if (targetUser && typeof window.sendPushToUser === 'function') {
             window.sendPushToUser(targetUser.id, safeName, textToShip);
         }
+    }
+
+    function flushPrivateAuto() {
+        clearTimeout(PM.silenceTimer);
+        PM.silenceTimer = null;
+        if (PM.interim.trim()) {
+            pmAppend(PM.interim.trim());
+            PM.interim = '';
+        }
+        const phrase = PM.committed.trim();
+        PM.committed = '';
+        PM.lastChunkNorm = '';
+        updatePrivatePillUI();
+        if (phrase) dispatchPrivatePhrase(phrase);
+    }
+
+    function schedulePrivateSilenceFlush() {
+        clearTimeout(PM.silenceTimer);
+        const delay = (PM.recBase === 'az') ? 2000 : 1600;
+        PM.silenceTimer = setTimeout(() => {
+            flushPrivateAuto();
+        }, delay);
+    }
+
+    function launchPrivateRec() {
+        PM.restartTimer = null;
+        if (!PM.active) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        if (PM.rec) {
+            try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
+            PM.rec = null;
+        }
+
+        PM.interim = '';
+        try {
+            const rec = new SpeechRecognition();
+            rec.lang = PRIV_SPEECH_LOCALE[PM.recBase] || PM.recBase;
+            rec.continuous = false;
+            rec.interimResults = true;
+            rec.maxAlternatives = 1;
+
+            rec.onresult = (event) => {
+                if (!PM.active || !event.results) return;
+                let finalTxt = '';
+                let interimTxt = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const chunk = (event.results[i][0] && event.results[i][0].transcript) || '';
+                    if (event.results[i].isFinal) finalTxt += ' ' + chunk;
+                    else interimTxt += ' ' + chunk;
+                }
+                if (finalTxt.trim()) {
+                    PM.interim = '';
+                    pmAppend(finalTxt.trim());
+                } else if (interimTxt.trim()) {
+                    PM.interim = interimTxt.trim();
+                }
+                updatePrivatePillUI();
+                schedulePrivateSilenceFlush();
+            };
+
+            rec.onerror = (ev) => {
+                if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) {
+                    if (window.showToast) window.showToast("Mic Error", ev.error, "", "");
+                    window.stopPrivateUnlimitedMic(true);
+                    return;
+                }
+                if (PM.interim.trim()) {
+                    pmAppend(PM.interim.trim());
+                    PM.interim = '';
+                    updatePrivatePillUI();
+                    schedulePrivateSilenceFlush();
+                }
+                PM.rec = null;
+                if (PM.active) {
+                    clearTimeout(PM.restartTimer);
+                    PM.restartTimer = setTimeout(launchPrivateRec, 220);
+                }
+            };
+
+            rec.onend = () => {
+                PM.rec = null;
+                if (PM.interim.trim()) {
+                    pmAppend(PM.interim.trim());
+                    PM.interim = '';
+                    updatePrivatePillUI();
+                    schedulePrivateSilenceFlush();
+                }
+                if (PM.active) {
+                    clearTimeout(PM.restartTimer);
+                    PM.restartTimer = setTimeout(launchPrivateRec, 80);
+                }
+            };
+
+            PM.rec = rec;
+            rec.start();
+        } catch (e) {
+            PM.rec = null;
+            if (PM.active) {
+                clearTimeout(PM.restartTimer);
+                PM.restartTimer = setTimeout(launchPrivateRec, 300);
+            }
+        }
+    }
+
+    window.stopPrivateUnlimitedMic = function (discard = true) {
+        if (!discard) {
+            flushPrivateAuto();
+        }
+        PM.active = false;
+        clearTimeout(PM.restartTimer);
+        clearTimeout(PM.silenceTimer);
+        clearInterval(PM.watchdog);
+        PM.restartTimer = null;
+        PM.silenceTimer = null;
+        PM.watchdog = null;
+        if (PM.rec) {
+            try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
+            PM.rec = null;
+        }
+        PM.committed = '';
+        PM.interim = '';
+        updatePrivatePillUI();
+    };
+
+    // Смена языка на лету без выключения микрофона
+    const origSavePrivateMicLang = window.savePrivateMicLang;
+    window.savePrivateMicLang = function (val) {
+        if (typeof origSavePrivateMicLang === 'function') origSavePrivateMicLang(val);
+        const roomId = getPrivateRoomId();
+        if (PM.active && roomId && roomId === PM.roomId) {
+            const manualMicLang = privNormLang(localStorage.getItem('hf_priv_mic_lang_' + roomId));
+            PM.isManual = Boolean(manualMicLang);
+            PM.recBase = PM.isManual ? manualMicLang : getMyPrivateNativeLang();
+            updatePrivatePillUI();
+            if (PM.rec) {
+                try { PM.rec.onresult = null; PM.rec.onend = null; PM.rec.onerror = null; PM.rec.abort(); } catch (e) {}
+                PM.rec = null;
+            }
+            clearTimeout(PM.restartTimer);
+            PM.restartTimer = setTimeout(launchPrivateRec, 80);
+        }
     };
 
     window.startPrivateMic = async function (mode) {
@@ -689,7 +732,6 @@ window.sendPrivateMsg = async function() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return alert("Голосовой ввод не поддерживается браузером.");
 
-        // КАНАЛ МИКРОФОНА ПРИВАТА: читает СТРОГО hf_priv_mic_lang_<roomId>
         const manualMicLang = privNormLang(localStorage.getItem('hf_priv_mic_lang_' + roomId));
         PM.isManual = Boolean(manualMicLang);
         PM.recBase = PM.isManual ? manualMicLang : getMyPrivateNativeLang();
@@ -702,6 +744,7 @@ window.sendPrivateMsg = async function() {
         }
         PM.roomId = roomId;
         PM.active = true;
+        ensurePrivateMicPill();
         updatePrivatePillUI();
         launchPrivateRec();
 
