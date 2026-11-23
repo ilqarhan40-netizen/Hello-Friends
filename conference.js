@@ -2109,21 +2109,22 @@
     // =======================================================
     // 11. ПРИГЛАШЕНИЯ И ПРИЁМНИК УВЕДОМЛЕНИЙ (13 ЯЗЫКОВ)
     // =======================================================
-    window.confDict = {
-        ru: { title: 'ПРИГЛАШЕНИЕ', desc: 'ждет вас в видеокомнату!', btn: 'Войти', no: 'Позже' },
-        en: { title: 'INVITATION', desc: 'is waiting for you in the video room!', btn: 'Join', no: 'Later' },
-        it: { title: 'INVITO', desc: 'ti aspetta nella stanza video!', btn: 'Entra', no: 'Più tardi' },
-        es: { title: 'INVITACIÓN', desc: 'te espera en la sala de video!', btn: 'Unirse', no: 'Más tarde' },
-        fr: { title: 'INVITATION', desc: 'vous attend dans le salon vidéo!', btn: 'Rejoindre', no: 'Plus tard' },
-        de: { title: 'EINLADUNG', desc: 'wartet auf dich im Videoraum!', btn: 'Beitreten', no: 'Später' },
-        pt: { title: 'CONVITE', desc: 'espera por você na sala de vídeo!', btn: 'Entrar', no: 'Mais tarde' },
-        tr: { title: 'DAVET', desc: 'seni video odasında bekliyor!', btn: 'Katıl', no: 'Sonra' },
-        az: { title: 'DƏVƏT', desc: 'sizi video otaqda gözləyir!', btn: 'Qoşul', no: 'Sonra' },
-        kk: { title: 'ШАҚЫРУ', desc: 'сізді бейнебөлмеде күтуде!', btn: 'Қосылу', no: 'Кейін' },
-        ar: { title: 'دعوة', desc: 'ينتظرك في غرفة الفيديو!', btn: 'انضمام', no: 'لاحقاً' },
-        ja: { title: '招待', desc: 'ビデオ会議でお待ちしています！', btn: '参加', no: '後で' },
-        zh: { title: '邀请', desc: '在视频房间等您！', btn: '加入', no: '稍后' }
+        window.confDict = {
+        ru: { title: 'ПРИГЛАШЕНИЕ', desc: 'ждёт вас на конференции!', btn: 'Войти', no: 'Позже' },
+        en: { title: 'INVITATION', desc: 'is waiting for you in the conference!', btn: 'Join', no: 'Later' },
+        it: { title: 'INVITO', desc: 'ti aspetta nella conferenza!', btn: 'Entra', no: 'Più tardi' },
+        es: { title: 'INVITACIÓN', desc: 'te espera en la conferencia!', btn: 'Unirse', no: 'Más tarde' },
+        fr: { title: 'INVITATION', desc: 'vous attend dans la conférence!', btn: 'Rejoindre', no: 'Plus tard' },
+        de: { title: 'EINLADUNG', desc: 'wartet auf dich in der Konferenz!', btn: 'Beitreten', no: 'Später' },
+        pt: { title: 'CONVITE', desc: 'espera por você na conferência!', btn: 'Entrar', no: 'Mais tarde' },
+        tr: { title: 'DAVET', desc: 'seni konferansta bekliyor!', btn: 'Katıl', no: 'Sonra' },
+        az: { title: 'DƏVƏT', desc: 'sizi konfransda gözləyir!', btn: 'Qoşul', no: 'Sonra' },
+        kk: { title: 'ШАҚЫРУ', desc: 'сізді конференцияда күтуде!', btn: 'Қосылу', no: 'Кейін' },
+        ar: { title: 'دعوة', desc: 'ينتظرك في المؤتمر!', btn: 'انضمام', no: 'لاحقاً' },
+        ja: { title: '招待', desc: '会議でお待ちしています！', btn: '参加', no: '後で' },
+        zh: { title: '邀请', desc: '在会议中等您！', btn: '加入', no: '稍后' }
     };
+    
 
     window.getConfTranslation = function (key) {
         const uiLang = cfNormLang(window.appLang) || getConfNativeLang(window.myProfileInfo) || 'en';
