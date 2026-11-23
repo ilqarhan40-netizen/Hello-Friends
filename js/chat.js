@@ -1,35 +1,50 @@
 // ==========================================
-// 1. БАЗОВЫЙ ЯЗЫК ПРИЛОЖЕНИЯ И ПРОФИЛЯ
+// 1. БАЗОВЫЙ ЯЗЫК ПРИЛОЖЕНИЯ И ПРОФИЛЯ (СТРОГО ПО ФЛАГУ И СТРАНЕ)
 // ==========================================
+window.getLangByFlag = function(flagCode, flagEmoji) {
+    const codeMap = { 'ru':'ru', 'kz':'kk', 'az':'az', 'it':'it', 'de':'de', 'fr':'fr', 'jp':'ja', 'es':'es', 'cn':'zh', 'pt':'pt', 'gb':'en', 'us':'en', 'ae':'ar', 'tr':'tr' };
+    const emojiMap = { '🇷🇺':'ru', '🇰🇿':'kk', '🇦🇿':'az', '🇮🇹':'it', '🇩🇪':'de', '🇫🇷':'fr', '🇯🇵':'ja', '🇪🇸':'es', '🇨🇳':'zh', '🇵🇹':'pt', '🇬🇧':'en', '🇺🇸':'en', '🇦🇪':'ar', '🇹🇷':'tr' };
+    let c = flagCode ? String(flagCode).toLowerCase().trim() : '';
+    if (c && c !== 'un' && codeMap[c]) return codeMap[c];
+    if (flagEmoji && flagEmoji !== '🌐' && emojiMap[flagEmoji]) return emojiMap[flagEmoji];
+    return null;
+};
+
+window.getSmartLang = function(userData) {
+    if (!userData) return navigator.language ? navigator.language.slice(0, 2) : 'en';
+
+    if (typeof userData === 'object') {
+        let langFromFlag = window.getLangByFlag(userData.flagCode, userData.flag);
+        if (langFromFlag) return langFromFlag;
+    }
+
+    let langPref = typeof userData === 'object' ? userData.langCode : null;
+    if (langPref === 'kz') langPref = 'kk';
+    if (langPref === 'cn') langPref = 'zh';
+    if (langPref === 'jp') langPref = 'ja';
+    if (langPref === 'ae') langPref = 'ar';
+    if (langPref && langPref !== 'auto' && langPref !== 'un') return langPref;
+
+    return navigator.language ? navigator.language.slice(0, 2) : 'en';
+};
+
 window.changeAppLanguage = function(langCode) {
     localStorage.setItem('hf_app_lang', langCode);
 
     if (langCode === 'auto') {
         let smartLang = null;
         if (window.myProfileInfo) {
-            let rawPhone = window.myProfileInfo.phone;
-            let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
-            let flag = window.myProfileInfo.flagCode ? String(window.myProfileInfo.flagCode).toLowerCase() : "un";
-
-            if (flag === 'kz') smartLang = 'kk';
-            else if (phone.startsWith('+7')) smartLang = 'ru';
-            else if (phone.startsWith('+994')) smartLang = 'az';
-            else if (phone.startsWith('+49')) smartLang = 'de';
-            else if (phone.startsWith('+90')) smartLang = 'tr';
-            else if (phone.startsWith('+39')) smartLang = 'it';
-            else if (phone.startsWith('+33')) smartLang = 'fr';
-            else if (phone.startsWith('+34')) smartLang = 'es';
-            else if (phone.startsWith('+81')) smartLang = 'ja';
-            else if (phone.startsWith('+86')) smartLang = 'zh';
-            else if (phone.startsWith('+351')) smartLang = 'pt';
-            else if (phone.startsWith('+1') || phone.startsWith('+44')) smartLang = 'en';
-            else if (phone.startsWith('+971')) smartLang = 'ar';
-            else if (flag !== 'un') {
-                const flagToLang = { 'ru':'ru', 'kz':'kk', 'az':'az', 'it':'it', 'de':'de', 'fr':'fr', 'jp':'ja', 'es':'es', 'cn':'zh', 'pt':'pt', 'gb':'en', 'us':'en', 'ae':'ar', 'tr':'tr' };
-                if (flagToLang[flag]) smartLang = flagToLang[flag];
+            smartLang = window.getLangByFlag(window.myProfileInfo.flagCode, window.myProfileInfo.flag);
+            if (!smartLang) {
+                let pLang = window.myProfileInfo.langCode;
+                if (pLang === 'kz') pLang = 'kk';
+                if (pLang === 'cn') pLang = 'zh';
+                if (pLang === 'jp') pLang = 'ja';
+                if (pLang === 'ae') pLang = 'ar';
+                if (pLang && pLang !== 'auto' && pLang !== 'un') smartLang = pLang;
             }
         }
-        window.appLang = smartLang || navigator.language.slice(0, 2) || 'en';
+        window.appLang = smartLang || (navigator.language ? navigator.language.slice(0, 2) : 'en');
     } else {
         window.appLang = langCode;
     }
@@ -57,48 +72,6 @@ setTimeout(() => {
     window.changeAppLanguage(saved);
 }, 1000);
 
-window.getLangByFlag = function(flagCode, flagEmoji) {
-    const codeMap = { 'ru':'ru', 'kz':'kk', 'az':'az', 'it':'it', 'de':'de', 'fr':'fr', 'jp':'ja', 'es':'es', 'cn':'zh', 'pt':'pt', 'gb':'en', 'us':'en', 'ae':'ar', 'tr':'tr' };
-    const emojiMap = { '🇷🇺':'ru', '🇰🇿':'kk', '🇦🇿':'az', '🇮🇹':'it', '🇩🇪':'de', '🇫🇷':'fr', '🇯🇵':'ja', '🇪🇸':'es', '🇨🇳':'zh', '🇵🇹':'pt', '🇬🇧':'en', '🇺🇸':'en', '🇦🇪':'ar', '🇹🇷':'tr' };
-    let c = flagCode ? String(flagCode).toLowerCase().trim() : '';
-    if (c && c !== 'un' && codeMap[c]) return codeMap[c];
-    if (flagEmoji && flagEmoji !== '🌐' && emojiMap[flagEmoji]) return emojiMap[flagEmoji];
-    return null;
-};
-
-window.getSmartLang = function(userData) {
-    if (!userData) return navigator.language ? navigator.language.slice(0, 2) : 'en';
-
-    if (typeof userData === 'object') {
-        let langFromFlag = window.getLangByFlag(userData.flagCode, userData.flag);
-        if (langFromFlag) return langFromFlag;
-    }
-
-    let langPref = typeof userData === 'object' ? userData.langCode : null;
-    if (langPref === 'kz') langPref = 'kk';
-    if (langPref === 'cn') langPref = 'zh';
-    if (langPref === 'jp') langPref = 'ja';
-    if (langPref === 'ae') langPref = 'ar';
-    if (langPref && langPref !== 'auto' && langPref !== 'un') return langPref;
-
-    let rawPhone = typeof userData === 'object' ? userData.phone : userData;
-    let phone = (rawPhone !== null && rawPhone !== undefined) ? String(rawPhone).replace(/\s+/g, '') : "";
-
-    if (phone.startsWith('+7')) return 'ru';
-    if (phone.startsWith('+994')) return 'az';
-    if (phone.startsWith('+90')) return 'tr';
-    if (phone.startsWith('+39')) return 'it';
-    if (phone.startsWith('+49')) return 'de';
-    if (phone.startsWith('+33')) return 'fr';
-    if (phone.startsWith('+81')) return 'ja';
-    if (phone.startsWith('+34')) return 'es';
-    if (phone.startsWith('+86')) return 'zh';
-    if (phone.startsWith('+351')) return 'pt';
-    if (phone.startsWith('+1') || phone.startsWith('+44')) return 'en';
-    if (phone.startsWith('+971')) return 'ar';
-
-    return navigator.language ? navigator.language.slice(0, 2) : 'en';
-};
 
 // ==========================================
 // 1.5. ЖИВАЯ СИНХРОНИЗАЦИЯ ФЛАГОВ И ЗЕРКАЛЬНЫЙ ПАКЕТ (ГЛОБАЛЬНЫЙ ЧАТ)
