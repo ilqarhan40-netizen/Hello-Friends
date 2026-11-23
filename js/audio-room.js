@@ -1430,7 +1430,8 @@
         if (!isAudioMode()) return;
         const cleanText = String(rawText || '').trim();
         if (!cleanText) return;
-
+        if ((sourceType === 'voice' || sourceType === 'ai-audio') && AR_MIC_WORLD.isDuplicate(cleanText, 'send')) return;
+        
         window.syncAudioRoomListener();
         const roomId = getAudioRoomId();
         if (!roomId) {
