@@ -56,7 +56,6 @@ function getPrivateTargetUser() {
     return null;
 }
 
-
 function getMyPrivateNativeLang() {
     if (window.myProfileInfo) {
         if (typeof window.getLangByFlag === 'function') {
@@ -310,7 +309,7 @@ window.sendPrivateMsg = async function() {
     let activeFlag = (window.myProfileInfo && window.myProfileInfo.flag) ? window.myProfileInfo.flag : '🌐';
     let activeFlagCode = (window.myProfileInfo && window.myProfileInfo.flagCode) ? window.myProfileInfo.flagCode : 'un';
 
-        if (manualLang && PRIV_LANG_MAP[manualLang]) {
+    if (manualLang && PRIV_LANG_MAP[manualLang]) {
         activeFlagCode = PRIV_LANG_MAP[manualLang][0];
         activeFlag = PRIV_LANG_MAP[manualLang][1];
     }
@@ -318,7 +317,6 @@ window.sendPrivateMsg = async function() {
     let myBaseText = myActiveLang
         ? await privTranslateText(rawText, myActiveLang)
         : rawText;
-    
 
     // Берём актуальный живой флаг собеседника СТРОГО в канале 'avatar'
     const targetUser = getPrivateTargetUser();
@@ -365,7 +363,7 @@ window.sendPrivateMsg = async function() {
     }
 };
 
-       // ==========================================
+// ==========================================
 // 3. ГОЛОСОВОЙ ВВОД ПРИВАТА (БЕЗЛИМИТНЫЙ КАНАЛ mic — ОДИН ЦЕЛЬНЫЙ ТЕКСТ ИЛИ ДВОЙНОЙ БАБЛ)
 // ==========================================
 (function () {
@@ -718,8 +716,6 @@ window.sendPrivateMsg = async function() {
         }, 700);
     };
 })();
-     
-    
 
 // ==========================================
 // 4. ПРИЁМ СООБЩЕНИЙ ПРИВАТА: ТУПОЕ ЗЕРКАЛЬНОЕ КОПИРОВАНИЕ (БЕЗ ПОВТОРНЫХ ПЕРЕВОДОВ)
