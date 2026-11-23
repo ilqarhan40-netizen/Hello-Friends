@@ -1378,7 +1378,8 @@
     function enqueueAudioTTS(text, lang) {
         const clean = String(text || '').trim();
         if (!clean || !isAudioMode()) return;
-
+        if (AR_MIC_WORLD.isDuplicate(clean, 'tts')) return;
+        
         // Держим максимум 2 фразы в очереди, чтобы голос не отставал от живой речи
         if (AR.ttsQueue.length >= 2) {
             AR.ttsQueue.shift();
