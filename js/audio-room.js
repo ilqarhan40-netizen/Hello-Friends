@@ -1079,6 +1079,8 @@
                 window.syncMyAudioChannelLang(rId, 'mic', (!val || val === 'auto') ? null : val);
             }
             updateMicPill('');
+            AR_MIC_WORLD.tick(getAudioRoomId());
+            
         };
         popup.querySelector('#hf-ar-mic-ai-btn').onclick = (e) => {
             e.stopPropagation();
