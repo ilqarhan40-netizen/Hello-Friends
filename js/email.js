@@ -369,7 +369,7 @@ window.sendEmailForm = function(e) {
     };
 
     // 1. Отправка через EmailJS
-    emailjs.send("service_md6pprq", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScxO").then(async function() {
+    emailjs.send("service_9pdd32d", "template_slxkkuk", templateParams, "NXn0TeAF95L5qScxO").then(async function() {
 
         // 2. Firebase (Входящие получателя, Отправленные отправителя и Верхний Баннер по ID)
         try {
