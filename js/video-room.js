@@ -1693,6 +1693,16 @@
                 }
 
                 if (interimTxt) {
+                       if (VR.activeChannel !== 'mic' && !isLikelyEcho(interimTxt)) {
+                        VR.activeChannel = 'mic';
+                        const activeRId = getVideoRoomId() || roomId;
+                        if (activeRId) {
+                            window.syncMyVideoChannelLang(activeRId, 'mic', undefined, true);
+                        } else {
+                            renderVideoRoomFlags(activeRId);
+                        }
+                                        }
+                    
                     VR.pendingInterim = interimTxt;
                     updateMicPill(interimTxt);
 
