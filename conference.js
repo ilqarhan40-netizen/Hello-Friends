@@ -4,8 +4,10 @@
 // - Изолированные ветки БД: conf_world/active_users, conf_world/messages, conf_world/active_langs
 // - Изолированные ключи: hf_conf_avatar_lang, hf_conf_mic_lang (сброс при выходе)
 // - Камеры для всех участников через CALLS_AGORA_APP_ID / CALLS_AGORA_TEMP_TOKEN / CALLS_AGORA_CHANNEL
+// - Включение/выключение камеры с переключением на аватар
 // - Пауза аудио-трека Agora (260 мс) перед ИИ-микрофоном без отключения камер
 // - Жёсткое разделение миров: avatar (чат без озвучки) и mic (голос / ИИ-переводчик)
+// - Выход по красной кнопке только для себя с переходом в глобальный чат
 // =======================================================
 
 (function () {
@@ -52,6 +54,7 @@
     const CF = {
         isActive: false,
         isJoining: false,
+        isLeaving: false,
         isStartingAgora: false,
         isTogglingCam: false,
         camEnabled: true,
@@ -489,6 +492,28 @@
                 background: #dc2626 !important;
                 color: #fff !important;
                 border-color: #ef4444 !important;
+            }
+            #hf-cf-cam-fallback-btn {
+                position: absolute;
+                top: 8px;
+                left: 8px;
+                z-index: 35;
+                width: 34px;
+                height: 34px;
+                border-radius: 999px;
+                border: 1px solid #2a3942;
+                background: rgba(17, 27, 33, 0.82);
+                color: #00e5b0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.9rem;
+                cursor: pointer;
+            }
+            #hf-cf-cam-fallback-btn.cam-off {
+                background: rgba(239, 68, 68, 0.25);
+                border-color: rgba(239, 68, 68, 0.7);
+                color: #f87171;
             }
             #hf-cf-avatar-modal, #hf-cf-mic-popup {
                 position: absolute;
@@ -1024,7 +1049,6 @@
             const gInfo = getGuestEffectiveInfo(guest, 'mic');
             const sameFlag = (gInfo.flag && myInfo.flag && gInfo.flag === myInfo.flag) || (gInfo.lang === myInfo.lang);
 
-            // Если сейчас говорит синтезатор ИИ — временно приглушаем всех; иначе одинаковый флаг слышно вживую
             const vol = (sameFlag && !CF.isSpeakingAI && !CF.agoraPausedForTranslation) ? 100 : (sameFlag && !CF.isSpeakingAI && isAiActive ? 100 : 0);
             try { track.setVolume(vol); } catch (e) {}
         });
@@ -1166,6 +1190,9 @@
                 }
 
                 if (interimTxt) {
+                    if (CF.activeChannel !== 'mic' && !isConfLikelyEcho(interimTxt)) {
+                        syncMyConfChannelLang('mic', undefined, true);
+                    }
                     CF.pendingInterim = interimTxt;
                     updateConfMicPill(interimTxt);
 
@@ -1277,7 +1304,7 @@
             CF.recognition = null;
         }
 
-        syncMyConfChannelLang('avatar', undefined, true);
+        if (!CF.isLeaving) syncMyConfChannelLang('avatar', undefined, true);
         updateConfMicPill('');
 
         if (skipResumeAgora) {
@@ -1303,6 +1330,25 @@
     // =======================================================
     // 7. РОДНАЯ СЕТКА .video-grid (1 ГЛАВНОЕ + 12 СЛОТОВ)
     // =======================================================
+    function ensureConfCamFallbackBtn() {
+        const mainBox = document.getElementById('my-video-container');
+        if (!mainBox) return;
+        const hasNativeBtn = Boolean(document.getElementById('conf-cam-btn'));
+        let fb = document.getElementById('hf-cf-cam-fallback-btn');
+
+        if (hasNativeBtn) {
+            if (fb) fb.remove();
+            return;
+        }
+        if (!fb) {
+            fb = document.createElement('button');
+            fb.type = 'button';
+            fb.id = 'hf-cf-cam-fallback-btn';
+            fb.innerHTML = '<i class="fa-solid fa-video"></i>';
+            mainBox.appendChild(fb);
+        }
+    }
+
     function refreshMyConfFrameUI() {
         const info = getMyEffectiveConfInfo(CF.activeChannel);
         const flagImg = document.getElementById('my-conf-flag-img');
@@ -1310,6 +1356,15 @@
 
         const nameEl = document.getElementById('my-conf-username');
         if (nameEl && window.myUsername) nameEl.textContent = window.myUsername;
+
+        const myPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || '';
+        const myPhImg = document.getElementById('my-conf-ph-img');
+        if (myPhImg && myPhoto && myPhImg.getAttribute('src') !== myPhoto) {
+            myPhImg.src = myPhoto;
+            myPhImg.classList.remove('hidden');
+            const phIcon = document.getElementById('my-conf-ph-icon');
+            if (phIcon) phIcon.classList.add('hidden');
+        }
 
         const speakerMarquee = document.getElementById('speaker-marquee');
         if (speakerMarquee) {
@@ -1320,6 +1375,8 @@
             const label = document.getElementById('hf-cf-mic-label');
             if (label) label.textContent = `${info.flag} ${getConfUiDict().directMode}`;
         }
+        ensureConfCamFallbackBtn();
+        updateConfCamBtnUI();
     }
 
     window.initConference = function () {
@@ -1334,15 +1391,20 @@
             confGrid.dataset.cfGridMounted = '1';
             const info = getMyEffectiveConfInfo('avatar');
             const d = getConfUiDict();
+            const myPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || '';
 
             let html = `
-                <div class="video-frame main" id="my-video-container">
-                    <video id="my-live-video" class="mirror-video cursor-pointer" playsinline autoplay muted></video>
-                    <div id="my-conf-username" class="video-overlay">${cfEscapeHtml(window.myUsername || 'Me')}</div>
-                    <div class="flag-overlay cursor-pointer" id="my-conf-flag-wrap" style="top:8px; right:8px;">
+                <div class="video-frame main relative overflow-hidden" id="my-video-container">
+                    <video id="my-live-video" class="mirror-video cursor-pointer absolute inset-0 w-full h-full object-cover z-20" playsinline autoplay muted></video>
+                    <div id="my-conf-ph" class="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[#111b21] z-10 hidden">
+                        <img id="my-conf-ph-img" src="${cfEscapeHtml(myPhoto)}" class="w-16 h-16 rounded-full object-cover border-2 border-[#2a3942] ${myPhoto ? '' : 'hidden'}">
+                        <i id="my-conf-ph-icon" class="fa-solid fa-video-slash text-2xl text-[#8696a0] ${myPhoto ? 'hidden' : ''}"></i>
+                    </div>
+                    <div id="my-conf-username" class="video-overlay z-30">${cfEscapeHtml(window.myUsername || 'Me')}</div>
+                    <div class="flag-overlay cursor-pointer z-30" id="my-conf-flag-wrap" style="top:8px; right:8px;">
                         <img id="my-conf-flag-img" src="https://flagcdn.com/w40/${info.flagCode}.png" class="w-6 rounded-sm border border-[#2a3942]">
                     </div>
-                    <div class="translation-bar">
+                    <div class="translation-bar z-30">
                         <div id="speaker-marquee" class="conf-marquee-text conf-listener-marquee" data-lang="${info.lang}" data-flag="${info.flag}" style="animation-duration: 28s;">
                             ${info.flag} ${cfEscapeHtml(d.waiting)}
                         </div>
@@ -1361,6 +1423,8 @@
             }
 
             confGrid.innerHTML = html;
+            ensureConfCamFallbackBtn();
+            updateConfCamBtnUI();
         } else {
             refreshMyConfFrameUI();
         }
@@ -1454,12 +1518,13 @@
 
     function attachLocalConfVideo() {
         const myVideo = document.getElementById('my-live-video');
+        const myPh = document.getElementById('my-conf-ph');
         if (!myVideo) return;
         if (CF.localVideoTrack && CF.camEnabled) {
             myVideo.style.opacity = '1';
-            playTrackInVideoElement(myVideo, CF.localVideoTrack, null);
+            playTrackInVideoElement(myVideo, CF.localVideoTrack, myPh);
         } else {
-            myVideo.style.opacity = '0.15';
+            hideVideoElement(myVideo, myPh);
         }
     }
 
@@ -1585,9 +1650,9 @@
     }
 
     async function startConfAgora() {
-        if (CF.isStartingAgora) return;
+        if (CF.isStartingAgora || CF.isLeaving) return;
         if (typeof AgoraRTC === 'undefined') {
-            setTimeout(() => { if (CF.isActive) startConfAgora(); }, 1000);
+            setTimeout(() => { if (CF.isActive && !CF.isLeaving) startConfAgora(); }, 1000);
             return;
         }
         if (CF.client && CF.client.connectionState === 'CONNECTED') {
@@ -1641,12 +1706,16 @@
 
             if (!appId) return;
 
-            // Точно как в calls.js: сначала join с реальным ID профиля (резерв null при конфликте)
             let joinedUid = null;
             try {
                 joinedUid = await CF.client.join(appId, channelName, token, myId);
             } catch (joinErr) {
                 joinedUid = await CF.client.join(appId, channelName, token, null);
+            }
+            if (!CF.isActive || CF.isLeaving) {
+                try { await CF.client.leave(); } catch (e) {}
+                CF.client = null;
+                return;
             }
             CF.myAgoraUid = String(joinedUid);
 
@@ -1654,7 +1723,6 @@
                 CF.presenceRef.update({ agoraUid: CF.myAgoraUid }).catch(() => {});
             }
 
-            // Затем создаём треки (как в calls.js: аудио с AEC/ANS/AGC + камера)
             const tracksToPublish = [];
 
             if (CF.localAudioTrack) {
@@ -1676,15 +1744,21 @@
                 try { CF.localVideoTrack.close(); } catch (e) {}
                 CF.localVideoTrack = null;
             }
-            try {
-                CF.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-                CF.camEnabled = true;
+            if (CF.camEnabled) {
+                try {
+                    CF.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+                    CF.camEnabled = true;
+                    attachLocalConfVideo();
+                    updateConfCamBtnUI();
+                    tracksToPublish.push(CF.localVideoTrack);
+                } catch (camErr) {
+                    console.warn('Conf camera unavailable:', camErr);
+                    CF.camEnabled = false;
+                    attachLocalConfVideo();
+                    updateConfCamBtnUI();
+                }
+            } else {
                 attachLocalConfVideo();
-                updateConfCamBtnUI();
-                tracksToPublish.push(CF.localVideoTrack);
-            } catch (camErr) {
-                console.warn('Conf camera unavailable:', camErr);
-                CF.camEnabled = false;
                 updateConfCamBtnUI();
             }
 
@@ -1692,13 +1766,11 @@
                 await CF.client.publish(tracksToPublish);
             }
 
-            // Подхватываем камеры и звук всех, кто уже в комнате
             (CF.client.remoteUsers || []).forEach(rem => {
                 if (rem.hasVideo) subscribeConfRemote(rem, 'video');
                 if (rem.hasAudio) subscribeConfRemote(rem, 'audio');
             });
 
-            // Если ИИ-режим уже включён — сразу переводим микрофон Agora на паузу
             if (CF.micActive || CF.agoraPausedForTranslation) {
                 await pauseConfAgoraMicForTranslation();
             }
@@ -1718,11 +1790,11 @@
 
         const myId = getMyId();
         if (!myId) {
-            setTimeout(() => { if (isConfVisible()) window.enterConferenceRoom(); }, 700);
+            setTimeout(() => { if (isConfVisible() && !CF.isLeaving) window.enterConferenceRoom(); }, 700);
             return;
         }
 
-        if (CF.isJoining) return;
+        if (CF.isJoining || CF.isLeaving) return;
         if (CF.isActive && CF.client && CF.client.connectionState === 'CONNECTED') {
             attachAllConfVideos();
             return;
@@ -1796,24 +1868,30 @@
 
         const nextEnabled = !CF.camEnabled;
         try {
-            if (nextEnabled && !CF.localVideoTrack && CF.client && typeof AgoraRTC !== 'undefined') {
-                CF.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-                await CF.client.publish([CF.localVideoTrack]);
-                CF.camEnabled = true;
-                attachLocalConfVideo();
-                updateConfCamBtnUI();
-                return;
-            }
-            if (CF.localVideoTrack) {
-                try {
-                    await CF.localVideoTrack.setEnabled(nextEnabled);
-                } catch (e) {
-                    await CF.localVideoTrack.setMuted(!nextEnabled);
+            if (nextEnabled) {
+                if (!CF.localVideoTrack && CF.client && CF.client.connectionState === 'CONNECTED' && typeof AgoraRTC !== 'undefined') {
+                    CF.localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+                    await CF.client.publish([CF.localVideoTrack]);
+                } else if (CF.localVideoTrack) {
+                    try {
+                        await CF.localVideoTrack.setEnabled(true);
+                    } catch (e) {
+                        await CF.localVideoTrack.setMuted(false);
+                    }
                 }
-                CF.camEnabled = nextEnabled;
-                attachLocalConfVideo();
-                updateConfCamBtnUI();
+                CF.camEnabled = true;
+            } else {
+                if (CF.localVideoTrack) {
+                    try {
+                        await CF.localVideoTrack.setEnabled(false);
+                    } catch (e) {
+                        await CF.localVideoTrack.setMuted(true);
+                    }
+                }
+                CF.camEnabled = false;
             }
+            attachLocalConfVideo();
+            updateConfCamBtnUI();
         } catch (e) {
             console.warn('Conf cam toggle:', e);
         } finally {
@@ -1823,59 +1901,81 @@
 
     function updateConfCamBtnUI() {
         const btn = document.getElementById('conf-cam-btn');
-        if (!btn) return;
-        btn.className = CF.camEnabled
-            ? 'w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-[#2a3942] transition'
-            : 'w-[44px] h-[44px] rounded-full bg-red-500/20 text-red-400 border border-red-500/50 flex justify-center items-center text-xl transition';
-        btn.innerHTML = CF.camEnabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
+        if (btn) {
+            btn.className = CF.camEnabled
+                ? 'w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-[#2a3942] transition'
+                : 'w-[44px] h-[44px] rounded-full bg-red-500/20 text-red-400 border border-red-500/50 flex justify-center items-center text-xl transition';
+            btn.innerHTML = CF.camEnabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
+        }
+        const fb = document.getElementById('hf-cf-cam-fallback-btn');
+        if (fb) {
+            fb.classList.toggle('cam-off', !CF.camEnabled);
+            fb.innerHTML = CF.camEnabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
+        }
     }
 
     window.leaveConferenceRoom = async function () {
+        if (CF.isLeaving) return;
+        CF.isLeaving = true;
         CF.isActive = false;
         CF.isJoining = false;
         CF.isStartingAgora = false;
-        CF.myAgoraUid = null;
-        CF.subscribing.clear();
-        CF.seenKeys.clear();
-        CF.recentSpoken = [];
-        CF.recentBuckets = { send: [], tts: [] };
 
-        stopConfTTSQueue();
-        await window.stopConfRoomMic(true);
+        // Сразу закрываем конференцию и перекидываем в глобальный чат
         closeAllConfPopups();
-
-        // Сброс сессионных языков конференции при выходе (как в video-room.js)
-        localStorage.removeItem('hf_conf_avatar_lang');
-        localStorage.removeItem('hf_conf_mic_lang');
-        CF.activeChannel = 'avatar';
-
-        const myId = getMyId();
-        if (myId && typeof firebase !== 'undefined' && firebase.database) {
-            firebase.database().ref(`conf_world/active_langs/${myId}`).remove().catch(() => {});
-        }
-        if (CF.presenceRef) { try { await CF.presenceRef.remove(); } catch (e) {} CF.presenceRef = null; }
-        if (CF.usersRef && CF.usersListener) { CF.usersRef.off('value', CF.usersListener); CF.usersListener = null; }
-        if (CF.langsRef && CF.langsListener) { CF.langsRef.off('value', CF.langsListener); CF.langsListener = null; }
-        if (CF.msgRef && CF.msgListener) { CF.msgRef.off('child_added', CF.msgListener); CF.msgListener = null; }
-
-        if (CF.localAudioTrack) { try { CF.localAudioTrack.close(); } catch (e) {} CF.localAudioTrack = null; }
-        if (CF.localVideoTrack) { try { CF.localVideoTrack.close(); } catch (e) {} CF.localVideoTrack = null; }
-        if (CF.client) { try { await CF.client.leave(); } catch (e) {} CF.client = null; }
-
-        CF.remoteAudioTracks = {};
-        CF.remoteVideoTracks = {};
-        CF.activeUsers = {};
-        for (let i = 0; i < MAX_GUEST_SLOTS; i++) {
-            CF.slots[i] = null;
-            renderConfGuestSlot(i, null);
-        }
-
-        const myVideo = document.getElementById('my-live-video');
-        if (myVideo) myVideo.srcObject = null;
-
-        updateConfMicPill('');
-        updateConfModeBarUI();
         if (typeof window.switchTab === 'function') window.switchTab(0);
+        if (typeof window.openGlobalChat === 'function') {
+            try { window.openGlobalChat(); } catch (e) {}
+        }
+
+        try {
+            CF.myAgoraUid = null;
+            CF.subscribing.clear();
+            CF.seenKeys.clear();
+            CF.recentSpoken = [];
+            CF.recentBuckets = { send: [], tts: [] };
+
+            stopConfTTSQueue();
+            await window.stopConfRoomMic(true);
+
+            // Сброс сессионных языков конференции при выходе (как в video-room.js)
+            localStorage.removeItem('hf_conf_avatar_lang');
+            localStorage.removeItem('hf_conf_mic_lang');
+            CF.activeChannel = 'avatar';
+            CF.camEnabled = true;
+
+            const myId = getMyId();
+            if (myId && typeof firebase !== 'undefined' && firebase.database) {
+                firebase.database().ref(`conf_world/active_langs/${myId}`).remove().catch(() => {});
+            }
+            if (CF.presenceRef) { try { await CF.presenceRef.remove(); } catch (e) {} CF.presenceRef = null; }
+            if (CF.usersRef && CF.usersListener) { CF.usersRef.off('value', CF.usersListener); CF.usersListener = null; }
+            if (CF.langsRef && CF.langsListener) { CF.langsRef.off('value', CF.langsListener); CF.langsListener = null; }
+            if (CF.msgRef && CF.msgListener) { CF.msgRef.off('child_added', CF.msgListener); CF.msgListener = null; }
+
+            if (CF.localAudioTrack) { try { CF.localAudioTrack.close(); } catch (e) {} CF.localAudioTrack = null; }
+            if (CF.localVideoTrack) { try { CF.localVideoTrack.close(); } catch (e) {} CF.localVideoTrack = null; }
+            if (CF.client) { try { await CF.client.leave(); } catch (e) {} CF.client = null; }
+
+            CF.remoteAudioTracks = {};
+            CF.remoteVideoTracks = {};
+            CF.activeUsers = {};
+            CF.liveLangs = {};
+            for (let i = 0; i < MAX_GUEST_SLOTS; i++) {
+                CF.slots[i] = null;
+                renderConfGuestSlot(i, null);
+            }
+
+            const myVideo = document.getElementById('my-live-video');
+            const myPh = document.getElementById('my-conf-ph');
+            hideVideoElement(myVideo, myPh);
+
+            updateConfMicPill('');
+            updateConfModeBarUI();
+            updateConfCamBtnUI();
+        } finally {
+            CF.isLeaving = false;
+        }
     };
 
     window.isMeetMarqueeEnabled = true;
@@ -1912,7 +2012,6 @@
         const safeName = (window.myUsername || (window.myProfileInfo && window.myProfileInfo.name) || 'User').split(' ')[0];
         const safePhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=U';
 
-        // 1-в-1 как в video-room.js: текст с клавиатуры переводим на активный язык отправителя
         const baseText = isVoice
             ? cleanText
             : await cfTranslateText(cleanText, myInfo.lang);
@@ -1974,8 +2073,15 @@
         );
 
         // 2. В моём главном окне (если сообщение от другого участника)
-        const myChannel = (data.inputChannel === 'mic' || CF.micActive) ? 'mic' : 'avatar';
-        const myInfo = getMyEffectiveConfInfo(myChannel);
+        const incomingChannel = (data.inputChannel === 'mic' || data.sourceType === 'voice' || data.sourceType === 'ai-audio')
+            ? 'mic'
+            : 'avatar';
+
+        if (!isMe && CF.activeChannel !== incomingChannel) {
+            syncMyConfChannelLang(incomingChannel, undefined, true);
+        }
+
+        const myInfo = getMyEffectiveConfInfo(incomingChannel);
         const mainMarquee = document.getElementById('speaker-marquee');
 
         if (!isMe && mainMarquee) {
@@ -2006,7 +2112,11 @@
 
         const byLang = {};
         otherMarquees.forEach(el => {
-            const tl = cfNormLang(el.getAttribute('data-lang')) || 'en';
+            const uid = el.id.replace('conf-marquee-', '');
+            const guest = CF.activeUsers[uid];
+            const gInfo = guest ? getGuestEffectiveInfo(guest, incomingChannel) : null;
+            const tl = (gInfo && gInfo.lang) || cfNormLang(el.getAttribute('data-lang')) || 'en';
+            if (gInfo && gInfo.flag) el.setAttribute('data-flag', gInfo.flag);
             if (!byLang[tl]) byLang[tl] = [];
             byLang[tl].push(el);
         });
@@ -2039,6 +2149,16 @@
         confPage.addEventListener('click', (e) => {
             unlockConfTTSOnGesture();
 
+            // Кнопка включения/выключения камеры (проверяем ДО клика по #my-video-container)
+            const camBtn = e.target.closest('#conf-cam-btn, #hf-cf-cam-fallback-btn, button[onclick*="toggleConfCamera"]');
+            if (camBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                window.toggleConfCamera();
+                return;
+            }
+
             // Клик по своему видео / флагу -> языковая панель аватара
             if (e.target.closest('#my-video-container')) {
                 e.preventDefault();
@@ -2047,19 +2167,13 @@
                 return;
             }
 
-            // Кнопка камеры
-            if (e.target.closest('#conf-cam-btn')) {
+            // Красная кнопка выхода (только для себя -> в глоб-чат)
+            const redBtn = e.target.closest('button.bg-red-500, button.bg-red-600, button[onclick*="leaveConference"]')
+                || (e.target.closest('.fa-phone-slash') ? e.target.closest('button') : null);
+            if (redBtn && redBtn.id !== 'conf-cam-btn' && !redBtn.closest('#hf-cf-mic-pill')) {
                 e.preventDefault();
                 e.stopPropagation();
-                window.toggleConfCamera();
-                return;
-            }
-
-            // Красная кнопка выхода
-            const redBtn = e.target.closest('button.bg-red-500');
-            if (redBtn && !redBtn.closest('#hf-cf-mic-pill')) {
-                e.preventDefault();
-                e.stopPropagation();
+                e.stopImmediatePropagation();
                 window.leaveConferenceRoom();
                 return;
             }
@@ -2109,7 +2223,7 @@
     // =======================================================
     // 11. ПРИГЛАШЕНИЯ И ПРИЁМНИК УВЕДОМЛЕНИЙ (13 ЯЗЫКОВ)
     // =======================================================
-        window.confDict = {
+    window.confDict = {
         ru: { title: 'ПРИГЛАШЕНИЕ', desc: 'ждёт вас на конференции!', btn: 'Войти', no: 'Позже' },
         en: { title: 'INVITATION', desc: 'is waiting for you in the conference!', btn: 'Join', no: 'Later' },
         it: { title: 'INVITO', desc: 'ti aspetta nella conferenza!', btn: 'Entra', no: 'Più tardi' },
@@ -2124,7 +2238,6 @@
         ja: { title: '招待', desc: '会議でお待ちしています！', btn: '参加', no: '後で' },
         zh: { title: '邀请', desc: '在会议中等您！', btn: '加入', no: '稍后' }
     };
-    
 
     window.getConfTranslation = function (key) {
         const uiLang = cfNormLang(window.appLang) || getConfNativeLang(window.myProfileInfo) || 'en';
@@ -2269,7 +2382,7 @@
         confPage.dataset.cfVisWatched = '1';
 
         const check = () => {
-            if (isConfVisible()) {
+            if (isConfVisible() && !CF.isLeaving) {
                 if (!CF.isActive) window.enterConferenceRoom();
                 else attachAllConfVideos();
             }
@@ -2286,7 +2399,7 @@
                 const res = orig.apply(this, arguments);
                 if (idx === 2 || idx === 'conference') {
                     unlockConfTTSOnGesture();
-                    if (!CF.isActive) window.enterConferenceRoom();
+                    if (!CF.isActive && !CF.isLeaving) window.enterConferenceRoom();
                     else attachAllConfVideos();
                 }
                 return res;
@@ -2313,7 +2426,7 @@
             bindConfAIVoiceCallbacks();
             ensureConfHeaderBar();
             refreshMyConfFrameUI();
-            if (isConfVisible()) {
+            if (isConfVisible() && !CF.isLeaving) {
                 if (!CF.isActive && !CF.isJoining && getMyId()) {
                     window.enterConferenceRoom();
                 } else if (CF.isActive) {
