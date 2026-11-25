@@ -1,8 +1,8 @@
 // ==========================================
-// ФАЙЛ: js/audio-room.js (ISOLATED AUDIO WORLD v3 — CLEAN SYNC)
+// ФАЙЛ: js/audio-room.js (ISOLATED AUDIO WORLD v3.1 — CLEAN SYNC)
 // - Мгновенный цикл: сказал -> ушло -> плашка очистилась
 // - Кнопка микрофона открывает выбор языка без сброса в Birbaşa
-// - Синхронизация активного флага (display) у обоих участников при любом переключении
+// - Синхронизация активного флага (display) у обоих участников при отправке, приёме и речи
 // - Бегущая строка "поездом" + очередь ИИ-озвучки + анти-эхо + фикс перевода az
 // ==========================================
 
@@ -418,6 +418,7 @@
             `</span>`
         );
     }
+
     // ================= ЕДИНЫЙ РЕНДЕР ФЛАГОВ ПО ТУМБЛЕРУ (activeChannel / display) =================
     function renderAudioRoomFlags(roomId) {
         const myCh = (AR.activeChannel === 'mic') ? 'mic' : 'avatar';
@@ -1121,6 +1122,7 @@
             textEl.appendChild(newNode);
         }
     }
+
     // ==========================================
     // 3. ВСТРОЕННАЯ БЫСТРАЯ ОЧЕРЕДЬ ОЗВУЧКИ + АНТИ-ЭХО
     // ==========================================
@@ -1433,7 +1435,7 @@
     };
 
     // ==========================================
-    // 5. ПРИЁМ: ПОЕЗД БЕГУЩЕЙ СТРОКИ + БЫСТРАЯ ОЗВУЧКА ИИ
+    // 5. ПРИЁМ: ПОЕЗД БЕГУЩЕЙ СТРОКИ + СИНХРОНИЗАЦИЯ КАНАЛА + ОЗВУЧКА ИИ
     // ==========================================
     function handleIncomingAudioMsg(snapshot) {
         if (!isAudioMode()) return;
@@ -1466,6 +1468,23 @@
         pushAudioMarquee(marqueeHtml);
 
         const myId = (window.myProfileInfo && window.myProfileInfo.id) ? String(window.myProfileInfo.id) : '';
+        if (myId && String(data.userId) !== myId) {
+            const incomingChannel = (data.inputChannel === 'mic' || data.sourceType === 'voice' || data.sourceType === 'ai-audio')
+                ? 'mic'
+                : 'avatar';
+            const syncRoomId = AR.activeMsgRoom || getAudioRoomId();
+            if (AR.activeChannel !== incomingChannel) {
+                AR.activeChannel = incomingChannel;
+                if (syncRoomId) {
+                    window.syncMyAudioChannelLang(syncRoomId, incomingChannel, undefined, true);
+                } else {
+                    renderAudioRoomFlags(syncRoomId);
+                }
+            } else {
+                renderAudioRoomFlags(syncRoomId);
+            }
+        }
+
         if (data.sourceType === 'ai-audio' && myId && String(data.userId) !== myId && isAudioRoomVisibleOrInCall()) {
             const spokenText = (data.text || data.originalText || '').trim();
             const spokenLang = data.targetLang || getMyManualAudioLang(AR.activeMsgRoom, 'mic') || getAudioNativeLang(window.myProfileInfo);
@@ -1655,6 +1674,16 @@
                 }
 
                 if (interimTxt) {
+                    if (AR.activeChannel !== 'mic' && !isLikelyEcho(interimTxt)) {
+                        AR.activeChannel = 'mic';
+                        const activeRId = getAudioRoomId() || roomId;
+                        if (activeRId) {
+                            window.syncMyAudioChannelLang(activeRId, 'mic', undefined, true);
+                        } else {
+                            renderAudioRoomFlags(activeRId);
+                        }
+                    }
+
                     AR.pendingInterim = interimTxt;
                     updateMicPill(interimTxt);
 
