@@ -1487,6 +1487,23 @@
         pushVideoMarquee(marqueeHtml);
 
         const myId = (window.myProfileInfo && window.myProfileInfo.id) ? String(window.myProfileInfo.id) : '';
+         if (myId && String(data.userId) !== myId) {
+            const incomingChannel = (data.inputChannel === 'mic' || data.sourceType === 'voice' || data.sourceType === 'ai-audio')
+                ? 'mic'
+                : 'avatar';
+            const syncRoomId = VR.activeMsgRoom || getVideoRoomId();
+            if (VR.activeChannel !== incomingChannel) {
+                VR.activeChannel = incomingChannel;
+                if (syncRoomId) {
+                    window.syncMyVideoChannelLang(syncRoomId, incomingChannel, undefined, true);
+                } else {
+                    renderVideoRoomFlags(syncRoomId);
+                }
+            } else {
+                renderVideoRoomFlags(syncRoomId);
+            }
+                }
+        
         if (data.sourceType === 'ai-audio' && myId && String(data.userId) !== myId && isVideoRoomVisibleOrInCall()) {
             const spokenText = (data.text || data.originalText || '').trim();
             const spokenLang = data.targetLang || getMyManualVideoLang(VR.activeMsgRoom, 'mic') || getVideoNativeLang(window.myProfileInfo);
