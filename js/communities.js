@@ -1,12 +1,13 @@
 // ============================================================
-// ИЗОЛИРОВАННЫЙ МИР СООБЩЕСТВ (js/communities.js) — v3
+// ИЗОЛИРОВАННЫЙ МИР СООБЩЕСТВ (js/communities.js) — v4
 // - Монтируется строго в #communities-page (индекс 7)
-// - Каталог: Открытые (ПРАВИЛА + 7 тематических) и Приватные комнаты
-// - Левый «веер» реальных участников, приглашения (+👤), автоправила + 3-уровневый блок
-// - Родные функции: Скрепка (Фото/Видео/Аудио/Документ/Геолокация),
-//   Корзина (Архив / Очистить / Удалить), Смайлы (toggleEmojiPicker),
-//   Микрофон (только Голос в текст, без ИИ-озвучки)
-// - Исправлен приоритет языка профиля (казахский kk по флагу 🇰🇿)
+// - Скрепка: нижняя шторка 3x2 (Фото, Видео, Аудио, Документ, Геолокация, Камера)
+// - Корзина: нижняя шторка (Архив / Очистить любую комнату / Удалить комнату для всех)
+// - Меню ⋮ на каждом сообщении и файле: Копировать (Clipboard), Скачать, Удалить у себя
+// - Микрофон: только Голос в текст (без ИИ-озвучки и кнопок динамика)
+// - Онлайн-присутствие с авто-выключением при смене вкладки
+// - Фикс приоритета казахского языка (kk по флагу профиля)
+// - Модерация (антимат, антиспам, 3 уровня бана) + права Бога 777
 // ============================================================
 
 (function () {
@@ -47,11 +48,11 @@
             comm_mod_title: 'Members & Moderation', comm_ban: 'Block', comm_unban: 'Unblock', comm_banned_list: 'Blocked',
             comm_no_members: 'Only you are in the room so far.', comm_members_count: 'members',
             comm_c_cap: 'Capital', comm_c_area: 'Area', comm_c_pop: 'Population', comm_c_waters: 'Waters', comm_c_res: 'Resources',
-            comm_photo: 'Photo', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Document', comm_loc: 'Location',
+            comm_attach_title: 'Attach File', comm_photo: 'Photo', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Document', comm_loc: 'Location', comm_camera: 'Camera',
             comm_download: 'Download', comm_open_maps: 'Open in Maps', comm_you: 'You',
-            comm_trash_title: 'Room Actions', comm_archive_btn: 'Save Backup to Archive',
-            comm_clear_btn: 'Clear Chat History', comm_delete_btn: 'Delete Room Forever',
-            comm_clear_denied: 'Public starter rooms cannot be cleared.', comm_delete_denied: 'Only the room creator can delete it.'
+            comm_trash_title: 'Room Actions', comm_archive_btn: 'Archive', comm_clear_btn: 'Clear Chat', comm_delete_btn: 'Delete Room',
+            comm_delete_denied: 'Only the room creator can delete it.', comm_room_closed: 'Room was closed by creator.',
+            comm_msg_actions: 'Message Actions', comm_copy: 'Copy', comm_copied: 'Copied to clipboard', comm_save_file: 'Save / Download', comm_del_for_me: 'Delete for me'
         },
         ru: {
             comm_title: 'Сообщества', comm_open: 'Открытые', comm_private: 'Приватные', comm_create: '+ Создать',
@@ -71,11 +72,11 @@
             comm_mod_title: 'Участники и блокировки', comm_ban: 'Блок', comm_unban: 'Разблок.', comm_banned_list: 'Заблокированные',
             comm_no_members: 'Пока в комнате только вы.', comm_members_count: 'участн.',
             comm_c_cap: 'Столица', comm_c_area: 'Территория', comm_c_pop: 'Население', comm_c_waters: 'Воды', comm_c_res: 'Ресурсы',
-            comm_photo: 'Фото', comm_video: 'Видео', comm_audio: 'Аудио', comm_doc: 'Документ', comm_loc: 'Геолокация',
+            comm_attach_title: 'Прикрепить файл', comm_photo: 'Фото', comm_video: 'Видео', comm_audio: 'Аудио', comm_doc: 'Документ', comm_loc: 'Геолокация', comm_camera: 'Камера',
             comm_download: 'Скачать', comm_open_maps: 'Открыть на карте', comm_you: 'Вы',
-            comm_trash_title: 'Управление комнатой', comm_archive_btn: 'Сохранить в Архив',
-            comm_clear_btn: 'Очистить историю', comm_delete_btn: 'Удалить комнату навсегда',
-            comm_clear_denied: 'Общие стартовые комнаты нельзя очистить.', comm_delete_denied: 'Удалить комнату может только её создатель.'
+            comm_trash_title: 'Управление комнатой', comm_archive_btn: 'В Архив', comm_clear_btn: 'Очистить чат', comm_delete_btn: 'Удалить комнату',
+            comm_delete_denied: 'Удалить комнату может только её создатель.', comm_room_closed: 'Создатель закрыл комнату.',
+            comm_msg_actions: 'Действия с сообщением', comm_copy: 'Копировать', comm_copied: 'Скопировано в буфер', comm_save_file: 'Скачать файл', comm_del_for_me: 'Удалить у себя'
         },
         kk: {
             comm_title: 'Қауымдастықтар', comm_open: 'Ашық', comm_private: 'Жеке', comm_create: '+ Құру',
@@ -95,11 +96,11 @@
             comm_mod_title: 'Қатысушылар және бұғаттау', comm_ban: 'Бұғаттау', comm_unban: 'Ашу', comm_banned_list: 'Бұғатталғандар',
             comm_no_members: 'Бөлмеде әзірге тек сіз барсыз.', comm_members_count: 'қатыс.',
             comm_c_cap: 'Астанасы', comm_c_area: 'Аумағы', comm_c_pop: 'Халқы', comm_c_waters: 'Сулары', comm_c_res: 'Ресурстары',
-            comm_photo: 'Фото', comm_video: 'Бейне', comm_audio: 'Аудио', comm_doc: 'Құжат', comm_loc: 'Геолокация',
+            comm_attach_title: 'Файл тіркеу', comm_photo: 'Фото', comm_video: 'Бейне', comm_audio: 'Аудио', comm_doc: 'Құжат', comm_loc: 'Геолокация', comm_camera: 'Камера',
             comm_download: 'Жүктеу', comm_open_maps: 'Картада ашу', comm_you: 'Сіз',
-            comm_trash_title: 'Бөлмені басқару', comm_archive_btn: 'Мұрағатқа сақтау',
-            comm_clear_btn: 'Тарихты тазарту', comm_delete_btn: 'Бөлмені біржола жою',
-            comm_clear_denied: 'Ашық бастапқы бөлмелерді тазартуға болмайды.', comm_delete_denied: 'Бөлмені тек жасаушы жоя алады.'
+            comm_trash_title: 'Бөлмені басқару', comm_archive_btn: 'Мұрағат', comm_clear_btn: 'Тазарту', comm_delete_btn: 'Бөлмені жою',
+            comm_delete_denied: 'Бөлмені тек жасаушы жоя алады.', comm_room_closed: 'Бөлме жабылды.',
+            comm_msg_actions: 'Хабарлама әрекеттері', comm_copy: 'Көшіру', comm_copied: 'Көшірілді', comm_save_file: 'Жүктеп алу', comm_del_for_me: 'Өзімде жою'
         },
         az: {
             comm_title: 'İcmalar', comm_open: 'Açıq', comm_private: 'Şəxsi', comm_create: '+ Yarat',
@@ -119,11 +120,11 @@
             comm_mod_title: 'Üzvlər və bloklama', comm_ban: 'Blokla', comm_unban: 'Aç', comm_banned_list: 'Bloklananlar',
             comm_no_members: 'Otaqda hələlik yalnız sizsiniz.', comm_members_count: 'üzv',
             comm_c_cap: 'Paytaxt', comm_c_area: 'Ərazi', comm_c_pop: 'Əhali', comm_c_waters: 'Sular', comm_c_res: 'Sərvətlər',
-            comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Sənəd', comm_loc: 'Məkan',
+            comm_attach_title: 'Fayl Əlavə et', comm_photo: 'Foto / Şəkil', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Sənəd', comm_loc: 'Məkan', comm_camera: 'Kamera',
             comm_download: 'Yüklə', comm_open_maps: 'Xəritədə aç', comm_you: 'Siz',
-            comm_trash_title: 'Otaq əməliyyatları', comm_archive_btn: 'Arxivdə saxla',
-            comm_clear_btn: 'Tarixçəni təmizlə', comm_delete_btn: 'Otağı həmişəlik sil',
-            comm_clear_denied: 'Açıq əsas otaqları təmizləmək olmaz.', comm_delete_denied: 'Yalnız otağın yaradıcısı silə bilər.'
+            comm_trash_title: 'Otaq əməliyyatları', comm_archive_btn: 'Arxiv', comm_clear_btn: 'Təmizlə', comm_delete_btn: 'Otağı sil',
+            comm_delete_denied: 'Yalnız otağın yaradıcısı silə bilər.', comm_room_closed: 'Otaq yaradıcı tərəfindən bağlandı.',
+            comm_msg_actions: 'Mesaj əməliyyatları', comm_copy: 'Kopyala', comm_copied: 'Kopyalandı', comm_save_file: 'Yüklə', comm_del_for_me: 'Məndən sil'
         },
         tr: {
             comm_title: 'Topluluklar', comm_open: 'Açık', comm_private: 'Özel', comm_create: '+ Oluştur',
@@ -143,11 +144,11 @@
             comm_mod_title: 'Üyeler ve Engelleme', comm_ban: 'Engelle', comm_unban: 'Kaldır', comm_banned_list: 'Engellenenler',
             comm_no_members: 'Odada şimdilik sadece siz varsınız.', comm_members_count: 'üye',
             comm_c_cap: 'Başkent', comm_c_area: 'Yüzölçümü', comm_c_pop: 'Nüfus', comm_c_waters: 'Denizler', comm_c_res: 'Kaynaklar',
-            comm_photo: 'Fotoğraf', comm_video: 'Video', comm_audio: 'Ses', comm_doc: 'Belge', comm_loc: 'Konum',
+            comm_attach_title: 'Dosya Ekle', comm_photo: 'Fotoğraf', comm_video: 'Video', comm_audio: 'Ses', comm_doc: 'Belge', comm_loc: 'Konum', comm_camera: 'Kamera',
             comm_download: 'İndir', comm_open_maps: 'Haritada Aç', comm_you: 'Sen',
-            comm_trash_title: 'Oda İşlemleri', comm_archive_btn: 'Arşive Kaydet',
-            comm_clear_btn: 'Geçmişi Temizle', comm_delete_btn: 'Odayı Kalıcı Sil',
-            comm_clear_denied: 'Açık başlangıç odaları temizlenemez.', comm_delete_denied: 'Sadece oda kurucusu silebilir.'
+            comm_trash_title: 'Oda İşlemleri', comm_archive_btn: 'Arşiv', comm_clear_btn: 'Temizle', comm_delete_btn: 'Odayı Sil',
+            comm_delete_denied: 'Sadece oda kurucusu silebilir.', comm_room_closed: 'Oda kurucu tarafından kapatıldı.',
+            comm_msg_actions: 'Mesaj İşlemleri', comm_copy: 'Kopyala', comm_copied: 'Kopyalandı', comm_save_file: 'İndir', comm_del_for_me: 'Benden Sil'
         },
         de: {
             comm_title: 'Communities', comm_open: 'Offen', comm_private: 'Privat', comm_create: '+ Erstellen',
@@ -167,11 +168,11 @@
             comm_mod_title: 'Mitglieder & Sperren', comm_ban: 'Sperren', comm_unban: 'Freigeben', comm_banned_list: 'Gesperrt',
             comm_no_members: 'Bisher bist nur du im Raum.', comm_members_count: 'Mitgl.',
             comm_c_cap: 'Hauptstadt', comm_c_area: 'Fläche', comm_c_pop: 'Einwohner', comm_c_waters: 'Gewässer', comm_c_res: 'Ressourcen',
-            comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Dokument', comm_loc: 'Standort',
+            comm_attach_title: 'Datei anhängen', comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Dokument', comm_loc: 'Standort', comm_camera: 'Kamera',
             comm_download: 'Laden', comm_open_maps: 'In Maps öffnen', comm_you: 'Du',
-            comm_trash_title: 'Raum-Aktionen', comm_archive_btn: 'Im Archiv sichern',
-            comm_clear_btn: 'Verlauf leeren', comm_delete_btn: 'Raum dauerhaft löschen',
-            comm_clear_denied: 'Öffentliche Starträume können nicht geleert werden.', comm_delete_denied: 'Nur der Ersteller kann den Raum löschen.'
+            comm_trash_title: 'Raum-Aktionen', comm_archive_btn: 'Archiv', comm_clear_btn: 'Leeren', comm_delete_btn: 'Löschen',
+            comm_delete_denied: 'Nur der Ersteller kann den Raum löschen.', comm_room_closed: 'Raum wurde geschlossen.',
+            comm_msg_actions: 'Nachricht', comm_copy: 'Kopieren', comm_copied: 'Kopiert', comm_save_file: 'Speichern', comm_del_for_me: 'Für mich löschen'
         },
         ar: {
             comm_title: 'المجتمعات', comm_open: 'عام', comm_private: 'خاص', comm_create: '+ إنشاء',
@@ -191,11 +192,11 @@
             comm_mod_title: 'الأعضاء والحظر', comm_ban: 'حظر', comm_unban: 'إلغاء', comm_banned_list: 'المحظورون',
             comm_no_members: 'أنت وحدك في الغرفة حالياً.', comm_members_count: 'أعضاء',
             comm_c_cap: 'العاصمة', comm_c_area: 'المساحة', comm_c_pop: 'السكان', comm_c_waters: 'المياه', comm_c_res: 'الموارد',
-            comm_photo: 'صورة', comm_video: 'فيديو', comm_audio: 'صوت', comm_doc: 'مستند', comm_loc: 'موقع',
+            comm_attach_title: 'إرفاق ملف', comm_photo: 'صورة', comm_video: 'فيديو', comm_audio: 'صوت', comm_doc: 'مستند', comm_loc: 'موقع', comm_camera: 'كاميرا',
             comm_download: 'تحميل', comm_open_maps: 'فتح في الخرائط', comm_you: 'أنت',
-            comm_trash_title: 'إجراءات الغرفة', comm_archive_btn: 'حفظ في الأرشيف',
-            comm_clear_btn: 'مسح السجل', comm_delete_btn: 'حذف الغرفة نهائياً',
-            comm_clear_denied: 'لا يمكن مسح الغرف العامة الأساسية.', comm_delete_denied: 'يمكن للمنشئ فقط حذف الغرفة.'
+            comm_trash_title: 'إجراءات الغرفة', comm_archive_btn: 'أرشيف', comm_clear_btn: 'مسح', comm_delete_btn: 'حذف',
+            comm_delete_denied: 'يمكن للمنشئ فقط حذف الغرفة.', comm_room_closed: 'تم إغلاق الغرفة.',
+            comm_msg_actions: 'إجراءات الرسالة', comm_copy: 'نسخ', comm_copied: 'تم النسخ', comm_save_file: 'تنزيل', comm_del_for_me: 'حذف لدي'
         },
         it: {
             comm_title: 'Comunità', comm_open: 'Aperte', comm_private: 'Private', comm_create: '+ Crea',
@@ -215,11 +216,11 @@
             comm_mod_title: 'Membri e Blocchi', comm_ban: 'Blocca', comm_unban: 'Sblocca', comm_banned_list: 'Bloccati',
             comm_no_members: 'Sei ancora solo nella stanza.', comm_members_count: 'membri',
             comm_c_cap: 'Capitale', comm_c_area: 'Superficie', comm_c_pop: 'Popolazione', comm_c_waters: 'Mari', comm_c_res: 'Risorse',
-            comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Documento', comm_loc: 'Posizione',
+            comm_attach_title: 'Allega file', comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Documento', comm_loc: 'Posizione', comm_camera: 'Fotocamera',
             comm_download: 'Scarica', comm_open_maps: 'Apri in Maps', comm_you: 'Tu',
-            comm_trash_title: 'Azioni Stanza', comm_archive_btn: 'Salva in Archivio',
-            comm_clear_btn: 'Cancella cronologia', comm_delete_btn: 'Elimina stanza',
-            comm_clear_denied: 'Le stanze pubbliche base non possono essere svuotate.', comm_delete_denied: 'Solo il creatore può eliminarla.'
+            comm_trash_title: 'Azioni Stanza', comm_archive_btn: 'Archivio', comm_clear_btn: 'Svuota', comm_delete_btn: 'Elimina',
+            comm_delete_denied: 'Solo il creatore può eliminarla.', comm_room_closed: 'Stanza chiusa dal creatore.',
+            comm_msg_actions: 'Azioni', comm_copy: 'Copia', comm_copied: 'Copiato', comm_save_file: 'Scarica', comm_del_for_me: 'Elimina per me'
         },
         es: {
             comm_title: 'Comunidades', comm_open: 'Abiertas', comm_private: 'Privadas', comm_create: '+ Crear',
@@ -239,11 +240,11 @@
             comm_mod_title: 'Miembros y Bloqueos', comm_ban: 'Bloquear', comm_unban: 'Desbloq.', comm_banned_list: 'Bloqueados',
             comm_no_members: 'Solo estás tú por ahora.', comm_members_count: 'miembros',
             comm_c_cap: 'Capital', comm_c_area: 'Superficie', comm_c_pop: 'Población', comm_c_waters: 'Mares', comm_c_res: 'Recursos',
-            comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Documento', comm_loc: 'Ubicación',
+            comm_attach_title: 'Adjuntar archivo', comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Documento', comm_loc: 'Ubicación', comm_camera: 'Cámara',
             comm_download: 'Descargar', comm_open_maps: 'Abrir en Maps', comm_you: 'Tú',
-            comm_trash_title: 'Acciones de Sala', comm_archive_btn: 'Guardar en Archivo',
-            comm_clear_btn: 'Limpiar historial', comm_delete_btn: 'Eliminar sala',
-            comm_clear_denied: 'Las salas públicas base no se pueden limpiar.', comm_delete_denied: 'Solo el creador puede eliminarla.'
+            comm_trash_title: 'Acciones de Sala', comm_archive_btn: 'Archivo', comm_clear_btn: 'Limpiar', comm_delete_btn: 'Eliminar',
+            comm_delete_denied: 'Solo el creador puede eliminarla.', comm_room_closed: 'Sala cerrada por el creador.',
+            comm_msg_actions: 'Acciones', comm_copy: 'Copiar', comm_copied: 'Copiado', comm_save_file: 'Descargar', comm_del_for_me: 'Eliminar para mí'
         },
         fr: {
             comm_title: 'Communautés', comm_open: 'Ouvertes', comm_private: 'Privées', comm_create: '+ Créer',
@@ -263,11 +264,11 @@
             comm_mod_title: 'Membres & Blocages', comm_ban: 'Bloquer', comm_unban: 'Débloq.', comm_banned_list: 'Bloqués',
             comm_no_members: 'Vous êtes seul pour le moment.', comm_members_count: 'membres',
             comm_c_cap: 'Capitale', comm_c_area: 'Superficie', comm_c_pop: 'Population', comm_c_waters: 'Mers', comm_c_res: 'Ressources',
-            comm_photo: 'Photo', comm_video: 'Vidéo', comm_audio: 'Audio', comm_doc: 'Document', comm_loc: 'Position',
+            comm_attach_title: 'Joindre un fichier', comm_photo: 'Photo', comm_video: 'Vidéo', comm_audio: 'Audio', comm_doc: 'Document', comm_loc: 'Position', comm_camera: 'Caméra',
             comm_download: 'Télécharger', comm_open_maps: 'Ouvrir dans Maps', comm_you: 'Vous',
-            comm_trash_title: 'Actions du salon', comm_archive_btn: 'Sauvegarder en Archive',
-            comm_clear_btn: 'Effacer l’historique', comm_delete_btn: 'Supprimer le salon',
-            comm_clear_denied: 'Les salons publics de base ne peuvent pas être vidés.', comm_delete_denied: 'Seul le créateur peut le supprimer.'
+            comm_trash_title: 'Actions du salon', comm_archive_btn: 'Archive', comm_clear_btn: 'Vider', comm_delete_btn: 'Supprimer',
+            comm_delete_denied: 'Seul le créateur peut le supprimer.', comm_room_closed: 'Salon fermé par le créateur.',
+            comm_msg_actions: 'Actions', comm_copy: 'Copier', comm_copied: 'Copié', comm_save_file: 'Télécharger', comm_del_for_me: 'Supprimer pour moi'
         },
         pt: {
             comm_title: 'Comunidades', comm_open: 'Abertas', comm_private: 'Privadas', comm_create: '+ Criar',
@@ -287,11 +288,11 @@
             comm_mod_title: 'Membros e Bloqueios', comm_ban: 'Bloquear', comm_unban: 'Desbloq.', comm_banned_list: 'Bloqueados',
             comm_no_members: 'Apenas você está na sala.', comm_members_count: 'membros',
             comm_c_cap: 'Capital', comm_c_area: 'Área', comm_c_pop: 'População', comm_c_waters: 'Águas', comm_c_res: 'Recursos',
-            comm_photo: 'Foto', comm_video: 'Vídeo', comm_audio: 'Áudio', comm_doc: 'Documento', comm_loc: 'Localização',
+            comm_attach_title: 'Anexar arquivo', comm_photo: 'Foto', comm_video: 'Vídeo', comm_audio: 'Áudio', comm_doc: 'Documento', comm_loc: 'Localização', comm_camera: 'Câmera',
             comm_download: 'Baixar', comm_open_maps: 'Abrir no Maps', comm_you: 'Você',
-            comm_trash_title: 'Ações da Sala', comm_archive_btn: 'Salvar no Arquivo',
-            comm_clear_btn: 'Limpar histórico', comm_delete_btn: 'Excluir sala',
-            comm_clear_denied: 'Salas públicas padrão não podem ser limpas.', comm_delete_denied: 'Apenas o criador pode excluir.'
+            comm_trash_title: 'Ações da Sala', comm_archive_btn: 'Arquivo', comm_clear_btn: 'Limpar', comm_delete_btn: 'Excluir',
+            comm_delete_denied: 'Apenas o criador pode excluir.', comm_room_closed: 'Sala fechada pelo criador.',
+            comm_msg_actions: 'Ações', comm_copy: 'Copiar', comm_copied: 'Copiado', comm_save_file: 'Baixar', comm_del_for_me: 'Apagar para mim'
         },
         ja: {
             comm_title: 'コミュニティ', comm_open: '公開', comm_private: '非公開', comm_create: '+ 作成',
@@ -311,11 +312,11 @@
             comm_mod_title: 'メンバー管理', comm_ban: 'ブロック', comm_unban: '解除', comm_banned_list: 'ブロック済み',
             comm_no_members: '現在はあなただけです。', comm_members_count: '人',
             comm_c_cap: '首都', comm_c_area: '面積', comm_c_pop: '人口', comm_c_waters: '海域', comm_c_res: '資源',
-            comm_photo: '写真', comm_video: '動画', comm_audio: '音声', comm_doc: 'ファイル', comm_loc: '位置情報',
+            comm_attach_title: 'ファイルを添付', comm_photo: '写真', comm_video: '動画', comm_audio: '音声', comm_doc: 'ファイル', comm_loc: '位置情報', comm_camera: 'カメラ',
             comm_download: '保存', comm_open_maps: 'マップで開く', comm_you: 'あなた',
-            comm_trash_title: 'ルーム操作', comm_archive_btn: 'アーカイブに保存',
-            comm_clear_btn: '履歴を消去', comm_delete_btn: 'ルームを完全削除',
-            comm_clear_denied: '公開標準ルームは消去できません。', comm_delete_denied: '作成者のみ削除できます。'
+            comm_trash_title: 'ルーム操作', comm_archive_btn: 'アーカイブ', comm_clear_btn: '消去', comm_delete_btn: '削除',
+            comm_delete_denied: '作成者のみ削除できます。', comm_room_closed: 'ルームが閉じられました。',
+            comm_msg_actions: '操作', comm_copy: 'コピー', comm_copied: 'コピーしました', comm_save_file: '保存', comm_del_for_me: '自分から削除'
         },
         zh: {
             comm_title: '社区', comm_open: '公开', comm_private: '私密', comm_create: '+ 创建',
@@ -335,11 +336,11 @@
             comm_mod_title: '成员与管理', comm_ban: '封禁', comm_unban: '解封', comm_banned_list: '已封禁',
             comm_no_members: '目前只有您在房间内。', comm_members_count: '成员',
             comm_c_cap: '首都', comm_c_area: '面积', comm_c_pop: '人口', comm_c_waters: '水域', comm_c_res: '资源',
-            comm_photo: '图片', comm_video: '视频', comm_audio: '音频', comm_doc: '文档', comm_loc: '位置',
+            comm_attach_title: '添加文件', comm_photo: '图片', comm_video: '视频', comm_audio: '音频', comm_doc: '文档', comm_loc: '位置', comm_camera: '相机',
             comm_download: '下载', comm_open_maps: '在地图中打开', comm_you: '我',
-            comm_trash_title: '房间操作', comm_archive_btn: '保存到存档',
-            comm_clear_btn: '清空记录', comm_delete_btn: '永久删除房间',
-            comm_clear_denied: '公共默认房间无法清空。', comm_delete_denied: '只有创建者可以删除房间。'
+            comm_trash_title: '房间操作', comm_archive_btn: '存档', comm_clear_btn: '清空', comm_delete_btn: '删除',
+            comm_delete_denied: '只有创建者可以删除房间。', comm_room_closed: '房间已关闭。',
+            comm_msg_actions: '消息操作', comm_copy: '复制', comm_copied: '已复制', comm_save_file: '下载', comm_del_for_me: '为我删除'
         }
     };
 
@@ -580,6 +581,7 @@
         rulesExpanded: false,
         globalBanned: false,
         lastUiLang: '',
+        msgStore: {},
 
         // Firebase refs
         metaListenerBound: false,
@@ -596,7 +598,7 @@
 
         recentSends: [],
 
-        // Isolated Mic engine (Voice-to-Text only, 1-to-1 with chat.js)
+        // Isolated Mic engine (Voice-to-Text only)
         micActive: false,
         recognition: null,
         restartTimer: null,
@@ -665,14 +667,11 @@
         return normLang(navigator.language) || 'en';
     }
 
-    // Приоритет: 1) ручной выбор в меню -> 2) родной язык профиля (флаг 🇰🇿 -> kk) -> 3) язык браузера
     function getUiLang() {
         const savedPref = localStorage.getItem('hf_app_lang');
         let code = null;
         if (savedPref && savedPref !== 'auto') {
             code = savedPref;
-        } else if (window.appLang && window.appLang !== 'auto' && savedPref && savedPref !== 'auto') {
-            code = window.appLang;
         } else {
             code = getMyNativeLang() || window.appLang || navigator.language || 'en';
         }
@@ -781,6 +780,11 @@
         return merged;
     }
 
+    function getDeletedCommMsgs() {
+        try { return JSON.parse(localStorage.getItem('hf_comm_deleted_msgs') || '[]'); }
+        catch (e) { return []; }
+    }
+
     // ============================================================
     // 2. СТИЛИ МОДУЛЯ
     // ============================================================
@@ -835,15 +839,13 @@
                 100% { transform: scale(0.85); opacity: 0.6; }
             }
             .hf-comm-popup {
-                display: none; position: absolute; bottom: 62px; z-index: 82;
+                display: none; position: absolute; bottom: 62px; right: 10px; width: 240px; z-index: 82;
                 background: #111b21; border: 1.5px solid #00a884;
                 border-radius: 16px; padding: 12px;
                 box-shadow: 0 12px 32px rgba(0,0,0,0.75);
                 flex-direction: column; gap: 8px;
             }
             .hf-comm-popup.active { display: flex; }
-            #hf-cmic-card { right: 10px; width: 240px; }
-            #hf-comm-attach-menu { left: 10px; width: 220px; }
             .hf-comm-modal-bg {
                 position: absolute; inset: 0; z-index: 95;
                 background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(4px);
@@ -1315,24 +1317,6 @@
                 </div>
             </div>
 
-            <div id="hf-comm-attach-menu" class="hf-comm-popup">
-                <button type="button" onclick="window.triggerCommFile('image/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#202c33] hover:border-[#00a884] border border-[#2a3942] text-xs text-white font-bold">
-                    <i class="fa-solid fa-image text-emerald-400 w-4"></i> ${esc(t('comm_photo'))}
-                </button>
-                <button type="button" onclick="window.triggerCommFile('video/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#202c33] hover:border-[#00a884] border border-[#2a3942] text-xs text-white font-bold">
-                    <i class="fa-solid fa-video text-purple-400 w-4"></i> ${esc(t('comm_video'))}
-                </button>
-                <button type="button" onclick="window.triggerCommFile('audio/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#202c33] hover:border-[#00a884] border border-[#2a3942] text-xs text-white font-bold">
-                    <i class="fa-solid fa-music text-amber-400 w-4"></i> ${esc(t('comm_audio'))}
-                </button>
-                <button type="button" onclick="window.triggerCommFile('*/*')" class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#202c33] hover:border-[#00a884] border border-[#2a3942] text-xs text-white font-bold">
-                    <i class="fa-solid fa-file-lines text-blue-400 w-4"></i> ${esc(t('comm_doc'))}
-                </button>
-                <button type="button" onclick="window.sendCommLocation()" class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#202c33] hover:border-[#00a884] border border-[#2a3942] text-xs text-white font-bold">
-                    <i class="fa-solid fa-location-dot text-red-400 w-4"></i> ${esc(t('comm_loc'))}
-                </button>
-            </div>
-
             <div id="hf-cmic-card" class="hf-comm-popup">
                 <div class="flex items-center justify-between">
                     <div class="text-xs font-bold text-[#00a884] flex items-center gap-1.5">
@@ -1348,6 +1332,43 @@
                 <button type="button" onclick="window.startCommMic()" class="w-full py-2.5 px-3 rounded-xl bg-[#00a884] text-[#111b21] text-xs font-extrabold flex items-center justify-center gap-2 hover:opacity-90 transition">
                     <i class="fa-solid fa-microphone"></i> ${esc(t('comm_stt_btn'))}
                 </button>
+            </div>
+
+            <div id="hf-comm-attach-menu" class="hf-comm-modal-bg !items-end !p-0" onclick="if(event.target===this) this.classList.remove('active')">
+                <div class="w-full bg-[#0b141a] border-t border-[#202c33] rounded-t-3xl p-4 pb-6 shadow-2xl">
+                    <div class="relative flex items-center justify-center mb-4">
+                        <span class="text-sm font-bold text-white">${esc(t('comm_attach_title'))}</span>
+                        <button type="button" onclick="document.getElementById('hf-comm-attach-menu').classList.remove('active')" class="absolute right-1 text-[#8696a0] hover:text-white text-base px-2 py-1">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" onclick="window.triggerCommFile('image/*', false)" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-[#1d4ed8] hover:opacity-90 text-white transition shadow-md">
+                            <i class="fa-solid fa-image text-xl"></i>
+                            <span class="text-[0.7rem] font-bold">${esc(t('comm_photo'))}</span>
+                        </button>
+                        <button type="button" onclick="window.triggerCommFile('video/*', false)" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-[#b91c1c] hover:opacity-90 text-white transition shadow-md">
+                            <i class="fa-solid fa-video text-xl"></i>
+                            <span class="text-[0.7rem] font-bold">${esc(t('comm_video'))}</span>
+                        </button>
+                        <button type="button" onclick="window.triggerCommFile('audio/*', false)" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-[#78350f] hover:opacity-90 text-white transition shadow-md">
+                            <i class="fa-solid fa-headphones text-xl"></i>
+                            <span class="text-[0.7rem] font-bold">${esc(t('comm_audio'))}</span>
+                        </button>
+                        <button type="button" onclick="window.triggerCommFile('*/*', false)" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-[#7e22ce] hover:opacity-90 text-white transition shadow-md">
+                            <i class="fa-solid fa-file-lines text-xl"></i>
+                            <span class="text-[0.7rem] font-bold">${esc(t('comm_doc'))}</span>
+                        </button>
+                        <button type="button" onclick="window.sendCommLocation()" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-[#15803d] hover:opacity-90 text-white transition shadow-md">
+                            <i class="fa-solid fa-location-dot text-xl"></i>
+                            <span class="text-[0.7rem] font-bold">${esc(t('comm_loc'))}</span>
+                        </button>
+                        <button type="button" onclick="window.triggerCommFile('image/*', true)" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-[#0369a1] hover:opacity-90 text-white transition shadow-md">
+                            <i class="fa-solid fa-camera text-xl"></i>
+                            <span class="text-[0.7rem] font-bold">${esc(t('comm_camera'))}</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <input id="comm-file-input" type="file" class="hidden" onchange="window.handleCommFileAttach(event)">
@@ -1379,7 +1400,8 @@
             <div id="hf-comm-invite-modal" class="hf-comm-modal-bg" onclick="if(event.target===this) this.classList.remove('active')"></div>
             <div id="hf-comm-country-modal" class="hf-comm-modal-bg" onclick="if(event.target===this) this.classList.remove('active')"></div>
             <div id="hf-comm-mod-modal" class="hf-comm-modal-bg" onclick="if(event.target===this) this.classList.remove('active')"></div>
-            <div id="hf-comm-trash-modal" class="hf-comm-modal-bg" onclick="if(event.target===this) this.classList.remove('active')"></div>
+            <div id="hf-comm-trash-modal" class="hf-comm-modal-bg !items-end !p-0" onclick="if(event.target===this) this.classList.remove('active')"></div>
+            <div id="hf-comm-msg-modal" class="hf-comm-modal-bg !items-end !p-0" onclick="if(event.target===this) this.classList.remove('active')"></div>
             <div id="hf-comm-img-modal" class="hf-comm-modal-bg" onclick="this.classList.remove('active')"></div>
         `;
 
@@ -1406,6 +1428,8 @@
     window.closeCommPopups = function () {
         document.getElementById('hf-cmic-card')?.classList.remove('active');
         document.getElementById('hf-comm-attach-menu')?.classList.remove('active');
+        document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
         if (typeof window.closeEmojiPicker === 'function') window.closeEmojiPicker();
     };
 
@@ -1558,6 +1582,7 @@
         CM.activeRoomId = roomId;
         CM.rulesExpanded = Boolean(room.isRulesRoom);
         CM.seenMsgKeys.clear();
+        CM.msgStore = {};
         CM.liveLangs = {};
         CM.recentSends = [];
 
@@ -1571,7 +1596,13 @@
             CM.roomMetaRef = firebase.database().ref('communities_meta/' + roomId);
             CM.roomMetaListener = CM.roomMetaRef.on('value', (snap) => {
                 const updated = snap.val();
-                if (!updated) return;
+                if (!updated) {
+                    if (!STARTER_COMMUNITIES[roomId]) {
+                        if (window.showToast) window.showToast(t('comm_title'), t('comm_room_closed'), '', '');
+                        window.leaveCommunityRoom();
+                    }
+                    return;
+                }
                 const base = STARTER_COMMUNITIES[roomId] || {};
                 CM.roomsMap[roomId] = Object.assign({}, base, updated, { id: roomId });
                 const myId = getMyId();
@@ -1776,11 +1807,10 @@
     };
 
     // ============================================================
-    // 8. РОДНЫЕ СКРЕПКА, СМАЙЛЫ И КОРЗИНА (ИЗОЛИРОВАННЫЕ ПОД КОМНАТУ)
+    // 8. СКРЕПКА (3x2), СМАЙЛЫ, КОРЗИНА И МЕНЮ СООБЩЕНИЯ (⋮ + CLIPBOARD)
     // ============================================================
     window.openCommEmojiPicker = function () {
-        document.getElementById('hf-cmic-card')?.classList.remove('active');
-        document.getElementById('hf-comm-attach-menu')?.classList.remove('active');
+        window.closeCommPopups();
         if (typeof window.toggleEmojiPicker === 'function') {
             window.toggleEmojiPicker('comm-chat-input');
         }
@@ -1788,15 +1818,19 @@
 
     window.toggleCommAttachMenu = function () {
         document.getElementById('hf-cmic-card')?.classList.remove('active');
+        document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
         if (typeof window.closeEmojiPicker === 'function') window.closeEmojiPicker();
         document.getElementById('hf-comm-attach-menu')?.classList.toggle('active');
     };
 
-    window.triggerCommFile = function (acceptMask) {
+    window.triggerCommFile = function (acceptMask, useCamera = false) {
         document.getElementById('hf-comm-attach-menu')?.classList.remove('active');
         const inp = document.getElementById('comm-file-input');
         if (!inp) return;
         inp.accept = acceptMask || '*/*';
+        if (useCamera) inp.setAttribute('capture', 'environment');
+        else inp.removeAttribute('capture');
         inp.click();
     };
 
@@ -1827,7 +1861,7 @@
                     dispatchCommPayload(caption, 'avatar', {
                         mediaUrl: canvas.toDataURL('image/jpeg', 0.72),
                         mediaType: 'image',
-                        fileName: file.name
+                        fileName: file.name || 'photo.jpg'
                     });
                 };
                 img.src = e.target.result;
@@ -1848,7 +1882,7 @@
             dispatchCommPayload(caption || file.name, 'avatar', {
                 mediaUrl: e.target.result,
                 mediaType,
-                fileName: file.name
+                fileName: file.name || 'file'
             });
         };
         reader.readAsDataURL(file);
@@ -1878,7 +1912,7 @@
         modal.classList.add('active');
     };
 
-    // Родная корзина (Архив / Очистить / Удалить) — строго для текущей комнаты сообщества
+    // Корзина в стиле нижней шторки (3 цветные плитки)
     window.openCommTrashModal = function () {
         window.closeCommPopups();
         const modal = document.getElementById('hf-comm-trash-modal');
@@ -1886,20 +1920,27 @@
         if (!modal || !room) return;
 
         modal.innerHTML = `
-            <div class="bg-[#111b21] border border-[#2a3942] rounded-2xl w-full max-w-xs p-4 flex flex-col gap-2.5 shadow-2xl">
-                <div class="flex items-center justify-between border-b border-[#202c33] pb-2">
-                    <span class="text-xs font-bold text-white flex items-center gap-2"><i class="fa-solid fa-trash-can text-red-400"></i> ${esc(t('comm_trash_title'))}</span>
-                    <button onclick="document.getElementById('hf-comm-trash-modal').classList.remove('active')" class="text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <div class="w-full bg-[#0b141a] border-t border-[#202c33] rounded-t-3xl p-4 pb-6 shadow-2xl flex flex-col gap-3">
+                <div class="relative flex items-center justify-center mb-1">
+                    <span class="text-sm font-bold text-white">${esc(t('comm_trash_title'))}</span>
+                    <button type="button" onclick="document.getElementById('hf-comm-trash-modal').classList.remove('active')" class="absolute right-1 text-[#8696a0] hover:text-white text-base px-2 py-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
-                <button onclick="window.commActionArchive()" class="w-full py-2.5 px-3 rounded-xl bg-[#202c33] border border-[#2a3942] hover:border-blue-400 text-xs font-bold text-white flex items-center gap-2.5">
-                    <i class="fa-solid fa-box-archive text-blue-400"></i> ${esc(t('comm_archive_btn'))}
-                </button>
-                <button onclick="window.commActionClearHistory()" class="w-full py-2.5 px-3 rounded-xl bg-[#202c33] border border-[#2a3942] hover:border-amber-400 text-xs font-bold text-white flex items-center gap-2.5">
-                    <i class="fa-solid fa-broom text-amber-400"></i> ${esc(t('comm_clear_btn'))}
-                </button>
-                <button onclick="window.commActionDeleteRoom()" class="w-full py-2.5 px-3 rounded-xl bg-red-500/15 border border-red-500/50 hover:bg-red-500/25 text-xs font-bold text-red-400 flex items-center gap-2.5">
-                    <i class="fa-solid fa-trash text-red-400"></i> ${esc(t('comm_delete_btn'))}
-                </button>
+                <div class="grid grid-cols-3 gap-3">
+                    <button type="button" onclick="window.commActionArchive()" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#1d4ed8] hover:opacity-90 text-white transition shadow-md text-center">
+                        <i class="fa-solid fa-box-archive text-xl"></i>
+                        <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_archive_btn'))}</span>
+                    </button>
+                    <button type="button" onclick="window.commActionClearHistory()" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#b45309] hover:opacity-90 text-white transition shadow-md text-center">
+                        <i class="fa-solid fa-broom text-xl"></i>
+                        <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_clear_btn'))}</span>
+                    </button>
+                    <button type="button" onclick="window.commActionDeleteRoom()" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#b91c1c] hover:opacity-90 text-white transition shadow-md text-center">
+                        <i class="fa-solid fa-trash text-xl"></i>
+                        <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_delete_btn'))}</span>
+                    </button>
+                </div>
             </div>
         `;
         modal.classList.add('active');
@@ -1938,19 +1979,20 @@
     window.commActionClearHistory = function () {
         const room = CM.roomsMap[CM.activeRoomId];
         if (!room) return;
-        if (STARTER_COMMUNITIES[room.id]) {
-            alert(t('comm_clear_denied'));
-            return;
+        if (!confirm(t('comm_clear_btn') + '?')) return;
+
+        const box = document.getElementById('comm-chat-messages');
+        if (box) box.innerHTML = '';
+        CM.seenMsgKeys.clear();
+        CM.msgStore = {};
+        localStorage.setItem('hf_comm_cleared_at_' + room.id, String(Date.now()));
+
+        if (!STARTER_COMMUNITIES[room.id] && String(room.creatorId) === getMyId() && typeof firebase !== 'undefined') {
+            firebase.database().ref('communities_messages/' + room.id).remove().catch(() => {});
         }
-        if (confirm(t('comm_clear_btn') + '?')) {
-            const box = document.getElementById('comm-chat-messages');
-            if (box) box.innerHTML = '';
-            CM.seenMsgKeys.clear();
-            if (typeof firebase !== 'undefined') {
-                firebase.database().ref('communities_messages/' + room.id).remove().catch(() => {});
-            }
-            document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
-        }
+
+        document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
+        if (window.showToast) window.showToast(t('comm_title'), t('comm_clear_btn') + ' ✓', '', '');
     };
 
     window.commActionDeleteRoom = function () {
@@ -1973,8 +2015,105 @@
         }
     };
 
+    // Меню ⋮ для каждого сообщения/файла (Копировать / Скачать / Удалить у себя)
+    window.openCommMsgActionMenu = function (msgKey) {
+        window.closeCommPopups();
+        const modal = document.getElementById('hf-comm-msg-modal');
+        const msg = CM.msgStore[msgKey];
+        if (!modal || !msg) return;
+
+        const hasMedia = Boolean(msg.mediaUrl || msg.image);
+        const hasText = Boolean(msg.copyText);
+
+        let btns = '';
+        if (hasText) {
+            btns += `
+                <button type="button" onclick="window.commMsgActionCopy('${esc(msgKey)}')" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#1d4ed8] hover:opacity-90 text-white transition shadow-md text-center">
+                    <i class="fa-regular fa-copy text-xl"></i>
+                    <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_copy'))}</span>
+                </button>
+            `;
+        }
+        if (hasMedia) {
+            btns += `
+                <button type="button" onclick="window.commMsgActionDownload('${esc(msgKey)}')" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#15803d] hover:opacity-90 text-white transition shadow-md text-center">
+                    <i class="fa-solid fa-download text-xl"></i>
+                    <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_save_file'))}</span>
+                </button>
+            `;
+        }
+        btns += `
+            <button type="button" onclick="window.commMsgActionDeleteLocal('${esc(msgKey)}')" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#b91c1c] hover:opacity-90 text-white transition shadow-md text-center">
+                <i class="fa-solid fa-trash-can text-xl"></i>
+                <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_del_for_me'))}</span>
+            </button>
+        `;
+
+        const cols = (hasText && hasMedia) ? 'grid-cols-3' : ((hasText || hasMedia) ? 'grid-cols-2' : 'grid-cols-1');
+        modal.innerHTML = `
+            <div class="w-full bg-[#0b141a] border-t border-[#202c33] rounded-t-3xl p-4 pb-6 shadow-2xl flex flex-col gap-3">
+                <div class="relative flex items-center justify-center mb-1">
+                    <span class="text-sm font-bold text-white">${esc(t('comm_msg_actions'))}</span>
+                    <button type="button" onclick="document.getElementById('hf-comm-msg-modal').classList.remove('active')" class="absolute right-1 text-[#8696a0] hover:text-white text-base px-2 py-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="grid ${cols} gap-3">${btns}</div>
+            </div>
+        `;
+        modal.classList.add('active');
+    };
+
+    window.commMsgActionCopy = function (msgKey) {
+        const msg = CM.msgStore[msgKey];
+        if (!msg || !msg.copyText) return;
+        const done = () => {
+            document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+            if (window.showToast) window.showToast(t('comm_copy'), t('comm_copied'), '', '');
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(msg.copyText).then(done).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = msg.copyText;
+                document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                ta.remove(); done();
+            });
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = msg.copyText;
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            ta.remove(); done();
+        }
+    };
+
+    window.commMsgActionDownload = function (msgKey) {
+        const msg = CM.msgStore[msgKey];
+        const url = msg && (msg.mediaUrl || msg.image);
+        if (!url) return;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = msg.fileName || 'file';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+    };
+
+    window.commMsgActionDeleteLocal = function (msgKey) {
+        const list = getDeletedCommMsgs();
+        if (!list.includes(msgKey)) {
+            list.push(msgKey);
+            try { localStorage.setItem('hf_comm_deleted_msgs', JSON.stringify(list)); } catch (e) {}
+        }
+        const domEl = document.getElementById('comm-msg-' + msgKey);
+        if (domEl) domEl.remove();
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+    };
+
     // ============================================================
-    // 9. ОТПРАВКА И ПРИЁМ СООБЩЕНИЙ (ЧИСТЫЙ ТЕКСТ + ВЛОЖЕНИЯ, БЕЗ ОЗВУЧКИ)
+    // 9. ОТПРАВКА И ПРИЁМ СООБЩЕНИЙ (ЧИСТЫЙ ТЕКСТ + ВЛОЖЕНИЯ + ⋮)
     // ============================================================
     async function dispatchCommPayload(rawText, channel, extra = null) {
         const roomId = CM.activeRoomId;
@@ -2042,6 +2181,11 @@
     function handleIncomingCommMsg(snap) {
         const data = snap.val();
         if (!data || CM.seenMsgKeys.has(snap.key)) return;
+
+        const clearedAt = Number(localStorage.getItem('hf_comm_cleared_at_' + CM.activeRoomId) || 0);
+        if (clearedAt && data.timestamp && data.timestamp <= clearedAt) return;
+        if (getDeletedCommMsgs().includes(snap.key)) return;
+
         CM.seenMsgKeys.add(snap.key);
 
         document.getElementById('hf-comm-waiting-hint')?.classList.add('hidden');
@@ -2055,43 +2199,56 @@
         const flag = data.flag || '🌐';
         const baseText = data.originalText || data.text || '';
         const fan = Array.isArray(data.mirrorFan) ? data.mirrorFan : (data.mirrorFan ? Object.values(data.mirrorFan) : []);
+        const mediaSrc = data.mediaUrl || data.image || '';
+
+        const myFanEntry = (!isMe && myId) ? fan.find(u => String(u.userId) === myId) : null;
+        CM.msgStore[snap.key] = {
+            copyText: (myFanEntry && myFanEntry.text) || baseText || data.mapLink || '',
+            mediaUrl: mediaSrc,
+            fileName: data.fileName || 'file'
+        };
 
         const group = document.createElement('div');
+        group.id = 'comm-msg-' + snap.key;
         group.className = 'flex flex-col w-full mt-2.5 mb-1';
 
         const avatarClick = isMe ? `window.openCommLangModal('avatar')` : `if(window.openAvatarModal) window.openAvatarModal('${esc(data.userId)}')`;
         const avatarHtml = `<div class="relative shrink-0 self-end cursor-pointer" onclick="${avatarClick}"><img src="${esc(data.photo || 'https://ui-avatars.com/api/?name=U')}" class="w-8 h-8 rounded-full object-cover border border-[#2a3942]"><span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-[3px] border border-[#2a3942] leading-none">${esc(flag)}</span></div>`;
 
-        const mediaSrc = data.mediaUrl || data.image || '';
         let innerHtml = '';
         let bubbleStyle = isMe ? 'bg-[#005c4b] text-white rounded-tr-sm' : 'bg-[#202c33] text-[#e9edef] rounded-tl-sm';
 
         if (mediaSrc) {
             const fname = esc(data.fileName || baseText || 'file');
             if (data.mediaType === 'video' || mediaSrc.startsWith('data:video/')) {
-                innerHtml = `<video src="${esc(mediaSrc)}" controls class="max-w-[200px] sm:max-w-[240px] rounded-lg border border-[#2a3942]"></video>`;
+                innerHtml = `<video src="${esc(mediaSrc)}" controls class="max-w-[195px] sm:max-w-[235px] rounded-lg border border-[#2a3942]"></video>`;
             } else if (data.mediaType === 'audio' || mediaSrc.startsWith('data:audio/')) {
-                innerHtml = `<audio src="${esc(mediaSrc)}" controls class="w-[200px] sm:w-[230px] outline-none"></audio>`;
+                innerHtml = `<audio src="${esc(mediaSrc)}" controls class="w-[195px] sm:w-[225px] outline-none"></audio>`;
             } else if (data.mediaType === 'document' || mediaSrc.startsWith('data:application/') || mediaSrc.startsWith('data:text/')) {
-                innerHtml = `<div class="flex items-center gap-2.5 bg-[#111b21] p-2.5 rounded-lg border border-[#2a3942] min-w-[180px]"><div class="w-9 h-9 rounded-full bg-[#202c33] flex items-center justify-center text-blue-400 shrink-0"><i class="fa-solid fa-file-arrow-down"></i></div><div class="flex flex-col overflow-hidden"><span class="text-white text-xs font-bold truncate max-w-[130px]">${fname}</span><a href="${esc(mediaSrc)}" download="${fname}" class="text-[0.68rem] text-[#00a884] font-bold mt-0.5 uppercase">${esc(t('comm_download'))}</a></div></div>`;
+                innerHtml = `<div class="flex items-center gap-2.5 bg-[#111b21] p-2.5 rounded-lg border border-[#2a3942] min-w-[170px]"><div class="w-9 h-9 rounded-full bg-[#202c33] flex items-center justify-center text-blue-400 shrink-0"><i class="fa-solid fa-file-arrow-down"></i></div><div class="flex flex-col overflow-hidden"><span class="text-white text-xs font-bold truncate max-w-[125px]">${fname}</span><a href="${esc(mediaSrc)}" download="${fname}" class="text-[0.68rem] text-[#00a884] font-bold mt-0.5 uppercase">${esc(t('comm_download'))}</a></div></div>`;
             } else {
-                innerHtml = `<img src="${esc(mediaSrc)}" onclick="window.openCommImagePreview(this.src)" class="max-w-[200px] max-h-[200px] rounded-xl object-cover cursor-pointer">`;
+                innerHtml = `<img src="${esc(mediaSrc)}" onclick="window.openCommImagePreview(this.src)" class="max-w-[195px] max-h-[195px] rounded-xl object-cover cursor-pointer">`;
             }
             if (baseText && data.mediaType !== 'document') {
                 innerHtml += `<div class="mt-1.5 text-sm">${esc(baseText)}</div>`;
             }
         } else if (data.isLocation && data.embedLink) {
             bubbleStyle = 'bg-[#0b141a] border border-[#00a884] !p-0 overflow-hidden';
-            innerHtml = `<div class="flex flex-col w-[200px] sm:w-[230px]"><iframe width="100%" height="130" frameborder="0" scrolling="no" src="${esc(data.embedLink)}" style="pointer-events:none;"></iframe><a href="${esc(data.mapLink)}" target="_blank" class="bg-[#202c33] p-2 text-center text-xs text-blue-400 font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-map-location-dot"></i> ${esc(t('comm_open_maps'))}</a></div>`;
+            innerHtml = `<div class="flex flex-col w-[195px] sm:w-[225px]"><iframe width="100%" height="125" frameborder="0" scrolling="no" src="${esc(data.embedLink)}" style="pointer-events:none;"></iframe><a href="${esc(data.mapLink)}" target="_blank" class="bg-[#202c33] p-2 text-center text-xs text-blue-400 font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-map-location-dot"></i> ${esc(t('comm_open_maps'))}</a></div>`;
         } else {
             innerHtml = `<span>${esc(baseText)}</span>`;
         }
 
+        const dotsBtn = `<button type="button" onclick="window.openCommMsgActionMenu('${esc(snap.key)}')" class="text-[#8696a0] hover:text-white px-1.5 py-1 self-center shrink-0 transition" title="Actions"><i class="fa-solid fa-ellipsis-vertical text-xs"></i></button>`;
+
         const bubbleHtml = `
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[82%]">
                 <span class="text-[0.64rem] text-[#8696a0] mb-0.5 px-1">${esc(name)}</span>
-                <div class="px-3 py-2 rounded-2xl text-sm ${bubbleStyle}">
-                    ${innerHtml}
+                <div class="flex items-center gap-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}">
+                    <div class="px-3 py-2 rounded-2xl text-sm ${bubbleStyle}">
+                        ${innerHtml}
+                    </div>
+                    ${dotsBtn}
                 </div>
             </div>
         `;
@@ -2121,7 +2278,7 @@
     }
 
     // ============================================================
-    // 10. ИЗОЛИРОВАННЫЙ МИКРОФОН (ТОЛЬКО ГОЛОС В ТЕКСТ, 1-В-1 С chat.js)
+    // 10. ИЗОЛИРОВАННЫЙ МИКРОФОН (ТОЛЬКО ГОЛОС В ТЕКСТ)
     // ============================================================
     function cmNorm(s) {
         return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
@@ -2180,6 +2337,8 @@
 
     window.onCommMicBtnClick = function () {
         document.getElementById('hf-comm-attach-menu')?.classList.remove('active');
+        document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
         if (typeof window.closeEmojiPicker === 'function') window.closeEmojiPicker();
         if (CM.micActive) {
             window.stopCommMic(false);
@@ -2327,7 +2486,91 @@
     };
 
     // ============================================================
-    // 11. СЛУШАТЕЛИ FIREBASE И ЗАПУСК
+    // 11. ПРАВА БОГА 777: ГЛОБАЛЬНАЯ РАЗБЛОКИРОВКА В СООБЩЕСТВАХ
+    // ============================================================
+    window.godUnbanCommunityUser = async function (targetUid) {
+        const uid = String(targetUid || '').trim();
+        if (!uid || typeof firebase === 'undefined' || !firebase.database) return;
+        const db = firebase.database();
+
+        try {
+            await db.ref('communities_global_bans/' + uid).remove();
+            await db.ref('communities_strikes/' + uid).remove();
+
+            const metaSnap = await db.ref('communities_meta').once('value');
+            const rooms = metaSnap.val() || {};
+            const updates = {};
+            Object.keys(rooms).forEach(rId => {
+                if (rooms[rId] && rooms[rId].banned && rooms[rId].banned[uid]) {
+                    updates[`communities_meta/${rId}/banned/${uid}`] = null;
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+                await db.ref().update(updates);
+            }
+
+            if (window.showToast) window.showToast('God Mode 777', 'Пользователь разблокирован в Сообществах ✓', '', '');
+            else alert('Пользователь ' + uid + ' полностью разблокирован!');
+        } catch (e) {
+            alert('Ошибка разблокировки: ' + e.message);
+        }
+    };
+
+    window.godOpenCommBansList = async function () {
+        if (typeof firebase === 'undefined' || !firebase.database) return;
+        const db = firebase.database();
+        const [bansSnap, strikesSnap] = await Promise.all([
+            db.ref('communities_global_bans').once('value'),
+            db.ref('communities_strikes').once('value')
+        ]);
+
+        const globalBans = bansSnap.val() || {};
+        const strikes = strikesSnap.val() || {};
+        const allIds = Array.from(new Set([...Object.keys(globalBans), ...Object.keys(strikes)]));
+
+        let existing = document.getElementById('hf-god-comm-unban-modal');
+        if (!existing) {
+            existing = document.createElement('div');
+            existing.id = 'hf-god-comm-unban-modal';
+            existing.className = 'fixed inset-0 z-[99999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4';
+            existing.onclick = (e) => { if (e.target === existing) existing.remove(); };
+            document.body.appendChild(existing);
+        }
+
+        const byId = {};
+        (window.participants || []).forEach(p => { if (p && p.id) byId[String(p.id)] = p; });
+
+        const rows = allIds.length ? allIds.map(uid => {
+            const p = byId[uid] || { name: uid, flag: '🚫', photo: 'https://ui-avatars.com/api/?name=U' };
+            const isGlob = Boolean(globalBans[uid]);
+            const stCount = strikes[uid] ? Object.keys(strikes[uid]).length : 0;
+            return `
+                <div class="flex items-center justify-between gap-2 p-2.5 bg-[#202c33] rounded-xl border ${isGlob ? 'border-red-500/60' : 'border-[#2a3942]'}">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <img src="${esc(p.photo)}" class="w-8 h-8 rounded-full object-cover shrink-0">
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-white truncate">${esc(p.flag || '')} ${esc((p.name || uid).split(' ')[0])}</div>
+                            <div class="text-[0.65rem] ${isGlob ? 'text-red-400' : 'text-amber-400'}">${isGlob ? 'ГЛОБАЛЬНЫЙ БАН' : 'Страйков: ' + stCount} • ID: ${esc(uid)}</div>
+                        </div>
+                    </div>
+                    <button onclick="window.godUnbanCommunityUser('${esc(uid)}').then(() => window.godOpenCommBansList())" class="px-3 py-1.5 rounded-lg bg-[#00a884] text-[#111b21] text-xs font-extrabold shrink-0">Разблок.</button>
+                </div>
+            `;
+        }).join('') : `<div class="text-xs text-[#8696a0] text-center py-6">Заблокированных пользователей нет</div>`;
+
+        existing.innerHTML = `
+            <div class="bg-[#111b21] border border-amber-500 rounded-2xl w-full max-w-sm p-4 flex flex-col gap-3 max-h-[80vh] shadow-2xl">
+                <div class="flex items-center justify-between border-b border-[#202c33] pb-2">
+                    <div class="text-sm font-bold text-amber-400">⚡ 777: Баны Сообществ</div>
+                    <button onclick="document.getElementById('hf-god-comm-unban-modal').remove()" class="text-[#8696a0] hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto flex flex-col gap-2">${rows}</div>
+            </div>
+        `;
+    };
+
+    // ============================================================
+    // 12. СЛУШАТЕЛИ FIREBASE И ЗАПУСК
     // ============================================================
     function bindFirebaseMetaAndInvites() {
         if (typeof firebase === 'undefined' || !firebase.database) {
@@ -2422,8 +2665,10 @@
             const idx = e.detail && e.detail.index;
             CM.isTabActive = (idx === 7);
             if (idx === 7) {
+                if (CM.activeRoomId) setMyRoomPresence(CM.activeRoomId, true);
                 renderRoot(false);
             } else {
+                if (CM.activeRoomId) setMyRoomPresence(CM.activeRoomId, false);
                 window.closeCommPopups();
                 window.stopCommMic(true);
             }
