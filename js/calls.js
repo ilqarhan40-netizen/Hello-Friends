@@ -1120,7 +1120,7 @@ window.hangUpCall = function() {
 };
 
 window.initSignalListener = function() {
-    if (!window.myProfileInfo || !window.myProfileInfo.id || window.isGuest) return;
+    if (!window.myProfileInfo || !window.myProfileInfo.id || window.myProfileInfo.id === 'guest' || window.isGuest) return;
     if (window.isSignalListenerActive) return;
     window.isSignalListenerActive = true;
 
@@ -1130,7 +1130,7 @@ window.initSignalListener = function() {
         const sig = snap.val();
         if (!sig) return;
 
-        const age = sig.timestamp ? (Date.now() - sig.timestamp) : 0;
+        const age = sig.timestamp ? Math.abs(Date.now() - sig.timestamp) : 0;
 
         if (sig.type === 'call') {
             if (age < 30000) {
@@ -1146,7 +1146,7 @@ window.initSignalListener = function() {
         }
         else if (sig.type === 'reject') {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
-            if (age > 15000) return;
+            if (age > 60000) return;
 
             const wasInRoom = !window._isOutgoingCallModal && (window.currentIndex === 1 || Boolean(window.agoraClient));
             window.hideCallModal();
@@ -1160,7 +1160,7 @@ window.initSignalListener = function() {
         }
         else if (sig.type === 'answered') {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
-            if (age > 15000) return;
+            if (age > 60000) return;
 
             // Закрываем экран исходящего вызова и зеркально заходим в комнату одновременно с собеседником
             window.hideCallModal();
@@ -1198,7 +1198,7 @@ window.initSignalListener = function() {
         }
         else if (sig.type === 'missed') {
             firebase.database().ref(mySignalPath + '/' + snap.key).remove();
-            if (age > 15000) return;
+            if (age > 60000) return;
 
             window.hideCallModal();
             window.stopAllRings();
@@ -1207,11 +1207,13 @@ window.initSignalListener = function() {
 };
 
 let signalInitCheck = setInterval(() => {
-    if (window.myProfileInfo && window.myProfileInfo.id && typeof firebase !== 'undefined') {
+    const myId = window.myProfileInfo && window.myProfileInfo.id;
+    if (myId && myId !== 'guest' && !window.isGuest && typeof firebase !== 'undefined') {
         window.initSignalListener();
         clearInterval(signalInitCheck);
     }
-}, 1000);
+}, 800);
+
 
 window.makeCallFromContact = function(userId, type = 'voice') {
     const target = (window.participants || []).find(p => String(p.id) === String(userId));
