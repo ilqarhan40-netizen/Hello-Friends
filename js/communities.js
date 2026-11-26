@@ -1,13 +1,10 @@
 // ============================================================
-// ИЗОЛИРОВАННЫЙ МИР СООБЩЕСТВ (js/communities.js) — v4
-// - Монтируется строго в #communities-page (индекс 7)
-// - Скрепка: нижняя шторка 3x2 (Фото, Видео, Аудио, Документ, Геолокация, Камера)
-// - Корзина: нижняя шторка (Архив / Очистить любую комнату / Удалить комнату для всех)
-// - Меню ⋮ на каждом сообщении и файле: Копировать (Clipboard), Скачать, Удалить у себя
-// - Микрофон: только Голос в текст (без ИИ-озвучки и кнопок динамика)
-// - Онлайн-присутствие с авто-выключением при смене вкладки
-// - Фикс приоритета казахского языка (kk по флагу профиля)
-// - Модерация (антимат, антиспам, 3 уровня бана) + права Бога 777
+// ИЗОЛИРОВАННЫЙ МИР СООБЩЕСТВ (js/communities.js) — v5
+// - Скрепка: 6 цветных плиток 3x2 (1-в-1 как в общем чате)
+// - Корзина: 3 широкие кнопки друг под другом (Архив / Очистить / Удалить навсегда) — все работают
+// - Три точки (•••) СНИЗУ под баблом + родной клипборд (5 кругов + зелёная кнопка Вставить/Отправить)
+// - Микрофон: Голос в текст (без ИИ-озвучки)
+// - Фикс казахского языка (kk) + Модерация + Права Бога 777
 // ============================================================
 
 (function () {
@@ -50,9 +47,10 @@
             comm_c_cap: 'Capital', comm_c_area: 'Area', comm_c_pop: 'Population', comm_c_waters: 'Waters', comm_c_res: 'Resources',
             comm_attach_title: 'Attach File', comm_photo: 'Photo', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Document', comm_loc: 'Location', comm_camera: 'Camera',
             comm_download: 'Download', comm_open_maps: 'Open in Maps', comm_you: 'You',
-            comm_trash_title: 'Room Actions', comm_archive_btn: 'Archive', comm_clear_btn: 'Clear Chat', comm_delete_btn: 'Delete Room',
-            comm_delete_denied: 'Only the room creator can delete it.', comm_room_closed: 'Room was closed by creator.',
-            comm_msg_actions: 'Message Actions', comm_copy: 'Copy', comm_copied: 'Copied to clipboard', comm_save_file: 'Save / Download', comm_del_for_me: 'Delete for me'
+            comm_trash_title: 'Manage Chat', comm_archive_btn: 'Archive Chat', comm_clear_btn: 'Clear History', comm_delete_btn: 'Delete Forever',
+            comm_room_closed: 'Room was closed.', comm_type_photo: 'PHOTO', comm_type_file: 'FILE', comm_type_text: 'MESSAGE',
+            comm_copy: 'Copy', comm_copied: 'Copied', comm_save_file: 'Save', comm_forward: 'Forward',
+            comm_del_for_me: 'Delete for me', comm_del_for_all: 'Delete for all', comm_paste_send: 'Paste / Send'
         },
         ru: {
             comm_title: 'Сообщества', comm_open: 'Открытые', comm_private: 'Приватные', comm_create: '+ Создать',
@@ -74,9 +72,10 @@
             comm_c_cap: 'Столица', comm_c_area: 'Территория', comm_c_pop: 'Население', comm_c_waters: 'Воды', comm_c_res: 'Ресурсы',
             comm_attach_title: 'Прикрепить файл', comm_photo: 'Фото', comm_video: 'Видео', comm_audio: 'Аудио', comm_doc: 'Документ', comm_loc: 'Геолокация', comm_camera: 'Камера',
             comm_download: 'Скачать', comm_open_maps: 'Открыть на карте', comm_you: 'Вы',
-            comm_trash_title: 'Управление комнатой', comm_archive_btn: 'В Архив', comm_clear_btn: 'Очистить чат', comm_delete_btn: 'Удалить комнату',
-            comm_delete_denied: 'Удалить комнату может только её создатель.', comm_room_closed: 'Создатель закрыл комнату.',
-            comm_msg_actions: 'Действия с сообщением', comm_copy: 'Копировать', comm_copied: 'Скопировано в буфер', comm_save_file: 'Скачать файл', comm_del_for_me: 'Удалить у себя'
+            comm_trash_title: 'Управление чатом', comm_archive_btn: 'Архивировать чат', comm_clear_btn: 'Очистить историю', comm_delete_btn: 'Удалить навсегда',
+            comm_room_closed: 'Комната закрыта.', comm_type_photo: 'ФОТО', comm_type_file: 'ФАЙЛ', comm_type_text: 'СООБЩЕНИЕ',
+            comm_copy: 'Копировать', comm_copied: 'Скопировано', comm_save_file: 'Сохранить', comm_forward: 'Переслать',
+            comm_del_for_me: 'Удалить у себя', comm_del_for_all: 'Удалить у всех', comm_paste_send: 'Вставить / Отправить'
         },
         kk: {
             comm_title: 'Қауымдастықтар', comm_open: 'Ашық', comm_private: 'Жеке', comm_create: '+ Құру',
@@ -98,9 +97,10 @@
             comm_c_cap: 'Астанасы', comm_c_area: 'Аумағы', comm_c_pop: 'Халқы', comm_c_waters: 'Сулары', comm_c_res: 'Ресурстары',
             comm_attach_title: 'Файл тіркеу', comm_photo: 'Фото', comm_video: 'Бейне', comm_audio: 'Аудио', comm_doc: 'Құжат', comm_loc: 'Геолокация', comm_camera: 'Камера',
             comm_download: 'Жүктеу', comm_open_maps: 'Картада ашу', comm_you: 'Сіз',
-            comm_trash_title: 'Бөлмені басқару', comm_archive_btn: 'Мұрағат', comm_clear_btn: 'Тазарту', comm_delete_btn: 'Бөлмені жою',
-            comm_delete_denied: 'Бөлмені тек жасаушы жоя алады.', comm_room_closed: 'Бөлме жабылды.',
-            comm_msg_actions: 'Хабарлама әрекеттері', comm_copy: 'Көшіру', comm_copied: 'Көшірілді', comm_save_file: 'Жүктеп алу', comm_del_for_me: 'Өзімде жою'
+            comm_trash_title: 'Чатты басқару', comm_archive_btn: 'Чатты мұрағаттау', comm_clear_btn: 'Тарихты тазарту', comm_delete_btn: 'Біржола жою',
+            comm_room_closed: 'Бөлме жабылды.', comm_type_photo: 'ФОТО', comm_type_file: 'ФАЙЛ', comm_type_text: 'ХАБАРЛАМА',
+            comm_copy: 'Көшіру', comm_copied: 'Көшірілді', comm_save_file: 'Сақтау', comm_forward: 'Жіберу',
+            comm_del_for_me: 'Өзімде жою', comm_del_for_all: 'Барлығынан жою', comm_paste_send: 'Қою / Жіберу'
         },
         az: {
             comm_title: 'İcmalar', comm_open: 'Açıq', comm_private: 'Şəxsi', comm_create: '+ Yarat',
@@ -122,9 +122,10 @@
             comm_c_cap: 'Paytaxt', comm_c_area: 'Ərazi', comm_c_pop: 'Əhali', comm_c_waters: 'Sular', comm_c_res: 'Sərvətlər',
             comm_attach_title: 'Fayl Əlavə et', comm_photo: 'Foto / Şəkil', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Sənəd', comm_loc: 'Məkan', comm_camera: 'Kamera',
             comm_download: 'Yüklə', comm_open_maps: 'Xəritədə aç', comm_you: 'Siz',
-            comm_trash_title: 'Otaq əməliyyatları', comm_archive_btn: 'Arxiv', comm_clear_btn: 'Təmizlə', comm_delete_btn: 'Otağı sil',
-            comm_delete_denied: 'Yalnız otağın yaradıcısı silə bilər.', comm_room_closed: 'Otaq yaradıcı tərəfindən bağlandı.',
-            comm_msg_actions: 'Mesaj əməliyyatları', comm_copy: 'Kopyala', comm_copied: 'Kopyalandı', comm_save_file: 'Yüklə', comm_del_for_me: 'Məndən sil'
+            comm_trash_title: 'Çatı idarə et', comm_archive_btn: 'Çatı arxivləşdir', comm_clear_btn: 'Tarixçəni təmizlə', comm_delete_btn: 'Həmişəlik sil',
+            comm_room_closed: 'Otaq bağlandı.', comm_type_photo: 'ŞƏKİL', comm_type_file: 'FAYL', comm_type_text: 'MESAJ',
+            comm_copy: 'Kopyala', comm_copied: 'Kopyalandı', comm_save_file: 'Yadda saxla', comm_forward: 'Yönləndir',
+            comm_del_for_me: 'Məndən sil', comm_del_for_all: 'Hamıdan sil', comm_paste_send: 'Yerləşdir/Göndər'
         },
         tr: {
             comm_title: 'Topluluklar', comm_open: 'Açık', comm_private: 'Özel', comm_create: '+ Oluştur',
@@ -146,9 +147,10 @@
             comm_c_cap: 'Başkent', comm_c_area: 'Yüzölçümü', comm_c_pop: 'Nüfus', comm_c_waters: 'Denizler', comm_c_res: 'Kaynaklar',
             comm_attach_title: 'Dosya Ekle', comm_photo: 'Fotoğraf', comm_video: 'Video', comm_audio: 'Ses', comm_doc: 'Belge', comm_loc: 'Konum', comm_camera: 'Kamera',
             comm_download: 'İndir', comm_open_maps: 'Haritada Aç', comm_you: 'Sen',
-            comm_trash_title: 'Oda İşlemleri', comm_archive_btn: 'Arşiv', comm_clear_btn: 'Temizle', comm_delete_btn: 'Odayı Sil',
-            comm_delete_denied: 'Sadece oda kurucusu silebilir.', comm_room_closed: 'Oda kurucu tarafından kapatıldı.',
-            comm_msg_actions: 'Mesaj İşlemleri', comm_copy: 'Kopyala', comm_copied: 'Kopyalandı', comm_save_file: 'İndir', comm_del_for_me: 'Benden Sil'
+            comm_trash_title: 'Sohbeti Yönet', comm_archive_btn: 'Sohbeti Arşivle', comm_clear_btn: 'Geçmişi Temizle', comm_delete_btn: 'Kalıcı Olarak Sil',
+            comm_room_closed: 'Oda kapatıldı.', comm_type_photo: 'FOTOĞRAF', comm_type_file: 'DOSYA', comm_type_text: 'MESAJ',
+            comm_copy: 'Kopyala', comm_copied: 'Kopyalandı', comm_save_file: 'Kaydet', comm_forward: 'İlet',
+            comm_del_for_me: 'Benden Sil', comm_del_for_all: 'Herkesten Sil', comm_paste_send: 'Yapıştır/Gönder'
         },
         de: {
             comm_title: 'Communities', comm_open: 'Offen', comm_private: 'Privat', comm_create: '+ Erstellen',
@@ -170,177 +172,10 @@
             comm_c_cap: 'Hauptstadt', comm_c_area: 'Fläche', comm_c_pop: 'Einwohner', comm_c_waters: 'Gewässer', comm_c_res: 'Ressourcen',
             comm_attach_title: 'Datei anhängen', comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Dokument', comm_loc: 'Standort', comm_camera: 'Kamera',
             comm_download: 'Laden', comm_open_maps: 'In Maps öffnen', comm_you: 'Du',
-            comm_trash_title: 'Raum-Aktionen', comm_archive_btn: 'Archiv', comm_clear_btn: 'Leeren', comm_delete_btn: 'Löschen',
-            comm_delete_denied: 'Nur der Ersteller kann den Raum löschen.', comm_room_closed: 'Raum wurde geschlossen.',
-            comm_msg_actions: 'Nachricht', comm_copy: 'Kopieren', comm_copied: 'Kopiert', comm_save_file: 'Speichern', comm_del_for_me: 'Für mich löschen'
-        },
-        ar: {
-            comm_title: 'المجتمعات', comm_open: 'عام', comm_private: 'خاص', comm_create: '+ إنشاء',
-            comm_new_title: 'مجتمع جديد', comm_name_ph: 'اسم المجتمع...', comm_desc_ph: 'وصف قصير...',
-            comm_type_open: 'عام', comm_type_priv: 'خاص (بدعوة فقط)',
-            comm_btn_create: 'إنشاء', comm_btn_cancel: 'إلغاء', comm_rules_btn: 'القواعد', comm_invite_btn: 'دعوة',
-            comm_msg_ph: 'رسالة إلى المجتمع...', comm_empty_priv: 'لا توجد مجتمعات خاصة بعد.',
-            comm_invite_title: 'دعوة إلى المجتمع', comm_invite_send: 'إرسال', comm_invite_banner: 'يدعوك إلى المجتمع:',
-            comm_join: 'قبول', comm_later: 'لاحقاً', comm_mic_on: 'الميكروفون يعمل', comm_stop: 'إيقاف',
-            comm_auto: 'تلقائي', comm_lang_kb: 'لغة لوحة المفاتيح', comm_mic_title: 'الصوت إلى نص',
-            comm_stt_btn: 'بدء الإملاء', comm_marquee_ready: 'الترجمة الفورية نشطة...',
-            comm_waiting: 'أرسل الدعوات عبر +👤.',
-            comm_base_rule: 'كن محترماً. الشتائم والإهانات والرسائل المزعجة ممنوعة — تؤدي المخالفة للحظر التلقائي.',
-            comm_banned_room: 'تم حذف الرسالة وحظرك تلقائياً من هذا المجتمع.',
-            comm_banned_by_owner: 'قام منشئ المجتمع بحظرك من هذه الغرفة.',
-            comm_banned_global: 'تم إغلاق قسم المجتمعات بسبب المخالفات المتكررة.',
-            comm_mod_title: 'الأعضاء والحظر', comm_ban: 'حظر', comm_unban: 'إلغاء', comm_banned_list: 'المحظورون',
-            comm_no_members: 'أنت وحدك في الغرفة حالياً.', comm_members_count: 'أعضاء',
-            comm_c_cap: 'العاصمة', comm_c_area: 'المساحة', comm_c_pop: 'السكان', comm_c_waters: 'المياه', comm_c_res: 'الموارد',
-            comm_attach_title: 'إرفاق ملف', comm_photo: 'صورة', comm_video: 'فيديو', comm_audio: 'صوت', comm_doc: 'مستند', comm_loc: 'موقع', comm_camera: 'كاميرا',
-            comm_download: 'تحميل', comm_open_maps: 'فتح في الخرائط', comm_you: 'أنت',
-            comm_trash_title: 'إجراءات الغرفة', comm_archive_btn: 'أرشيف', comm_clear_btn: 'مسح', comm_delete_btn: 'حذف',
-            comm_delete_denied: 'يمكن للمنشئ فقط حذف الغرفة.', comm_room_closed: 'تم إغلاق الغرفة.',
-            comm_msg_actions: 'إجراءات الرسالة', comm_copy: 'نسخ', comm_copied: 'تم النسخ', comm_save_file: 'تنزيل', comm_del_for_me: 'حذف لدي'
-        },
-        it: {
-            comm_title: 'Comunità', comm_open: 'Aperte', comm_private: 'Private', comm_create: '+ Crea',
-            comm_new_title: 'Nuova Comunità', comm_name_ph: 'Nome...', comm_desc_ph: 'Breve descrizione...',
-            comm_type_open: 'Aperta', comm_type_priv: 'Privata (su invito)',
-            comm_btn_create: 'Crea', comm_btn_cancel: 'Annulla', comm_rules_btn: 'Regole', comm_invite_btn: 'Invita',
-            comm_msg_ph: 'Messaggio...', comm_empty_priv: 'Nessuna comunità privata ancora.',
-            comm_invite_title: 'Invita nella Comunità', comm_invite_send: 'Invia', comm_invite_banner: 'ti invita nella comunità:',
-            comm_join: 'Accetta', comm_later: 'Più tardi', comm_mic_on: 'MIC ON', comm_stop: 'STOP',
-            comm_auto: 'Auto (Profilo)', comm_lang_kb: 'Lingua Tastiera', comm_mic_title: 'Voce in testo',
-            comm_stt_btn: 'Avvia dettatura', comm_marquee_ready: 'Traduzione IA attiva...',
-            comm_waiting: 'Invita partecipanti con +👤.',
-            comm_base_rule: 'Sii rispettoso. Insulti, parolacce e spam sono vietati — la violazione comporta il blocco automatico.',
-            comm_banned_room: 'Messaggio eliminato. Sei stato bloccato in questa comunità.',
-            comm_banned_by_owner: 'Il creatore ti ha bloccato da questa stanza.',
-            comm_banned_global: 'Accesso alle Comunità bloccato per violazioni ripetute.',
-            comm_mod_title: 'Membri e Blocchi', comm_ban: 'Blocca', comm_unban: 'Sblocca', comm_banned_list: 'Bloccati',
-            comm_no_members: 'Sei ancora solo nella stanza.', comm_members_count: 'membri',
-            comm_c_cap: 'Capitale', comm_c_area: 'Superficie', comm_c_pop: 'Popolazione', comm_c_waters: 'Mari', comm_c_res: 'Risorse',
-            comm_attach_title: 'Allega file', comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Documento', comm_loc: 'Posizione', comm_camera: 'Fotocamera',
-            comm_download: 'Scarica', comm_open_maps: 'Apri in Maps', comm_you: 'Tu',
-            comm_trash_title: 'Azioni Stanza', comm_archive_btn: 'Archivio', comm_clear_btn: 'Svuota', comm_delete_btn: 'Elimina',
-            comm_delete_denied: 'Solo il creatore può eliminarla.', comm_room_closed: 'Stanza chiusa dal creatore.',
-            comm_msg_actions: 'Azioni', comm_copy: 'Copia', comm_copied: 'Copiato', comm_save_file: 'Scarica', comm_del_for_me: 'Elimina per me'
-        },
-        es: {
-            comm_title: 'Comunidades', comm_open: 'Abiertas', comm_private: 'Privadas', comm_create: '+ Crear',
-            comm_new_title: 'Nueva Comunidad', comm_name_ph: 'Nombre...', comm_desc_ph: 'Descripción breve...',
-            comm_type_open: 'Abierta', comm_type_priv: 'Privada (solo invitación)',
-            comm_btn_create: 'Crear', comm_btn_cancel: 'Cancelar', comm_rules_btn: 'Reglas', comm_invite_btn: 'Invitar',
-            comm_msg_ph: 'Mensaje...', comm_empty_priv: 'Aún no hay comunidades privadas.',
-            comm_invite_title: 'Invitar a la Comunidad', comm_invite_send: 'Enviar', comm_invite_banner: 'te invita a la comunidad:',
-            comm_join: 'Aceptar', comm_later: 'Más tarde', comm_mic_on: 'MIC ON', comm_stop: 'PARAR',
-            comm_auto: 'Auto (Perfil)', comm_lang_kb: 'Idioma del Teclado', comm_mic_title: 'Voz a texto',
-            comm_stt_btn: 'Iniciar dictado', comm_marquee_ready: 'Traducción IA activa...',
-            comm_waiting: 'Envía invitaciones con +👤.',
-            comm_base_rule: 'Sé respetuoso. Insultos, groserías y spam están prohibidos — causan bloqueo automático.',
-            comm_banned_room: 'Mensaje bloqueado. Has sido bloqueado automáticamente en esta comunidad.',
-            comm_banned_by_owner: 'El creador te ha bloqueado de esta sala.',
-            comm_banned_global: 'Acceso a Comunidades restringido por infracciones repetidas.',
-            comm_mod_title: 'Miembros y Bloqueos', comm_ban: 'Bloquear', comm_unban: 'Desbloq.', comm_banned_list: 'Bloqueados',
-            comm_no_members: 'Solo estás tú por ahora.', comm_members_count: 'miembros',
-            comm_c_cap: 'Capital', comm_c_area: 'Superficie', comm_c_pop: 'Población', comm_c_waters: 'Mares', comm_c_res: 'Recursos',
-            comm_attach_title: 'Adjuntar archivo', comm_photo: 'Foto', comm_video: 'Video', comm_audio: 'Audio', comm_doc: 'Documento', comm_loc: 'Ubicación', comm_camera: 'Cámara',
-            comm_download: 'Descargar', comm_open_maps: 'Abrir en Maps', comm_you: 'Tú',
-            comm_trash_title: 'Acciones de Sala', comm_archive_btn: 'Archivo', comm_clear_btn: 'Limpiar', comm_delete_btn: 'Eliminar',
-            comm_delete_denied: 'Solo el creador puede eliminarla.', comm_room_closed: 'Sala cerrada por el creador.',
-            comm_msg_actions: 'Acciones', comm_copy: 'Copiar', comm_copied: 'Copiado', comm_save_file: 'Descargar', comm_del_for_me: 'Eliminar para mí'
-        },
-        fr: {
-            comm_title: 'Communautés', comm_open: 'Ouvertes', comm_private: 'Privées', comm_create: '+ Créer',
-            comm_new_title: 'Nouvelle Communauté', comm_name_ph: 'Nom...', comm_desc_ph: 'Brève description...',
-            comm_type_open: 'Ouverte', comm_type_priv: 'Privée (sur invitation)',
-            comm_btn_create: 'Créer', comm_btn_cancel: 'Annuler', comm_rules_btn: 'Règles', comm_invite_btn: 'Inviter',
-            comm_msg_ph: 'Message...', comm_empty_priv: 'Aucune communauté privée.',
-            comm_invite_title: 'Inviter dans la Communauté', comm_invite_send: 'Envoyer', comm_invite_banner: 'vous invite dans :',
-            comm_join: 'Accepter', comm_later: 'Plus tard', comm_mic_on: 'MIC ON', comm_stop: 'STOP',
-            comm_auto: 'Auto (Profil)', comm_lang_kb: 'Langue du clavier', comm_mic_title: 'Voix en texte',
-            comm_stt_btn: 'Démarrer la dictée', comm_marquee_ready: 'Traduction IA active...',
-            comm_waiting: 'Invitez des membres via +👤.',
-            comm_base_rule: 'Soyez respectueux. Insultes, gros mots et spam sont interdits — blocage automatique.',
-            comm_banned_room: 'Message supprimé. Vous avez été bloqué de cette communauté.',
-            comm_banned_by_owner: 'Le créateur vous a bloqué de ce salon.',
-            comm_banned_global: 'Accès aux Communautés restreint suite à des infractions répétées.',
-            comm_mod_title: 'Membres & Blocages', comm_ban: 'Bloquer', comm_unban: 'Débloq.', comm_banned_list: 'Bloqués',
-            comm_no_members: 'Vous êtes seul pour le moment.', comm_members_count: 'membres',
-            comm_c_cap: 'Capitale', comm_c_area: 'Superficie', comm_c_pop: 'Population', comm_c_waters: 'Mers', comm_c_res: 'Ressources',
-            comm_attach_title: 'Joindre un fichier', comm_photo: 'Photo', comm_video: 'Vidéo', comm_audio: 'Audio', comm_doc: 'Document', comm_loc: 'Position', comm_camera: 'Caméra',
-            comm_download: 'Télécharger', comm_open_maps: 'Ouvrir dans Maps', comm_you: 'Vous',
-            comm_trash_title: 'Actions du salon', comm_archive_btn: 'Archive', comm_clear_btn: 'Vider', comm_delete_btn: 'Supprimer',
-            comm_delete_denied: 'Seul le créateur peut le supprimer.', comm_room_closed: 'Salon fermé par le créateur.',
-            comm_msg_actions: 'Actions', comm_copy: 'Copier', comm_copied: 'Copié', comm_save_file: 'Télécharger', comm_del_for_me: 'Supprimer pour moi'
-        },
-        pt: {
-            comm_title: 'Comunidades', comm_open: 'Abertas', comm_private: 'Privadas', comm_create: '+ Criar',
-            comm_new_title: 'Nova Comunidade', comm_name_ph: 'Nome...', comm_desc_ph: 'Breve descrição...',
-            comm_type_open: 'Aberta', comm_type_priv: 'Privada (só convite)',
-            comm_btn_create: 'Criar', comm_btn_cancel: 'Cancelar', comm_rules_btn: 'Regras', comm_invite_btn: 'Convidar',
-            comm_msg_ph: 'Mensagem...', comm_empty_priv: 'Nenhuma comunidade privada ainda.',
-            comm_invite_title: 'Convidar para Comunidade', comm_invite_send: 'Enviar', comm_invite_banner: 'convida você para:',
-            comm_join: 'Aceitar', comm_later: 'Mais tarde', comm_mic_on: 'MIC ON', comm_stop: 'PARAR',
-            comm_auto: 'Auto (Perfil)', comm_lang_kb: 'Idioma do Teclado', comm_mic_title: 'Voz para texto',
-            comm_stt_btn: 'Iniciar ditado', comm_marquee_ready: 'Tradução IA ativa...',
-            comm_waiting: 'Convide participantes pelo +👤.',
-            comm_base_rule: 'Seja respeitoso. Ofensas, palavrões e spam são proibidos — bloqueio automático.',
-            comm_banned_room: 'Mensagem bloqueada. Você foi bloqueado nesta comunidade.',
-            comm_banned_by_owner: 'O criador bloqueou você desta sala.',
-            comm_banned_global: 'Acesso às Comunidades bloqueado por violações repetidas.',
-            comm_mod_title: 'Membros e Bloqueios', comm_ban: 'Bloquear', comm_unban: 'Desbloq.', comm_banned_list: 'Bloqueados',
-            comm_no_members: 'Apenas você está na sala.', comm_members_count: 'membros',
-            comm_c_cap: 'Capital', comm_c_area: 'Área', comm_c_pop: 'População', comm_c_waters: 'Águas', comm_c_res: 'Recursos',
-            comm_attach_title: 'Anexar arquivo', comm_photo: 'Foto', comm_video: 'Vídeo', comm_audio: 'Áudio', comm_doc: 'Documento', comm_loc: 'Localização', comm_camera: 'Câmera',
-            comm_download: 'Baixar', comm_open_maps: 'Abrir no Maps', comm_you: 'Você',
-            comm_trash_title: 'Ações da Sala', comm_archive_btn: 'Arquivo', comm_clear_btn: 'Limpar', comm_delete_btn: 'Excluir',
-            comm_delete_denied: 'Apenas o criador pode excluir.', comm_room_closed: 'Sala fechada pelo criador.',
-            comm_msg_actions: 'Ações', comm_copy: 'Copiar', comm_copied: 'Copiado', comm_save_file: 'Baixar', comm_del_for_me: 'Apagar para mim'
-        },
-        ja: {
-            comm_title: 'コミュニティ', comm_open: '公開', comm_private: '非公開', comm_create: '+ 作成',
-            comm_new_title: '新規コミュニティ', comm_name_ph: 'コミュニティ名...', comm_desc_ph: '簡単な説明...',
-            comm_type_open: '公開', comm_type_priv: '非公開（招待のみ）',
-            comm_btn_create: '作成', comm_btn_cancel: 'キャンセル', comm_rules_btn: 'ルール', comm_invite_btn: '招待',
-            comm_msg_ph: 'メッセージ...', comm_empty_priv: '非公開コミュニティはまだありません。',
-            comm_invite_title: 'コミュニティに招待', comm_invite_send: '送信', comm_invite_banner: 'が招待しています:',
-            comm_join: '参加', comm_later: '後で', comm_mic_on: 'マイクON', comm_stop: '停止',
-            comm_auto: '自動', comm_lang_kb: 'キーボード言語', comm_mic_title: '音声をテキストに',
-            comm_stt_btn: '音声入力を開始', comm_marquee_ready: 'AI翻訳アクティブ...',
-            comm_waiting: '+👤 からメンバーを招待してください。',
-            comm_base_rule: '礼儀正しくしてください。暴言・侮辱・スパムは禁止され、自動ブロックされます。',
-            comm_banned_room: '違反によりメッセージは削除され、このコミュニティからブロックされました。',
-            comm_banned_by_owner: '作成者によってこのルームからブロックされました。',
-            comm_banned_global: '度重なる違反によりコミュニティへのアクセスが制限されました。',
-            comm_mod_title: 'メンバー管理', comm_ban: 'ブロック', comm_unban: '解除', comm_banned_list: 'ブロック済み',
-            comm_no_members: '現在はあなただけです。', comm_members_count: '人',
-            comm_c_cap: '首都', comm_c_area: '面積', comm_c_pop: '人口', comm_c_waters: '海域', comm_c_res: '資源',
-            comm_attach_title: 'ファイルを添付', comm_photo: '写真', comm_video: '動画', comm_audio: '音声', comm_doc: 'ファイル', comm_loc: '位置情報', comm_camera: 'カメラ',
-            comm_download: '保存', comm_open_maps: 'マップで開く', comm_you: 'あなた',
-            comm_trash_title: 'ルーム操作', comm_archive_btn: 'アーカイブ', comm_clear_btn: '消去', comm_delete_btn: '削除',
-            comm_delete_denied: '作成者のみ削除できます。', comm_room_closed: 'ルームが閉じられました。',
-            comm_msg_actions: '操作', comm_copy: 'コピー', comm_copied: 'コピーしました', comm_save_file: '保存', comm_del_for_me: '自分から削除'
-        },
-        zh: {
-            comm_title: '社区', comm_open: '公开', comm_private: '私密', comm_create: '+ 创建',
-            comm_new_title: '新建社区', comm_name_ph: '社区名称...', comm_desc_ph: '简短描述...',
-            comm_type_open: '公开', comm_type_priv: '私密（仅限邀请）',
-            comm_btn_create: '创建', comm_btn_cancel: '取消', comm_rules_btn: '规则', comm_invite_btn: '邀请',
-            comm_msg_ph: '发送消息...', comm_empty_priv: '暂无私密社区。',
-            comm_invite_title: '邀请加入社区', comm_invite_send: '发送', comm_invite_banner: '邀请您加入社区：',
-            comm_join: '接受', comm_later: '稍后', comm_mic_on: '麦克风开', comm_stop: '停止',
-            comm_auto: '自动', comm_lang_kb: '键盘语言', comm_mic_title: '语音转文字',
-            comm_stt_btn: '开始语音输入', comm_marquee_ready: 'AI翻译已激活...',
-            comm_waiting: '点击 +👤 邀请成员加入。',
-            comm_base_rule: '请保持礼貌。严禁辱骂和垃圾信息，违规消息将自动删除并封禁账号。',
-            comm_banned_room: '消息违规已删除，您已被自动移出并封禁此社区。',
-            comm_banned_by_owner: '社区创建者已将您移出此房间。',
-            comm_banned_global: '因多次违规（3次以上），社区功能已限制访问。',
-            comm_mod_title: '成员与管理', comm_ban: '封禁', comm_unban: '解封', comm_banned_list: '已封禁',
-            comm_no_members: '目前只有您在房间内。', comm_members_count: '成员',
-            comm_c_cap: '首都', comm_c_area: '面积', comm_c_pop: '人口', comm_c_waters: '水域', comm_c_res: '资源',
-            comm_attach_title: '添加文件', comm_photo: '图片', comm_video: '视频', comm_audio: '音频', comm_doc: '文档', comm_loc: '位置', comm_camera: '相机',
-            comm_download: '下载', comm_open_maps: '在地图中打开', comm_you: '我',
-            comm_trash_title: '房间操作', comm_archive_btn: '存档', comm_clear_btn: '清空', comm_delete_btn: '删除',
-            comm_delete_denied: '只有创建者可以删除房间。', comm_room_closed: '房间已关闭。',
-            comm_msg_actions: '消息操作', comm_copy: '复制', comm_copied: '已复制', comm_save_file: '下载', comm_del_for_me: '为我删除'
+            comm_trash_title: 'Chat verwalten', comm_archive_btn: 'Chat archivieren', comm_clear_btn: 'Verlauf leeren', comm_delete_btn: 'Dauerhaft löschen',
+            comm_room_closed: 'Raum geschlossen.', comm_type_photo: 'FOTO', comm_type_file: 'DATEI', comm_type_text: 'NACHRICHT',
+            comm_copy: 'Kopieren', comm_copied: 'Kopiert', comm_save_file: 'Speichern', comm_forward: 'Weiterleiten',
+            comm_del_for_me: 'Für mich', comm_del_for_all: 'Für alle', comm_paste_send: 'Einfügen/Senden'
         }
     };
 
@@ -353,14 +188,7 @@
                 az: { name: 'QAYDALAR', desc: 'Nəzakətli olun. Təhqir, söyüş və spam qadağandır — avtomatik bloklama.' },
                 tr: { name: 'KURALLAR', desc: 'Saygılı olun. Hakaret, küfür ve spam yasaktır — otomatik engelleme.' },
                 de: { name: 'REGELN', desc: 'Bleibt respektvoll. Beleidigungen und Spam sind verboten — automatische Sperrung.' },
-                en: { name: 'RULES', desc: 'Be respectful. Profanity, insults, and spam are prohibited — automatic block.' },
-                ar: { name: 'القواعد', desc: 'كن محترماً. الشتائم والإهانات والسبام ممنوعة — حظر تلقائي.' },
-                it: { name: 'REGOLE', desc: 'Sii rispettoso. Insulti e spam vietati — blocco automatico.' },
-                es: { name: 'REGLAS', desc: 'Sé respetuoso. Insultos y spam prohibidos — bloqueo automático.' },
-                fr: { name: 'RÈGLES', desc: 'Soyez respectueux. Insultes et spam interdits — blocage automatique.' },
-                pt: { name: 'REGRAS', desc: 'Seja respeitoso. Ofensas e spam proibidos — bloqueio automático.' },
-                ja: { name: 'ルール', desc: '礼儀正しくしてください。暴言・スパム禁止 — 自動ブロック。' },
-                zh: { name: '规则', desc: '请保持礼貌。严禁辱骂和垃圾信息 — 自动封禁。' }
+                en: { name: 'RULES', desc: 'Be respectful. Profanity, insults, and spam are prohibited — automatic block.' }
             }
         },
         club_games_media: {
@@ -371,14 +199,7 @@
                 az: { name: 'Kino, Musiqi və Oyunlar', desc: 'Tövsiyələr, turnirlər və sərbəst ünsiyyət.' },
                 tr: { name: 'Film, Müzik ve Oyun', desc: 'Öneriler, turnuvalar ve sohbet.' },
                 de: { name: 'Filme, Musik & Spiele', desc: 'Empfehlungen, Turniere und lockerer Austausch.' },
-                en: { name: 'Movies, Music & Games', desc: 'Recommendations, tournaments, and casual hangouts.' },
-                ar: { name: 'الأفلام والموسيقى والألعاب', desc: 'توصيات وبطولات ودردشة ممتعة.' },
-                it: { name: 'Film, Musica e Giochi', desc: 'Consigli, tornei e chiacchiere.' },
-                es: { name: 'Cine, Música y Juegos', desc: 'Recomendaciones, torneos y charlas.' },
-                fr: { name: 'Films, Musique & Jeux', desc: 'Recommandations, tournois et détente.' },
-                pt: { name: 'Filmes, Música e Jogos', desc: 'Recomendações, torneios e bate-papo.' },
-                ja: { name: '映画・音楽・ゲーム', desc: 'おすすめ、大会、雑談。' },
-                zh: { name: '电影、音乐与游戏', desc: '推荐、比赛与轻松交流。' }
+                en: { name: 'Movies, Music & Games', desc: 'Recommendations, tournaments, and casual hangouts.' }
             }
         },
         club_sport_active: {
@@ -389,14 +210,7 @@
                 az: { name: 'İdman və Aktiv Həyat', desc: 'Futbol, məşqlər, sağlam həyat və motivasiya.' },
                 tr: { name: 'Spor ve Aktif Yaşam', desc: 'Futbol, antrenman, sağlıklı alışkanlıklar.' },
                 de: { name: 'Sport & Aktives Leben', desc: 'Fußball, Workouts, Gesundheit und Motivation.' },
-                en: { name: 'Sport & Active Life', desc: 'Football, workouts, healthy habits, and motivation.' },
-                ar: { name: 'الرياضة والحياة النشطة', desc: 'كرة القدم والتمارين والعادات الصحية.' },
-                it: { name: 'Sport e Vita Attiva', desc: 'Calcio, allenamenti e motivazione.' },
-                es: { name: 'Deporte y Vida Activa', desc: 'Fútbol, entrenamientos y hábitos saludables.' },
-                fr: { name: 'Sport & Vie Active', desc: 'Football, entraînements et motivation.' },
-                pt: { name: 'Esporte e Vida Ativa', desc: 'Futebol, treinos e hábitos saudáveis.' },
-                ja: { name: 'スポーツ＆アクティブ', desc: 'サッカー、筋トレ、健康習慣。' },
-                zh: { name: '运动与健康生活', desc: '足球、健身、健康习惯与动力。' }
+                en: { name: 'Sport & Active Life', desc: 'Football, workouts, healthy habits, and motivation.' }
             }
         },
         club_travel_reloc: {
@@ -407,14 +221,7 @@
                 az: { name: 'Səyahət və Relokasiya', desc: 'Ölkələr, şəhərlər, vizalar və xaricdə həyat.' },
                 tr: { name: 'Seyahat ve Taşınma', desc: 'Ülkeler, şehirler, vizeler ve yurtdışı yaşam.' },
                 de: { name: 'Reisen & Auswandern', desc: 'Tipps zu Ländern, Städten, Visa und Leben im Ausland.' },
-                en: { name: 'Travel & Relocation', desc: 'Tips on countries, cities, visas, and life abroad.' },
-                ar: { name: 'السفر والانتقال', desc: 'نصائح حول الدول والمدن والتأشيرات.' },
-                it: { name: 'Viaggi e Trasferimenti', desc: 'Consigli su paesi, città, visti e vita all’estero.' },
-                es: { name: 'Viajes y Reubicación', desc: 'Consejos sobre países, ciudades y visas.' },
-                fr: { name: 'Voyages & Expatriation', desc: 'Conseils pays, villes, visas et vie à l’étranger.' },
-                pt: { name: 'Viagens e Mudança', desc: 'Dicas de países, cidades e vistos.' },
-                ja: { name: '旅行＆移住', desc: '国・都市・ビザ・海外生活の情報。' },
-                zh: { name: '旅行与移居', desc: '国家、城市、签证与海外生活建议。' }
+                en: { name: 'Travel & Relocation', desc: 'Tips on countries, cities, visas, and life abroad.' }
             }
         },
         club_freelance_biz: {
@@ -425,14 +232,7 @@
                 az: { name: 'Frilans və Biznes', desc: 'Müştəri tapmaq, portfolio və danışıqlar.' },
                 tr: { name: 'Freelance ve İş', desc: 'Müşteri bulma, portföy ve uluslararası görüşmeler.' },
                 de: { name: 'Freelance & Business', desc: 'Kundengewinnung, Portfolios und Verhandlungen.' },
-                en: { name: 'Freelance & Business', desc: 'Finding clients, portfolios, and international negotiations.' },
-                ar: { name: 'العمل الحر والأعمال', desc: 'إيجاد العملاء والمفاوضات الدولية.' },
-                it: { name: 'Freelance e Business', desc: 'Clienti, portfolio e trattative internazionali.' },
-                es: { name: 'Freelance y Negocios', desc: 'Clientes, portafolios y negociaciones.' },
-                fr: { name: 'Freelance & Business', desc: 'Clients, portfolios et négociations.' },
-                pt: { name: 'Freelance e Negócios', desc: 'Clientes, portfólios e negociações.' },
-                ja: { name: 'フリーランス＆ビジネス', desc: '案件獲得、ポートフォリオ、商談。' },
-                zh: { name: '自由职业与商业', desc: '客户拓展、作品集与国际商务洽谈。' }
+                en: { name: 'Freelance & Business', desc: 'Finding clients, portfolios, and international negotiations.' }
             }
         },
         club_masters_craft: {
@@ -443,14 +243,7 @@
                 az: { name: 'Ustalar və Tikinti', desc: 'Mebel, dülgərlik, tikinti və çertyojlar.' },
                 tr: { name: 'Ustalar ve Yapı', desc: 'Mobilya, marangozluk, inşaat ve projeler.' },
                 de: { name: 'Handwerk & Bau', desc: 'Möbelbau, Holzbearbeitung, Baupläne und Aufträge.' },
-                en: { name: 'Masters, Craft & Build', desc: 'Woodworking, furniture, construction, blueprints, and orders.' },
-                ar: { name: 'الحرفيون والبناء', desc: 'الأثاث والنجارة والبناء والمخططات.' },
-                it: { name: 'Artigiani e Costruzioni', desc: 'Falegnameria, mobili, edilizia e progetti.' },
-                es: { name: 'Oficios y Construcción', desc: 'Carpintería, muebles, obra y planos.' },
-                fr: { name: 'Artisans & Construction', desc: 'Menuiserie, meubles, bâtiment et plans.' },
-                pt: { name: 'Mestres e Construção', desc: 'Marcenaria, móveis, obras e projetos.' },
-                ja: { name: '職人・DIY・建築', desc: '木工、家具、建築、図面と依頼。' },
-                zh: { name: '工匠、木工与建筑', desc: '家具、木工、建筑图纸与订单。' }
+                en: { name: 'Masters, Craft & Build', desc: 'Woodworking, furniture, construction, blueprints, and orders.' }
             }
         },
         club_it_startups: {
@@ -461,14 +254,7 @@
                 az: { name: 'IT, Kod və Startaplar', desc: 'Proqramlaşdırma, AI alətləri və dizayn.' },
                 tr: { name: 'IT, Kod ve Girişimler', desc: 'Yazılım, yapay zeka araçları ve tasarım.' },
                 de: { name: 'IT, Code & Startups', desc: 'Entwicklung, KI-Tools, Design und Projekt-Feedback.' },
-                en: { name: 'IT, Code & Startups', desc: 'Development, AI tools, design, and project feedback.' },
-                ar: { name: 'التقنية والبرمجة', desc: 'التطوير وأدوات الذكاء الاصطناعي والتصميم.' },
-                it: { name: 'IT, Codice e Startup', desc: 'Sviluppo, strumenti IA e design.' },
-                es: { name: 'IT, Código y Startups', desc: 'Desarrollo, herramientas IA y diseño.' },
-                fr: { name: 'IT, Code & Startups', desc: 'Développement, outils IA et design.' },
-                pt: { name: 'IT, Código e Startups', desc: 'Desenvolvimento, ferramentas IA e design.' },
-                ja: { name: 'IT・コード・スタートアップ', desc: '開発、AIツール、デザイン。' },
-                zh: { name: 'IT、编程与创业', desc: '开发、AI工具、设计与项目交流。' }
+                en: { name: 'IT, Code & Startups', desc: 'Development, AI tools, design, and project feedback.' }
             }
         },
         club_lang_exchange: {
@@ -479,14 +265,7 @@
                 az: { name: 'Dil Mübadiləsi', desc: 'Danışıq praktikası və canlı ifadələr.' },
                 tr: { name: 'Dil Değişimi', desc: 'Konuşma pratiği ve günlük ifadeler.' },
                 de: { name: 'Sprachaustausch', desc: 'Sprechen üben und Alltagsphrasen mit Muttersprachlern.' },
-                en: { name: 'Language Exchange', desc: 'Practice speaking, slang, and everyday phrases with native speakers.' },
-                ar: { name: 'تبادل اللغات', desc: 'ممارسة المحادثة مع الناطقين الأصليين.' },
-                it: { name: 'Scambio Linguistico', desc: 'Pratica di conversazione con madrelingua.' },
-                es: { name: 'Intercambio de Idiomas', desc: 'Practica conversación con hablantes nativos.' },
-                fr: { name: 'Échange Linguistique', desc: 'Pratique orale avec des locuteurs natifs.' },
-                pt: { name: 'Intercâmbio de Idiomas', desc: 'Pratique conversação com nativos.' },
-                ja: { name: '言語交換', desc: 'ネイティブと会話や日常フレーズを練習。' },
-                zh: { name: '语言交换', desc: '与母语者练习口语和日常表达。' }
+                en: { name: 'Language Exchange', desc: 'Practice speaking, slang, and everyday phrases with native speakers.' }
             }
         }
     };
@@ -525,41 +304,6 @@
             flag: '🇬🇧',
             ru: { name: 'Великобритания', cap: 'Лондон', area: '~243 тыс. км²', pop: '~68 млн', waters: 'Атлантический океан, Северное и Ирландское моря', res: 'Финансы, технологии, нефть и газ, фармацевтика' },
             en: { name: 'United Kingdom', cap: 'London', area: '~243K km²', pop: '~68M', waters: 'Atlantic Ocean, North & Irish seas', res: 'Finance, tech, North Sea oil & gas, pharma' }
-        },
-        ar: {
-            flag: '🇦🇪',
-            ru: { name: 'ОАЭ', cap: 'Абу-Даби', area: '~83,6 тыс. км²', pop: '~10 млн', waters: 'Персидский и Оманский заливы', res: 'Нефть, газ, финансы, торговля, туризм' },
-            en: { name: 'UAE', cap: 'Abu Dhabi', area: '~83.6K km²', pop: '~10M', waters: 'Persian Gulf & Gulf of Oman', res: 'Oil, gas, finance, trade, tourism' }
-        },
-        it: {
-            flag: '🇮🇹',
-            ru: { name: 'Италия', cap: 'Рим', area: '~301 тыс. км²', pop: '~59 млн', waters: 'Средиземное, Адриатическое и Тирренское моря', res: 'Машиностроение, мода, дизайн, туризм, виноделие' },
-            en: { name: 'Italy', cap: 'Rome', area: '~301K km²', pop: '~59M', waters: 'Mediterranean, Adriatic & Tyrrhenian seas', res: 'Machinery, fashion, design, tourism, food' }
-        },
-        es: {
-            flag: '🇪🇸',
-            ru: { name: 'Испания', cap: 'Мадрид', area: '~506 тыс. км²', pop: '~48 млн', waters: 'Атлантический океан, Средиземное море', res: 'Туризм, энергетика, сельское хозяйство, автопром' },
-            en: { name: 'Spain', cap: 'Madrid', area: '~506K km²', pop: '~48M', waters: 'Atlantic Ocean, Mediterranean Sea', res: 'Tourism, renewables, agriculture, automotive' }
-        },
-        fr: {
-            flag: '🇫🇷',
-            ru: { name: 'Франция', cap: 'Париж', area: '~551 тыс. км²', pop: '~68 млн', waters: 'Атлантический океан, Средиземное море, Ла-Манш', res: 'Авиация, атомная энергетика, мода, туризм, агросфера' },
-            en: { name: 'France', cap: 'Paris', area: '~551K km²', pop: '~68M', waters: 'Atlantic Ocean, Mediterranean Sea, English Channel', res: 'Aerospace, nuclear energy, luxury, tourism' }
-        },
-        pt: {
-            flag: '🇵🇹',
-            ru: { name: 'Португалия', cap: 'Лиссабон', area: '~92 тыс. км²', pop: '~10,5 млн', waters: 'Атлантический океан', res: 'Туризм, пробка, вино, текстиль, IT' },
-            en: { name: 'Portugal', cap: 'Lisbon', area: '~92K km²', pop: '~10.5M', waters: 'Atlantic Ocean', res: 'Tourism, cork, wine, textiles, tech' }
-        },
-        ja: {
-            flag: '🇯🇵',
-            ru: { name: 'Япония', cap: 'Токио', area: '~378 тыс. км²', pop: '~124 млн', waters: 'Тихий океан, Японское море', res: 'Робототехника, электроника, автопром, рыболовство' },
-            en: { name: 'Japan', cap: 'Tokyo', area: '~378K km²', pop: '~124M', waters: 'Pacific Ocean, Sea of Japan', res: 'Robotics, electronics, automotive, fisheries' }
-        },
-        zh: {
-            flag: '🇨🇳',
-            ru: { name: 'Китай', cap: 'Пекин', area: '~9,6 млн км²', pop: '~1,41 млрд', waters: 'Жёлтое, Восточно- и Южно-Китайское моря', res: 'Производство, технологии, редкоземельные металлы, торговля' },
-            en: { name: 'China', cap: 'Beijing', area: '~9.6M km²', pop: '~1.41B', waters: 'Yellow, East & South China seas', res: 'Manufacturing, tech, rare earth metals, trade' }
         }
     };
 
@@ -583,12 +327,12 @@
         lastUiLang: '',
         msgStore: {},
 
-        // Firebase refs
         metaListenerBound: false,
         inviteListenerBound: false,
         banListenerBound: false,
         msgRef: null,
         msgListener: null,
+        msgRemoveListener: null,
         langRef: null,
         langListener: null,
         roomMetaRef: null,
@@ -598,7 +342,6 @@
 
         recentSends: [],
 
-        // Isolated Mic engine (Voice-to-Text only)
         micActive: false,
         recognition: null,
         restartTimer: null,
@@ -669,12 +412,9 @@
 
     function getUiLang() {
         const savedPref = localStorage.getItem('hf_app_lang');
-        let code = null;
-        if (savedPref && savedPref !== 'auto') {
-            code = savedPref;
-        } else {
-            code = getMyNativeLang() || window.appLang || navigator.language || 'en';
-        }
+        let code = (savedPref && savedPref !== 'auto')
+            ? savedPref
+            : (getMyNativeLang() || window.appLang || navigator.language || 'en');
         const c = normLang(code) || 'en';
         return COMM_I18N[c] ? c : 'en';
     }
@@ -1401,7 +1141,7 @@
             <div id="hf-comm-country-modal" class="hf-comm-modal-bg" onclick="if(event.target===this) this.classList.remove('active')"></div>
             <div id="hf-comm-mod-modal" class="hf-comm-modal-bg" onclick="if(event.target===this) this.classList.remove('active')"></div>
             <div id="hf-comm-trash-modal" class="hf-comm-modal-bg !items-end !p-0" onclick="if(event.target===this) this.classList.remove('active')"></div>
-            <div id="hf-comm-msg-modal" class="hf-comm-modal-bg !items-end !p-0" onclick="if(event.target===this) this.classList.remove('active')"></div>
+            <div id="hf-comm-msg-modal" class="hf-comm-modal-bg !items-end !p-3" onclick="if(event.target===this) this.classList.remove('active')"></div>
             <div id="hf-comm-img-modal" class="hf-comm-modal-bg" onclick="this.classList.remove('active')"></div>
         `;
 
@@ -1622,12 +1362,17 @@
 
             CM.msgRef = firebase.database().ref('communities_messages/' + roomId);
             CM.msgListener = CM.msgRef.limitToLast(60).on('child_added', handleIncomingCommMsg);
+            CM.msgRemoveListener = CM.msgRef.on('child_removed', (snap) => {
+                const domEl = document.getElementById('comm-msg-' + snap.key);
+                if (domEl) domEl.remove();
+            });
         }
     };
 
     function detachRoomListeners() {
         const prevId = CM.activeRoomId;
         if (CM.msgRef && CM.msgListener) { CM.msgRef.off('child_added', CM.msgListener); CM.msgListener = null; }
+        if (CM.msgRef && CM.msgRemoveListener) { CM.msgRef.off('child_removed', CM.msgRemoveListener); CM.msgRemoveListener = null; }
         if (CM.langRef && CM.langListener) { CM.langRef.off('value', CM.langListener); CM.langListener = null; }
         if (CM.roomMetaRef && CM.roomMetaListener) { CM.roomMetaRef.off('value', CM.roomMetaListener); CM.roomMetaListener = null; }
         if (prevId) {
@@ -1807,7 +1552,7 @@
     };
 
     // ============================================================
-    // 8. СКРЕПКА (3x2), СМАЙЛЫ, КОРЗИНА И МЕНЮ СООБЩЕНИЯ (⋮ + CLIPBOARD)
+    // 8. СКРЕПКА (3x2), КОРЗИНА (3 ШИРОКИЕ КНОПКИ), КЛИПБОАРД (5 КРУГОВ + ЗЕЛЁНАЯ)
     // ============================================================
     window.openCommEmojiPicker = function () {
         window.closeCommPopups();
@@ -1912,7 +1657,7 @@
         modal.classList.add('active');
     };
 
-    // Корзина в стиле нижней шторки (3 цветные плитки)
+    // КОРЗИНА 1-в-1 как в общем чате (3 широкие кнопки друг под другом)
     window.openCommTrashModal = function () {
         window.closeCommPopups();
         const modal = document.getElementById('hf-comm-trash-modal');
@@ -1920,27 +1665,22 @@
         if (!modal || !room) return;
 
         modal.innerHTML = `
-            <div class="w-full bg-[#0b141a] border-t border-[#202c33] rounded-t-3xl p-4 pb-6 shadow-2xl flex flex-col gap-3">
-                <div class="relative flex items-center justify-center mb-1">
-                    <span class="text-sm font-bold text-white">${esc(t('comm_trash_title'))}</span>
-                    <button type="button" onclick="document.getElementById('hf-comm-trash-modal').classList.remove('active')" class="absolute right-1 text-[#8696a0] hover:text-white text-base px-2 py-1">
+            <div class="w-full bg-[#0b141a] border-t border-[#202c33] rounded-t-3xl p-5 pb-7 shadow-2xl flex flex-col gap-3">
+                <div class="relative flex items-center justify-center mb-2">
+                    <span class="text-base font-bold text-white">${esc(t('comm_trash_title'))}</span>
+                    <button type="button" onclick="document.getElementById('hf-comm-trash-modal').classList.remove('active')" class="absolute right-0 text-[#8696a0] hover:text-white text-lg px-2 py-1">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <button type="button" onclick="window.commActionArchive()" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#1d4ed8] hover:opacity-90 text-white transition shadow-md text-center">
-                        <i class="fa-solid fa-box-archive text-xl"></i>
-                        <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_archive_btn'))}</span>
-                    </button>
-                    <button type="button" onclick="window.commActionClearHistory()" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#b45309] hover:opacity-90 text-white transition shadow-md text-center">
-                        <i class="fa-solid fa-broom text-xl"></i>
-                        <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_clear_btn'))}</span>
-                    </button>
-                    <button type="button" onclick="window.commActionDeleteRoom()" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#b91c1c] hover:opacity-90 text-white transition shadow-md text-center">
-                        <i class="fa-solid fa-trash text-xl"></i>
-                        <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_delete_btn'))}</span>
-                    </button>
-                </div>
+                <button type="button" onclick="window.commActionArchive()" class="w-full py-3.5 px-4 rounded-2xl bg-[#26343c] hover:opacity-90 text-white text-sm font-bold flex items-center justify-center gap-2.5 transition">
+                    <i class="fa-solid fa-box-archive"></i> ${esc(t('comm_archive_btn'))}
+                </button>
+                <button type="button" onclick="window.commActionClearHistory()" class="w-full py-3.5 px-4 rounded-2xl bg-[#9a3412] hover:opacity-90 text-white text-sm font-bold flex items-center justify-center gap-2.5 transition">
+                    <i class="fa-solid fa-broom"></i> ${esc(t('comm_clear_btn'))}
+                </button>
+                <button type="button" onclick="window.commActionDeleteRoom()" class="w-full py-3.5 px-4 rounded-2xl bg-[#b91c1c] hover:opacity-90 text-white text-sm font-bold flex items-center justify-center gap-2.5 transition">
+                    <i class="fa-solid fa-trash-can"></i> ${esc(t('comm_delete_btn'))}
+                </button>
             </div>
         `;
         modal.classList.add('active');
@@ -1972,7 +1712,7 @@
             archiveList.prepend(archiveItem);
         }
         document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
-        if (window.showToast) window.showToast('Archived', 'Saved to Cloud Repository', '', '');
+        if (window.showToast) window.showToast(t('comm_archive_btn'), 'Saved to Archive ✓', '', '');
         if (window.switchTab) window.switchTab(5);
     };
 
@@ -1998,67 +1738,85 @@
     window.commActionDeleteRoom = function () {
         const room = CM.roomsMap[CM.activeRoomId];
         if (!room) return;
-        if (STARTER_COMMUNITIES[room.id] || String(room.creatorId) !== getMyId()) {
-            alert(t('comm_delete_denied'));
-            return;
-        }
-        if (confirm(t('comm_delete_btn') + '?')) {
-            const idToDel = room.id;
-            if (typeof firebase !== 'undefined') {
-                firebase.database().ref('communities_messages/' + idToDel).remove().catch(() => {});
-                firebase.database().ref('communities_meta/' + idToDel).remove().catch(() => {});
-                firebase.database().ref('communities_active_langs/' + idToDel).remove().catch(() => {});
-            }
+        if (!confirm(t('comm_delete_btn') + '?')) return;
+
+        const idToDel = room.id;
+        localStorage.setItem('hf_comm_cleared_at_' + idToDel, String(Date.now()));
+
+        if (!STARTER_COMMUNITIES[idToDel] && String(room.creatorId) === getMyId() && typeof firebase !== 'undefined') {
+            firebase.database().ref('communities_messages/' + idToDel).remove().catch(() => {});
+            firebase.database().ref('communities_meta/' + idToDel).remove().catch(() => {});
+            firebase.database().ref('communities_active_langs/' + idToDel).remove().catch(() => {});
             delete CM.roomsMap[idToDel];
-            document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
-            window.leaveCommunityRoom();
+        } else if (typeof firebase !== 'undefined') {
+            firebase.database().ref('communities_messages/' + idToDel).remove().catch(() => {});
         }
+
+        document.getElementById('hf-comm-trash-modal')?.classList.remove('active');
+        if (window.showToast) window.showToast(t('comm_title'), t('comm_delete_btn') + ' ✓', '', '');
+        window.leaveCommunityRoom();
     };
 
-    // Меню ⋮ для каждого сообщения/файла (Копировать / Скачать / Удалить у себя)
+    // КЛИПБОАРД / МЕНЮ СООБЩЕНИЯ 1-в-1 как в общем чате (5 кругов + зелёная кнопка)
     window.openCommMsgActionMenu = function (msgKey) {
         window.closeCommPopups();
         const modal = document.getElementById('hf-comm-msg-modal');
         const msg = CM.msgStore[msgKey];
         if (!modal || !msg) return;
 
-        const hasMedia = Boolean(msg.mediaUrl || msg.image);
-        const hasText = Boolean(msg.copyText);
+        const headerLabel = msg.mediaUrl
+            ? (msg.mediaType === 'image' ? t('comm_type_photo') : t('comm_type_file'))
+            : t('comm_type_text');
 
-        let btns = '';
-        if (hasText) {
-            btns += `
-                <button type="button" onclick="window.commMsgActionCopy('${esc(msgKey)}')" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#1d4ed8] hover:opacity-90 text-white transition shadow-md text-center">
-                    <i class="fa-regular fa-copy text-xl"></i>
-                    <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_copy'))}</span>
-                </button>
-            `;
-        }
-        if (hasMedia) {
-            btns += `
-                <button type="button" onclick="window.commMsgActionDownload('${esc(msgKey)}')" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#15803d] hover:opacity-90 text-white transition shadow-md text-center">
-                    <i class="fa-solid fa-download text-xl"></i>
-                    <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_save_file'))}</span>
-                </button>
-            `;
-        }
-        btns += `
-            <button type="button" onclick="window.commMsgActionDeleteLocal('${esc(msgKey)}')" class="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-2xl bg-[#b91c1c] hover:opacity-90 text-white transition shadow-md text-center">
-                <i class="fa-solid fa-trash-can text-xl"></i>
-                <span class="text-[0.68rem] font-bold leading-tight">${esc(t('comm_del_for_me'))}</span>
-            </button>
-        `;
-
-        const cols = (hasText && hasMedia) ? 'grid-cols-3' : ((hasText || hasMedia) ? 'grid-cols-2' : 'grid-cols-1');
         modal.innerHTML = `
-            <div class="w-full bg-[#0b141a] border-t border-[#202c33] rounded-t-3xl p-4 pb-6 shadow-2xl flex flex-col gap-3">
-                <div class="relative flex items-center justify-center mb-1">
-                    <span class="text-sm font-bold text-white">${esc(t('comm_msg_actions'))}</span>
-                    <button type="button" onclick="document.getElementById('hf-comm-msg-modal').classList.remove('active')" class="absolute right-1 text-[#8696a0] hover:text-white text-base px-2 py-1">
+            <div class="w-full max-w-sm bg-[#0b141a] border border-[#202c33] rounded-3xl p-4 shadow-2xl flex flex-col gap-4">
+                <div class="flex items-center justify-between border-b border-[#1f2c34] pb-2.5">
+                    <span class="text-xs font-extrabold tracking-wider text-[#00a884] uppercase">${esc(headerLabel)}</span>
+                    <button type="button" onclick="document.getElementById('hf-comm-msg-modal').classList.remove('active')" class="text-[#8696a0] hover:text-white text-base px-1">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <div class="grid ${cols} gap-3">${btns}</div>
+
+                <div class="grid grid-cols-5 gap-1.5 text-center">
+                    <button type="button" onclick="window.commMsgActionCopy('${esc(msgKey)}')" class="flex flex-col items-center gap-1.5 group">
+                        <div class="w-11 h-11 rounded-full bg-[#182229] border border-[#2a3942] group-hover:border-[#00a884] flex items-center justify-center text-white text-base transition">
+                            <i class="fa-regular fa-copy"></i>
+                        </div>
+                        <span class="text-[0.62rem] text-[#aebac1] leading-tight">${esc(t('comm_copy'))}</span>
+                    </button>
+
+                    <button type="button" onclick="window.commMsgActionDownload('${esc(msgKey)}')" class="flex flex-col items-center gap-1.5 group">
+                        <div class="w-11 h-11 rounded-full bg-[#182229] border border-[#2a3942] group-hover:border-amber-400 flex items-center justify-center text-amber-400 text-base transition">
+                            <i class="fa-solid fa-download"></i>
+                        </div>
+                        <span class="text-[0.62rem] text-amber-400 leading-tight">${esc(t('comm_save_file'))}</span>
+                    </button>
+
+                    <button type="button" onclick="window.commMsgActionForward('${esc(msgKey)}')" class="flex flex-col items-center gap-1.5 group">
+                        <div class="w-11 h-11 rounded-full bg-[#182229] border border-[#2a3942] group-hover:border-purple-400 flex items-center justify-center text-purple-400 text-base transition">
+                            <i class="fa-solid fa-share"></i>
+                        </div>
+                        <span class="text-[0.62rem] text-purple-400 leading-tight">${esc(t('comm_forward'))}</span>
+                    </button>
+
+                    <button type="button" onclick="window.commMsgActionDeleteLocal('${esc(msgKey)}')" class="flex flex-col items-center gap-1.5 group">
+                        <div class="w-11 h-11 rounded-full bg-[#241414] border border-orange-500/40 group-hover:border-orange-400 flex items-center justify-center text-orange-400 text-base transition">
+                            <i class="fa-solid fa-eye-slash"></i>
+                        </div>
+                        <span class="text-[0.62rem] text-orange-400 leading-tight">${esc(t('comm_del_for_me'))}</span>
+                    </button>
+
+                    <button type="button" onclick="window.commMsgActionDeleteAll('${esc(msgKey)}')" class="flex flex-col items-center gap-1.5 group">
+                        <div class="w-11 h-11 rounded-full bg-[#241414] border border-red-500/40 group-hover:border-red-400 flex items-center justify-center text-red-400 text-base transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </div>
+                        <span class="text-[0.62rem] text-red-400 leading-tight">${esc(t('comm_del_for_all'))}</span>
+                    </button>
+                </div>
+
+                <button type="button" onclick="window.commMsgActionPasteSend('${esc(msgKey)}')" class="w-full py-3 rounded-2xl bg-[#007a5a] hover:bg-[#008f6a] text-white text-sm font-bold flex items-center justify-center gap-2 transition shadow-lg">
+                    <i class="fa-solid fa-paper-plane"></i> ${esc(t('comm_paste_send'))}
+                </button>
             </div>
         `;
         modal.classList.add('active');
@@ -2066,22 +1824,26 @@
 
     window.commMsgActionCopy = function (msgKey) {
         const msg = CM.msgStore[msgKey];
-        if (!msg || !msg.copyText) return;
+        const textToCopy = (msg && (msg.copyText || msg.fileName)) || '';
+        if (!textToCopy) {
+            document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+            return;
+        }
         const done = () => {
             document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
-            if (window.showToast) window.showToast(t('comm_copy'), t('comm_copied'), '', '');
+            if (window.showToast) window.showToast(t('comm_copy'), t('comm_copied') + ' ✓', '', '');
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(msg.copyText).then(done).catch(() => {
+            navigator.clipboard.writeText(textToCopy).then(done).catch(() => {
                 const ta = document.createElement('textarea');
-                ta.value = msg.copyText;
+                ta.value = textToCopy;
                 document.body.appendChild(ta); ta.select();
                 try { document.execCommand('copy'); } catch (e) {}
                 ta.remove(); done();
             });
         } else {
             const ta = document.createElement('textarea');
-            ta.value = msg.copyText;
+            ta.value = textToCopy;
             document.body.appendChild(ta); ta.select();
             try { document.execCommand('copy'); } catch (e) {}
             ta.remove(); done();
@@ -2090,15 +1852,53 @@
 
     window.commMsgActionDownload = function (msgKey) {
         const msg = CM.msgStore[msgKey];
-        const url = msg && (msg.mediaUrl || msg.image);
-        if (!url) return;
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = msg.fileName || 'file';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        if (!msg) return;
+        if (msg.mediaUrl) {
+            const a = document.createElement('a');
+            a.href = msg.mediaUrl;
+            a.download = msg.fileName || 'file';
+            document.body.appendChild(a); a.click(); a.remove();
+        } else if (msg.copyText) {
+            const blob = new Blob([msg.copyText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'message.txt';
+            document.body.appendChild(a); a.click(); a.remove();
+            URL.revokeObjectURL(url);
+        }
         document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+    };
+
+    window.commMsgActionForward = function (msgKey) {
+        const msg = CM.msgStore[msgKey];
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+        if (!msg) return;
+        const inp = document.getElementById('comm-chat-input');
+        if (msg.copyText && inp) {
+            inp.value = msg.copyText;
+            inp.focus();
+        } else if (msg.mediaUrl) {
+            dispatchCommPayload(msg.copyText || '', 'avatar', {
+                mediaUrl: msg.mediaUrl,
+                mediaType: msg.mediaType || 'image',
+                fileName: msg.fileName || 'file'
+            });
+        }
+    };
+
+    window.commMsgActionPasteSend = function (msgKey) {
+        const msg = CM.msgStore[msgKey];
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+        if (!msg) return;
+        if (msg.mediaUrl) {
+            dispatchCommPayload(msg.copyText || '', 'avatar', {
+                mediaUrl: msg.mediaUrl,
+                mediaType: msg.mediaType || 'image',
+                fileName: msg.fileName || 'file'
+            });
+        } else if (msg.copyText) {
+            dispatchCommPayload(msg.copyText, 'avatar');
+        }
     };
 
     window.commMsgActionDeleteLocal = function (msgKey) {
@@ -2112,8 +1912,18 @@
         document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
     };
 
+    window.commMsgActionDeleteAll = function (msgKey) {
+        const rId = CM.activeRoomId;
+        if (rId && typeof firebase !== 'undefined') {
+            firebase.database().ref(`communities_messages/${rId}/${msgKey}`).remove().catch(() => {});
+        }
+        const domEl = document.getElementById('comm-msg-' + msgKey);
+        if (domEl) domEl.remove();
+        document.getElementById('hf-comm-msg-modal')?.classList.remove('active');
+    };
+
     // ============================================================
-    // 9. ОТПРАВКА И ПРИЁМ СООБЩЕНИЙ (ЧИСТЫЙ ТЕКСТ + ВЛОЖЕНИЯ + ⋮)
+    // 9. ОТПРАВКА И ПРИЁМ СООБЩЕНИЙ (КНОПКА ••• СНИЗУ ПОД БАБЛОМ)
     // ============================================================
     async function dispatchCommPayload(rawText, channel, extra = null) {
         const roomId = CM.activeRoomId;
@@ -2205,6 +2015,7 @@
         CM.msgStore[snap.key] = {
             copyText: (myFanEntry && myFanEntry.text) || baseText || data.mapLink || '',
             mediaUrl: mediaSrc,
+            mediaType: data.mediaType || (mediaSrc ? 'image' : 'text'),
             fileName: data.fileName || 'file'
         };
 
@@ -2239,17 +2050,20 @@
             innerHtml = `<span>${esc(baseText)}</span>`;
         }
 
-        const dotsBtn = `<button type="button" onclick="window.openCommMsgActionMenu('${esc(snap.key)}')" class="text-[#8696a0] hover:text-white px-1.5 py-1 self-center shrink-0 transition" title="Actions"><i class="fa-solid fa-ellipsis-vertical text-xs"></i></button>`;
+        // Кнопка ••• строго СНИЗУ под баблом (1-в-1 как в общем чате)
+        const dotsBtnBelow = `
+            <button type="button" onclick="window.openCommMsgActionMenu('${esc(snap.key)}')" class="mt-1 px-2.5 py-0.5 rounded-full bg-[#182229] border border-[#2a3942] text-[#00a884] hover:text-white text-[0.65rem] leading-none transition flex items-center justify-center">
+                <i class="fa-solid fa-ellipsis"></i>
+            </button>
+        `;
 
         const bubbleHtml = `
             <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[82%]">
                 <span class="text-[0.64rem] text-[#8696a0] mb-0.5 px-1">${esc(name)}</span>
-                <div class="flex items-center gap-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}">
-                    <div class="px-3 py-2 rounded-2xl text-sm ${bubbleStyle}">
-                        ${innerHtml}
-                    </div>
-                    ${dotsBtn}
+                <div class="px-3 py-2 rounded-2xl text-sm ${bubbleStyle}">
+                    ${innerHtml}
                 </div>
+                ${dotsBtnBelow}
             </div>
         `;
 
