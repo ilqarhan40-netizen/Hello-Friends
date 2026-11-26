@@ -208,6 +208,8 @@ window.saveProfileData = function() {
             if (window.renderSidebar) window.renderSidebar();
             if (window.initConference) window.initConference();
             if (window.renderProfessionList) window.renderProfessionList();
+            if (typeof window.initSignalListener === 'function') window.initSignalListener();
+
         }).catch(err => {
             if (btn) btn.innerHTML = '<span data-i18n="reg_save">Save Profile</span>';
             alert("Firebase Error: " + err.message);
