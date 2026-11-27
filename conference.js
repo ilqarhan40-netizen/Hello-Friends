@@ -2224,19 +2224,19 @@
     // 11. ПРИГЛАШЕНИЯ И ПРИЁМНИК УВЕДОМЛЕНИЙ (13 ЯЗЫКОВ)
     // =======================================================
     window.confDict = {
-        ru: { title: 'ПРИГЛАШЕНИЕ', desc: 'ждёт вас на конференции!', btn: 'Войти', no: 'Позже' },
-        en: { title: 'INVITATION', desc: 'is waiting for you in the conference!', btn: 'Join', no: 'Later' },
-        it: { title: 'INVITO', desc: 'ti aspetta nella conferenza!', btn: 'Entra', no: 'Più tardi' },
-        es: { title: 'INVITACIÓN', desc: 'te espera en la conferencia!', btn: 'Unirse', no: 'Más tarde' },
-        fr: { title: 'INVITATION', desc: 'vous attend dans la conférence!', btn: 'Rejoindre', no: 'Plus tard' },
-        de: { title: 'EINLADUNG', desc: 'wartet auf dich in der Konferenz!', btn: 'Beitreten', no: 'Später' },
-        pt: { title: 'CONVITE', desc: 'espera por você na conferência!', btn: 'Entrar', no: 'Mais tarde' },
-        tr: { title: 'DAVET', desc: 'seni konferansta bekliyor!', btn: 'Katıl', no: 'Sonra' },
-        az: { title: 'DƏVƏT', desc: 'sizi konfransda gözləyir!', btn: 'Qoşul', no: 'Sonra' },
-        kk: { title: 'ШАҚЫРУ', desc: 'сізді конференцияда күтуде!', btn: 'Қосылу', no: 'Кейін' },
-        ar: { title: 'دعوة', desc: 'ينتظرك في المؤتمر!', btn: 'انضمام', no: 'لاحقاً' },
-        ja: { title: '招待', desc: '会議でお待ちしています！', btn: '参加', no: '後で' },
-        zh: { title: '邀请', desc: '在会议中等您！', btn: '加入', no: '稍后' }
+        ru: { title: 'ПРИГЛАШЕНИЕ', desc: 'ждёт вас на конференции!', btn: 'Войти', no: 'Позже', errTitle: 'Ошибка', errSelect: 'Выберите пользователей!', okTitle: 'Успех', okSent: 'Приглашения отправлены!' },
+        en: { title: 'INVITATION', desc: 'is waiting for you in the conference!', btn: 'Join', no: 'Later', errTitle: 'Error', errSelect: 'Select users!', okTitle: 'Success', okSent: 'Invitations sent!' },
+        it: { title: 'INVITO', desc: 'ti aspetta nella conferenza!', btn: 'Entra', no: 'Più tardi', errTitle: 'Errore', errSelect: 'Seleziona gli utenti!', okTitle: 'Successo', okSent: 'Inviti inviati!' },
+        es: { title: 'INVITACIÓN', desc: 'te espera en la conferencia!', btn: 'Unirse', no: 'Más tarde', errTitle: 'Error', errSelect: '¡Selecciona usuarios!', okTitle: 'Éxito', okSent: '¡Invitaciones enviadas!' },
+        fr: { title: 'INVITATION', desc: 'vous attend dans la conférence!', btn: 'Rejoindre', no: 'Plus tard', errTitle: 'Erreur', errSelect: 'Sélectionnez des utilisateurs !', okTitle: 'Succès', okSent: 'Invitations envoyées !' },
+        de: { title: 'EINLADUNG', desc: 'wartet auf dich in der Konferenz!', btn: 'Beitreten', no: 'Später', errTitle: 'Fehler', errSelect: 'Benutzer auswählen!', okTitle: 'Erfolg', okSent: 'Einladungen gesendet!' },
+        pt: { title: 'CONVITE', desc: 'espera por você na conferência!', btn: 'Entrar', no: 'Mais tarde', errTitle: 'Erro', errSelect: 'Selecione usuários!', okTitle: 'Sucesso', okSent: 'Convites enviados!' },
+        tr: { title: 'DAVET', desc: 'seni konferansta bekliyor!', btn: 'Katıl', no: 'Sonra', errTitle: 'Hata', errSelect: 'Kullanıcıları seçin!', okTitle: 'Başarılı', okSent: 'Davetler gönderildi!' },
+        az: { title: 'DƏVƏT', desc: 'sizi konfransda gözləyir!', btn: 'Qoşul', no: 'Sonra', errTitle: 'Xəta', errSelect: 'İstifadəçiləri seçin!', okTitle: 'Uğurlu', okSent: 'Dəvətlər göndərildi!' },
+        kk: { title: 'ШАҚЫРУ', desc: 'сізді конференцияда күтуде!', btn: 'Қосылу', no: 'Кейін', errTitle: 'Қате', errSelect: 'Пайдаланушыларды таңдаңыз!', okTitle: 'Сәтті', okSent: 'Шақырулар жіберілді!' },
+        ar: { title: 'دعوة', desc: 'ينتظرك في المؤتمر!', btn: 'انضمام', no: 'لاحقاً', errTitle: 'خطأ', errSelect: 'اختر المستخدمين!', okTitle: 'تم بنجاح', okSent: 'تم إرسال الدعوات!' },
+        ja: { title: '招待', desc: '会議でお待ちしています！', btn: '参加', no: '後で', errTitle: 'エラー', errSelect: 'ユーザーを選択してください！', okTitle: '完了', okSent: '招待を送信しました！' },
+        zh: { title: '邀请', desc: '在会议中等您！', btn: '加入', no: '稍后', errTitle: '错误', errSelect: '请选择用户！', okTitle: '成功', okSent: '邀请已发送！' }
     };
 
     window.getConfTranslation = function (key) {
@@ -2282,7 +2282,7 @@
     window.sendGroupInvites = function () {
         const checked = document.querySelectorAll('#group-invite-list input[type="checkbox"]:checked');
         if (!checked.length) {
-            if (window.showToast) window.showToast('Ошибка', 'Выберите пользователей!', '', '');
+            if (window.showToast) window.showToast(window.getConfTranslation('errTitle'), window.getConfTranslation('errSelect'), '', '');
             return;
         }
         const myId = getMyId();
@@ -2298,9 +2298,16 @@
             });
         });
         unlockConfTTSOnGesture();
-        window.enterConferenceRoom();
-        if (window.showToast) window.showToast('Успех', 'Приглашения отправлены!', '', '');
         window.closeGroupInviteModal();
+
+        if (!isConfVisible() && typeof window.switchTab === 'function') {
+            window.currentIndex = null;
+            window.switchTab(2);
+        } else if (!CF.isActive) {
+            window.enterConferenceRoom();
+        }
+
+        if (window.showToast) window.showToast(window.getConfTranslation('okTitle'), window.getConfTranslation('okSent'), '', '');
     };
 
     window.listenForDirectInvites = function () {
@@ -2372,6 +2379,7 @@
             }
         });
     };
+
 
     // =======================================================
     // 12. ИНИЦИАЛИЗАЦИЯ И АВТОПОДКЛЮЧЕНИЕ ПРИ ОТКРЫТИИ ВКЛАДКИ
