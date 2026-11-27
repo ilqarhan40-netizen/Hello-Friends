@@ -48,7 +48,7 @@
     <script src="js/audio-room.js?v=11"></script>
     <script src="js/nav-architecture.js?v=1"></script>
     <script src="js/communities.js?v=8"></script>
-    <script src="js/live-room.js?v=2"></script>
+    <script src="js/live-room.js?v=3"></script>
     
 
     
@@ -815,7 +815,7 @@ if (window.OneSignalDeferred) {
         <div class="bottom-nav-container">
             <div class="nav-links-wrapper">
                 <a class="nav-item active" onclick="window.switchTab(0)"><i class="fa-solid fa-message"></i><span data-i18n="chat">Chat</span></a>
-                <a class="nav-item" onclick="window.switchTab(1)"><i class="fa-solid fa-video"></i><span data-i18n="voice">Call</span></a>
+                <a class="nav-item" id="nav-live-btn" onclick="window.switchTab(8)"><i class="fa-solid fa-video"></i><span data-i18n="live_nav">Live</span></a>
                 <a class="nav-item" onclick="window.switchTab(7)"><i class="fa-solid fa-users"></i><span data-i18n="comm_title">Communities</span></a>
                 <a class="nav-item" onclick="window.switchTab(3)"><i class="fa-solid fa-briefcase"></i><span data-i18n="cv">CV</span></a>
                 <a class="nav-item" onclick="window.switchTab(4)"><i class="fa-solid fa-hashtag"></i><span data-i18n="social">Social</span></a>
