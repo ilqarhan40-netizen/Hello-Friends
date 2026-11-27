@@ -41,7 +41,7 @@
     <script src="js/email.js?v=2028"></script>
     <script src="js/agora-token-sync.js?v=1"></script>
     <script src="js/calls.js?v=2029"></script>
-    <script src="conference.js?v=1"></script>
+    <script src="conference.js?v=2"></script>
     <script src="js/video-room.js?v=2027"></script>
     <script src="js/notifications.js?v=2027"></script>
     <script src="js/microphones.js?v=2"></script>
@@ -1587,7 +1587,8 @@ if (window.OneSignalDeferred) {
                             <i class="fa-solid fa-headset text-[#a29bfe] text-lg"></i> ${t_audio}
                         </button>
                         
-                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); window.currentIndex = null; window.switchTab(2);" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                        <button onclick="window.closeAvatarModal(); window.currentTargetUser = window.participants.find(x=>x.id==='${p.id}'); if(window.openGroupInviteModal) window.openGroupInviteModal();" class="py-2.5 rounded-xl bg-[#202c33] border border-[#2a3942] text-white font-bold hover:border-pink-400 text-[0.7rem] transition flex flex-col items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                        
                             <i class="fa-solid fa-users text-pink-400 text-lg"></i> ${t_video}
                         </button>
                         
