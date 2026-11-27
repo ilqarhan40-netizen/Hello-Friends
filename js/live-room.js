@@ -1,23 +1,14 @@
 // =======================================================
-// ФАЙЛ: js/live-room.js (ISOLATED LIVE STREAM WORLD)
-// Прототип: conference.js (движок Agora + микрофон + TTS + анти-эхо)
-// - Полностью отделён от 1-на-1 звонков (#voice-translator / switchTab(1))
-//   и Конференции (#conference / switchTab(2))
-// - Привязан к нижней видеокнопке (switchTab(8)) + перевод в window.i18n (13 языков)
-// - Изолированные ветки Firebase:
-//     live_world/hosts/<hostId>
-//     live_world/viewers/<hostId>/<viewerId>
-//     live_world/messages/<hostId>
-//     live_world/active_langs/<userId>
-// - Изолированные ключи: hf_live_avatar_lang, hf_live_mic_lang (сброс при выходе)
-// - Камера у ведущего включается автоматически при входе + кнопка вкл/выкл + переворот
-// - Ролевой перевод в бегущих строках:
-//     * Верхняя строка (CC): оригиналы всех участников
-//     * Строка внутри видеофрейма (медленная очередь ~46 px/s без обрывов):
-//       - Ведущий видит переводы всех зрителей на свой язык (с их флагом и именем)
-//       - Зритель видит только перевод речи/сообщений Ведущего на свой язык
-// - Родной нижний футер (#conference): CC, камера, переворот, красная кнопка отбоя
-//   + родная строка ввода (скрепка, смайлы, корзина, микрофон, отправка)
+// ФАЙЛ: js/live-room.js (OPEN LIVE ROOMS — PROTOTYPE: conference.js)
+// - Отдельные открытые ("проходные") комнаты у каждого пользователя
+// - Камера при входе ВЫКЛЮЧЕНА (личный выбор каждого, до 6 видео в сетке)
+// - При выключенной камере свой фрейм и бегущая строка переводов продолжают работать
+// - Верхняя строка CC: оригиналы всех участников комнаты
+// - Внутренняя строка фрейма: медленная очередь переводов чужих фраз на твой активный язык
+// - Тап по видеофрейму -> ручная панель смены языка
+// - Тап по флагу -> информация о стране
+// - Корзина -> родная window.openTrashModal()
+// - Полная изоляция от switchTab(1) и switchTab(2)
 // =======================================================
 
 (function () {
@@ -39,115 +30,102 @@
         zh: { name: '中文', flagCode: 'cn', flag: '🇨🇳', speech: 'zh-CN' }
     };
 
-    // Переводы для внедрения прямо в общий window.i18n (все 13 языков)
     const LIVE_I18N_BUNDLE = {
         en: {
             live_nav: 'Live', live_msg_placeholder: 'Message Live...',
             live_lang_title: 'Live Language', live_auto: 'Auto (Profile)', live_mic_title: 'Live Mic',
             live_direct: 'Direct', live_ai: 'AI', live_on: 'MIC ON', live_ai_on: 'AI VOICE ON', live_stop: 'STOP',
-            live_cc_wait: 'Live originals...', live_wait_host: 'Viewer translations will appear here...',
-            live_wait_viewer: 'Host translation will appear here...', live_off: 'OFF AIR', live_badge: 'LIVE',
-            live_voice_text: 'Voice Text', live_ended: 'Broadcast offline', live_connecting: 'Connecting to Live...'
+            live_cc_wait: 'Live originals...', live_wait_trans: 'Translations will appear here...',
+            live_badge: 'LIVE', live_voice_text: 'Voice Text', live_cam_off: 'Camera Off'
         },
         ru: {
             live_nav: 'Эфир', live_msg_placeholder: 'Написать в эфир...',
             live_lang_title: 'Язык эфира', live_auto: 'Авто (Профиль)', live_mic_title: 'Микрофон эфира',
             live_direct: 'Напрямую', live_ai: 'ИИ', live_on: 'МИК ВКЛ', live_ai_on: 'ИИ-ГОЛОС ВКЛ', live_stop: 'СТОП',
-            live_cc_wait: 'Оригиналы речи и сообщений...', live_wait_host: 'Здесь появятся переводы зрителей...',
-            live_wait_viewer: 'Здесь появится перевод ведущего...', live_off: 'НЕ В ЭФИРЕ', live_badge: 'LIVE',
-            live_voice_text: 'Текст голосом', live_ended: 'Эфир не запущен', live_connecting: 'Подключение к эфиру...'
+            live_cc_wait: 'Оригиналы речи и сообщений...', live_wait_trans: 'Здесь появятся переводы...',
+            live_badge: 'LIVE', live_voice_text: 'Текст голосом', live_cam_off: 'Камера выключена'
         },
         kk: {
             live_nav: 'Тікелей', live_msg_placeholder: 'Эфирге жазу...',
             live_lang_title: 'Эфир тілі', live_auto: 'Авто (Профиль)', live_mic_title: 'Эфир микрофоны',
             live_direct: 'Тікелей', live_ai: 'AI', live_on: 'МИК ҚОСУЛЫ', live_ai_on: 'AI ДАУЫС ҚОСУЛЫ', live_stop: 'ТОҚТА',
-            live_cc_wait: 'Түпнұсқа сөздер мен хабарламалар...', live_wait_host: 'Көрермендердің аудармалары осында...',
-            live_wait_viewer: 'Жүргізушінің аудармасы осында...', live_off: 'ЭФИРДЕ ЕМЕС', live_badge: 'LIVE',
-            live_voice_text: 'Дауыстық мәтін', live_ended: 'Эфир аяқталды', live_connecting: 'Эфирге қосылуда...'
+            live_cc_wait: 'Түпнұсқа сөздер мен хабарламалар...', live_wait_trans: 'Аудармалар осында...',
+            live_badge: 'LIVE', live_voice_text: 'Дауыстық мәтін', live_cam_off: 'Камера өшірулі'
         },
         az: {
             live_nav: 'Canlı', live_msg_placeholder: 'Efirə yaz...',
             live_lang_title: 'Efir Dili', live_auto: 'Avto (Profil)', live_mic_title: 'Efir Mikrofonu',
             live_direct: 'Birbaşa', live_ai: 'AI', live_on: 'MİK AÇIQ', live_ai_on: 'AI SƏS AÇIQ', live_stop: 'DAYAN',
-            live_cc_wait: 'Orijinal nitq və mesajlar...', live_wait_host: 'İzləyicilərin tərcümələri burada...',
-            live_wait_viewer: 'Aparıcının tərcüməsi burada...', live_off: 'OFLAYN', live_badge: 'LIVE',
-            live_voice_text: 'Səsli Mətn', live_ended: 'Yayım bağlıdır', live_connecting: 'Yayıma qoşulur...'
+            live_cc_wait: 'Orijinal nitq və mesajlar...', live_wait_trans: 'Tərcümələr burada...',
+            live_badge: 'LIVE', live_voice_text: 'Səsli Mətn', live_cam_off: 'Kamera bağlıdır'
         },
         tr: {
             live_nav: 'Canlı', live_msg_placeholder: 'Yayına yaz...',
             live_lang_title: 'Yayın Dili', live_auto: 'Oto (Profil)', live_mic_title: 'Yayın Mikrofonu',
             live_direct: 'Doğrudan', live_ai: 'AI', live_on: 'MİK AÇIK', live_ai_on: 'AI SES AÇIK', live_stop: 'DUR',
-            live_cc_wait: 'Orijinal konuşma ve mesajlar...', live_wait_host: 'İzleyici çevirileri burada...',
-            live_wait_viewer: 'Yayıncı çevirisi burada...', live_off: 'ÇEVRİMDIŞI', live_badge: 'LIVE',
-            live_voice_text: 'Sesli Metin', live_ended: 'Yayın kapalı', live_connecting: 'Yayına bağlanıyor...'
+            live_cc_wait: 'Orijinal konuşma ve mesajlar...', live_wait_trans: 'Çeviriler burada...',
+            live_badge: 'LIVE', live_voice_text: 'Sesli Metin', live_cam_off: 'Kamera Kapalı'
         },
         de: {
             live_nav: 'Live', live_msg_placeholder: 'In den Live-Stream...',
             live_lang_title: 'Live-Sprache', live_auto: 'Auto (Profil)', live_mic_title: 'Live-Mikrofon',
             live_direct: 'Direkt', live_ai: 'KI', live_on: 'MIK AN', live_ai_on: 'KI-STIMME AN', live_stop: 'STOPP',
-            live_cc_wait: 'Originale Sprache & Nachrichten...', live_wait_host: 'Übersetzungen der Zuschauer hier...',
-            live_wait_viewer: 'Übersetzung des Hosts hier...', live_off: 'OFFLINE', live_badge: 'LIVE',
-            live_voice_text: 'Sprachtext', live_ended: 'Stream offline', live_connecting: 'Verbinde zum Stream...'
+            live_cc_wait: 'Originale...', live_wait_trans: 'Übersetzungen erscheinen hier...',
+            live_badge: 'LIVE', live_voice_text: 'Sprachtext', live_cam_off: 'Kamera aus'
         },
         ar: {
             live_nav: 'مباشر', live_msg_placeholder: 'اكتب في البث...',
             live_lang_title: 'لغة البث', live_auto: 'تلقائي (الملف)', live_mic_title: 'ميكروفون البث',
             live_direct: 'مباشر', live_ai: 'AI', live_on: 'تشغيل', live_ai_on: 'صوت AI', live_stop: 'إيقاف',
-            live_cc_wait: 'الرسائل الأصلية...', live_wait_host: 'ترجمات المشاهدين هنا...',
-            live_wait_viewer: 'ترجمة المضيف هنا...', live_off: 'غير متصل', live_badge: 'LIVE',
-            live_voice_text: 'نص صوتي', live_ended: 'البث متوقف', live_connecting: 'جاري الاتصال...'
+            live_cc_wait: 'الرسائل الأصلية...', live_wait_trans: 'ستظهر الترجمات هنا...',
+            live_badge: 'LIVE', live_voice_text: 'نص صوتي', live_cam_off: 'الكاميرا مغلقة'
         },
         it: {
             live_nav: 'Diretta', live_msg_placeholder: 'Scrivi in diretta...',
             live_lang_title: 'Lingua Diretta', live_auto: 'Auto (Profilo)', live_mic_title: 'Microfono Diretta',
             live_direct: 'Diretto', live_ai: 'IA', live_on: 'MIC ON', live_ai_on: 'IA VOCE ON', live_stop: 'STOP',
-            live_cc_wait: 'Messaggi originali...', live_wait_host: 'Traduzioni degli spettatori qui...',
-            live_wait_viewer: 'Traduzione dell’host qui...', live_off: 'OFFLINE', live_badge: 'LIVE',
-            live_voice_text: 'Testo Vocale', live_ended: 'Diretta offline', live_connecting: 'Connessione...'
+            live_cc_wait: 'Messaggi originali...', live_wait_trans: 'Le traduzioni appariranno qui...',
+            live_badge: 'LIVE', live_voice_text: 'Testo Vocale', live_cam_off: 'Fotocamera spenta'
         },
         es: {
             live_nav: 'En Vivo', live_msg_placeholder: 'Escribir en vivo...',
             live_lang_title: 'Idioma en Vivo', live_auto: 'Auto (Perfil)', live_mic_title: 'Micrófono en Vivo',
             live_direct: 'Directo', live_ai: 'IA', live_on: 'MIC ON', live_ai_on: 'VOZ IA ON', live_stop: 'PARAR',
-            live_cc_wait: 'Mensajes originales...', live_wait_host: 'Traducciones de espectadores aquí...',
-            live_wait_viewer: 'Traducción del anfitrión aquí...', live_off: 'OFFLINE', live_badge: 'LIVE',
-            live_voice_text: 'Texto a Voz', live_ended: 'Directo finalizado', live_connecting: 'Conectando...'
+            live_cc_wait: 'Mensajes originales...', live_wait_trans: 'Las traducciones aparecerán aquí...',
+            live_badge: 'LIVE', live_voice_text: 'Texto a Voz', live_cam_off: 'Cámara apagada'
         },
         fr: {
             live_nav: 'Direct', live_msg_placeholder: 'Écrire dans le direct...',
             live_lang_title: 'Langue du Direct', live_auto: 'Auto (Profil)', live_mic_title: 'Micro Direct',
             live_direct: 'Direct', live_ai: 'IA', live_on: 'MIC ON', live_ai_on: 'VOIX IA ON', live_stop: 'STOP',
-            live_cc_wait: 'Messages originaux...', live_wait_host: 'Traductions des spectateurs ici...',
-            live_wait_viewer: 'Traduction de l’hôte ici...', live_off: 'HORS LIGNE', live_badge: 'LIVE',
-            live_voice_text: 'Texte vocal', live_ended: 'Direct hors ligne', live_connecting: 'Connexion...'
+            live_cc_wait: 'Messages originaux...', live_wait_trans: 'Les traductions apparaîtront ici...',
+            live_badge: 'LIVE', live_voice_text: 'Texte vocal', live_cam_off: 'Caméra coupée'
         },
         pt: {
             live_nav: 'Ao Vivo', live_msg_placeholder: 'Escrever na live...',
             live_lang_title: 'Idioma da Live', live_auto: 'Auto (Perfil)', live_mic_title: 'Microfone Live',
             live_direct: 'Direto', live_ai: 'IA', live_on: 'MIC ON', live_ai_on: 'VOZ IA ON', live_stop: 'PARAR',
-            live_cc_wait: 'Mensagens originais...', live_wait_host: 'Traduções dos espectadores aqui...',
-            live_wait_viewer: 'Tradução do apresentador aqui...', live_off: 'OFFLINE', live_badge: 'LIVE',
-            live_voice_text: 'Texto de Voz', live_ended: 'Live offline', live_connecting: 'Conectando...'
+            live_cc_wait: 'Mensagens originais...', live_wait_trans: 'As traduções aparecerão aqui...',
+            live_badge: 'LIVE', live_voice_text: 'Texto de Voz', live_cam_off: 'Câmera desligada'
         },
         ja: {
             live_nav: 'ライブ', live_msg_placeholder: 'ライブに送信...',
             live_lang_title: 'ライブ言語', live_auto: '自動 (プロフィール)', live_mic_title: 'ライブマイク',
             live_direct: '直接', live_ai: 'AI', live_on: 'マイクON', live_ai_on: 'AI音声ON', live_stop: '停止',
-            live_cc_wait: 'オリジナル音声・メッセージ...', live_wait_host: '視聴者の翻訳がここに表示されます...',
-            live_wait_viewer: '配信者の翻訳がここに表示されます...', live_off: 'オフライン', live_badge: 'LIVE',
-            live_voice_text: '音声テキスト', live_ended: '配信オフライン', live_connecting: '接続中...'
+            live_cc_wait: 'オリジナル音声・メッセージ...', live_wait_trans: '翻訳がここに表示されます...',
+            live_badge: 'LIVE', live_voice_text: '音声テキスト', live_cam_off: 'カメラオフ'
         },
         zh: {
             live_nav: '直播', live_msg_placeholder: '发送消息到直播...',
             live_lang_title: '直播语言', live_auto: '自动 (个人资料)', live_mic_title: '直播麦克风',
             live_direct: '直接', live_ai: 'AI', live_on: '麦克风开', live_ai_on: 'AI语音开', live_stop: '停止',
-            live_cc_wait: '实时原文...', live_wait_host: '观众翻译将显示在此处...',
-            live_wait_viewer: '主播翻译将显示在此处...', live_off: '未开播', live_badge: 'LIVE',
-            live_voice_text: '语音文本', live_ended: '直播已结束', live_connecting: '正在连接...'
+            live_cc_wait: '实时原文...', live_wait_trans: '翻译将显示在此处...',
+            live_badge: 'LIVE', live_voice_text: '语音文本', live_cam_off: '摄像头已关'
         }
     };
 
     const LIVE_TAB_INDEX = 8;
+    const MAX_VIDEO_SLOTS = 6;
     const LIVE_SILENCE_FLUSH_MS = 850;
     const LIVE_MAX_CHUNK_WORDS = 14;
     const LIVE_MAX_CHUNK_CHARS = 95;
@@ -159,19 +137,20 @@
         isLeaving: false,
         isStartingAgora: false,
         isTogglingCam: false,
-        camEnabled: true,
+        camEnabled: false, // При входе камера ВСЕГДА выключена
         facingMode: 'user',
         marqueeEnabled: true,
         agoraPausedForTranslation: false,
         activeChannel: 'avatar', // 'avatar' | 'mic'
 
-        // Канал эфира: свой ID = я Ведущий, чужой ID = я Зритель
-        currentHostId: null,
-        liveHosts: {},
+        // Открытая комната (ID владельца комнаты)
+        currentRoomOwnerId: null,
+        allActiveRooms: {},   // live_world/rooms -> кто где в эфире с камерой
+        roomCameras: {},      // live_world/rooms/<ownerId>/cameras
+        roomMembersCount: 0,
         liveLangs: {},
-        viewersCount: 0,
 
-        // Agora (полностью изолированный клиент)
+        // Agora
         client: null,
         myAgoraUid: null,
         localAudioTrack: null,
@@ -180,14 +159,16 @@
         remoteVideoTracks: {},
         subscribing: new Set(),
 
-        // Firebase слушатели
-        hostsListBound: false,
-        hostPresenceRef: null,
+        // Firebase
+        roomsListBound: false,
+        myCamRef: null,
+        myMemberRef: null,
+        roomCamsRef: null,
+        roomCamsListener: null,
+        roomMembersRef: null,
+        roomMembersListener: null,
         langsRef: null,
         langsListener: null,
-        viewersRef: null,
-        viewersListener: null,
-        myViewerRef: null,
         msgRef: null,
         msgListener: null,
         listenerStartedAt: 0,
@@ -195,7 +176,7 @@
         offsetSynced: false,
         seenKeys: new Set(),
 
-        // Очереди медленных бегущих строк (верхняя CC + внутренняя с переводом)
+        // Медленные бегущие строки
         ccQueue: [],
         ccRunning: false,
         ccAnim: null,
@@ -203,10 +184,10 @@
         frameRunning: false,
         frameAnim: null,
 
-        // Микрофон и распознавание (прототип conference.js)
+        // Микрофон (прототип conference.js)
         recognition: null,
         micActive: false,
-        micMode: 'ai-audio', // 'ai-audio' | 'text'
+        micMode: 'ai-audio',
         isSpeakingAI: false,
         micRestartTimer: null,
         micWatchdog: null,
@@ -216,7 +197,7 @@
         lastSentAt: 0,
         recentBuckets: { send: [], tts: [] },
 
-        // Очередь TTS + анти-эхо
+        // TTS + анти-эхо
         ttsQueue: [],
         ttsSpeaking: false,
         ttsSafetyTimer: null,
@@ -231,12 +212,11 @@
     window.HF_LIVE_ROOM = LV;
     window.liveRoomMicActive = false;
 
-    // Сброс сессионных языков при загрузке (как в conference.js)
     localStorage.removeItem('hf_live_avatar_lang');
     localStorage.removeItem('hf_live_mic_lang');
 
     // =======================================================
-    // 1. ХЕЛПЕРЫ ЯЗЫКА, ОБЩИЙ СЛОВАРЬ i18n И ПРОФИЛЬ
+    // 1. ХЕЛПЕРЫ ЯЗЫКА, i18n И ПРОФИЛЬ
     // =======================================================
     function lvEscapeHtml(str) {
         return String(str || '')
@@ -306,11 +286,6 @@
         return (id && id !== 'guest') ? String(id) : '';
     }
 
-    function isHostRole() {
-        const myId = getMyId();
-        return Boolean(myId && LV.currentHostId && String(LV.currentHostId) === myId);
-    }
-
     function isLiveVisible() {
         const page = document.getElementById('live-room-page');
         return Boolean(page && page.classList.contains('active'));
@@ -348,17 +323,13 @@
         return (LIVE_I18N_BUNDLE[l] && LIVE_I18N_BUNDLE[l][key]) || LIVE_I18N_BUNDLE.en[key] || key;
     }
 
-    // Внедряем переводы Живого эфира прямо в общий словарь window.i18n (включая kk/kz)
     function mergeLiveIntoGlobalI18n() {
         if (!window.i18n) return false;
         Object.keys(LIVE_I18N_BUNDLE).forEach(code => {
             if (!window.i18n[code]) window.i18n[code] = {};
             Object.assign(window.i18n[code], LIVE_I18N_BUNDLE[code]);
         });
-        // Страховка на случай если где-то в экосистеме передадут 'kz' вместо 'kk'
-        if (window.i18n.kk && !window.i18n.kz) {
-            window.i18n.kz = window.i18n.kk;
-        }
+        if (window.i18n.kk && !window.i18n.kz) window.i18n.kz = window.i18n.kk;
         return true;
     }
 
@@ -378,6 +349,31 @@
                 ? String(window.myProfileInfo.flagCode).trim().toLowerCase()
                 : ((LIVE_LANG_MAP[lang] && LIVE_LANG_MAP[lang].flagCode) || 'un'));
         return { lang, flag, flagCode, isAuto: !manual };
+    }
+
+    // Тап по флагу -> информация о стране (как в Сообществах)
+    function openLiveCountryInfo(flagCode, flagEmoji, userName) {
+        const fc = String(flagCode || 'un').toLowerCase();
+        if (typeof window.showCountryInfo === 'function') {
+            window.showCountryInfo(fc);
+            return;
+        }
+        if (typeof window.openCountryInfo === 'function') {
+            window.openCountryInfo(fc);
+            return;
+        }
+        if (typeof window.openCountryModal === 'function') {
+            window.openCountryModal(fc);
+            return;
+        }
+        const info = (window.countryData && window.countryData[fc]) || null;
+        if (typeof window.showToast === 'function') {
+            const title = info ? `${flagEmoji || ''} ${info.name || fc.toUpperCase()}` : `${flagEmoji || '🌐'} ${fc.toUpperCase()}`;
+            const details = info
+                ? [info.capital ? `🏛 ${info.capital}` : '', info.pop ? `👥 ${info.pop}` : '', info.desc || ''].filter(Boolean).join('<br>')
+                : (userName || '');
+            window.showToast(title, details, '', info && info.phone ? info.phone : '');
+        }
     }
 
     function isLiveDuplicate(text, bucket) {
@@ -432,7 +428,7 @@
     }
 
     // =======================================================
-    // 2. СИНХРОНИЗАЦИЯ ФЛАГОВ ЭФИРА (avatar / mic)
+    // 2. СИНХРОНИЗАЦИЯ ФЛАГОВ ЭФИРА
     // =======================================================
     function syncMyLiveChannelLang(channel, forcedLang, makeActive = true) {
         const myId = getMyId();
@@ -448,7 +444,7 @@
         const info = getMyEffectiveLiveInfo(channel);
         if (makeActive) LV.activeChannel = channel;
 
-        refreshLiveFrameOverlay();
+        renderLiveGrid();
         syncLiveRemoteAudioVolume();
 
         if (!myId || typeof firebase === 'undefined' || !firebase.database) return;
@@ -469,8 +465,8 @@
             const disp = Object.assign({ channel }, payload);
             LV.liveLangs[myId].display = disp;
             ref.child('display').set(disp).catch(() => {});
-            if (LV.isActive && isHostRole() && LV.hostPresenceRef) {
-                LV.hostPresenceRef.update({
+            if (LV.camEnabled && LV.myCamRef) {
+                LV.myCamRef.update({
                     langCode: info.lang,
                     flagCode: info.flagCode,
                     flag: info.flag
@@ -481,17 +477,15 @@
     }
 
     // =======================================================
-    // 3. СТИЛИ (СТРОГО ИЗОЛИРОВАННЫЕ #live-room-page / #hf-lv-*)
+    // 3. СТИЛИ
     // =======================================================
     function injectLiveStyles() {
-        // Удаляем старые стили предыдущих версий, если остались
         document.getElementById('hf-live-styles')?.remove();
-        document.getElementById('hf-live-header-btn')?.remove();
-        document.getElementById('hf-live-room-page')?.remove();
+        document.getElementById('hf-lv-v3-styles')?.remove();
+        if (document.getElementById('hf-lv-v4-styles')) return;
 
-        if (document.getElementById('hf-lv-v3-styles')) return;
         const style = document.createElement('style');
-        style.id = 'hf-lv-v3-styles';
+        style.id = 'hf-lv-v4-styles';
         style.textContent = `
             #hf-lv-mode-bar {
                 display: inline-flex; align-items: center; gap: 3px;
@@ -525,12 +519,8 @@
             }
             #hf-lv-mic-pill.live-text #hf-lv-stop-btn,
             #hf-lv-mic-pill.live-ai #hf-lv-stop-btn { display: inline-block; }
+            .hf-lv-mic-btn-live { background: #dc2626 !important; color: #fff !important; border-color: #ef4444 !important; }
 
-            .hf-lv-mic-btn-live {
-                background: #dc2626 !important; color: #fff !important; border-color: #ef4444 !important;
-            }
-
-            /* Верхняя бегущая строка CC (оригиналы) */
             #live-cc-viewport {
                 flex: 1; overflow: hidden; white-space: nowrap; position: relative;
                 height: 20px; display: flex; align-items: center;
@@ -540,38 +530,42 @@
                 font-size: 0.78rem; color: #00a884; font-weight: 700;
             }
 
-            /* Главный видеофрейм эфира */
-            #live-video-frame {
-                position: relative; flex: 1; min-height: 0; border-radius: 16px;
-                overflow: hidden; background: #000; border: 2px solid #202c33;
-                box-shadow: 0 0 18px rgba(0, 0, 0, 0.5);
+            /* Динамическая сетка видеофреймов (1..6) */
+            #live-grid {
+                display: grid; gap: 6px; width: 100%; height: 100%;
+                min-height: 0; grid-auto-rows: 1fr;
             }
-            #live-video-frame.is-on-air {
-                border-color: #ef4444;
-                box-shadow: 0 0 18px rgba(239, 68, 68, 0.25);
+            #live-grid.cols-1 { grid-template-columns: 1fr; }
+            #live-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+
+            .lv-tile {
+                position: relative; border-radius: 14px; overflow: hidden;
+                background: #111b21; border: 1.5px solid #202c33;
+                min-height: 0; display: flex; flex-direction: column;
             }
-            #live-main-video {
+            .lv-tile.is-me { border-color: #00a884; cursor: pointer; }
+            .lv-tile video {
                 position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
             }
+            .lv-tile video.mirror-video { transform: scaleX(-1); }
 
-            /* Бегущая строка переводов ВНУТРИ видеофрейма (медленная очередь) */
+            /* Бегущая строка переводов внутри твоего фрейма */
             #live-frame-bar {
                 position: absolute; left: 0; right: 0; bottom: 0; z-index: 25;
                 background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.82) 32%, rgba(0,0,0,0.94) 100%);
-                padding: 14px 8px 8px 8px; display: flex; align-items: center; gap: 6px;
+                padding: 12px 8px 7px 8px; display: flex; align-items: center; gap: 6px;
                 border-top: 1px solid rgba(255,255,255,0.08); transition: opacity 0.25s;
             }
             #live-frame-viewport {
                 flex: 1; overflow: hidden; white-space: nowrap; position: relative;
-                height: 24px; display: flex; align-items: center;
+                height: 22px; display: flex; align-items: center;
             }
             #live-frame-track {
                 display: inline-block; white-space: nowrap; will-change: transform;
-                font-size: 0.88rem; font-weight: 800; color: #facc15;
+                font-size: 0.84rem; font-weight: 800; color: #facc15;
                 text-shadow: 0 1px 4px rgba(0,0,0,0.95);
             }
 
-            /* Попапы языка и микрофона (1-в-1 conference.js) */
             #hf-lv-avatar-modal, #hf-lv-mic-popup {
                 position: absolute; z-index: 9995; display: none;
                 background: #111b21; border: 1.5px solid #00a884; border-radius: 16px;
@@ -599,7 +593,7 @@
     }
 
     // =======================================================
-    // 4. МЕДЛЕННЫЕ ОЧЕРЕДИ БЕГУЩИХ СТРОК (БЕЗ ОБРЫВОВ И НАЛОЖЕНИЙ)
+    // 4. МЕДЛЕННЫЕ ОЧЕРЕДИ БЕГУЩИХ СТРОК
     // =======================================================
     function resetLiveTicker(kind) {
         if (kind === 'cc') {
@@ -615,10 +609,7 @@
             const tr = document.getElementById('live-frame-track');
             const qBadge = document.getElementById('live-q-badge');
             if (qBadge) qBadge.classList.add('hidden');
-            if (tr) {
-                tr.style.transform = 'translateX(0)';
-                tr.textContent = isHostRole() ? lt('live_wait_host') : lt('live_wait_viewer');
-            }
+            if (tr) { tr.style.transform = 'translateX(0)'; tr.textContent = lt('live_wait_trans'); }
         }
     }
 
@@ -645,10 +636,7 @@
     function runNextLiveCc() {
         const vp = document.getElementById('live-cc-viewport');
         const tr = document.getElementById('live-cc-track');
-        if (!vp || !tr || !LV.ccQueue.length) {
-            LV.ccRunning = false;
-            return;
-        }
+        if (!vp || !tr || !LV.ccQueue.length) { LV.ccRunning = false; return; }
         LV.ccRunning = true;
         const item = LV.ccQueue.shift();
         tr.innerHTML = `<span class="text-[#00a884] mr-1.5">${lvEscapeHtml(item.flag)} ${lvEscapeHtml(item.name)}:</span><span class="text-white">${lvEscapeHtml(item.text)}</span>`;
@@ -669,7 +657,6 @@
                 else { LV.ccRunning = false; tr.style.transform = 'translateX(0)'; }
             };
         } else {
-            tr.style.transform = 'translateX(0)';
             setTimeout(() => { LV.ccRunning = false; runNextLiveCc(); }, 5000);
         }
     }
@@ -695,12 +682,10 @@
         const item = LV.frameQueue.shift();
         updateLiveQueueBadge();
 
-        // Флаг и имя отправителя + его перевод на язык получателя
         tr.innerHTML = `<span class="text-white mr-1.5">${lvEscapeHtml(item.flag)} ${lvEscapeHtml(item.name)}:</span><span class="text-yellow-300">${lvEscapeHtml(item.text)}</span>`;
 
         const vpW = vp.clientWidth || 240;
         const trW = tr.scrollWidth || 180;
-        // Спокойная, легко читаемая скорость ~46 px/сек
         const durationMs = Math.max(6800, Math.min(30000, Math.round(((vpW + trW) / 46) * 1000)));
 
         if (LV.frameAnim) { try { LV.frameAnim.cancel(); } catch (e) {} }
@@ -715,17 +700,9 @@
                 else { LV.frameRunning = false; tr.style.transform = 'translateX(0)'; }
             };
         } else {
-            tr.style.transform = 'translateX(0)';
             setTimeout(() => { LV.frameRunning = false; runNextLiveFrame(); }, 6000);
         }
     }
-
-    window.clearLiveTickers = function () {
-        const inp = document.getElementById('live-chat-input');
-        if (inp) inp.value = '';
-        resetLiveTicker('cc');
-        resetLiveTicker('frame');
-    };
 
     window.toggleLiveMarquee = function () {
         LV.marqueeEnabled = !LV.marqueeEnabled;
@@ -736,7 +713,7 @@
     };
 
     // =======================================================
-    // 5. МОНТИРОВАНИЕ ЭКРАНА #live-room-page ВНУТРИ <main> (РОДНОЙ ДИЗАЙН)
+    // 5. МОНТИРОВАНИЕ ЭКРАНА #live-room-page
     // =======================================================
     function closeAllLivePopups() {
         document.getElementById('hf-lv-avatar-modal')?.classList.remove('active');
@@ -756,10 +733,9 @@
         page.className = 'page-content h-full flex flex-col bg-[#0b141a] relative z-10';
 
         const myInfo = getMyEffectiveLiveInfo('avatar');
-        const myPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || '';
 
         page.innerHTML = `
-            <!-- 1. ВЕРХНЯЯ ПАНЕЛЬ РЕЖИМОВ (ПРОТОТИП conference.js) -->
+            <!-- 1. ПАНЕЛЬ РЕЖИМОВ (ПРОТОТИП conference.js) -->
             <div class="flex items-center justify-between gap-2 px-2.5 py-2 bg-[#111b21] border-b border-[#202c33] shrink-0">
                 <div id="hf-lv-mic-pill">
                     <span id="hf-lv-mic-dot"></span>
@@ -789,49 +765,23 @@
                 </div>
             </div>
 
-            <!-- 3. ОСНОВНАЯ ЗОНА: СЛЕВА БОКОВАЯ ПАНЕЛЬ + СПРАВА ОДИН ВИДЕОФРЕЙМ -->
+            <!-- 3. БОКОВАЯ ПАНЕЛЬ КОМНАТ + ДИНАМИЧЕСКАЯ СЕТКА ВИДЕО -->
             <div class="flex flex-1 min-h-0 overflow-hidden w-full bg-[#0b141a]">
                 <div class="chat-sidebar" id="live-sidebar"></div>
-
-                <div class="flex-1 flex flex-col min-w-0 min-h-0 p-2 relative">
-                    <div id="live-video-frame">
-                        <video id="live-main-video" class="hidden" playsinline autoplay muted></video>
-                        <div id="live-main-ph" class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#111b21] z-10">
-                            <img id="live-main-ph-img" src="${lvEscapeHtml(myPhoto)}" class="w-20 h-20 rounded-full object-cover border-2 border-[#2a3942] ${myPhoto ? '' : 'hidden'}">
-                            <i id="live-main-ph-icon" class="fa-solid fa-video-slash text-3xl text-[#8696a0] ${myPhoto ? 'hidden' : ''}"></i>
-                            <span id="live-main-ph-txt" class="text-xs text-[#8696a0] font-semibold text-center px-3"></span>
-                        </div>
-
-                        <!-- Верхние бейджи внутри видеофрейма -->
-                        <div class="absolute top-2 left-2 z-30 flex items-center gap-1.5 bg-black/70 px-2.5 py-1 rounded-full border border-white/10">
-                            <span id="live-status-pill" class="px-1.5 py-0.5 rounded bg-red-600 text-[0.58rem] font-extrabold text-white tracking-wider">${lvEscapeHtml(lt('live_badge'))}</span>
-                            <span id="live-host-title" class="text-xs font-bold text-white truncate max-w-[120px]"></span>
-                        </div>
-
-                        <div id="live-flag-wrap" class="flag-overlay cursor-pointer z-30" style="top:8px; right:8px;" title="Language">
-                            <img id="live-my-flag-img" src="https://flagcdn.com/w40/${myInfo.flagCode}.png" class="w-6 rounded-sm border border-[#2a3942]">
-                        </div>
-
-                        <!-- Бегущая строка ПЕРЕВОДА внутри видеофрейма -->
-                        <div id="live-frame-bar">
-                            <span id="live-q-badge" class="hidden px-1.5 py-0.5 rounded-full bg-yellow-400 text-[#111b21] text-[0.6rem] font-extrabold shrink-0"></span>
-                            <div id="live-frame-viewport">
-                                <div id="live-frame-track">${lvEscapeHtml(lt('live_wait_host'))}</div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex-1 flex flex-col min-w-0 min-h-0 p-2 relative overflow-hidden">
+                    <div id="live-grid" class="cols-1"></div>
                 </div>
             </div>
 
-            <!-- 4. ПАНЕЛЬ КНОПОК ЭФИРА (РОДНОЙ СТИЛЬ #conference + КРАСНАЯ КНОПКА ОТБОЯ) -->
+            <!-- 4. РОДНОЙ РЯД КНОПОК (#conference + КРАСНАЯ КНОПКА ОТБОЯ) -->
             <div class="flex justify-center items-center gap-6 py-2.5 bg-[#111b21] border-t border-[#202c33] shrink-0">
                 <button type="button" onclick="window.toggleLiveMarquee()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#00a884] flex justify-center items-center text-xl hover:text-white hover:bg-gray-700 transition" title="Toggle CC">
                     <i class="fa-solid fa-closed-captioning"></i>
                 </button>
-                <button type="button" id="live-cam-btn" onclick="window.toggleLiveCamera()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-[#2a3942] transition" title="Camera">
-                    <i class="fa-solid fa-video"></i>
+                <button type="button" id="live-cam-btn" onclick="window.toggleLiveCamera()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#8696a0] flex justify-center items-center text-xl hover:bg-[#2a3942] transition" title="Camera">
+                    <i class="fa-solid fa-video-slash"></i>
                 </button>
-                <button type="button" id="live-flip-btn" onclick="window.flipLiveCamera()" class="w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-[#2a3942] transition" title="Switch Camera">
+                <button type="button" id="live-flip-btn" onclick="window.flipLiveCamera()" class="hidden w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-[#2a3942] transition" title="Switch Camera">
                     <i class="fa-solid fa-camera-rotate"></i>
                 </button>
                 <button type="button" id="live-hangup-btn" onclick="window.leaveLiveRoom(false)" class="w-[44px] h-[44px] rounded-full bg-red-500 text-white flex justify-center items-center text-xl shadow-lg hover:bg-red-600 transition" title="End Live">
@@ -839,7 +789,7 @@
                 </button>
             </div>
 
-            <!-- 5. РОДНАЯ СТРОКА ВВОДА (1-в-1 #conference: скрепка, смайл, корзина, микрофон, отправка) -->
+            <!-- 5. РОДНАЯ СТРОКА ВВОДА (СКРЕПКА, СМАЙЛ, РОДНАЯ КОРЗИНА, МИКРОФОН, ОТПРАВКА) -->
             <div class="chat-input-area border-t border-[#202c33] shrink-0 px-2 gap-1.5 bg-[#111b21]">
                 <button type="button" class="text-[#8696a0] hover:text-[#00a884] transition text-xl px-1" onclick="window.openAttachModal()">
                     <i class="fa-solid fa-paperclip"></i>
@@ -847,7 +797,7 @@
                 <div class="flex-grow bg-[#202c33] rounded-full flex items-center px-3 py-1.5 border border-[#2a3942]">
                     <i class="fa-regular fa-face-smile text-[#8696a0] text-[1.2rem] cursor-pointer hover:text-white mr-2" onclick="window.toggleEmojiPicker('live-chat-input'); event.stopPropagation();"></i>
                     <input type="text" id="live-chat-input" data-i18n-placeholder="live_msg_placeholder" placeholder="${lvEscapeHtml(lt('live_msg_placeholder'))}" class="bg-transparent border-none text-white w-full outline-none text-[0.95rem]">
-                    <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.clearLiveTickers()"></i>
+                    <i class="fa-solid fa-trash text-[#8696a0] text-[1rem] cursor-pointer hover:text-red-500 ml-2" onclick="window.openTrashModal()" title="Manage Chat"></i>
                 </div>
                 <button type="button" id="live-mic-btn" class="w-[40px] h-[40px] rounded-full bg-[#202c33] text-[#8696a0] border border-[#2a3942] flex justify-center items-center text-[1.1rem] shrink-0 transition">
                     <i class="fa-solid fa-microphone"></i>
@@ -878,10 +828,6 @@
             e.stopPropagation();
             window.stopLiveRoomMic(false);
         });
-        page.querySelector('#live-flag-wrap')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openLiveAvatarLangPanel();
-        });
         page.querySelector('#live-mic-btn')?.addEventListener('click', (e) => {
             e.stopPropagation();
             openLiveMicMenu();
@@ -909,17 +855,29 @@
         if (stopB) stopB.textContent = lt('live_stop');
         if (inp) inp.placeholder = lt('live_msg_placeholder');
         updateLiveMicPill(LV.pendingInterim);
-        refreshLiveFrameOverlay();
+        updateLiveCamButtons();
+    }
+
+    function updateLiveCamButtons() {
+        const camBtn = document.getElementById('live-cam-btn');
+        const flipBtn = document.getElementById('live-flip-btn');
+        if (camBtn) {
+            camBtn.className = LV.camEnabled
+                ? 'w-[44px] h-[44px] rounded-full bg-[#00a884] text-[#111b21] flex justify-center items-center text-xl shadow-lg transition'
+                : 'w-[44px] h-[44px] rounded-full bg-[#202c33] text-[#8696a0] flex justify-center items-center text-xl hover:bg-[#2a3942] transition';
+            camBtn.innerHTML = LV.camEnabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
+        }
+        if (flipBtn) {
+            flipBtn.classList.toggle('hidden', !LV.camEnabled);
+        }
     }
 
     function updateLiveModeBarUI() {
         const btnDirect = document.getElementById('hf-lv-btn-direct');
         const btnAi = document.getElementById('hf-lv-btn-ai');
         if (!btnDirect || !btnAi) return;
-        const isDirect = !LV.micActive;
-        const isAiActive = LV.micActive && LV.micMode === 'ai-audio';
-        btnDirect.classList.toggle('active-direct', isDirect);
-        btnAi.classList.toggle('active-ai', isAiActive);
+        btnDirect.classList.toggle('active-direct', !LV.micActive);
+        btnAi.classList.toggle('active-ai', LV.micActive && LV.micMode === 'ai-audio');
     }
 
     function updateLiveMicPill(preview = '') {
@@ -951,7 +909,7 @@
         updateLiveModeBarUI();
     }
 
-    // Попап выбора языка аватара в эфире (1-в-1 conference.js)
+    // Ручная панель смены языка (открывается тапом по видеофрейму, НЕ по флагу)
     function openLiveAvatarLangPanel() {
         const existing = document.getElementById('hf-lv-avatar-modal');
         const wasOpen = existing && existing.classList.contains('active');
@@ -1000,7 +958,6 @@
         modal.classList.add('active');
     }
 
-    // Попап микрофона эфира (1-в-1 conference.js)
     function openLiveMicMenu() {
         const existing = document.getElementById('hf-lv-mic-popup');
         const wasOpen = existing && existing.classList.contains('active');
@@ -1055,8 +1012,13 @@
     }
 
     // =======================================================
-    // 6. БОКОВАЯ ПАНЕЛЬ ПОЛЬЗОВАТЕЛЕЙ (LIVE ПОДНИМАЮТСЯ НАВЕРХ)
+    // 6. БОКОВАЯ ПАНЕЛЬ КОМНАТ И ДИНАМИЧЕСКАЯ СЕТКА ВИДЕО (1..6)
     // =======================================================
+    function roomHasLiveCameras(ownerId) {
+        const room = LV.allActiveRooms && LV.allActiveRooms[String(ownerId)];
+        return Boolean(room && room.cameras && Object.keys(room.cameras).length > 0);
+    }
+
     function renderLiveSidebar() {
         const sb = document.getElementById('live-sidebar');
         if (!sb) return;
@@ -1065,44 +1027,35 @@
         const myName = (window.myUsername || 'Me').split(' ')[0];
         const myPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || 'https://ui-avatars.com/api/?name=Me';
         const myFlag = getLiveNativeFlag(window.myProfileInfo);
-        const myIsLive = Boolean(LV.isActive && isHostRole());
-        const mySel = String(LV.currentHostId) === myId;
+        const myRoomLive = roomHasLiveCameras(myId) || (LV.camEnabled && String(LV.currentRoomOwnerId) === myId);
+        const mySel = String(LV.currentRoomOwnerId) === myId;
 
         let html = `
-            <div class="chat-contact ${mySel ? 'active-room' : ''}" onclick="window.selectLiveHostChannel('${lvEscapeHtml(myId)}')">
-                <div class="chat-contact-icon" style="background-image:url('${lvEscapeHtml(myPhoto)}'); border-color:${myIsLive ? '#ef4444' : (mySel ? '#00a884' : 'transparent')};">
+            <div class="chat-contact ${mySel ? 'active-room' : ''}" onclick="window.selectLiveRoom('${lvEscapeHtml(myId)}')">
+                <div class="chat-contact-icon" style="background-image:url('${lvEscapeHtml(myPhoto)}'); border-color:${myRoomLive ? '#ef4444' : (mySel ? '#00a884' : 'transparent')};">
                     <span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-0.5 leading-none">${lvEscapeHtml(myFlag)}</span>
-                    ${myIsLive ? '<span class="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1 py-[1px] rounded bg-red-600 text-[0.5rem] font-extrabold text-white">LIVE</span>' : ''}
+                    ${myRoomLive ? '<span class="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1 py-[1px] rounded bg-red-600 text-[0.5rem] font-extrabold text-white">LIVE</span>' : ''}
                 </div>
                 <span class="chat-contact-name">${lvEscapeHtml(myName)}</span>
             </div>
         `;
 
         const others = (window.participants || []).filter(p => p && p.id && p.id !== 'ai' && String(p.id) !== myId);
-        const seen = new Set(others.map(p => String(p.id)));
-        Object.keys(LV.liveHosts || {}).forEach(hid => {
-            const h = LV.liveHosts[hid];
-            if (hid !== myId && h && h.online && !seen.has(hid)) {
-                others.push({ id: hid, name: h.name || 'Host', photo: h.photo, flag: h.flag || '🌐' });
-            }
-        });
-
-        // Кто сейчас в LIVE — строго наверх
         others.sort((a, b) => {
-            const aLive = Boolean(LV.liveHosts[String(a.id)] && LV.liveHosts[String(a.id)].online);
-            const bLive = Boolean(LV.liveHosts[String(b.id)] && LV.liveHosts[String(b.id)].online);
+            const aLive = roomHasLiveCameras(a.id);
+            const bLive = roomHasLiveCameras(b.id);
             if (aLive !== bLive) return aLive ? -1 : 1;
             return 0;
         });
 
         others.forEach(p => {
             const pid = String(p.id);
-            const isLive = Boolean(LV.liveHosts[pid] && LV.liveHosts[pid].online);
-            const isSel = String(LV.currentHostId) === pid;
+            const isLive = roomHasLiveCameras(pid);
+            const isSel = String(LV.currentRoomOwnerId) === pid;
             const photo = p.photo || 'https://ui-avatars.com/api/?name=U';
             html += `
-                <div class="chat-contact ${isSel ? 'active-room' : ''}" onclick="window.selectLiveHostChannel('${lvEscapeHtml(pid)}')">
-                    <div class="chat-contact-icon" style="background-image:url('${lvEscapeHtml(photo)}'); border-color:${isLive ? '#ef4444' : (isSel ? '#00a884' : 'transparent')}; opacity:${isLive || isSel ? '1' : '0.68'};">
+                <div class="chat-contact ${isSel ? 'active-room' : ''}" onclick="window.selectLiveRoom('${lvEscapeHtml(pid)}')">
+                    <div class="chat-contact-icon" style="background-image:url('${lvEscapeHtml(photo)}'); border-color:${isLive ? '#ef4444' : (isSel ? '#00a884' : 'transparent')}; opacity:${isLive || isSel ? '1' : '0.72'};">
                         <span class="absolute -bottom-1 -right-1 text-[10px] bg-[#111b21] rounded-full px-0.5 leading-none">${lvEscapeHtml(p.flag || '🌐')}</span>
                         ${isLive ? '<span class="absolute -top-1.5 left-1/2 -translate-x-1/2 px-1 py-[1px] rounded bg-red-600 text-[0.5rem] font-extrabold text-white">LIVE</span>' : ''}
                     </div>
@@ -1114,75 +1067,162 @@
         sb.innerHTML = html;
     }
 
-    function refreshLiveFrameOverlay() {
-        const myInfo = getMyEffectiveLiveInfo(LV.activeChannel);
-        const flagImg = document.getElementById('live-my-flag-img');
-        if (flagImg) flagImg.src = `https://flagcdn.com/w40/${myInfo.flagCode}.png`;
-
-        const hostId = LV.currentHostId;
-        const amHost = isHostRole();
-        const hostInfo = hostId ? LV.liveHosts[String(hostId)] : null;
-        const onAir = amHost ? LV.isActive : Boolean(hostInfo && hostInfo.online);
-
-        const wrap = document.getElementById('live-video-frame');
-        const pill = document.getElementById('live-status-pill');
-        const titleEl = document.getElementById('live-host-title');
-        const vChip = document.getElementById('live-viewers-chip');
-        const phImg = document.getElementById('live-main-ph-img');
-        const phIcon = document.getElementById('live-main-ph-icon');
-        const phTxt = document.getElementById('live-main-ph-txt');
-        const flipBtn = document.getElementById('live-flip-btn');
-        const camBtn = document.getElementById('live-cam-btn');
-
-        if (wrap) wrap.classList.toggle('is-on-air', onAir);
-        if (vChip) vChip.textContent = `👁 ${LV.viewersCount || 0}`;
-
-        if (pill) {
-            pill.textContent = onAir ? lt('live_badge') : lt('live_off');
-            pill.className = onAir
-                ? 'px-1.5 py-0.5 rounded bg-red-600 text-[0.58rem] font-extrabold text-white tracking-wider'
-                : 'px-1.5 py-0.5 rounded bg-[#2a3942] text-[0.58rem] font-extrabold text-[#aebac1]';
-        }
-
-        let displayPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || '';
-        if (amHost) {
-            if (titleEl) titleEl.textContent = `${myInfo.flag} ${(window.myUsername || 'Me').split(' ')[0]}`;
-        } else {
-            const p = (window.participants || []).find(x => String(x.id) === String(hostId));
-            const nm = (hostInfo && hostInfo.name) || (p && p.name) || 'Host';
-            const fl = (hostInfo && hostInfo.flag) || (p && p.flag) || '🌐';
-            displayPhoto = (hostInfo && hostInfo.photo) || (p && p.photo) || '';
-            if (titleEl) titleEl.textContent = `${fl} ${nm.split(' ')[0]}`;
-        }
-
-        if (phImg) {
-            if (displayPhoto) {
-                phImg.src = displayPhoto;
-                phImg.classList.remove('hidden');
-                if (phIcon) phIcon.classList.add('hidden');
-            } else {
-                phImg.classList.add('hidden');
-                if (phIcon) phIcon.classList.remove('hidden');
+    function attachTrackToVideoEl(videoEl, track, mirror) {
+        if (!videoEl || !track) return;
+        try {
+            const mediaTrack = track.getMediaStreamTrack();
+            if (!mediaTrack) return;
+            const cur = (videoEl.srcObject && videoEl.srcObject.getVideoTracks) ? videoEl.srcObject.getVideoTracks()[0] : null;
+            if (!cur || cur.id !== mediaTrack.id) {
+                videoEl.srcObject = new MediaStream([mediaTrack]);
             }
-        }
-        if (phTxt) {
-            phTxt.textContent = amHost
-                ? (LV.camEnabled ? '' : lt('live_off'))
-                : (onAir ? lt('live_connecting') : lt('live_ended'));
+            videoEl.muted = true;
+            videoEl.playsInline = true;
+            videoEl.autoplay = true;
+            videoEl.classList.remove('hidden');
+            videoEl.classList.toggle('mirror-video', Boolean(mirror));
+            if (videoEl.paused) videoEl.play().catch(() => {});
+        } catch (e) {}
+    }
+
+    function renderLiveGrid() {
+        const grid = document.getElementById('live-grid');
+        if (!grid) return;
+
+        const myId = getMyId() || 'guest';
+        const myName = (window.myUsername || 'Me').split(' ')[0];
+        const myPhoto = (window.myProfileInfo && window.myProfileInfo.photo) || '';
+        const myInfo = getMyEffectiveLiveInfo(LV.activeChannel);
+
+        // Собираем список других участников с включённой камерой в текущей комнате (до 5 + я = 6)
+        const remoteCams = Object.values(LV.roomCameras || {})
+            .filter(c => c && c.userId && String(c.userId) !== myId && c.online)
+            .slice(0, MAX_VIDEO_SLOTS - 1);
+
+        const totalTiles = 1 + remoteCams.length;
+        grid.className = totalTiles === 1 ? 'cols-1' : 'cols-2';
+
+        // Сохраняем текущее состояние строки переводов, чтобы не сбрасывать её при перерисовке
+        const existingBar = document.getElementById('live-frame-bar');
+
+        // 1. Мой фрейм (всегда есть, даже если камера выключена — в нём бежит перевод)
+        let myTile = document.getElementById('lv-tile-me');
+        if (!myTile) {
+            myTile = document.createElement('div');
+            myTile.id = 'lv-tile-me';
+            myTile.className = 'lv-tile is-me';
+            myTile.innerHTML = `
+                <video id="lv-video-me" class="hidden" playsinline autoplay muted></video>
+                <div id="lv-ph-me" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-[#111b21] z-10">
+                    <img id="lv-ph-img-me" src="${lvEscapeHtml(myPhoto)}" class="w-16 h-16 rounded-full object-cover border-2 border-[#00a884] ${myPhoto ? '' : 'hidden'}">
+                    <span id="lv-ph-txt-me" class="text-[0.7rem] text-[#8696a0] font-semibold">${lvEscapeHtml(lt('live_cam_off'))}</span>
+                </div>
+                <div class="absolute top-2 left-2 z-20 flex items-center gap-1 bg-black/70 px-2 py-0.5 rounded-full">
+                    <span id="lv-badge-me" class="hidden px-1 py-[1px] rounded bg-red-600 text-[0.52rem] font-extrabold text-white">${lvEscapeHtml(lt('live_badge'))}</span>
+                    <span id="lv-name-me" class="text-[0.7rem] font-bold text-white truncate max-w-[90px]">${lvEscapeHtml(myName)}</span>
+                </div>
+                <div id="lv-flag-me" class="flag-overlay cursor-pointer z-30" style="top:8px; right:8px;" title="Country Info">
+                    <img id="lv-flag-img-me" src="https://flagcdn.com/w40/${myInfo.flagCode}.png" class="w-6 rounded-sm border border-[#2a3942]">
+                </div>
+            `;
+            // Тап по видеофрейму -> панель ручной смены языка
+            myTile.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openLiveAvatarLangPanel();
+            });
+            // Тап по флагу -> информация о стране (не открывает языковую панель)
+            myTile.querySelector('#lv-flag-me').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const cur = getMyEffectiveLiveInfo(LV.activeChannel);
+                openLiveCountryInfo(cur.flagCode, cur.flag, myName);
+            });
+            grid.appendChild(myTile);
         }
 
-        if (camBtn) {
-            camBtn.style.display = amHost ? 'flex' : 'none';
-            camBtn.className = LV.camEnabled
-                ? 'w-[44px] h-[44px] rounded-full bg-[#202c33] text-white flex justify-center items-center text-xl hover:bg-[#2a3942] transition'
-                : 'w-[44px] h-[44px] rounded-full bg-red-500/20 text-red-400 border border-red-500/50 flex justify-center items-center text-xl transition';
-            camBtn.innerHTML = LV.camEnabled ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
+        // Прикрепляем бегущую строку переводов внутрь моего фрейма
+        if (!existingBar) {
+            const bar = document.createElement('div');
+            bar.id = 'live-frame-bar';
+            bar.style.opacity = LV.marqueeEnabled ? '1' : '0';
+            bar.innerHTML = `
+                <span id="live-q-badge" class="hidden px-1.5 py-0.5 rounded-full bg-yellow-400 text-[#111b21] text-[0.6rem] font-extrabold shrink-0"></span>
+                <div id="live-frame-viewport">
+                    <div id="live-frame-track">${lvEscapeHtml(lt('live_wait_trans'))}</div>
+                </div>
+            `;
+            myTile.appendChild(bar);
+        } else if (existingBar.parentElement !== myTile) {
+            myTile.appendChild(existingBar);
         }
-        if (flipBtn) flipBtn.style.display = (amHost && LV.camEnabled) ? 'flex' : 'none';
+
+        // Обновляем мой фрейм (флаг, имя, видео/заглушка)
+        const myFlagImg = document.getElementById('lv-flag-img-me');
+        if (myFlagImg) myFlagImg.src = `https://flagcdn.com/w40/${myInfo.flagCode}.png`;
+        const myBadge = document.getElementById('lv-badge-me');
+        if (myBadge) myBadge.classList.toggle('hidden', !LV.camEnabled);
+        const myPh = document.getElementById('lv-ph-me');
+        const myVid = document.getElementById('lv-video-me');
+        if (LV.camEnabled && LV.localVideoTrack) {
+            attachTrackToVideoEl(myVid, LV.localVideoTrack, LV.facingMode === 'user');
+            if (myPh) myPh.classList.add('hidden');
+        } else {
+            if (myVid) { myVid.srcObject = null; myVid.classList.add('hidden'); }
+            if (myPh) myPh.classList.remove('hidden');
+        }
+
+        // 2. Удаляем старые чужие плитки, которых больше нет в roomCameras
+        const activeRemoteIds = new Set(remoteCams.map(c => `lv-tile-${c.userId}`));
+        Array.from(grid.children).forEach(child => {
+            if (child.id !== 'lv-tile-me' && !activeRemoteIds.has(child.id)) {
+                child.remove();
+            }
+        });
+
+        // 3. Добавляем/обновляем плитки участников с включённой камерой
+        remoteCams.forEach(c => {
+            const tileId = `lv-tile-${c.userId}`;
+            let tile = document.getElementById(tileId);
+            const uFlagCode = (c.flagCode || 'un').toLowerCase();
+            const uName = (c.name || 'User').split(' ')[0];
+
+            if (!tile) {
+                tile = document.createElement('div');
+                tile.id = tileId;
+                tile.className = 'lv-tile';
+                tile.innerHTML = `
+                    <video id="lv-video-${lvEscapeHtml(c.userId)}" class="hidden" playsinline autoplay muted></video>
+                    <div id="lv-ph-${lvEscapeHtml(c.userId)}" class="absolute inset-0 flex flex-col items-center justify-center bg-[#111b21] z-10">
+                        <img src="${lvEscapeHtml(c.photo || '')}" class="w-14 h-14 rounded-full object-cover border-2 border-[#2a3942] ${c.photo ? '' : 'hidden'}">
+                    </div>
+                    <div class="absolute top-2 left-2 z-20 flex items-center gap-1 bg-black/70 px-2 py-0.5 rounded-full">
+                        <span class="px-1 py-[1px] rounded bg-red-600 text-[0.52rem] font-extrabold text-white">LIVE</span>
+                        <span class="text-[0.7rem] font-bold text-white truncate max-w-[85px]">${lvEscapeHtml(uName)}</span>
+                    </div>
+                    <div class="flag-overlay cursor-pointer z-30" style="top:8px; right:8px;" data-flag-code="${lvEscapeHtml(uFlagCode)}" data-flag-emoji="${lvEscapeHtml(c.flag || '🌐')}" data-user-name="${lvEscapeHtml(uName)}">
+                        <img src="https://flagcdn.com/w40/${lvEscapeHtml(uFlagCode)}.png" class="w-6 rounded-sm border border-[#2a3942]">
+                    </div>
+                `;
+                tile.querySelector('.flag-overlay').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const el = e.currentTarget;
+                    openLiveCountryInfo(el.dataset.flagCode, el.dataset.flagEmoji, el.dataset.userName);
+                });
+                grid.appendChild(tile);
+            }
+
+            const aUid = String(c.agoraUid || c.userId);
+            const track = LV.remoteVideoTracks[aUid] || LV.remoteVideoTracks[String(c.userId)];
+            const vEl = document.getElementById(`lv-video-${c.userId}`);
+            const pEl = document.getElementById(`lv-ph-${c.userId}`);
+            if (track && vEl) {
+                attachTrackToVideoEl(vEl, track, false);
+                if (pEl) pEl.classList.add('hidden');
+            }
+        });
     }
 
     // =======================================================
-    // 7. ОЧЕРЕДЬ TTS + АНТИ-ЭХО (ПРОТОТИП conference.js)
+    // 7. TTS + АНТИ-ЭХО (ПРОТОТИП conference.js)
     // =======================================================
     function unlockLiveTTSOnGesture() {
         if (LV.ttsUnlocked || typeof window.speechSynthesis === 'undefined') return;
@@ -1201,8 +1241,7 @@
         LV.ttsSpeaking = false;
         clearTimeout(LV.ttsSafetyTimer);
         clearTimeout(LV.ttsCooldownTimer);
-        LV.ttsSafetyTimer = null;
-        LV.ttsCooldownTimer = null;
+        LV.ttsSafetyTimer = LV.ttsCooldownTimer = null;
         if (hadWork || LV.isActive) {
             try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
         }
@@ -1216,9 +1255,7 @@
         const short = full.split('-')[0];
         let match = voices.find(v => (v.lang || '').toLowerCase() === full)
             || voices.find(v => (v.lang || '').toLowerCase().startsWith(short));
-        if (!match && short === 'az') {
-            match = voices.find(v => (v.lang || '').toLowerCase().startsWith('tr'));
-        }
+        if (!match && short === 'az') match = voices.find(v => (v.lang || '').toLowerCase().startsWith('tr'));
         return match || null;
     }
 
@@ -1229,7 +1266,6 @@
         clearTimeout(LV.ttsCooldownTimer);
         LV.micRestartTimer = LV.silenceTimer = LV.ttsCooldownTimer = null;
         LV.pendingInterim = '';
-
         if (LV.recognition) {
             try {
                 LV.recognition.onresult = LV.recognition.onend = LV.recognition.onerror = null;
@@ -1318,11 +1354,10 @@
 
         utt.onend = done;
         utt.onerror = done;
-        const maxDur = Math.min(18000, Math.max(4000, item.text.length * 140));
         LV.ttsSafetyTimer = setTimeout(() => {
             try { window.speechSynthesis.cancel(); } catch (e) {}
             done();
-        }, maxDur);
+        }, Math.min(18000, Math.max(4000, item.text.length * 140)));
 
         try { window.speechSynthesis.speak(utt); } catch (e) { done(); }
     }
@@ -1337,88 +1372,32 @@
     }
 
     // =======================================================
-    // 8. AGORA: ВИДЕО + АУДИО ЭФИРА (ВЕДУЩИЙ ПУБЛИКУЕТ, ЗРИТЕЛЬ СМОТРИТ ТОЛЬКО ВЕДУЩЕГО)
+    // 8. AGORA: ВИДЕО + АУДИО (ФИЛЬТРАЦИЯ ПО ТЕКУЩЕЙ КОМНАТЕ)
     // =======================================================
-    function playLiveTrack(track) {
-        const videoEl = document.getElementById('live-main-video');
-        const phEl = document.getElementById('live-main-ph');
-        if (!videoEl || !track) return;
-        try {
-            const mediaTrack = track.getMediaStreamTrack();
-            if (!mediaTrack) return;
-            const cur = (videoEl.srcObject && videoEl.srcObject.getVideoTracks) ? videoEl.srcObject.getVideoTracks()[0] : null;
-            if (!cur || cur.id !== mediaTrack.id) {
-                videoEl.srcObject = new MediaStream([mediaTrack]);
+    function getRoomAgoraUidSet() {
+        const set = new Set();
+        Object.values(LV.roomCameras || {}).forEach(c => {
+            if (c && c.online) {
+                if (c.agoraUid) set.add(String(c.agoraUid));
+                if (c.userId) set.add(String(c.userId));
             }
-            videoEl.muted = true;
-            videoEl.playsInline = true;
-            videoEl.autoplay = true;
-            videoEl.classList.remove('hidden');
-            videoEl.style.display = 'block';
-            if (isHostRole() && LV.facingMode === 'user') videoEl.classList.add('mirror-video');
-            else videoEl.classList.remove('mirror-video');
-            if (videoEl.paused) videoEl.play().catch(() => {});
-            if (phEl) { phEl.classList.add('hidden'); phEl.style.display = 'none'; }
-        } catch (e) {}
-    }
-
-    function hideLiveVideoEl() {
-        const videoEl = document.getElementById('live-main-video');
-        const phEl = document.getElementById('live-main-ph');
-        if (videoEl) {
-            videoEl.srcObject = null;
-            videoEl.classList.add('hidden');
-            videoEl.style.display = 'none';
-        }
-        if (phEl) {
-            phEl.classList.remove('hidden');
-            phEl.style.display = 'flex';
-        }
-    }
-
-    function getTargetHostAgoraUid() {
-        if (isHostRole()) return LV.myAgoraUid || '';
-        const h = LV.currentHostId ? LV.liveHosts[String(LV.currentHostId)] : null;
-        return (h && h.online && h.agoraUid) ? String(h.agoraUid) : '';
-    }
-
-    function syncLiveVideoDisplay() {
-        if (isHostRole()) {
-            if (LV.localVideoTrack && LV.camEnabled) playLiveTrack(LV.localVideoTrack);
-            else hideLiveVideoEl();
-            return;
-        }
-        const targetUid = getTargetHostAgoraUid();
-        const hostTrack = (targetUid && LV.remoteVideoTracks[targetUid])
-            || (LV.currentHostId && LV.remoteVideoTracks[String(LV.currentHostId)])
-            || null;
-        if (hostTrack) playLiveTrack(hostTrack);
-        else hideLiveVideoEl();
+        });
+        return set;
     }
 
     function syncLiveRemoteAudioVolume() {
-        const targetUid = getTargetHostAgoraUid();
+        const allowedUids = getRoomAgoraUidSet();
         const isAiActive = LV.micActive && LV.micMode === 'ai-audio';
-        const myInfo = getMyEffectiveLiveInfo(LV.micActive ? 'mic' : LV.activeChannel);
-        const hostInfo = LV.currentHostId ? LV.liveHosts[String(LV.currentHostId)] : null;
-        const hostLang = hostInfo ? lvNormLang(hostInfo.langCode) : null;
-        const sameLang = Boolean(hostLang && hostLang === myInfo.lang);
-
         Object.keys(LV.remoteAudioTracks).forEach(aUid => {
             const tr = LV.remoteAudioTracks[aUid];
             if (!tr) return;
-            // Зритель слышит ТОЛЬКО выбранного ведущего; ведущий не слушает чужой шум
-            const isTargetHost = !isHostRole() && targetUid && (String(aUid) === targetUid || String(aUid) === String(LV.currentHostId));
-            if (!isTargetHost) {
+            const inRoom = allowedUids.has(String(aUid));
+            if (!inRoom) {
                 try { tr.setVolume(0); } catch (e) {}
                 return;
             }
-            if (!LV.agoraPausedForTranslation && !isAiActive) {
-                try { tr.setVolume(100); } catch (e) {}
-            } else {
-                const vol = (sameLang && !LV.isSpeakingAI && !LV.agoraPausedForTranslation) ? 100 : 0;
-                try { tr.setVolume(vol); } catch (e) {}
-            }
+            const vol = (!LV.agoraPausedForTranslation && !isAiActive && !LV.isSpeakingAI) ? 100 : 0;
+            try { tr.setVolume(vol); } catch (e) {}
         });
     }
 
@@ -1433,7 +1412,7 @@
 
     async function resumeLiveAgoraMicAfterTranslation() {
         LV.agoraPausedForTranslation = false;
-        if (LV.localAudioTrack && isHostRole()) {
+        if (LV.localAudioTrack && LV.camEnabled) {
             try { await LV.localAudioTrack.setEnabled(true); }
             catch (e) { try { await LV.localAudioTrack.setMuted(false); } catch (err) {} }
         }
@@ -1443,11 +1422,6 @@
     async function subscribeLiveRemote(user, mediaType) {
         if (!LV.client || !user) return;
         const aUid = String(user.uid);
-        const targetUid = getTargetHostAgoraUid();
-        // Подписываемся только на треки выбранного ведущего
-        if (isHostRole()) return;
-        if (targetUid && aUid !== targetUid && aUid !== String(LV.currentHostId)) return;
-
         const lock = `${aUid}:${mediaType}`;
         if (LV.subscribing.has(lock)) return;
         LV.subscribing.add(lock);
@@ -1455,7 +1429,7 @@
             await LV.client.subscribe(user, mediaType);
             if (mediaType === 'video' && user.videoTrack) {
                 LV.remoteVideoTracks[aUid] = user.videoTrack;
-                syncLiveVideoDisplay();
+                renderLiveGrid();
             }
             if (mediaType === 'audio' && user.audioTrack) {
                 LV.remoteAudioTracks[aUid] = user.audioTrack;
@@ -1469,13 +1443,11 @@
         }
     }
 
-    function trySubscribeCurrentHost() {
-        if (!LV.client || isHostRole()) return;
-        const targetUid = getTargetHostAgoraUid();
-        if (!targetUid) return;
+    function trySubscribeRoomUsers() {
+        if (!LV.client) return;
+        const allowed = getRoomAgoraUidSet();
         (LV.client.remoteUsers || []).forEach(rem => {
-            const rUid = String(rem.uid);
-            if (rUid === targetUid || rUid === String(LV.currentHostId)) {
+            if (allowed.has(String(rem.uid))) {
                 if (rem.hasVideo) subscribeLiveRemote(rem, 'video');
                 if (rem.hasAudio) subscribeLiveRemote(rem, 'audio');
             }
@@ -1489,37 +1461,10 @@
         }
         if (LV.localAudioTrack) { try { LV.localAudioTrack.close(); } catch (e) {} LV.localAudioTrack = null; }
         if (LV.localVideoTrack) { try { LV.localVideoTrack.close(); } catch (e) {} LV.localVideoTrack = null; }
-        if (LV.hostPresenceRef) { try { await LV.hostPresenceRef.remove(); } catch (e) {} LV.hostPresenceRef = null; }
-    }
-
-    async function publishHostTracksIfNeeded() {
-        if (!LV.isActive || !isHostRole() || !LV.client || LV.client.connectionState !== 'CONNECTED') return;
-
-        const toPublish = [];
-        if (!LV.localAudioTrack) {
-            try {
-                LV.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({ AEC: true, ANS: true, AGC: true });
-                toPublish.push(LV.localAudioTrack);
-            } catch (e) { console.warn('Live mic unavailable:', e); }
-        }
-        if (LV.camEnabled && !LV.localVideoTrack) {
-            try {
-                LV.localVideoTrack = await AgoraRTC.createCameraVideoTrack({ facingMode: LV.facingMode });
-                toPublish.push(LV.localVideoTrack);
-            } catch (e) {
-                console.warn('Live camera unavailable:', e);
-                LV.camEnabled = false;
-            }
-        }
-        if (toPublish.length > 0 && LV.client && LV.client.connectionState === 'CONNECTED') {
-            await LV.client.publish(toPublish);
-        }
-        syncLiveVideoDisplay();
-        refreshLiveFrameOverlay();
-
-        if (LV.micActive || LV.agoraPausedForTranslation) {
-            await pauseLiveAgoraMicForTranslation();
-        }
+        if (LV.myCamRef) { try { await LV.myCamRef.remove(); } catch (e) {} LV.myCamRef = null; }
+        LV.camEnabled = false;
+        updateLiveCamButtons();
+        renderLiveGrid();
     }
 
     async function startLiveAgora() {
@@ -1529,9 +1474,7 @@
             return;
         }
         if (LV.client && LV.client.connectionState === 'CONNECTED') {
-            if (isHostRole()) await publishHostTracksIfNeeded();
-            else trySubscribeCurrentHost();
-            syncLiveVideoDisplay();
+            trySubscribeRoomUsers();
             syncLiveRemoteAudioVolume();
             return;
         }
@@ -1546,13 +1489,14 @@
             LV.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
             LV.client.on('user-published', (user, mediaType) => {
-                subscribeLiveRemote(user, mediaType);
+                const allowed = getRoomAgoraUidSet();
+                if (allowed.has(String(user.uid))) subscribeLiveRemote(user, mediaType);
             });
             LV.client.on('user-unpublished', (user, mediaType) => {
                 const aUid = String(user.uid);
                 if (mediaType === 'video') {
                     delete LV.remoteVideoTracks[aUid];
-                    if (aUid === getTargetHostAgoraUid()) hideLiveVideoEl();
+                    renderLiveGrid();
                 }
                 if (mediaType === 'audio') {
                     if (user.audioTrack) { try { user.audioTrack.stop(); } catch (e) {} }
@@ -1563,7 +1507,7 @@
                 const aUid = String(user.uid);
                 delete LV.remoteVideoTracks[aUid];
                 delete LV.remoteAudioTracks[aUid];
-                if (aUid === getTargetHostAgoraUid()) hideLiveVideoEl();
+                renderLiveGrid();
             });
 
             const appId = window.CALLS_AGORA_APP_ID || (typeof AGORA_APP_ID !== 'undefined' ? AGORA_APP_ID : window.AGORA_APP_ID) || '';
@@ -1573,14 +1517,10 @@
             if (!appId) return;
 
             let joinedUid = null;
-            try {
-                joinedUid = await LV.client.join(appId, channelName, token, myId ? `live_${myId}` : null);
-            } catch (e1) {
-                try {
-                    joinedUid = await LV.client.join(appId, channelName, token, myId || null);
-                } catch (e2) {
-                    joinedUid = await LV.client.join(appId, channelName, token, null);
-                }
+            try { joinedUid = await LV.client.join(appId, channelName, token, myId ? `live_${myId}` : null); }
+            catch (e1) {
+                try { joinedUid = await LV.client.join(appId, channelName, token, myId || null); }
+                catch (e2) { joinedUid = await LV.client.join(appId, channelName, token, null); }
             }
 
             if (!LV.isActive || LV.isLeaving) {
@@ -1590,13 +1530,7 @@
             }
 
             LV.myAgoraUid = String(joinedUid);
-
-            if (isHostRole()) {
-                registerMyHostPresence();
-                await publishHostTracksIfNeeded();
-            } else {
-                trySubscribeCurrentHost();
-            }
+            trySubscribeRoomUsers();
         } catch (e) {
             console.warn('Live Agora error:', e);
         } finally {
@@ -1604,15 +1538,16 @@
         }
     }
 
-    function registerMyHostPresence() {
+    function registerMyCameraInRoom() {
         const myId = getMyId();
-        if (!myId || !LV.isActive || !isHostRole() || typeof firebase === 'undefined' || !firebase.database) return;
+        const ownerId = LV.currentRoomOwnerId;
+        if (!myId || !ownerId || !LV.isActive || typeof firebase === 'undefined' || !firebase.database) return;
         const myInfo = getMyEffectiveLiveInfo(LV.activeChannel);
-        LV.hostPresenceRef = firebase.database().ref(`live_world/hosts/${myId}`);
-        LV.hostPresenceRef.set({
-            hostId: myId,
+        LV.myCamRef = firebase.database().ref(`live_world/rooms/${ownerId}/cameras/${myId}`);
+        LV.myCamRef.set({
+            userId: myId,
             agoraUid: LV.myAgoraUid || myId,
-            name: (window.myUsername || 'Host').split(' ')[0],
+            name: (window.myUsername || 'User').split(' ')[0],
             photo: (window.myProfileInfo && window.myProfileInfo.photo) || '',
             flag: myInfo.flag,
             flagCode: myInfo.flagCode,
@@ -1620,32 +1555,41 @@
             online: true,
             startedAt: firebase.database.ServerValue.TIMESTAMP
         }).catch(() => {});
-        try { LV.hostPresenceRef.onDisconnect().remove(); } catch (e) {}
+        try { LV.myCamRef.onDisconnect().remove(); } catch (e) {}
     }
 
     window.toggleLiveCamera = async function () {
-        if (!isHostRole() || LV.isTogglingCam) return;
+        if (LV.isTogglingCam || !LV.isActive) return;
         LV.isTogglingCam = true;
-        const nextEnabled = !LV.camEnabled;
         try {
-            if (nextEnabled) {
-                if (!LV.localVideoTrack && LV.client && LV.client.connectionState === 'CONNECTED' && typeof AgoraRTC !== 'undefined') {
+            if (!LV.camEnabled) {
+                if (!LV.client || LV.client.connectionState !== 'CONNECTED') {
+                    await startLiveAgora();
+                }
+                const toPublish = [];
+                if (!LV.localAudioTrack) {
+                    try {
+                        LV.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({ AEC: true, ANS: true, AGC: true });
+                        toPublish.push(LV.localAudioTrack);
+                    } catch (e) {}
+                }
+                if (!LV.localVideoTrack) {
                     LV.localVideoTrack = await AgoraRTC.createCameraVideoTrack({ facingMode: LV.facingMode });
-                    await LV.client.publish([LV.localVideoTrack]);
-                } else if (LV.localVideoTrack) {
-                    try { await LV.localVideoTrack.setEnabled(true); }
-                    catch (e) { await LV.localVideoTrack.setMuted(false); }
+                    toPublish.push(LV.localVideoTrack);
+                }
+                if (toPublish.length > 0 && LV.client && LV.client.connectionState === 'CONNECTED') {
+                    await LV.client.publish(toPublish);
                 }
                 LV.camEnabled = true;
+                registerMyCameraInRoom();
+                if (LV.micActive || LV.agoraPausedForTranslation) await pauseLiveAgoraMicForTranslation();
+                updateLiveCamButtons();
+                renderLiveGrid();
+                renderLiveSidebar();
             } else {
-                if (LV.localVideoTrack) {
-                    try { await LV.localVideoTrack.setEnabled(false); }
-                    catch (e) { await LV.localVideoTrack.setMuted(true); }
-                }
-                LV.camEnabled = false;
+                await stopLocalLiveMedia();
+                renderLiveSidebar();
             }
-            syncLiveVideoDisplay();
-            refreshLiveFrameOverlay();
         } catch (e) {
             console.warn('Live cam toggle:', e);
         } finally {
@@ -1654,7 +1598,7 @@
     };
 
     window.flipLiveCamera = async function () {
-        if (!isHostRole() || !LV.camEnabled || LV.isTogglingCam) return;
+        if (!LV.camEnabled || LV.isTogglingCam) return;
         LV.isTogglingCam = true;
         LV.facingMode = (LV.facingMode === 'user') ? 'environment' : 'user';
         try {
@@ -1666,7 +1610,7 @@
                 }
                 LV.localVideoTrack = newTrack;
                 await LV.client.publish([LV.localVideoTrack]);
-                syncLiveVideoDisplay();
+                renderLiveGrid();
             }
         } catch (e) {
             console.warn('Live flip cam:', e);
@@ -1676,7 +1620,7 @@
     };
 
     // =======================================================
-    // 9. МИКРОФОН ЭФИРА (1-в-1 ДВИЖОК conference.js)
+    // 9. МИКРОФОН ЭФИРА (ПРОТОТИП conference.js)
     // =======================================================
     function dispatchLiveVoicePhrase(text) {
         const clean = String(text || '').trim();
@@ -1688,8 +1632,7 @@
         if (isLiveLikelyEcho(clean)) return;
         LV.lastSentNorm = norm;
         LV.lastSentAt = now;
-        const payloadType = (LV.micMode === 'ai-audio') ? 'ai-audio' : 'voice';
-        window.sendLiveRoomPayload(clean, payloadType);
+        window.sendLiveRoomPayload(clean, LV.micMode === 'ai-audio' ? 'ai-audio' : 'voice');
     }
 
     function resetLiveRecognitionFresh(delay = 80) {
@@ -1893,60 +1836,56 @@
     };
 
     // =======================================================
-    // 10. ВХОД, ПЕРЕКЛЮЧЕНИЕ КАНАЛОВ, СООБЩЕНИЯ И РОЛЕВОЙ ПЕРЕВОД
+    // 10. ВХОД, ПЕРЕКЛЮЧЕНИЕ КОМНАТ, СООБЩЕНИЯ И ПЕРЕВОД
     // =======================================================
-    function detachLiveChannelListeners() {
-        if (LV.msgRef && LV.msgListener) {
-            LV.msgRef.off('child_added', LV.msgListener);
-            LV.msgListener = null;
-        }
-        if (LV.viewersRef && LV.viewersListener) {
-            LV.viewersRef.off('value', LV.viewersListener);
-            LV.viewersListener = null;
-        }
-        if (LV.myViewerRef) {
-            LV.myViewerRef.remove().catch(() => {});
-            LV.myViewerRef = null;
-        }
+    function detachLiveRoomListeners() {
+        if (LV.msgRef && LV.msgListener) { LV.msgRef.off('child_added', LV.msgListener); LV.msgListener = null; }
+        if (LV.roomCamsRef && LV.roomCamsListener) { LV.roomCamsRef.off('value', LV.roomCamsListener); LV.roomCamsListener = null; }
+        if (LV.roomMembersRef && LV.roomMembersListener) { LV.roomMembersRef.off('value', LV.roomMembersListener); LV.roomMembersListener = null; }
+        if (LV.myMemberRef) { LV.myMemberRef.remove().catch(() => {}); LV.myMemberRef = null; }
     }
 
-    window.selectLiveHostChannel = async function (hostId) {
-        if (!hostId) return;
+    window.selectLiveRoom = async function (ownerId) {
+        if (!ownerId) return;
         const myId = getMyId() || 'guest';
-        const targetId = String(hostId);
-        const wasHost = isHostRole();
+        const targetId = String(ownerId);
 
-        detachLiveChannelListeners();
+        detachLiveRoomListeners();
+        if (LV.camEnabled) await stopLocalLiveMedia();
 
-        // Если вели эфир и перешли смотреть другого ведущего — гасим свою публикацию
-        if (wasHost && targetId !== myId) {
-            await stopLocalLiveMedia();
-        }
-
-        LV.currentHostId = targetId;
+        LV.currentRoomOwnerId = targetId;
+        LV.roomCameras = {};
+        LV.roomMembersCount = 0;
         LV.seenKeys.clear();
-        LV.viewersCount = 0;
 
         resetLiveTicker('cc');
         resetLiveTicker('frame');
         renderLiveSidebar();
-        refreshLiveFrameOverlay();
+        renderLiveGrid();
 
         if (typeof firebase !== 'undefined' && firebase.database) {
             const db = firebase.database();
 
-            if (myId !== 'guest' && targetId !== myId) {
-                LV.myViewerRef = db.ref(`live_world/viewers/${targetId}/${myId}`);
-                LV.myViewerRef.set({ joinedAt: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
-                try { LV.myViewerRef.onDisconnect().remove(); } catch (e) {}
+            if (myId !== 'guest') {
+                LV.myMemberRef = db.ref(`live_world/rooms/${targetId}/members/${myId}`);
+                LV.myMemberRef.set({ joinedAt: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+                try { LV.myMemberRef.onDisconnect().remove(); } catch (e) {}
             }
 
-            LV.viewersRef = db.ref(`live_world/viewers/${targetId}`);
-            LV.viewersListener = LV.viewersRef.on('value', (snap) => {
+            LV.roomMembersRef = db.ref(`live_world/rooms/${targetId}/members`);
+            LV.roomMembersListener = LV.roomMembersRef.on('value', (snap) => {
                 const val = snap.val();
-                LV.viewersCount = val ? Object.keys(val).length : 0;
+                LV.roomMembersCount = val ? Object.keys(val).length : 0;
                 const vChip = document.getElementById('live-viewers-chip');
-                if (vChip) vChip.textContent = `👁 ${LV.viewersCount}`;
+                if (vChip) vChip.textContent = `👁 ${LV.roomMembersCount}`;
+            });
+
+            LV.roomCamsRef = db.ref(`live_world/rooms/${targetId}/cameras`);
+            LV.roomCamsListener = LV.roomCamsRef.on('value', (snap) => {
+                LV.roomCameras = snap.val() || {};
+                renderLiveGrid();
+                trySubscribeRoomUsers();
+                syncLiveRemoteAudioVolume();
             });
 
             LV.listenerStartedAt = Date.now() + (LV.serverOffset || 0);
@@ -1955,24 +1894,16 @@
         }
 
         if (LV.isActive) {
-            if (isHostRole()) {
-                LV.camEnabled = true;
-                registerMyHostPresence();
-                await startLiveAgora();
-            } else {
-                hideLiveVideoEl();
-                await startLiveAgora();
-                trySubscribeCurrentHost();
-                syncLiveVideoDisplay();
-                syncLiveRemoteAudioVolume();
-            }
+            await startLiveAgora();
+            trySubscribeRoomUsers();
+            syncLiveRemoteAudioVolume();
         }
     };
 
     window.sendLiveRoomPayload = async function (rawText, sourceType = 'keyboard') {
         const cleanText = String(rawText || '').trim();
-        const hostId = LV.currentHostId;
-        if (!cleanText || !hostId || typeof firebase === 'undefined' || !firebase.database) return;
+        const ownerId = LV.currentRoomOwnerId;
+        if (!cleanText || !ownerId || typeof firebase === 'undefined' || !firebase.database) return;
 
         const isVoice = (sourceType === 'voice' || sourceType === 'ai-audio');
         if (isVoice && isLiveDuplicate(cleanText, 'send')) return;
@@ -1984,9 +1915,8 @@
         const safeId = getMyId() || 'guest';
         const safeName = (window.myUsername || (window.myProfileInfo && window.myProfileInfo.name) || 'User').split(' ')[0];
 
-        firebase.database().ref(`live_world/messages/${hostId}`).push({
+        firebase.database().ref(`live_world/messages/${ownerId}`).push({
             userId: safeId,
-            isHost: isHostRole(),
             sessionId: window.mySessionId || 'sess',
             name: safeName,
             flag: myInfo.flag,
@@ -2032,57 +1962,43 @@
         const originalText = String(data.originalText || data.text || '').trim();
         if (!originalText) return;
 
-        // 1. ВЕРХНЯЯ БЕГУЩАЯ СТРОКА (CC) — оригиналы всех участников эфира
+        // 1. Верхняя бегущая строка (CC) — оригиналы всех участников комнаты
         enqueueLiveCcOriginal(senderFlag, senderName, originalText);
 
-        // 2. СТРОКА ВНУТРИ ВИДЕОФРЕЙМА — строгая ролевая фильтрация перевода:
-        //    - Ведущий видит переводы ВСЕХ зрителей на свой язык (с флагом и именем зрителя)
-        //    - Зритель видит перевод ТОЛЬКО Ведущего на свой язык
-        const amHost = isHostRole();
-        const senderIsHost = String(LV.currentHostId) === senderId || Boolean(data.isHost);
+        // 2. Внутренняя строка твоего фрейма — переводы чужих фраз на твой активный язык
+        if (isMe) return;
 
-        let shouldTranslateIntoFrame = false;
-        if (amHost && !isMe) {
-            shouldTranslateIntoFrame = true;
-        } else if (!amHost && senderIsHost && !isMe) {
-            shouldTranslateIntoFrame = true;
-        }
-
-        if (!shouldTranslateIntoFrame) return;
-
-        const incomingChannel = (data.inputChannel === 'mic' || data.sourceType === 'voice' || data.sourceType === 'ai-audio') ? 'mic' : 'avatar';
-        const myInfo = getMyEffectiveLiveInfo(incomingChannel);
+        const myInfo = getMyEffectiveLiveInfo(LV.activeChannel);
         const translated = (senderLang === myInfo.lang)
             ? originalText
             : await lvTranslateText(originalText, myInfo.lang, senderLang);
 
-        // Обязательно выводим флаг и имя отправителя (например, 🇯🇵 Kenji: Привет!)
         enqueueLiveFrameTranslation(senderFlag, senderName, translated);
 
-        // В режиме AI-голоса озвучиваем перевод (клавиатура и voice-text НЕ озвучиваются)
         if (data.sourceType === 'ai-audio' && LV.isActive && LV.micActive && LV.micMode === 'ai-audio') {
             enqueueLiveTTS(translated, myInfo.lang);
         }
     }
 
-    window.enterLiveRoom = async function (targetHostId) {
+    window.enterLiveRoom = async function (targetOwnerId) {
         ensureLivePageMounted();
         refreshLiveUITexts();
 
         const myId = getMyId();
         if (!myId) {
-            setTimeout(() => { if (isLiveVisible() && !LV.isLeaving) window.enterLiveRoom(targetHostId); }, 700);
+            setTimeout(() => { if (isLiveVisible() && !LV.isLeaving) window.enterLiveRoom(targetOwnerId); }, 700);
             return;
         }
         if (LV.isJoining || LV.isLeaving) return;
 
-        // Если до этого была активна Конференция — аккуратно освобождаем микрофон/камеру
         if (window.HF_CONF_ROOM && window.HF_CONF_ROOM.isActive && typeof window.leaveConferenceRoom === 'function') {
             try { await window.leaveConferenceRoom(); } catch (e) {}
         }
 
         LV.isActive = true;
         LV.isJoining = true;
+        LV.camEnabled = false; // При входе камера всегда выключена
+        updateLiveCamButtons();
 
         try {
             if (typeof firebase !== 'undefined' && firebase.database) {
@@ -2103,9 +2019,8 @@
                 }
             }
 
-            // По умолчанию при входе открываем свой канал эфира (камера включится автоматически)
-            const chosenHost = targetHostId || LV.currentHostId || myId;
-            await window.selectLiveHostChannel(chosenHost);
+            const chosenRoom = targetOwnerId || LV.currentRoomOwnerId || myId;
+            await window.selectLiveRoom(chosenRoom);
         } finally {
             LV.isJoining = false;
         }
@@ -2130,7 +2045,7 @@
         try {
             stopLiveTTSQueue();
             await window.stopLiveRoomMic(true);
-            detachLiveChannelListeners();
+            detachLiveRoomListeners();
             await stopLocalLiveMedia();
 
             if (LV.client) {
@@ -2139,14 +2054,15 @@
             }
 
             LV.myAgoraUid = null;
-            LV.currentHostId = null;
+            LV.currentRoomOwnerId = null;
+            LV.roomCameras = {};
             LV.subscribing.clear();
             LV.seenKeys.clear();
             LV.remoteAudioTracks = {};
             LV.remoteVideoTracks = {};
             LV.recentSpoken = [];
             LV.recentBuckets = { send: [], tts: [] };
-            LV.camEnabled = true;
+            LV.camEnabled = false;
             LV.activeChannel = 'avatar';
 
             localStorage.removeItem('hf_live_avatar_lang');
@@ -2161,7 +2077,6 @@
                 LV.langsListener = null;
             }
 
-            hideLiveVideoEl();
             resetLiveTicker('cc');
             resetLiveTicker('frame');
             updateLiveMicPill('');
@@ -2172,7 +2087,7 @@
     };
 
     // =======================================================
-    // 11. ПРИВЯЗКА НИЖНЕЙ ВИДЕОКНОПКИ И ПЕРЕХВАТ switchTab(8)
+    // 11. ПРИВЯЗКА НИЖНЕЙ ВИДЕОКНОПКИ И switchTab(8)
     // =======================================================
     function bindBottomLiveButton() {
         const navWrap = document.querySelector('.bottom-nav-container .nav-links-wrapper');
@@ -2186,7 +2101,6 @@
         }
         if (!liveBtn) return;
 
-        // Перепривязываем строго на switchTab(8) и ключ i18n "live_nav"
         if (liveBtn.getAttribute('onclick') !== `window.switchTab(${LIVE_TAB_INDEX})`) {
             liveBtn.setAttribute('onclick', `window.switchTab(${LIVE_TAB_INDEX})`);
         }
@@ -2241,7 +2155,6 @@
                 openLiveTabScreen();
                 return;
             }
-            // Уходим с Живого эфира на любую другую вкладку (вкл. звонок 1 или конференцию 2)
             const livePage = document.getElementById('live-room-page');
             if (livePage && livePage.classList.contains('active')) {
                 livePage.classList.remove('active');
@@ -2255,31 +2168,23 @@
         window.switchTab = wrapped;
     }
 
-    function bindFirebaseHostsList() {
+    function bindFirebaseRoomsList() {
         if (typeof firebase === 'undefined' || !firebase.database) {
-            setTimeout(bindFirebaseHostsList, 600);
+            setTimeout(bindFirebaseRoomsList, 600);
             return;
         }
-        if (LV.hostsListBound) return;
-        LV.hostsListBound = true;
+        if (LV.roomsListBound) return;
+        LV.roomsListBound = true;
 
-        firebase.database().ref('live_world/hosts').on('value', (snap) => {
-            LV.liveHosts = snap.val() || {};
-            if (isLiveVisible()) {
-                renderLiveSidebar();
-                refreshLiveFrameOverlay();
-                if (!isHostRole() && LV.isActive) {
-                    trySubscribeCurrentHost();
-                    syncLiveVideoDisplay();
-                    syncLiveRemoteAudioVolume();
-                }
-            }
+        firebase.database().ref('live_world/rooms').on('value', (snap) => {
+            LV.allActiveRooms = snap.val() || {};
+            if (isLiveVisible()) renderLiveSidebar();
         });
     }
 
     window.addEventListener('beforeunload', () => {
-        if (LV.hostPresenceRef) try { LV.hostPresenceRef.remove(); } catch (e) {}
-        if (LV.myViewerRef) try { LV.myViewerRef.remove(); } catch (e) {}
+        if (LV.myCamRef) try { LV.myCamRef.remove(); } catch (e) {}
+        if (LV.myMemberRef) try { LV.myMemberRef.remove(); } catch (e) {}
     });
 
     function bootLiveRoom() {
@@ -2288,11 +2193,9 @@
         bindBottomLiveButton();
         ensureLivePageMounted();
         hookLiveSwitchTab();
-        bindFirebaseHostsList();
+        bindFirebaseRoomsList();
 
-        if (typeof window.applyTranslations === 'function') {
-            window.applyTranslations();
-        }
+        if (typeof window.applyTranslations === 'function') window.applyTranslations();
 
         document.addEventListener('click', () => closeAllLivePopups());
 
@@ -2312,7 +2215,7 @@
         setInterval(() => {
             mergeLiveIntoGlobalI18n();
             bindBottomLiveButton();
-            hookLiveSwitchTab(); // Перехватываем повторно, если index.html обернул switchTab в setTimeout(1500)
+            hookLiveSwitchTab();
 
             const curLang = getUiLangCode();
             if (curLang !== LV.lastUiLang) {
@@ -2320,10 +2223,7 @@
                 if (typeof window.applyTranslations === 'function') window.applyTranslations();
                 refreshLiveUITexts();
             }
-            if (isLiveVisible()) {
-                renderLiveSidebar();
-                refreshLiveFrameOverlay();
-            }
+            if (isLiveVisible()) renderLiveSidebar();
         }, 1200);
     }
 
