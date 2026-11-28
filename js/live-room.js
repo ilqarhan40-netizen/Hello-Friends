@@ -1510,18 +1510,88 @@
                 renderLiveGrid();
             });
 
-            const appId = window.CALLS_AGORA_APP_ID || (typeof AGORA_APP_ID !== 'undefined' ? AGORA_APP_ID : window.AGORA_APP_ID) || '';
-            const token = window.CALLS_AGORA_TEMP_TOKEN || (typeof AGORA_TEMP_TOKEN !== 'undefined' ? AGORA_TEMP_TOKEN : window.AGORA_TEMP_TOKEN) || null;
-            const channelName = window.LIVE_AGORA_CHANNEL || window.CALLS_AGORA_CHANNEL || 'hello';
-            const myId = getMyId();
-            if (!appId) return;
+    const LIVE_AGORA_APP_ID = '913f13a6b8104d34b03695acdc0d79b7';
+    const LIVE_AGORA_CHANNEL = 'hello';
+    // Если твоя ветка в Firebase называется иначе — впиши сюда её точное имя:
+    const LIVE_TOKEN_DB_PATH = 'config/agoraToken';
 
-            let joinedUid = null;
-            try { joinedUid = await LV.client.join(appId, channelName, token, myId ? `live_${myId}` : null); }
-            catch (e1) {
-                try { joinedUid = await LV.client.join(appId, channelName, token, myId || null); }
-                catch (e2) { joinedUid = await LV.client.join(appId, channelName, token, null); }
+    async function fetchLiveTokenFromFirebase() {
+        if (typeof firebase === 'undefined' || !firebase.database) return null;
+        const db = firebase.database();
+        const paths = [
+            LIVE_TOKEN_DB_PATH,
+            'config/agora_token',
+            'agoraToken',
+            'agora_token',
+            'agora/token',
+            'settings/agoraToken'
+        ];
+        for (const path of paths) {
+            if (!path) continue;
+            try {
+                const snap = await db.ref(path).once('value');
+                const val = snap.val();
+                if (!val) continue;
+                const raw = (typeof val === 'string')
+                    ? val
+                    : (val.token || val.agoraToken || val.tempToken || '');
+                const clean = String(raw).trim().replace(/^["']|["']$/g, '').trim();
+                if (clean) return clean;
+            } catch (e) {}
+        }
+        return null;
+    }
+
+    async function startLiveAgora() {
+        if (LV.isStartingAgora || LV.isLeaving) return;
+        if (typeof AgoraRTC === 'undefined') {
+            setTimeout(() => { if (LV.isActive && !LV.isLeaving) startLiveAgora(); }, 1000);
+            return;
+        }
+        if (LV.client && LV.client.connectionState === 'CONNECTED') {
+            trySubscribeRoomUsers();
+            syncLiveRemoteAudioVolume();
+            return;
+        }
+
+        LV.isStartingAgora = true;
+        try {
+            if (LV.client) {
+                try { await LV.client.leave(); } catch (e) {}
+                LV.client = null;
             }
+
+            const token = await fetchLiveTokenFromFirebase();
+            if (!token) {
+                throw new Error('Токен не найден в Firebase (' + LIVE_TOKEN_DB_PATH + ')');
+            }
+
+            LV.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+
+            LV.client.on('user-published', (user, mediaType) => {
+                const allowed = getRoomAgoraUidSet();
+                if (allowed.has(String(user.uid))) subscribeLiveRemote(user, mediaType);
+            });
+            LV.client.on('user-unpublished', (user, mediaType) => {
+                const aUid = String(user.uid);
+                if (mediaType === 'video') {
+                    delete LV.remoteVideoTracks[aUid];
+                    renderLiveGrid();
+                }
+                if (mediaType === 'audio') {
+                    if (user.audioTrack) { try { user.audioTrack.stop(); } catch (e) {} }
+                    delete LV.remoteAudioTracks[aUid];
+                }
+            });
+            LV.client.on('user-left', (user) => {
+                const aUid = String(user.uid);
+                delete LV.remoteVideoTracks[aUid];
+                delete LV.remoteAudioTracks[aUid];
+                renderLiveGrid();
+            });
+
+            // Для временного токена из Agora Console передаём uid = null (числовой авто-UID)
+            const joinedUid = await LV.client.join(LIVE_AGORA_APP_ID, LIVE_AGORA_CHANNEL, token, null);
 
             if (!LV.isActive || LV.isLeaving) {
                 try { await LV.client.leave(); } catch (e) {}
@@ -1532,12 +1602,12 @@
             LV.myAgoraUid = String(joinedUid);
             trySubscribeRoomUsers();
         } catch (e) {
-            console.warn('Live Agora error:', e);
+            console.error('Live Agora error:', e);
+            if (window.showToast) window.showToast('Agora Live', e.message || String(e), '', '');
         } finally {
             LV.isStartingAgora = false;
         }
-    }
-
+            }
     function registerMyCameraInRoom() {
         const myId = getMyId();
         const ownerId = LV.currentRoomOwnerId;
