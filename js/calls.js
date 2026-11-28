@@ -17,8 +17,42 @@ window.localVideoTrack = null;
 window.remoteAgoraUser = null;
 window._isStartingAgora = false;
 
-// Ключи Agora (свежий токен для канала "hello")
+// Ключи Agora (токен автоматически читается из Firebase config/agoraToken)
 window.CALLS_AGORA_APP_ID = "913f13a6b8104d34b03695acdc0d79b7";
+window.AGORA_APP_ID = window.CALLS_AGORA_APP_ID;
+window.CALLS_AGORA_CHANNEL = "hello";
+window.CALLS_AGORA_TEMP_TOKEN = "";
+window.AGORA_TEMP_TOKEN = "";
+
+window.getFreshAgoraToken = async function() {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+        try {
+            const snap = await firebase.database().ref('config/agoraToken').once('value');
+            const tok = String(snap.val() || '').trim().replace(/^["']|["']$/g, '');
+            if (tok) {
+                window.CALLS_AGORA_TEMP_TOKEN = tok;
+                window.AGORA_TEMP_TOKEN = tok;
+                return tok;
+            }
+        } catch (e) {}
+    }
+    return window.CALLS_AGORA_TEMP_TOKEN || "";
+};
+
+(function syncAgoraTokenFromFirebase() {
+    if (typeof firebase === 'undefined' || !firebase.database) {
+        setTimeout(syncAgoraTokenFromFirebase, 400);
+        return;
+    }
+    firebase.database().ref('config/agoraToken').on('value', (snap) => {
+        const tok = String(snap.val() || '').trim().replace(/^["']|["']$/g, '');
+        if (tok) {
+            window.CALLS_AGORA_TEMP_TOKEN = tok;
+            window.AGORA_TEMP_TOKEN = tok;
+        }
+    });
+})();
+
 
 
 
