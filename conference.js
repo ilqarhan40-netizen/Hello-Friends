@@ -1699,19 +1699,23 @@
                 delete CF.remoteAudioTracks[aUid];
             });
 
-            const appId = window.CALLS_AGORA_APP_ID || (typeof AGORA_APP_ID !== 'undefined' ? AGORA_APP_ID : window.AGORA_APP_ID) || '';
-            const token = window.CALLS_AGORA_TEMP_TOKEN || (typeof AGORA_TEMP_TOKEN !== 'undefined' ? AGORA_TEMP_TOKEN : window.AGORA_TEMP_TOKEN) || null;
-            const channelName = window.CONF_AGORA_CHANNEL || window.CALLS_AGORA_CHANNEL || 'hello';
-            const myId = getMyId() || null;
+            const appId = window.CALLS_AGORA_APP_ID || (typeof AGORA_APP_ID !== 'undefined' ? AGORA_APP_ID : window.AGORA_APP_ID) || '913f13a6b8104d34b03695acdc0d79b7';
+        const channelName = window.CONF_AGORA_CHANNEL || window.CALLS_AGORA_CHANNEL || 'hello';
 
-            if (!appId) return;
+        let token = '';
+        if (typeof window.getFreshAgoraToken === 'function') {
+            token = await window.getFreshAgoraToken();
+        } else if (typeof firebase !== 'undefined' && firebase.database) {
+            const snap = await firebase.database().ref('config/agoraToken').once('value');
+            token = String(snap.val() || '').trim().replace(/^["']|["']$/g, '');
+        }
+        if (!token) {
+            token = window.CALLS_AGORA_TEMP_TOKEN || window.AGORA_TEMP_TOKEN || null;
+        }
 
-            let joinedUid = null;
-            try {
-                joinedUid = await CF.client.join(appId, channelName, token, myId);
-            } catch (joinErr) {
-                joinedUid = await CF.client.join(appId, channelName, token, null);
-            }
+        if (!appId) return;
+
+        const joinedUid = await CF.client.join(appId, channelName, token, null);
             if (!CF.isActive || CF.isLeaving) {
                 try { await CF.client.leave(); } catch (e) {}
                 CF.client = null;
