@@ -708,15 +708,19 @@ window.startWebRTC = async function(isCaller, targetId, isVideo = false) {
             window.setRemoteVideoVisible(false);
         });
 
-        const channelName = window.CALLS_AGORA_CHANNEL;
-        const uid = (window.myProfileInfo && window.myProfileInfo.id) ? window.myProfileInfo.id : null;
+                const channelName = window.CALLS_AGORA_CHANNEL;
+        const freshToken = await window.getFreshAgoraToken();
+        if (!freshToken) {
+            throw new Error("Токен Agora не найден в Firebase (config/agoraToken)");
+        }
 
         await window.agoraClient.join(
             window.CALLS_AGORA_APP_ID,
             channelName,
-            window.CALLS_AGORA_TEMP_TOKEN,
-            uid
+            freshToken,
+            null
         );
+        
 
         const tracksToPublish = [];
 
